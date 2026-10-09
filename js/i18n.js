@@ -1,0 +1,64 @@
+/* Textes FR / EN */
+(function (root) {
+  'use strict';
+  var D = {
+    fr: {
+      brandTop: 'LA MAIN D\'', balance: 'SOLDE', bet: 'MISE', win: 'GAIN', turbo: 'TURBO', auto: 'AUTO',
+      spin: 'TOURNER', stop: 'STOP', ready: 'Tournez la roue du jugement', spinning: 'La roue du jugement tourne…',
+      noFunds: 'Solde insuffisant', oracleSpeaks: 'L\'Oracle parle…', oracleOn: 'ORACLE', ankhRespin: 'ANKH — RELANCE GRATUITE !',
+      dust: 'La poussière retourne à la poussière…', winLine: 'Gain', respinLabel: 'RELANCE',
+      kinds: { m0: 'POUSSIÈRE', m05: '0,5×', m1: '1×', m2: '2×', m3: '3×', ankh: 'ANKH', scarab: 'SCARABÉES', weigh: 'PESÉE', vault: 'TRÉSOR' },
+      kindsLong: { scarab: 'Chute des Scarabées', weigh: 'Pesée du Cœur', vault: 'Chambre du Trésor', hand: 'Main d\'Anubis' },
+      tiers: ['', 'GRAND GAIN', 'MÉGA GAIN', 'ÉPIQUE', 'JUGEMENT DIVIN'],
+      scarabSub: 'Trois scarabées traversent les ténèbres. Chacun rapporte la case où il tombe.', scarabIntro: 'CHUTE DES SCARABÉES',
+      weighIntro: 'PESÉE DU CŒUR', weighSub: 'Le cœur contre la plume de Maât. Le plateau le plus lourd décide de votre gain.', feather: 'PLUME', heart: 'CŒUR', weighing: 'Les dieux pèsent votre âme…',
+      vaultIntro: 'CHAMBRE DU TRÉSOR', vaultSub: 'Ouvrez les chambres. Évitez la malédiction : elle clôt le coffre.', pick: 'Choisissez une chambre', vaultCurse: 'MALÉDICTION !', vaultSaved: 'L\'ANKH VOUS PROTÈGE', vaultScepter: 'SCEPTRE ×2', vaultShield: 'BOUCLIER ANKH', vaultClear: 'CHAMBRES VIDÉES  +5×', total: 'TOTAL',
+      handIntro: 'LA MAIN D\'ANUBIS', handSub: 'Le dieu saisit votre bonus et le transforme en jugement suprême.', handSpin: 'Les multiplicateurs s\'empilent…', handFinal: 'JUGEMENT RENDU',
+      boostApplied: 'BOOST ORACLE', tapSkip: 'Touchez pour passer', continueBtn: 'CONTINUER', bonusWin: 'GAIN DU BONUS',
+      infoTitle: 'RÈGLES & TABLE DES GAINS', rtp: 'RTP', maxWin: 'Gain max', hitRate: 'Tours gagnants', bonusFreq: 'Bonus', volat: 'Volatilité',
+      volatV: 'Moyenne-haute', demo: 'Crédits fictifs — démo sans argent réel.',
+      rules: [
+        'Une mise, un tour : la roue du jugement décide. Chaque case paie sa valeur × votre mise.',
+        'L\'Oracle (≈ 1 tour sur 2) désigne une case et lui offre un boost ×2 à ×25. Si la roue s\'y arrête, le boost s\'applique !',
+        'ANKH : relance gratuite de la roue, sans remise.',
+        'Un bonus peut être saisi par la MAIN D\'ANUBIS : roue géante à multiplicateurs cumulés, jusqu\'à ×5000.'
+      ],
+      tableCols: ['Case', 'Sur la roue', 'Gain'], settings: 'RÉGLAGES', language: 'Langue', sound: 'Son', reducedFx: 'Effets réduits', stopBonus: 'Stopper l\'auto sur bonus',
+      autoOpts: 'Nombre de tours auto', off: 'Non', on: 'Oui', close: 'Fermer', noWin: 'Pas de gain', handLabel: 'MAIN D\'ANUBIS'
+    },
+    en: {
+      brandTop: 'HAND OF', balance: 'BALANCE', bet: 'BET', win: 'WIN', turbo: 'TURBO', auto: 'AUTO',
+      spin: 'SPIN', stop: 'STOP', ready: 'Spin the wheel of judgement', spinning: 'The wheel of judgement turns…',
+      noFunds: 'Insufficient balance', oracleSpeaks: 'The Oracle speaks…', oracleOn: 'ORACLE', ankhRespin: 'ANKH — FREE RESPIN!',
+      dust: 'Dust returns to dust…', winLine: 'Win', respinLabel: 'RESPIN',
+      kinds: { m0: 'DUST', m05: '0.5×', m1: '1×', m2: '2×', m3: '3×', ankh: 'ANKH', scarab: 'SCARABS', weigh: 'WEIGHING', vault: 'VAULT' },
+      kindsLong: { scarab: 'Scarab Drop', weigh: 'Weighing of the Heart', vault: 'Treasure Vault', hand: 'Hand of Anubis' },
+      tiers: ['', 'BIG WIN', 'MEGA WIN', 'EPIC WIN', 'DIVINE JUDGEMENT'],
+      scarabSub: 'Three scarabs plunge through the dark. Each pays the slot it lands in.', scarabIntro: 'SCARAB DROP',
+      weighIntro: 'WEIGHING OF THE HEART', weighSub: 'Heart against the feather of Ma\'at. The heavier pan decides your prize.', feather: 'FEATHER', heart: 'HEART', weighing: 'The gods weigh your soul…',
+      vaultIntro: 'TREASURE VAULT', vaultSub: 'Open the chambers. Avoid the curse — it seals the vault.', pick: 'Choose a chamber', vaultCurse: 'CURSE!', vaultSaved: 'THE ANKH PROTECTS YOU', vaultScepter: 'SCEPTER ×2', vaultShield: 'ANKH SHIELD', vaultClear: 'VAULT CLEARED  +5×', total: 'TOTAL',
+      handIntro: 'HAND OF ANUBIS', handSub: 'The god seizes your bonus and turns it into supreme judgement.', handSpin: 'Multipliers stack up…', handFinal: 'JUDGEMENT PASSED',
+      boostApplied: 'ORACLE BOOST', tapSkip: 'Tap to skip', continueBtn: 'CONTINUE', bonusWin: 'BONUS WIN',
+      infoTitle: 'RULES & PAYTABLE', rtp: 'RTP', maxWin: 'Max win', hitRate: 'Hit rate', bonusFreq: 'Bonus', volat: 'Volatility',
+      volatV: 'Medium-high', demo: 'Play credits — demo, no real money.',
+      rules: [
+        'One bet, one spin: the wheel of judgement decides. Each segment pays its value × your bet.',
+        'The Oracle (≈ every other spin) picks a segment and grants it a ×2 to ×25 boost. If the wheel lands there, the boost applies!',
+        'ANKH: free respin of the wheel, no extra stake.',
+        'Any bonus can be seized by the HAND OF ANUBIS: a giant wheel with stacking multipliers, up to ×5000.'
+      ],
+      tableCols: ['Segment', 'On wheel', 'Pays'], settings: 'SETTINGS', language: 'Language', sound: 'Sound', reducedFx: 'Reduced effects', stopBonus: 'Stop autoplay on bonus',
+      autoOpts: 'Autoplay spins', off: 'Off', on: 'On', close: 'Close', noWin: 'No win', handLabel: 'HAND OF ANUBIS'
+    }
+  };
+  var lang = 'fr';
+  root.I18N = {
+    setLang: function (l) { lang = D[l] ? l : 'fr'; document.documentElement.lang = lang; },
+    lang: function () { return lang; },
+    t: function () { return D[lang]; },
+    apply: function () {
+      var d = D[lang];
+      document.querySelectorAll('[data-i]').forEach(function (el) { var k = el.getAttribute('data-i'); if (d[k] != null) el.textContent = d[k]; });
+    }
+  };
+})(window);

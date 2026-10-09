@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#0b0907">
+<title>Hand of Anubis</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-14 -20 28 40'%3E%3Cg fill='none' stroke='%23e6b94a' stroke-width='4.6' stroke-linecap='round'%3E%3Cellipse cx='0' cy='-11' rx='7.4' ry='9.4'/%3E%3Cpath d='M0 -1.5V17M-10.5 5.5H10.5'/%3E%3C/g%3E%3C/svg%3E">
+<link rel="preload" href="fonts/cinzel-latin-900-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<canvas id="stage" aria-label="Hand of Anubis"></canvas>
+
+<div id="ui">
+  <header id="top">
+    <div class="brand">
+      <span class="b-small" data-i="brandTop">HAND OF</span>
+      <span class="b-big">ANUBIS</span>
+    </div>
+    <div class="top-right">
+      <button class="ibtn" id="btnLang" type="button" aria-label="Langue">FR</button>
+      <button class="ibtn" id="btnSound" type="button" aria-label="Son"><svg viewBox="0 0 24 24"><path id="sndPath" d="M4 9v6h4l5 4V5L8 9H4z"/><path id="sndWave" d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
+      <button class="ibtn" id="btnInfo" type="button" aria-label="Infos">i</button>
+    </div>
+  </header>
+
+  <div id="oracle" class="pill" hidden><svg><use href="#i-eye" width="100%" height="100%"/></svg><span id="oracleText"></span></div>
+  <div id="status"><span id="statusText"></span></div>
+
+  <div id="history" aria-label="Historique"></div>
+
+  <footer id="hud">
+    <div class="stat" id="statBal"><label data-i="balance">SOLDE</label><b id="bal">0</b></div>
+    <div class="betbox">
+      <button class="step" id="betDn" type="button" aria-label="-">−</button>
+      <div class="betval"><label data-i="bet">MISE</label><b id="bet">0</b></div>
+      <button class="step" id="betUp" type="button" aria-label="+">+</button>
+    </div>
+    <button id="spin" type="button" aria-label="Spin">
+      <span class="ring"></span>
+      <svg class="ank"><use href="#i-ankh" width="100%" height="100%"/></svg>
+      <span class="spin-t" id="spinText">SPIN</span>
+    </button>
+    <div class="toggles">
+      <button class="tgl" id="btnTurbo" type="button"><i></i><span data-i="turbo">TURBO</span></button>
+      <button class="tgl" id="btnAuto" type="button"><i></i><span id="autoText">AUTO</span></button>
+    </div>
+    <div class="stat win" id="statWin"><label data-i="win">GAIN</label><b id="win">0</b></div>
+  </footer>
+
+  <div id="modal" hidden>
+    <div class="sheet" role="dialog" aria-modal="true">
+      <button class="x" id="modalClose" type="button" aria-label="Fermer">×</button>
+      <div id="modalBody"></div>
+    </div>
+  </div>
+</div>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-ankh" viewBox="-14 -20 28 40"><g fill="none" stroke="currentColor" stroke-width="4.6" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="0" cy="-11" rx="7.4" ry="9.4"/><path d="M0 -1.5V17M-10.5 5.5H10.5"/></g></symbol>
+  <symbol id="i-eye" viewBox="0 0 48 24"><g fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12Q22 -2 45 10Q26 24 3 12Z"/><circle cx="25" cy="11" r="4.4" fill="currentColor"/></g></symbol>
+</svg>
+
+<script src="js/math.js"></script>
+<script src="js/art.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/fx.js"></script>
+<script src="js/i18n.js"></script>
+<script src="js/game.js"></script>
+<script src="js/bonuses.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
