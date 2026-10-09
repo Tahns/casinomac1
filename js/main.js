@@ -4,13 +4,15 @@
   var M = root.AnubisMath, G = root.G, FX = root.FX, Sfx = root.Sfx;
   function $(id) { return document.getElementById(id); }
 
-  // Statistiques mesurées par tools/simulate.js (36M tours, ±0,2 pt) — affichées dans la table des gains
-  var STATS = { rtp: '96.1', hit: '47.7', bonusEvery: '14.7' };
+  // Statistiques mesurées par tools/simulate.js (36M tours par mode, ±0,2 pt) — affichées dans la table des gains
+  var STATS = { rtp: '96.2', rtpPlus: '95.9', hit: '61.3', bonusEvery: '14.7' };
   var BETS = [10, 20, 50, 100, 200, 500, 1000, 2000, 5000];
   var AUTO_STEPS = [0, 10, 25, 50, 100];
   var SAVE_KEY = 'hoa_save_v1';
 
-  var S = { balance: 10000, bi: 3, lastWin: 0, autoIdx: 0, auto: 0, stopOnBonus: true, busy: false, hist: [], reduced: false };
+  var S = { balance: 10000, bi: 3, lastWin: 0, autoIdx: 0, auto: 0, stopOnBonus: true, busy: false, hist: [], reduced: false, mode: 'std', limit: 0, quality: 'auto', limitHit: false };
+  var SESS = { start: Date.now(), spins: 0, wag: 0, won: 0, lastCheck: Date.now() };
+  var LIMITS = [0, 1000, 5000, 20000];
   var rng = M.cryptoRng();
 
   function load() {
@@ -25,19 +27,24 @@
         if (typeof d.stopOnBonus === 'boolean') S.stopOnBonus = d.stopOnBonus;
         if (d.reduced) { S.reduced = true; FX.reduced = true; }
         if (Array.isArray(d.hist)) S.hist = d.hist.slice(0, 10);
+        if (d.mode === 'plus') S.mode = 'plus';
+        if (LIMITS.indexOf(d.limit) >= 0) S.limit = d.limit;
+        if (d.quality) S.quality = d.quality;
       }
     } catch (e) {}
     if (S.balance < BETS[0]) S.balance = 10000;
   }
   function save() {
     try {
-      localStorage.setItem(SAVE_KEY, JSON.stringify({ balance: S.balance, bi: S.bi, lang: I18N.lang(), muted: Sfx.isMuted(), turbo: G.turbo, stopOnBonus: S.stopOnBonus, reduced: S.reduced, hist: S.hist }));
+      localStorage.setItem(SAVE_KEY, JSON.stringify({ balance: S.balance, bi: S.bi, lang: I18N.lang(), muted: Sfx.isMuted(), turbo: G.turbo, stopOnBonus: S.stopOnBonus, reduced: S.reduced, hist: S.hist, mode: S.mode, limit: S.limit, quality: S.quality }));
     } catch (e) {}
   }
 
   /* ---------- HUD ---------- */
   G.bet = BETS[S.bi];
   function bet() { return BETS[S.bi]; }
+  function cost() { return Math.round(bet() * M.MODES[S.mode].cost * 100) / 100; }
+  G.cost = cost;
   function say(txt) { $('statusText').textContent = txt || ''; }
   G.say = say;
 
@@ -55,6 +62,7 @@
   function updateHud(anim) {
     countTo($('bal'), 'bal', S.balance, anim ? 600 : 0);
     $('bet').textContent = G.fmt(bet());
+    $('betCost').textContent = S.mode === 'plus' ? I18N.t().cost + ' ' + G.fmt(cost()) : '';
     G.bet = bet();
     $('betDn').disabled = S.busy || S.bi === 0;
     $('betUp').disabled = S.busy || S.bi === BETS.length - 1;
@@ -71,6 +79,7 @@
     $('autoText').textContent = AUTO_STEPS[S.autoIdx] ? T.auto + ' ' + AUTO_STEPS[S.autoIdx] : T.auto;
     $('btnAuto').classList.toggle('on', S.autoIdx > 0);
     $('btnTurbo').classList.toggle('on', G.turbo);
+    $('btnPlus').classList.toggle('on', S.mode === 'plus'); $('plusText').textContent = T.oraclePlus;
   }
   function pushHistory(mult, bonus) {
     S.hist.unshift({ m: mult, b: bonus ? 1 : 0 }); S.hist = S.hist.slice(0, 10); renderHistory();
@@ -91,11 +100,13 @@
   async function play() {
     if (S.busy) return;
     var b = bet(), T = I18N.t();
-    if (S.balance < b) { say(T.noFunds); Sfx.curse(); stopAuto(); return; }
+    var c = cost();
+    if (S.limitHit) { openLimit(); return; }
+    if (S.balance < c) { say(T.noFunds); Sfx.curse(); stopAuto(); return; }
     Sfx.unlock(); Sfx.startAmbient();
     S.busy = true; G.speed = G.turbo ? 1.6 : 1;
-    S.balance -= b; updateHud(true); setWin(0, false); setSpinBtn();
-    var round = M.playRound(rng), hadBonus = false;
+    S.balance -= c; SESS.spins++; SESS.wag += c; updateHud(true); setWin(0, false); setSpinBtn();
+    var round = M.playRound(rng, S.mode), hadBonus = false;
     G.wheel.clearHighlight(); G.wheel.clearOracle();
     say(T.spinning);
     var total = 0;
@@ -137,7 +148,7 @@
     if (amount > 0) {
       var tier = tierOf(total);
       if (tier > 0) await G.showBigWin(total, amount, tier);
-      S.balance += amount; S.lastWin = amount;
+      S.balance += amount; S.lastWin = amount; SESS.won += amount;
       setWin(amount, true); updateHud(true);
       say(T.winLine + ' ×' + G.fmt(total) + '  ·  +' + G.fmt(amount));
     } else { setWin(0); say(T.ready); }
@@ -145,8 +156,9 @@
     G.wheel.clearHighlight();
     S.busy = false; G.speed = G.turbo ? 1.6 : 1;
     save();
+    var stopped = responsibleCheck();
     if (S.auto > 0) {
-      if (hadBonus && S.stopOnBonus) stopAuto(); else S.auto = isFinite(S.auto) ? S.auto - 1 : S.auto;
+      if (stopped || (hadBonus && S.stopOnBonus)) stopAuto(); else S.auto = isFinite(S.auto) ? S.auto - 1 : S.auto;
     }
     updateHud(); setSpinBtn();
     if (S.auto > 0) { await G.sleep(amount > 0 ? 0.7 : 0.25); if (S.auto > 0) play(); }
@@ -166,6 +178,7 @@
   $('betDn').addEventListener('click', function () { stepBet(-1); });
   $('betUp').addEventListener('click', function () { stepBet(1); });
   $('btnTurbo').addEventListener('click', function () { G.turbo = !G.turbo; G.speed = G.turbo ? 1.6 : 1; Sfx.click(); setSpinBtn(); save(); });
+  $('btnPlus').addEventListener('click', function () { if (S.busy) return; S.mode = S.mode === 'plus' ? 'std' : 'plus'; Sfx.click(); updateHud(); setSpinBtn(); save(); say(S.mode === 'plus' ? I18N.t().plusHint : I18N.t().ready); });
   $('btnAuto').addEventListener('click', function () {
     if (S.auto > 0) { stopAuto(); return; }
     S.autoIdx = (S.autoIdx + 1) % AUTO_STEPS.length; Sfx.click(); setSpinBtn();
@@ -186,6 +199,27 @@
     else if (e.code === 'Escape') $('modal').hidden = true;
   });
 
+  /* ---------- jeu responsable ---------- */
+  function net() { return Math.round((SESS.won - SESS.wag) * 100) / 100; }
+  function showMsg(title, body, btns) {
+    $('modalBody').innerHTML = '<h2>' + title + '</h2><p>' + body + '</p><div class="chips" id="msgBtns" style="margin-top:14px"></div>';
+    btns.forEach(function (b) { var e = document.createElement('button'); e.type = 'button'; e.textContent = b[0]; e.onclick = function () { $('modal').hidden = true; if (b[1]) b[1](); }; $('msgBtns').appendChild(e); });
+    $('modal').hidden = false;
+  }
+  function openLimit() { var T = I18N.t(); showMsg(T.limitTitle, T.limitMsg, [[T.settings, openInfo]]); }
+  // renvoie true si l'auto-play doit s'arrêter
+  function responsibleCheck() {
+    var T = I18N.t();
+    if (S.limit > 0 && -net() >= S.limit) { S.limitHit = true; stopAuto(); setTimeout(openLimit, 600); return true; }
+    if (Date.now() - SESS.lastCheck > 30 * 60000) {
+      SESS.lastCheck = Date.now(); stopAuto();
+      var mins = Math.round((Date.now() - SESS.start) / 60000);
+      setTimeout(function () { showMsg(T.realityTitle, T.realityMsg(mins, (net() >= 0 ? '+' : '') + G.fmt(net())), [[T.keepPlaying]]); }, 600);
+      return true;
+    }
+    return false;
+  }
+
   /* ---------- table des gains & réglages ---------- */
   function openInfo() {
     var T = I18N.t(), k, rows = '';
@@ -194,17 +228,22 @@
       weigh: I18N.lang() === 'fr' ? 'Cœur vs plume : jusqu\'à 200×' : 'Heart vs feather: up to 200×',
       vault: I18N.lang() === 'fr' ? 'Chambres à ouvrir, évitez la malédiction' : 'Open chambers, dodge the curse'
     };
-    ['m0', 'm05', 'm1', 'm2', 'm3', 'ankh', 'scarab', 'weigh', 'vault'].forEach(function (id) {
+    ['m0', 'm025', 'm05', 'm1', 'm2', 'm3', 'ankh', 'scarab', 'weigh', 'vault'].forEach(function (id) {
       var def = M.KINDS[id], pays = def.bonus ? desc[id] : def.respin ? T.respinLabel : (def.mult ? def.mult + '×' : T.noWin);
       rows += '<tr><td><span class="sw" style="background:' + G.kindColor(id) + '"></span>' + T.kinds[id] + '</td><td class="n">' + def.count + ' / ' + M.N + '</td><td>' + pays + '</td></tr>';
     });
     $('modalBody').innerHTML =
       '<h2>' + T.infoTitle + '</h2><p style="color:var(--dim)">' + T.demo + '</p>' +
-      '<div class="kv"><div><label>' + T.rtp + '</label><b>' + STATS.rtp + '%</b></div><div><label>' + T.maxWin + '</label><b>' + G.fmt(M.MAX_WIN) + '×</b></div>' +
+      '<div class="kv"><div><label>' + T.rtp + '</label><b>' + STATS.rtp + '% <small style="font-size:11px;color:var(--turq)">· ORACLE+ ' + STATS.rtpPlus + '%</small></b></div><div><label>' + T.maxWin + '</label><b>' + G.fmt(M.MAX_WIN) + '×</b></div>' +
       '<div><label>' + T.hitRate + '</label><b>' + STATS.hit + '%</b></div><div><label>' + T.bonusFreq + '</label><b>1 / ' + STATS.bonusEvery + '</b></div><div><label>' + T.volat + '</label><b>' + T.volatV + '</b></div></div>' +
-      '<h3>' + T.infoTitle.split('&')[0].trim() + '</h3>' + T.rules.map(function (r) { return '<p>• ' + r + '</p>'; }).join('') +
+      '<h3>' + T.infoTitle.split('&')[0].trim() + '</h3>' + T.rules.map(function (r) { return '<p>• ' + r + '</p>'; }).join('') + '<p>• ' + T.rulesPlus + '</p>' +
       '<h3>' + T.tableCols[0] + '</h3><table><tr><th>' + T.tableCols[0] + '</th><th>' + T.tableCols[1] + '</th><th>' + T.tableCols[2] + '</th></tr>' + rows + '</table>' +
+      '<h3>' + T.session + '</h3>' +
+      '<div class="kv"><div><label>' + T.sessTime + '</label><b>' + Math.round((Date.now() - SESS.start) / 60000) + ' min</b></div><div><label>' + T.sessSpins + '</label><b>' + SESS.spins + '</b></div>' +
+      '<div><label>' + T.sessWag + '</label><b>' + G.fmt(SESS.wag) + '</b></div><div><label>' + T.sessWon + '</label><b>' + G.fmt(SESS.won) + '</b></div><div><label>' + T.sessNet + '</label><b>' + (net() >= 0 ? '+' : '') + G.fmt(net()) + '</b></div></div>' +
       '<h3>' + T.settings + '</h3>' +
+      '<div class="opt"><span>' + T.lossLimit + '</span><div class="chips" id="optLimit"></div></div>' +
+      '<div class="opt"><span>' + T.qualityL + '</span><div class="chips" id="optQ"></div></div>' +
       '<div class="opt"><span>' + T.autoOpts + '</span><div class="chips" id="optAuto"></div></div>' +
       '<div class="opt"><span>' + T.stopBonus + '</span><div class="chips"><button id="optStop" class="' + (S.stopOnBonus ? 'on' : '') + '" type="button">' + (S.stopOnBonus ? T.on : T.off) + '</button></div></div>' +
       '<div class="opt"><span>' + T.reducedFx + '</span><div class="chips"><button id="optRed" class="' + (S.reduced ? 'on' : '') + '" type="button">' + (S.reduced ? T.on : T.off) + '</button></div></div>' +
@@ -216,6 +255,18 @@
       bt.onclick = function () { if (S.busy) return; var ix = AUTO_STEPS.indexOf(n); S.autoIdx = ix < 0 ? 0 : ix; setSpinBtn(); openInfo(); };
       ao.appendChild(bt);
     });
+    var ol = $('optLimit');
+    LIMITS.forEach(function (n) {
+      var bt = document.createElement('button'); bt.type = 'button'; bt.textContent = n ? G.fmt(n) : T.off; bt.className = S.limit === n ? 'on' : '';
+      bt.onclick = function () { S.limit = n; S.limitHit = n > 0 && -net() >= n; if (!n) S.limitHit = false; save(); openInfo(); };
+      ol.appendChild(bt);
+    });
+    var oq = $('optQ');
+    [['auto', T.qAuto], ['high', T.qHigh], ['low', T.qLow]].forEach(function (q) {
+      var bt = document.createElement('button'); bt.type = 'button'; bt.textContent = q[1]; bt.className = S.quality === q[0] ? 'on' : '';
+      bt.onclick = function () { S.quality = q[0]; G.setQuality(q[0]); save(); openInfo(); };
+      oq.appendChild(bt);
+    });
     $('optStop').onclick = function () { S.stopOnBonus = !S.stopOnBonus; save(); openInfo(); };
     $('optRed').onclick = function () { S.reduced = !S.reduced; FX.reduced = S.reduced; save(); openInfo(); };
     $('optReset').onclick = function () { if (S.busy) return; S.balance = 10000; shown.bal = -1; updateHud(); save(); };
@@ -226,7 +277,7 @@
   $('modal').addEventListener('click', function (e) { if (e.target === $('modal')) $('modal').hidden = true; });
 
   /* ---------- démarrage ---------- */
-  load(); I18N.apply(); refreshSound(); applyLang();
+  load(); G.quality = S.quality; if (S.quality === 'low') FX.lite = true; I18N.apply(); refreshSound(); applyLang();
   updateHud(); setWin(0); setSpinBtn(); renderHistory();
   G.start();
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { G.wheel.build(); });

@@ -3,7 +3,9 @@
 var M = require('../js/math.js');
 var n = parseInt(process.argv[2] || '5000000', 10);
 var seed = parseInt(process.argv[3] || '1', 10);
+var mode = process.argv[4] || 'std';
 var rng = M.mulberry32(seed);
+var COST = (M.MODES[mode] || M.MODES.std).cost;
 
 var sum = 0, sum2 = 0, hits = 0, maxWin = 0, capped = 0;
 var byKind = {}, oracleExtra = 0;
@@ -12,7 +14,7 @@ var dist = buckets.map(function () { return 0; });
 var nBonus = 0;
 
 for (var i = 0; i < n; i++) {
-  var r = M.playRound(rng);
+  var r = M.playRound(rng, mode);
   sum += r.total; sum2 += r.total * r.total;
   if (r.total > 0) hits++;
   if (r.total > maxWin) maxWin = r.total;
@@ -29,7 +31,8 @@ for (var i = 0; i < n; i++) {
   });
 }
 var mean = sum / n, sd = Math.sqrt(sum2 / n - mean * mean);
-console.log('Tours: ' + n + '  graine: ' + seed);
+console.log('Tours: ' + n + '  graine: ' + seed + '  mode: ' + mode + ' (coût ×' + COST + ')');
+mean = mean / COST;
 console.log('RTP: ' + (mean * 100).toFixed(2) + '%   écart-type: ' + sd.toFixed(2) + 'x   gain max observé: ' + maxWin + 'x   plafonnés: ' + capped);
 console.log('Taux de gain (>0): ' + (hits / n * 100).toFixed(1) + '%   bonus déclenchés: 1 / ' + (n / nBonus).toFixed(1) + ' tours');
 console.log('Part de RTP due aux boosts Oracle: ' + (oracleExtra / n * 100).toFixed(2) + ' pts');

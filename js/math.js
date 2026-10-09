@@ -40,7 +40,8 @@
   /* ---------- La roue (54 cases) ---------- */
   // kind: identifiant ; mult: gain direct (cases « nombre ») ; count: nombre de cases sur la roue
   var KINDS = {
-    m0:    { id: 'm0',    mult: 0,   count: 23, tier: 0 },
+    m0:    { id: 'm0',    mult: 0,   count: 17, tier: 0 },
+    m025:  { id: 'm025',  mult: 0.25,count: 6,  tier: 1 },
     m05:   { id: 'm05',   mult: 0.5, count: 12, tier: 1 },
     m1:    { id: 'm1',    mult: 1,   count: 4,  tier: 2 },
     m2:    { id: 'm2',    mult: 2,   count: 1,  tier: 3 },
@@ -50,7 +51,7 @@
     weigh: { id: 'weigh', count: 1,  tier: 9, bonus: true },
     vault: { id: 'vault', count: 1,  tier: 10, bonus: true }
   };
-  var KIND_ORDER = ['weigh', 'vault', 'scarab', 'm3', 'ankh', 'm2', 'm1', 'm05', 'm0'];
+  var KIND_ORDER = ['weigh', 'vault', 'scarab', 'm3', 'ankh', 'm2', 'm1', 'm05', 'm025', 'm0'];
   var HAND_UPGRADE = 0.08; // chance qu'un bonus soit saisi par la Main d'Anubis
 
   // Disposition déterministe : les plus rares d'abord, répartis régulièrement, jamais deux cases identiques côte à côte.
@@ -87,7 +88,8 @@
   var N = LAYOUT.length;
 
   /* ---------- Oracle (booster pré-tour, façon « top slot ») ---------- */
-  var ORACLE_CHANCE = 0.46;
+  var MODES = { std: { cost: 1, oracle: 0.32 }, plus: { cost: 1.1, oracle: 0.72 } };
+  var ORACLE_CHANCE = MODES.std.oracle;
   var ORACLE_KIND_W = [['m05', 3], ['m1', 4], ['m2', 3], ['m3', 2], ['scarab', 3], ['weigh', 3], ['vault', 3]];
   var ORACLE_BOOST = {
     num:   [[2, 58], [3, 28], [5, 10], [10, 3.2], [25, 0.8]],
@@ -167,15 +169,15 @@
   }
 
   /* ---------- Un tour complet ---------- */
-  function rollOracle(rng) {
-    if (rng() >= ORACLE_CHANCE) return null;
+  function rollOracle(rng, chance) {
+    if (rng() >= chance) return null;
     var kind = weighted(rng, ORACLE_KIND_W);
     var isBonus = KINDS[kind].bonus;
     return { kind: kind, boost: weighted(rng, isBonus ? ORACLE_BOOST.bonus : ORACLE_BOOST.num) };
   }
 
-  function playSpin(rng) {
-    var oracle = rollOracle(rng);
+  function playSpin(rng, chance) {
+    var oracle = rollOracle(rng, chance);
     var index = Math.floor(rng() * N);
     var kind = LAYOUT[index];
     var def = KINDS[kind];
@@ -193,12 +195,13 @@
   }
 
   // renvoie { spins:[...], total, capped }
-  function playRound(rng) {
+  function playRound(rng, mode) {
+    var md = MODES[mode] || MODES.std, chance = md.oracle;
     var spins = [], total = 0;
     for (var i = 0; i <= MAX_CHAIN; i++) {
-      var s = playSpin(rng);
+      var s = playSpin(rng, chance);
       if (s.kind === 'ankh' && i === MAX_CHAIN) { // plus de relance possible : on retire
-        do { s = playSpin(rng); } while (s.kind === 'ankh');
+        do { s = playSpin(rng, chance); } while (s.kind === 'ankh');
       }
       spins.push(s);
       total += s.pay;
@@ -206,11 +209,11 @@
     }
     var capped = total > MAX_WIN;
     if (capped) total = MAX_WIN;
-    return { spins: spins, total: total, capped: capped };
+    return { spins: spins, total: total, capped: capped, cost: md.cost, mode: md === MODES.plus ? 'plus' : 'std' };
   }
 
   return {
-    MAX_WIN: MAX_WIN, N: N, LAYOUT: LAYOUT, KINDS: KINDS,
+    MAX_WIN: MAX_WIN, MODES: MODES, N: N, LAYOUT: LAYOUT, KINDS: KINDS,
     SCARAB_ROWS: SCARAB_ROWS, SCARAB_VALUES: SCARAB_VALUES, SCARAB_BALLS: SCARAB_BALLS,
     WEIGH_PAIRS: WEIGH_PAIRS, VAULT_TILES: VAULT_TILES, VAULT_MAX_PICKS: VAULT_MAX_PICKS,
     HAND_SEGS: HAND_SEGS, HAND_UPGRADE: HAND_UPGRADE, ORACLE_CHANCE: ORACLE_CHANCE,

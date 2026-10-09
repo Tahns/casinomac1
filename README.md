@@ -4,7 +4,7 @@ Jeu de roue à bonus (démo, crédits fictifs) dans l'univers du jugement d'Anub
 
 ```bash
 python3 -m http.server 8000      # puis ouvrir http://localhost:8000
-node tools/simulate.js 10000000  # RTP, taux de gain, distribution (graine en 2e argument)
+node tools/simulate.js 10000000 1 plus  # RTP, taux de gain, distribution (graine, puis mode std|plus)
 node tools/tune.js               # espérance de chaque bonus isolé
 ```
 

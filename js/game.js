@@ -9,7 +9,7 @@
   var G = root.G = {
     w: 0, h: 0, dpr: 1, t: 0, speed: 1, turbo: false, scene: null, ctx: ctx,
     cx: 0, cy: 0, R: 0, timers: [], tweens: [], fade: 0, winOv: null,
-    mod: mod, clamp: clamp, txt: null, ease: FX.ease, onFrame: []
+    quality: 'auto', mod: mod, clamp: clamp, txt: null, ease: FX.ease, onFrame: []
   };
 
   /* ---------- temps : sleep / tween pilotés par la boucle (donc accélérables) ---------- */
@@ -49,7 +49,7 @@
   for (var di = 0; di < 46; di++) dust.push({ x: Math.random(), y: Math.random(), s: 0.6 + Math.random() * 1.8, v: 0.01 + Math.random() * 0.035, p: Math.random() * 6.28 });
 
   function layout() {
-    var dpr = Math.min(root.devicePixelRatio || 1, 2);
+    var dpr = Math.min(root.devicePixelRatio || 1, G.quality === 'low' || G.autoLow ? 1 : 2);
     G.dpr = dpr; G.w = root.innerWidth; G.h = root.innerHeight;
     cv.width = Math.round(G.w * dpr); cv.height = Math.round(G.h * dpr);
     var hud = document.getElementById('hud');
@@ -119,6 +119,13 @@
       });
       G.guard = { x: gx, top: G.cy - G.R * 0.28, s: G.R * 0.26, bowlY: G.cy - G.R * 0.28 + G.R * 0.78 };
     } else G.guard = null;
+    // grain de pierre
+    var nt = A.noiseTile(128, 0.05); f.globalCompositeOperation = 'overlay'; f.fillStyle = f.createPattern(nt, 'repeat'); f.fillRect(0, 0, w, h); f.globalCompositeOperation = 'source-over';
+    // frise de hiéroglyphes sous le linteau
+    var fh = clamp(h * 0.022, 14, 20);
+    f.fillStyle = 'rgba(0,0,0,.55)'; f.fillRect(0, 0, w, fh + 6);
+    f.fillStyle = A.goldGrad(f, 0, 0, w, 0); f.fillRect(0, fh + 6, w, 2);
+    A.glyphRow(f, 0, 3, w, fh, A.rgba(C.gold, 0.5), 7);
     // sol poli
     var fl = f.createLinearGradient(0, h * 0.78, 0, h);
     fl.addColorStop(0, 'rgba(230,185,74,0)'); fl.addColorStop(1, 'rgba(230,185,74,.08)');
@@ -171,6 +178,7 @@
   /* ============================== LA ROUE ============================== */
   var VIS = {
     m0:    { c: ['#2c241b', '#14100b'], tx: '#8d7c60', glyph: 'dust' },
+    m025:  { c: ['#7c6038', '#3d2c17'], tx: '#f0d8a8' },
     m05:   { c: ['#a67c3d', '#5f4220'], tx: '#fff1c8' },
     m1:    { c: ['#3e74e8', '#183a8c'], tx: '#ffffff' },
     m2:    { c: ['#22d3be', '#0b7c70'], tx: '#032b26' },
@@ -221,8 +229,8 @@
       f.save(); f.rotate(am);
       var big = M.KINDS[k].bonus || k === 'ankh';
       if (!big) {
-        var lab = k === 'm0' ? '0' : ({ m05: '0.5', m1: '1', m2: '2', m3: '3' })[k];
-        var fs = R * (k === 'm0' ? 0.07 : 0.1);
+        var lab = k === 'm0' ? '0' : ({ m025: '0.25', m05: '0.5', m1: '1', m2: '2', m3: '3' })[k];
+        var fs = R * (k === 'm0' ? 0.07 : k === 'm025' ? 0.085 : 0.1);
         f.font = '900 ' + fs + 'px Cinzel, serif'; f.textAlign = 'right'; f.textBaseline = 'middle';
         f.fillStyle = v.tx;
         if (k !== 'm0') { f.shadowColor = 'rgba(0,0,0,.55)'; f.shadowBlur = 3; }
@@ -347,7 +355,7 @@
     // disque rotatif (avec flou de mouvement à haute vitesse)
     var half = R + 6, sp = Math.abs(W.vel);
     ctx.save(); ctx.translate(cx, cy);
-    if (sp > 9 && !FX.reduced) {
+    if (sp > 9 && !FX.reduced && !FX.lite) {
       for (var gi = 3; gi >= 1; gi--) {
         ctx.save(); ctx.rotate(W.rot - Math.sign(W.vel || 1) * gi * Math.min(0.1, sp * 0.0045));
         ctx.globalAlpha = 0.22; ctx.drawImage(W.face, -half, -half, half * 2, half * 2); ctx.restore();
@@ -496,8 +504,22 @@
     updateWinOv(dt);
   }
   G.advance = async function (sec) { for (var n = Math.round(sec * 60), i = 0; i < n; i++) { tick(1 / 60); await null; } };
+  var perf = { acc: 0, n: 0, stage: 0 };
+  function adaptQuality(rawDt) {
+    if (G.quality !== 'auto' || perf.stage >= 2 || rawDt > 0.25) return;
+    perf.acc += rawDt; perf.n++;
+    if (perf.n < 120) return;
+    var avg = perf.acc / perf.n; perf.acc = 0; perf.n = 0;
+    if (avg > 0.034) {
+      perf.stage++;
+      if (perf.stage === 1 && G.dpr > 1) { G.autoLow = true; layout(); }
+      else { FX.lite = true; perf.stage = 2; }
+    }
+  }
+  G.setQuality = function (q) { G.quality = q; G.autoLow = false; perf.stage = 0; FX.lite = (q === 'low'); layout(); };
   function frame(ts) {
-    var dt = Math.min(0.05, (ts - last) / 1000 || 0.016); last = ts;
+    var rawDt = (ts - last) / 1000 || 0.016;
+    var dt = Math.min(0.05, rawDt); last = ts; adaptQuality(rawDt);
     tick(dt);
     var i;
     var so = FX.shakeOffset();

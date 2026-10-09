@@ -46,9 +46,9 @@ Décision : tout est **écrit en original**, sans dépendance ni asset externe. 
 
 ## 5. Game design et mathématiques (mesurés)
 
-**Roue de 48 cases** : `0×` ×23, `0,5×` ×12, `1×` ×4, `2×` ×1, `3×` ×1, **Ankh** (relance gratuite) ×4, **Scarabées**, **Pesée**, **Trésor** ×1 chacun. Disposition déterministe, jamais deux cases identiques côte à côte.
+**Roue de 48 cases** : `0×` ×17, `0,25×` ×6, `0,5×` ×12, `1×` ×4, `2×` ×1, `3×` ×1, **Ankh** (relance gratuite) ×4, **Scarabées**, **Pesée**, **Trésor** ×1 chacun. Disposition déterministe, jamais deux cases identiques côte à côte.
 
-**L'Oracle** (≈ 46 % des tours) : avant le spin, il désigne une case et lui offre un boost ×2 → ×25. Les cases concernées s'illuminent avec un badge sur la roue. Si la roue s'y arrête, le boost s'applique (sur un bonus, il multiplie le total du bonus). *Inspiré du « top slot » de ta base, mais lisible d'un coup d'œil.*
+**L'Oracle** (≈ 32 % des tours en mode Standard, ≈ 72 % en mode **Oracle+**) : avant le spin, il désigne une case et lui offre un boost ×2 → ×25. Les cases concernées s'illuminent avec un badge sur la roue. Si la roue s'y arrête, le boost s'applique (sur un bonus, il multiplie le total du bonus). *Inspiré du « top slot » de ta base, mais lisible d'un coup d'œil.*
 
 **Bonus** (chacun rejoue un script) :
 
@@ -59,13 +59,18 @@ Décision : tout est **écrit en original**, sans dépendance ni asset externe. 
 | **Chambre du Trésor** | Pick-me 12 chambres : valeurs, **Sceptre ×2**, **Ankh bouclier** (annule une malédiction), **Malédiction** (clôt le coffre), prime « coffre vidé » | ≈ 7,3× | 240× |
 | **Main d'Anubis** | **Chaque bonus a 8 % de chance d'être saisi** : roue géante à 24 cases, multiplicateurs ×2/×3/×4 qui **s'empilent** (jusqu'à 2 chaînes) | ≈ 24,6× | 1 600× (jusqu'à 5 000× avec un boost Oracle, plafond global) |
 
-**Résultats de simulation** (`node tools/simulate.js 12000000 <graine>`, 3 graines = 36 M de tours) :
+**Résultats de simulation** (`node tools/simulate.js 12000000 <graine> <std|plus>`, 3 graines × 12 M de tours par mode) :
 
-- **RTP ≈ 96,1 %** (95,98 / 96,46 / 95,97 ; marge ≈ ±0,2 pt car l'écart-type est ~6×)
-- Taux de tours gagnants **47,7 %** · bonus **1 tour sur 14,7** · gain max observé 3 600× (plafond 5 000×)
-- Les boosts Oracle pèsent ≈ 10,5 pts de RTP
+| | Standard | Oracle+ (mise ×1,1) |
+|---|---|---|
+| RTP | **96,2 %** (96,30 / 96,15 / 96,27) | **95,9 %** (95,86 / 95,94 / 95,74) |
+| Tours gagnants | 61,3 % | 61,4 % |
+| Bonus | 1 tour sur 14,7 | 1 tour sur 14,7 |
+| Gain max observé | 3 600× | 5 000× (plafond atteint) |
 
-Volatilité moyenne-haute : la moitié des tours perdent, mais les 0,5× et la relance Ankh lissent la série, et la queue de distribution (Main d'Anubis) apporte le « rêve de gros gain ».
+Marge d'erreur ≈ ±0,2 pt (l'écart-type d'un tour est ~6×). Les boosts Oracle pèsent ≈ 7 pts de RTP en Standard et ≈ 20 pts en Oracle+ (compensés par la mise ×1,1).
+
+Volatilité moyenne-haute : 61 % des tours rendent quelque chose (0,25× et 0,5× compris), la relance Ankh lisse la série, et la queue de distribution (Main d'Anubis) apporte le « rêve de gros gain ».
 
 ## 6. Chemin vers Stake Engine
 
@@ -84,3 +89,15 @@ Ce qui **reste à faire** (non fait ici, et je n'ai pas pu vérifier tous les d�
 - Le RNG de la démo est côté navigateur (`crypto.getRandomValues`) : c'est une démo, pas un jeu certifiable. L'RTP n'est pas audité.
 - L'art est entièrement procédural : fidèle à la DA, mais un habillage avec illustrations sur mesure (statue d'Anubis, textures de pierre) élèverait encore le rendu. Possible via génération d'images si tu veux aller plus loin.
 - Le multi-paris façon Crazy Time a été abandonné (voir §3).
+
+## 8. SWOT du jeu et corrections apportées
+
+| Faiblesse relevée | Correction |
+|---|---|
+| Plus de décision pour le joueur (fin du multi-paris) | **Mode ORACLE+** : mise ×1,1 contre un Oracle sur ≈ 3 tours sur 4. Même RTP (≈ 96 %), donc un vrai choix de profil de risque, compatible avec le modèle « un pari, un round » (les *bet modes* de Stake, à confirmer dans leur doc). |
+| Moitié des tours à zéro | **Cases 0,25×** (6) : 47,7 % → **61,3 %** de tours gagnants. L'RTP a été rééquilibré (Oracle moins fréquent en Standard). |
+| Pas de cadre de jeu responsable | **Limite de perte de séance** (1 000 / 5 000 / 20 000, blocage + message), **rappel toutes les 30 min** avec résultat net, **stats de séance** dans le panneau d'infos, arrêt de l'auto-play. |
+| Fluidité mobile non mesurée | **Qualité adaptative** : si la moyenne dépasse ~34 ms/frame, baisse du DPR puis allègement des effets ; réglage manuel Auto / Élevée / Basse. |
+| Art sans textures | **Grain de pierre** et **frise de hiéroglyphes** sous le linteau. |
+
+Reste non résolu (hors de portée d'un correctif de code) : validation de la propriété intellectuelle, lecture des contraintes officielles Stake, test du son à l'oreille, RNG serveur et audit.

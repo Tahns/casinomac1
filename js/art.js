@@ -234,6 +234,19 @@
     ctx.restore();
   }
 
+  function glyphRow(ctx, x, y, w, h, color, seed) {
+    var n = Math.max(3, Math.floor(w / (h * 1.5))), step = w / n, i;
+    for (i = 0; i < n; i++) {
+      var gi = Math.floor((Math.sin(seed * 91 + i * 12.9898) * 43758.5453 % 1 + 1) * 5) % 5;
+      GLYPHS[gi](ctx, x + step * (i + 0.5), y + h / 2, h * 0.62, color);
+    }
+  }
+  function noiseTile(size, alpha) {
+    var c = document.createElement('canvas'); c.width = c.height = size; var x = c.getContext('2d'), d = x.createImageData(size, size);
+    for (var i = 0; i < d.data.length; i += 4) { var v = Math.random() * 255; d.data[i] = d.data[i + 1] = d.data[i + 2] = v; d.data[i + 3] = alpha * 255; }
+    x.putImageData(d, 0, 0); return c;
+  }
+
   /* ---------- étoile de lumière ---------- */
   function rays(ctx, cx, cy, r, n, rot, color, alpha) {
     ctx.save(); ctx.translate(cx, cy); ctx.rotate(rot); ctx.globalAlpha = alpha; ctx.fillStyle = color;
@@ -253,6 +266,6 @@
   root.Art = {
     C: C, TAU: TAU, goldGrad: goldGrad, rgba: rgba, mix: mix,
     ankh: ankh, eye: eye, scarab: scarab, feather: feather, pyramid: pyramid, skullX: skullX, cobra: cobra, skull: skull,
-    jackal: jackal, hand: hand, glyphStrip: glyphStrip, rays: rays, roundRect: roundRect
+    jackal: jackal, hand: hand, glyphStrip: glyphStrip, glyphRow: glyphRow, noiseTile: noiseTile, rays: rays, roundRect: roundRect
   };
 })(window);

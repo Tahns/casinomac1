@@ -10,24 +10,29 @@
   var FX = {
     parts: parts,
     reduced: false,
+    lite: false,
     spark: function (x, y, n, color, spd, life) {
+      if (FX.lite) n = Math.ceil(n * 0.45);
       for (var i = 0; i < n; i++) {
         var a = Math.random() * TAU, v = (0.3 + Math.random()) * (spd || 260);
         parts.push({ k: 'spark', x: x, y: y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, g: 120, life: (life || 0.9) * (0.6 + Math.random() * 0.8), t: 0, s: 1.5 + Math.random() * 2.5, c: color || '#ffd86a' });
       }
     },
     coins: function (x, y, n, power, spreadX) {
+      if (FX.lite) n = Math.ceil(n * 0.45);
       for (var i = 0; i < n; i++) {
         var a = -Math.PI / 2 + (Math.random() - 0.5) * 1.5, v = (0.55 + Math.random() * 0.7) * (power || 700);
         parts.push({ k: 'coin', x: x + (Math.random() - 0.5) * (spreadX || 40), y: y, vx: Math.cos(a) * v * 0.55, vy: Math.sin(a) * v, g: 1500, life: 2.2 + Math.random() * 0.8, t: 0, s: 7 + Math.random() * 6, rot: Math.random() * TAU, vr: (Math.random() - 0.5) * 14, bounce: 0.45 });
       }
     },
     rain: function (w, n) { // pluie d'or depuis le haut
+      if (FX.lite) n = Math.ceil(n * 0.45);
       for (var i = 0; i < n; i++) {
         parts.push({ k: 'coin', x: Math.random() * w, y: -20 - Math.random() * 200, vx: (Math.random() - 0.5) * 80, vy: 200 + Math.random() * 300, g: 700, life: 3.5 + Math.random() * 1.5, t: 0, s: 6 + Math.random() * 7, rot: Math.random() * TAU, vr: (Math.random() - 0.5) * 12, bounce: 0.35 });
       }
     },
     dust: function (x, y, n, color) {
+      if (FX.lite) n = Math.ceil(n * 0.45);
       for (var i = 0; i < n; i++) parts.push({ k: 'dust', x: x + (Math.random() - 0.5) * 30, y: y + (Math.random() - 0.5) * 12, vx: (Math.random() - 0.5) * 90, vy: -Math.random() * 60, g: -10, life: 0.9 + Math.random() * 0.6, t: 0, s: 6 + Math.random() * 10, c: color || '#caa45f' });
     },
     ring: function (x, y, color, maxR, life) { parts.push({ k: 'ring', x: x, y: y, life: life || 0.8, t: 0, r: maxR || 200, c: color || '#ffd86a' }); },
