@@ -10,7 +10,7 @@
   var AUTO_STEPS = [0, 10, 25, 50, 100];
   var SAVE_KEY = 'hoa_save_v1';
 
-  var S = { balance: 10000, bi: 3, lastWin: 0, autoIdx: 0, auto: 0, stopOnBonus: true, busy: false, hist: [], reduced: false, mode: 'std', limit: 0, quality: 'auto', limitHit: false };
+  var S = { balance: 10000, bi: 3, lastWin: 0, autoIdx: 0, auto: 0, stopOnBonus: true, busy: false, hist: [], reduced: false, mode: 'std', buyOn: true, limit: 0, quality: 'auto', limitHit: false };
   var SESS = { start: Date.now(), spins: 0, wag: 0, won: 0, lastCheck: Date.now() };
   var LIMITS = [0, 1000, 5000, 20000];
   var rng = M.cryptoRng();
@@ -28,6 +28,7 @@
         if (d.reduced) { S.reduced = true; FX.reduced = true; }
         if (Array.isArray(d.hist)) S.hist = d.hist.slice(0, 10);
         if (d.mode === 'plus') S.mode = 'plus';
+        if (d.buyOn === false) S.buyOn = false;
         if (LIMITS.indexOf(d.limit) >= 0) S.limit = d.limit;
         if (d.quality) S.quality = d.quality;
       }
@@ -36,7 +37,7 @@
   }
   function save() {
     try {
-      localStorage.setItem(SAVE_KEY, JSON.stringify({ balance: S.balance, bi: S.bi, lang: I18N.lang(), muted: Sfx.isMuted(), turbo: G.turbo, stopOnBonus: S.stopOnBonus, reduced: S.reduced, hist: S.hist, mode: S.mode, limit: S.limit, quality: S.quality }));
+      localStorage.setItem(SAVE_KEY, JSON.stringify({ balance: S.balance, bi: S.bi, lang: I18N.lang(), muted: Sfx.isMuted(), turbo: G.turbo, stopOnBonus: S.stopOnBonus, reduced: S.reduced, hist: S.hist, mode: S.mode, buyOn: S.buyOn, limit: S.limit, quality: S.quality }));
     } catch (e) {}
   }
 
@@ -80,6 +81,7 @@
     $('btnAuto').classList.toggle('on', S.autoIdx > 0);
     $('btnTurbo').classList.toggle('on', G.turbo);
     $('btnPlus').classList.toggle('on', S.mode === 'plus'); $('plusText').textContent = T.oraclePlus;
+    $('btnBuy').hidden = !S.buyOn; $('btnBuy').disabled = S.busy || S.auto > 0 || S.autoIdx > 0; $('buyText').textContent = T.buyBtn;
   }
   function pushHistory(mult, bonus) {
     S.hist.unshift({ m: mult, b: bonus ? 1 : 0 }); S.hist = S.hist.slice(0, 10); renderHistory();
@@ -95,31 +97,33 @@
   }
 
   /* ---------- un tour ---------- */
+  // m = gain rapporté au coût du tour
   function tierOf(m) { return m >= 200 ? 4 : m >= 50 ? 3 : m >= 15 ? 2 : m >= 5 ? 1 : 0; }
 
-  async function play() {
+  async function play(buyKind) {
     if (S.busy) return;
     var b = bet(), T = I18N.t();
-    var c = cost();
+    var priceMult = buyKind ? M.BUY[buyKind].price : M.MODES[S.mode].cost;
+    var c = buyKind ? Math.round(b * priceMult * 100) / 100 : cost();
     if (S.limitHit) { openLimit(); return; }
     if (S.balance < c) { say(T.noFunds); Sfx.curse(); stopAuto(); return; }
     Sfx.unlock(); Sfx.startAmbient();
     S.busy = true; G.speed = G.turbo ? 1.6 : 1;
     S.balance -= c; SESS.spins++; SESS.wag += c; updateHud(true); setWin(0, false); setSpinBtn();
-    var round = M.playRound(rng, S.mode), hadBonus = false;
+    var round = buyKind ? M.playBuy(rng, buyKind) : M.playRound(rng, S.mode), hadBonus = false;
     G.wheel.clearHighlight(); G.wheel.clearOracle();
     say(T.spinning);
     var total = 0;
     for (var i = 0; i < round.spins.length; i++) {
       var sp = round.spins[i];
-      if (sp.oracle) {
+      if (!buyKind && sp.oracle) {
         $('oracleText').textContent = T.oracleOn + ' ×' + sp.oracle.boost + ' → ' + T.kinds[sp.oracle.kind].replace('\n', ' ');
         $('oracle').hidden = false;
         await G.wheel.showOracle(sp.oracle);
       }
-      await G.wheel.spinTo(sp);
+      if (!buyKind) await G.wheel.spinTo(sp);
       G.speed = G.turbo ? 1.6 : 1;
-      var def = M.KINDS[sp.kind];
+      var def = M.KINDS[sp.kind] || { bonus: true };
       if (def.respin) {
         Sfx.shield(); FX.spark(G.cx, G.cy - G.R * 0.9, 30, '#ffe9a0', 300); FX.flash(0.3, '#ffe9a0');
         say(T.ankhRespin); G.wheel.flashLamps = 1.0;
@@ -146,7 +150,7 @@
     var amount = Math.round(total * b * 100) / 100;
     G.wheel.clearOracle(); $('oracle').hidden = true;
     if (amount > 0) {
-      var tier = tierOf(total);
+      var tier = tierOf(total / priceMult);
       if (tier > 0) await G.showBigWin(total, amount, tier);
       S.balance += amount; S.lastWin = amount; SESS.won += amount;
       setWin(amount, true); updateHud(true);
@@ -157,7 +161,7 @@
     S.busy = false; G.speed = G.turbo ? 1.6 : 1;
     save();
     var stopped = responsibleCheck();
-    if (S.auto > 0) {
+    if (S.auto > 0 && !buyKind) {
       if (stopped || (hadBonus && S.stopOnBonus)) stopAuto(); else S.auto = isFinite(S.auto) ? S.auto - 1 : S.auto;
     }
     updateHud(); setSpinBtn();
@@ -199,6 +203,38 @@
     else if (e.code === 'Escape') $('modal').hidden = true;
   });
 
+  /* ---------- achat de bonus ---------- */
+  var BUY_ORDER = ['vault', 'scarab', 'weigh', 'hand'];
+  function buyIcon(kind) {
+    var c = document.createElement('canvas'); c.width = c.height = 144; var x = c.getContext('2d'), A = root.Art;
+    x.translate(72, 74);
+    if (kind === 'vault') A.pyramid(x, 0, 2, 110, '#e8c4ff', 'rgba(60,20,90,.6)');
+    else if (kind === 'scarab') A.scarab(x, 0, 0, 100, '#ffd86a', 'rgba(60,30,0,.6)');
+    else if (kind === 'weigh') { A.feather(x, 0, 0, 110, '#fff8e6', 'rgba(150,110,40,.8)'); }
+    else A.hand(x, 0, 18, 52, {});
+    return c;
+  }
+  function openBuy() {
+    if (S.busy || !S.buyOn) return;
+    var T = I18N.t(), b = bet();
+    $('modalBody').innerHTML = '<h2>' + T.buyTitle + '</h2><p style="color:var(--dim)">' + T.buySub + '</p><div class="buyGrid" id="buyGrid"></div>' +
+      '<p style="margin-top:14px;font-size:12px;color:var(--dim)">' + T.buyRtp + ' · ' + T.bet + ' ' + G.fmt(b) + '</p>';
+    var grid = $('buyGrid');
+    BUY_ORDER.forEach(function (k) {
+      var price = Math.round(b * M.BUY[k].price * 100) / 100, name = k === 'hand' ? T.kindsLong.hand : T.kindsLong[k];
+      var card = document.createElement('button'); card.type = 'button'; card.className = 'buyCard'; card.disabled = S.balance < price;
+      card.appendChild(buyIcon(k));
+      var h = document.createElement('h4'); h.textContent = name; card.appendChild(h);
+      var d = document.createElement('small'); d.textContent = T.buyDesc[k]; card.appendChild(d);
+      var pr = document.createElement('div'); pr.className = 'pr'; pr.textContent = G.fmt(price) + '  (×' + M.BUY[k].price + ')'; card.appendChild(pr);
+      var go = document.createElement('div'); go.className = 'go'; go.textContent = card.disabled ? T.buyNoFunds : T.buyNow; card.appendChild(go);
+      card.onclick = function () { $('modal').hidden = true; Sfx.unlock(); play(k); };
+      grid.appendChild(card);
+    });
+    $('modal').hidden = false; Sfx.click();
+  }
+  $('btnBuy').addEventListener('click', openBuy);
+
   /* ---------- jeu responsable ---------- */
   function net() { return Math.round((SESS.won - SESS.wag) * 100) / 100; }
   function showMsg(title, body, btns) {
@@ -236,7 +272,7 @@
       '<h2>' + T.infoTitle + '</h2><p style="color:var(--dim)">' + T.demo + '</p>' +
       '<div class="kv"><div><label>' + T.rtp + '</label><b>' + STATS.rtp + '% <small style="font-size:11px;color:var(--turq)">· ORACLE+ ' + STATS.rtpPlus + '%</small></b></div><div><label>' + T.maxWin + '</label><b>' + G.fmt(M.MAX_WIN) + '×</b></div>' +
       '<div><label>' + T.hitRate + '</label><b>' + STATS.hit + '%</b></div><div><label>' + T.bonusFreq + '</label><b>1 / ' + STATS.bonusEvery + '</b></div><div><label>' + T.volat + '</label><b>' + T.volatV + '</b></div></div>' +
-      '<h3>' + T.infoTitle.split('&')[0].trim() + '</h3>' + T.rules.map(function (r) { return '<p>• ' + r + '</p>'; }).join('') + '<p>• ' + T.rulesPlus + '</p>' +
+      '<h3>' + T.infoTitle.split('&')[0].trim() + '</h3>' + T.rules.map(function (r) { return '<p>• ' + r + '</p>'; }).join('') + '<p>• ' + T.rulesPlus + '</p>' + (S.buyOn ? '<p>• ' + T.buyTitle + ' : ' + BUY_ORDER.map(function (k) { return (k === 'hand' ? T.kindsLong.hand : T.kindsLong[k]) + ' ×' + M.BUY[k].price; }).join(' · ') + '</p>' : '') +
       '<h3>' + T.tableCols[0] + '</h3><table><tr><th>' + T.tableCols[0] + '</th><th>' + T.tableCols[1] + '</th><th>' + T.tableCols[2] + '</th></tr>' + rows + '</table>' +
       '<h3>' + T.session + '</h3>' +
       '<div class="kv"><div><label>' + T.sessTime + '</label><b>' + Math.round((Date.now() - SESS.start) / 60000) + ' min</b></div><div><label>' + T.sessSpins + '</label><b>' + SESS.spins + '</b></div>' +
@@ -246,6 +282,7 @@
       '<div class="opt"><span>' + T.qualityL + '</span><div class="chips" id="optQ"></div></div>' +
       '<div class="opt"><span>' + T.autoOpts + '</span><div class="chips" id="optAuto"></div></div>' +
       '<div class="opt"><span>' + T.stopBonus + '</span><div class="chips"><button id="optStop" class="' + (S.stopOnBonus ? 'on' : '') + '" type="button">' + (S.stopOnBonus ? T.on : T.off) + '</button></div></div>' +
+      '<div class="opt"><span>' + T.buyOn + '</span><div class="chips"><button id="optBuy" class="' + (S.buyOn ? 'on' : '') + '" type="button">' + (S.buyOn ? T.on : T.off) + '</button></div></div>' +
       '<div class="opt"><span>' + T.reducedFx + '</span><div class="chips"><button id="optRed" class="' + (S.reduced ? 'on' : '') + '" type="button">' + (S.reduced ? T.on : T.off) + '</button></div></div>' +
       '<div class="opt"><span>' + T.balance + '</span><div class="chips"><button id="optReset" type="button">10 000</button></div></div>';
     var ao = $('optAuto');
@@ -267,6 +304,7 @@
       bt.onclick = function () { S.quality = q[0]; G.setQuality(q[0]); save(); openInfo(); };
       oq.appendChild(bt);
     });
+    $('optBuy').onclick = function () { S.buyOn = !S.buyOn; save(); setSpinBtn(); openInfo(); };
     $('optStop').onclick = function () { S.stopOnBonus = !S.stopOnBonus; save(); openInfo(); };
     $('optRed').onclick = function () { S.reduced = !S.reduced; FX.reduced = S.reduced; save(); openInfo(); };
     $('optReset').onclick = function () { if (S.busy) return; S.balance = 10000; shown.bal = -1; updateHud(); save(); };

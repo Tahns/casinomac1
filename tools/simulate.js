@@ -5,7 +5,8 @@ var n = parseInt(process.argv[2] || '5000000', 10);
 var seed = parseInt(process.argv[3] || '1', 10);
 var mode = process.argv[4] || 'std';
 var rng = M.mulberry32(seed);
-var COST = (M.MODES[mode] || M.MODES.std).cost;
+var BUYK = mode.indexOf('buy-') === 0 ? mode.slice(4) : null;
+var COST = BUYK ? M.BUY[BUYK].price : (M.MODES[mode] || M.MODES.std).cost;
 
 var sum = 0, sum2 = 0, hits = 0, maxWin = 0, capped = 0;
 var byKind = {}, oracleExtra = 0;
@@ -14,7 +15,7 @@ var dist = buckets.map(function () { return 0; });
 var nBonus = 0;
 
 for (var i = 0; i < n; i++) {
-  var r = M.playRound(rng, mode);
+  var r = BUYK ? M.playBuy(rng, BUYK) : M.playRound(rng, mode);
   sum += r.total; sum2 += r.total * r.total;
   if (r.total > 0) hits++;
   if (r.total > maxWin) maxWin = r.total;

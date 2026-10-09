@@ -446,6 +446,7 @@
       g.R = Math.min(w * 0.4, (bot - top) / 2.3); g.cy = top + g.R * 1.2; g.u = Math.min(w, h);
     };
     function iconAt(x, y, s) {
+      if (sp.kind === 'hand') return;
       if (sp.kind === 'scarab') A.scarab(ctx, x, y, s, '#ffd86a', 'rgba(60,30,0,.6)');
       else if (sp.kind === 'weigh') A.feather(ctx, x, y, s * 1.3, '#fff8e6', 'rgba(150,110,40,.8)');
       else A.pyramid(ctx, x, y, s * 1.2, '#e8c4ff', 'rgba(60,20,90,.6)');

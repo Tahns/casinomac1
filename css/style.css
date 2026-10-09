@@ -84,7 +84,19 @@ label{font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--d
 @keyframes ring{from{transform:scale(.9);opacity:.9}to{transform:scale(1.28);opacity:0}}
 
 .toggles{display:grid;grid-template-columns:auto auto;gap:7px}
-.tgl.plus{grid-column:1/-1;justify-content:center}
+.tgl.plus,.tgl.buy{grid-column:1/-1;justify-content:center}
+.tgl.buy{color:#2a1a02;background:linear-gradient(180deg,#fff1b8,#e6b94a 55%,#a77c1c);border-color:#fff1b8;box-shadow:0 0 14px rgba(230,185,74,.35)}
+.tgl.buy i{display:none}
+.tgl.buy:disabled{filter:grayscale(.7) brightness(.6);cursor:not-allowed}
+.buyGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-top:14px}
+.buyCard{display:flex;flex-direction:column;align-items:center;gap:6px;padding:14px 10px;border-radius:14px;background:linear-gradient(180deg,#2a2013,#120d08);border:1px solid var(--line);text-align:center;transition:.15s}
+.buyCard:hover:not(:disabled){border-color:var(--gold);transform:translateY(-2px);box-shadow:0 8px 24px rgba(230,185,74,.2)}
+.buyCard:disabled{opacity:.4;cursor:not-allowed}
+.buyCard canvas{width:72px;height:72px}
+.buyCard h4{min-height:32px;display:grid;place-items:center;margin:0;font:900 13px Cinzel,serif;letter-spacing:.1em;color:var(--gold-hi)}
+.buyCard small{font-size:11px;color:var(--dim);line-height:1.35;min-height:44px}
+.buyCard .pr{font:800 18px Manrope;color:var(--gold-hi);font-variant-numeric:tabular-nums}
+.buyCard .go{margin-top:auto;padding:7px 16px;border-radius:99px;font:900 11px Cinzel,serif;letter-spacing:.14em;color:#2a1a02;background:var(--gold-grad)}
 .betval small{display:block;font:700 10px Manrope;color:var(--turq);letter-spacing:.1em;margin-top:1px;min-height:12px}
 .tgl{display:flex;align-items:center;gap:9px;padding:7px 12px;border-radius:99px;font:800 11px Manrope;letter-spacing:.14em;color:var(--dim);background:#14100c;border:1px solid var(--line);transition:.15s;white-space:nowrap}
 .tgl i{width:9px;height:9px;border-radius:50%;background:#3a3126;box-shadow:inset 0 1px 2px #000}

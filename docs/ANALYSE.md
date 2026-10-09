@@ -101,3 +101,31 @@ Ce qui **reste à faire** (non fait ici, et je n'ai pas pu vérifier tous les d�
 | Art sans textures | **Grain de pierre** et **frise de hiéroglyphes** sous le linteau. |
 
 Reste non résolu (hors de portée d'un correctif de code) : validation de la propriété intellectuelle, lecture des contraintes officielles Stake, test du son à l'oreille, RNG serveur et audit.
+
+## 9. Achat de bonus
+
+Le joueur choisit **au départ** : jouer la roue, ou acheter directement un bonus (Pyramide/Trésor, Scarabées, Pesée, Main d'Anubis), à un prix plus élevé que la mise normale. Le bonus s'ouvre aussitôt, sans passer par la roue. Prix = mise × multiplicateur, calé sur l'espérance réelle du bonus (la Main d'Anubis peut toujours saisir un bonus acheté, avec la même probabilité que sur la roue ; aucun boost Oracle à l'achat).
+
+| Bonus | Prix (× mise) | RTP simulé (2 graines × 10 M) |
+|---|---|---|
+| Chute des Scarabées | 6,9 | 96,3 % |
+| Pesée du Cœur | 7,6 | 96,4 % |
+| Chambre du Trésor (pyramide) | 9,1 | 95,7 % |
+| Main d'Anubis | 25,6 | 96,3 % |
+
+Cadre : l'achat est désactivé pendant l'auto-play, compte dans la limite de perte de séance, et peut être coupé dans les réglages (« Achat de bonus : Non »), car il est interdit dans certaines juridictions. L'overlay de gros gain se déclenche sur le gain rapporté au **prix payé**, pas à la mise de base.
+
+## 10. Itération 1 de la boucle (2026-10-09, 20 h UTC)
+
+**Fait** : achat de bonus (voir §9). C'est la demande directe de l'utilisateur, traitée avant le SWOT.
+
+**SWOT à jour**
+
+| | |
+|---|---|
+| **Forces** | Rendu cohérent (DA obsidienne/or), 61 % de tours gagnants, RTP ≈ 96 % sur 3 profils (Standard, Oracle+, achat de bonus), résultat décidé avant l'animation, bundle ≈ 250 Ko, jeu responsable intégré, choix du joueur à l'entrée (roue, Oracle+, achat). |
+| **Faiblesses** | Son jamais écouté, fluidité mobile non mesurée sur appareil réel ; art procédural ; RNG navigateur non audité ; l'achat de bonus fait monter la variance perçue (écart-type ≈ 16–50× par achat) ; pas de progression (séries, quêtes). |
+| **Opportunités** | Achat + Oracle+ = trois profils de risque à proposer sur Stake (si leurs *bet modes* le permettent) ; illustrations générées ; contenu événementiel. |
+| **Menaces** | Propriété intellectuelle (Plinko/Pachinko, Coin Flip), contraintes Stake non vérifiées (achat de bonus autorisé ou non selon marché), cadre légal par pays (achat interdit dans certains), concurrence des roues à bonus. |
+
+**Bloqué (dépend de l'utilisateur ou d'un tiers)** : validation de la propriété intellectuelle ; lecture de la doc officielle Stake ; test du son à l'oreille ; test sur vrai téléphone ; RNG serveur et audit ; avis juridique sur l'achat de bonus.

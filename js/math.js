@@ -212,7 +212,21 @@
     return { spins: spins, total: total, capped: capped, cost: md.cost, mode: md === MODES.plus ? 'plus' : 'std' };
   }
 
+  /* ---------- Achat de bonus ---------- */
+  // Prix en x la mise, calés par simulation pour un RTP ≈ 96 % (voir tools/simulate.js <n> <graine> buy-<bonus>).
+  // La Main d'Anubis peut toujours saisir un bonus acheté (même probabilité que sur la roue), sans boost Oracle.
+  var BUY = { scarab: { price: 6.9 }, weigh: { price: 7.6 }, vault: { price: 9.1 }, hand: { price: 25.6 } };
+  function playBuy(rng, kind) {
+    var b, upgraded = false;
+    if (kind === 'hand' || rng() < HAND_UPGRADE) { b = hand(rng); upgraded = true; }
+    else b = kind === 'scarab' ? scarab(rng) : kind === 'weigh' ? weigh(rng) : vault(rng);
+    var s = { oracle: null, index: -1, kind: kind, boost: 1, bonus: b, upgraded: upgraded, base: b.total, pay: b.total };
+    var total = Math.min(s.pay, MAX_WIN);
+    return { spins: [s], total: total, capped: s.pay > MAX_WIN, cost: BUY[kind].price, mode: 'buy' };
+  }
+
   return {
+    BUY: BUY, playBuy: playBuy,
     MAX_WIN: MAX_WIN, MODES: MODES, N: N, LAYOUT: LAYOUT, KINDS: KINDS,
     SCARAB_ROWS: SCARAB_ROWS, SCARAB_VALUES: SCARAB_VALUES, SCARAB_BALLS: SCARAB_BALLS,
     WEIGH_PAIRS: WEIGH_PAIRS, VAULT_TILES: VAULT_TILES, VAULT_MAX_PICKS: VAULT_MAX_PICKS,
