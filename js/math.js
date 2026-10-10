@@ -99,35 +99,51 @@
   /* ---------- Bonus 1 : Chute du Scarabée (Plinko 8 rangées, 3 scarabées) ---------- */
   var SCARAB_ROWS = 8;
   var SCARAB_BALLS = 3;
-  var SCARAB_VALUES = [25, 6, 2.5, 1, 0.5, 1, 2.5, 6, 25];
-  function scarab(rng) {
-    var balls = [], total = 0;
+  // Trois profils de même espérance (433/256 par bille) : le joueur choisit sa volatilité avant le bonus.
+  var SCARAB_PROFILES = {
+    safe: [13, 4, 2.5, 1.5, 0.5, 1.5, 2.5, 4, 13],
+    std:  [25, 6, 2.5, 1, 0.5, 1, 2.5, 6, 25],
+    bold: [75, 5, 2, 0.5, 0.5, 0.5, 2, 5, 75]
+  };
+  var SCARAB_VALUES = SCARAB_PROFILES.std;
+  function scarab(rng, prof) {
+    var vals = SCARAB_PROFILES[prof || 'std'], balls = [], total = 0;
     for (var b = 0; b < SCARAB_BALLS; b++) {
       var path = [], col = 0;
       for (var r = 0; r < SCARAB_ROWS; r++) { var right = rng() < 0.5; path.push(right ? 1 : 0); col += right ? 1 : 0; }
-      balls.push({ path: path, slot: col, value: SCARAB_VALUES[col] });
-      total += SCARAB_VALUES[col];
+      balls.push({ path: path, slot: col, value: vals[col] });
+      total += vals[col];
     }
-    return { balls: balls, total: total };
+    return { balls: balls, total: total, values: vals, profile: prof || 'std' };
   }
 
   /* ---------- Bonus 2 : Pesée du Cœur ---------- */
-  var WEIGH_PAIRS = [[[1, 3], 34], [[2, 5], 28], [[3, 8], 20], [[4, 12], 10], [[6, 25], 5], [[12, 60], 2], [[20, 150], 0.9]];
-  function weigh(rng) {
-    var pair = weighted(rng, WEIGH_PAIRS);
+  // Trois profils de même espérance (≈ 5,83) : paires proches / d'origine / très écartées.
+  var WEIGH_PROFILES = {
+    safe: [[[2, 3], 37], [[3, 5], 31], [[4, 6], 25], [[5, 8], 24], [[6, 10], 6], [[10, 16], 2], [[20, 30], 2], [[40, 60], 1], [[60, 100], 1]],
+    std:  [[[1, 3], 34], [[2, 5], 28], [[3, 8], 20], [[4, 12], 10], [[6, 25], 5], [[12, 60], 2], [[20, 150], 0.9]],
+    bold: [[[0.5, 2], 38], [[1, 5], 37], [[1, 10], 17], [[2, 20], 9], [[3, 40], 3], [[5, 80], 1], [[10, 150], 1], [[20, 150], 1]]
+  };
+  var WEIGH_PAIRS = WEIGH_PROFILES.std;
+  function weigh(rng, prof) {
+    var pair = weighted(rng, WEIGH_PROFILES[prof || 'std']);
     var heavy = rng() < 0.5 ? 0 : 1; // 0 = plume (gauche) 1 = cœur (droite) — celui qui descend
-    return { pair: pair, heavy: heavy, total: pair[heavy] };
+    return { pair: pair, heavy: heavy, total: pair[heavy], profile: prof || 'std' };
   }
 
   /* ---------- Bonus 3 : Chambre du Trésor (pick-me, 12 tuiles) ---------- */
   var VAULT_TILES = 12;
-  var VAULT_TOKENS = [[1, 40], [2, 25], [3, 12], [5, 6], [8, 2.5], [15, 1], [40, 0.25],
-                      ['scepter', 2], ['ankh', 3]];
-  var VAULT_CURSE_W = 85;
+  // Trois profils : la malédiction est plus rare (prudent) ou plus fréquente (audacieux), les gains suivent ; poids de la malédiction calés par simulation pour une même espérance.
+  var VAULT_PROFILES = {
+    safe: { curse: 56.8, tokens: [[1, 48], [2, 26], [3, 10], [4, 5], [6, 2], [10, 0.6], [25, 0.15], ['scepter', 2], ['ankh', 3]] },
+    std:  { curse: 85, tokens: [[1, 40], [2, 25], [3, 12], [5, 6], [8, 2.5], [15, 1], [40, 0.25], ['scepter', 2], ['ankh', 3]] },
+    bold: { curse: 138.2, tokens: [[1, 60], [2, 15], [3, 6], [5, 3], [10, 2], [25, 1.5], [100, 0.6], ['scepter', 4], ['ankh', 1]] }
+  };
+  var VAULT_TOKENS = VAULT_PROFILES.std.tokens;
   var VAULT_MAX_PICKS = 7;
-  function vault(rng) {
-    var picks = [], total = 0, shield = 0, ended = 'cleared';
-    var pool = VAULT_TOKENS.concat([['curse', VAULT_CURSE_W]]);
+  function vault(rng, prof) {
+    var picks = [], total = 0, shield = 0, ended = 'cleared', vp = VAULT_PROFILES[prof || 'std'];
+    var pool = vp.tokens.concat([['curse', vp.curse]]);
     for (var i = 0; i < VAULT_MAX_PICKS; i++) {
       var tk = weighted(rng, pool);
       if (i < 2 && tk === 'curse') { // jamais de malédiction sur les deux premiers choix
@@ -144,7 +160,7 @@
       picks.push(rec);
     }
     if (ended === 'cleared') total += 5; // prime « chambre vidée »
-    return { picks: picks, ended: ended, bonusFinish: ended === 'cleared' ? 5 : 0, total: total };
+    return { picks: picks, ended: ended, bonusFinish: ended === 'cleared' ? 5 : 0, total: total, profile: prof || 'std' };
   }
 
   /* ---------- Bonus 4 : Main d'Anubis (roue géante à multiplicateurs) ---------- */
@@ -176,6 +192,24 @@
     return { kind: kind, boost: weighted(rng, isBonus ? ORACLE_BOOST.bonus : ORACLE_BOOST.num) };
   }
 
+  // Les trois profils sont tirés d'avance (modèle « livres » de Stake Engine) ; le choix du joueur révèle l'un d'eux.
+  var BONUS_FN = { scarab: scarab, weigh: weigh, vault: vault };
+  var PROFILES = ['safe', 'std', 'bold'];
+  function drawOptions(rng, kind) {
+    var o = { std: BONUS_FN[kind](rng, 'std') };
+    o.safe = BONUS_FN[kind](rng, 'safe'); o.bold = BONUS_FN[kind](rng, 'bold');
+    return o;
+  }
+  // applique le profil choisi à un tour (le script reste le même, seul le bonus joué change) et renvoie le nouveau total
+  function applyChoice(round, spinIndex, prof) {
+    var s = round.spins[spinIndex];
+    if (!s || !s.options || !s.options[prof]) return round.total;
+    s.bonus = s.options[prof]; s.profile = prof; s.base = s.bonus.total; s.pay = s.base * (s.boost || 1);
+    var t = 0; round.spins.forEach(function (x) { t += x.pay; });
+    round.capped = t > MAX_WIN; round.total = Math.min(t, MAX_WIN);
+    return round.total;
+  }
+
   function playSpin(rng, chance) {
     var oracle = rollOracle(rng, chance);
     var index = Math.floor(rng() * N);
@@ -185,7 +219,7 @@
     var s = { oracle: oracle, index: index, kind: kind, boost: boost, bonus: null, base: 0, pay: 0 };
     if (def.bonus) {
       if (rng() < HAND_UPGRADE) { s.bonus = hand(rng); s.upgraded = true; }
-      else s.bonus = kind === 'scarab' ? scarab(rng) : kind === 'weigh' ? weigh(rng) : vault(rng);
+      else { s.options = drawOptions(rng, kind); s.bonus = s.options.std; s.profile = 'std'; }
       s.base = s.bonus.total;
     } else if (!def.respin) {
       s.base = def.mult;
@@ -218,15 +252,17 @@
   var BUY = { scarab: { price: 6.9 }, weigh: { price: 7.6 }, vault: { price: 9.1 }, hand: { price: 25.6 } };
   function playBuy(rng, kind) {
     var b, upgraded = false;
+    var opts = null;
     if (kind === 'hand' || rng() < HAND_UPGRADE) { b = hand(rng); upgraded = true; }
-    else b = kind === 'scarab' ? scarab(rng) : kind === 'weigh' ? weigh(rng) : vault(rng);
-    var s = { oracle: null, index: -1, kind: kind, boost: 1, bonus: b, upgraded: upgraded, base: b.total, pay: b.total };
+    else { opts = drawOptions(rng, kind); b = opts.std; }
+    var s = { oracle: null, index: -1, kind: kind, boost: 1, bonus: b, upgraded: upgraded, base: b.total, pay: b.total, options: opts, profile: opts ? 'std' : undefined };
     var total = Math.min(s.pay, MAX_WIN);
     return { spins: [s], total: total, capped: s.pay > MAX_WIN, cost: BUY[kind].price, mode: 'buy' };
   }
 
   return {
-    BUY: BUY, playBuy: playBuy,
+    BUY: BUY, playBuy: playBuy, applyChoice: applyChoice, drawOptions: drawOptions, PROFILES: PROFILES,
+    SCARAB_PROFILES: SCARAB_PROFILES, WEIGH_PROFILES: WEIGH_PROFILES, VAULT_PROFILES: VAULT_PROFILES,
     MAX_WIN: MAX_WIN, MODES: MODES, N: N, LAYOUT: LAYOUT, KINDS: KINDS,
     SCARAB_ROWS: SCARAB_ROWS, SCARAB_VALUES: SCARAB_VALUES, SCARAB_BALLS: SCARAB_BALLS,
     WEIGH_PAIRS: WEIGH_PAIRS, VAULT_TILES: VAULT_TILES, VAULT_MAX_PICKS: VAULT_MAX_PICKS,

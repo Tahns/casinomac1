@@ -327,3 +327,13 @@ Toujours : résultat tiré avant l'animation ; les actions du joueur n'ont aucun
 - Détails : pointeur de la roue (scarabée ailé, rubis) sur les deux roues ; scarabée ailé comme bille et réserve du Plinko ; chevilles dorées ; pièces, sceptre d'Anubis, amulette ankh turquoise et crâne maudit sur les dalles du trésor.
 - Non fait : manches successives dans la Pesée (demande « et oui fait » ambiguë) — à préciser si souhaité, la règle devra rester sans effet sur le gain.
 - Poids : fichier unique ≈ 2 Mo.
+
+## Itération 12 — vrai choix avant chaque bonus (2026-10-10)
+
+- Avant chaque bonus tiré sur la roue ou acheté (hors Main d'Anubis), le joueur choisit un profil : **Prudent / Équilibré / Audacieux**. Les trois profils ont la **même espérance** (vérifiée par `tools/tune-profiles.js`, écarts ≤ 0,15 %) mais pas la même volatilité :
+  - Scarabées : cases ×0,5–×13 / ×0,5–×25 / ×0,5–×75 (espérance 433/256 par bille, exacte).
+  - Pesée : paires proches (max ×100) / d'origine (max ×150) / très écartées (max ×150, plus rares).
+  - Trésor : malédiction 37 % / 48 % / 60 % par coffre ; gains qui suivent (poids calés par simulation).
+- Modèle Stake Engine : les trois tirages sont dans le script du tour ; le choix révèle l'un d'eux. Le gain en attente est recalculé et sauvegardé au moment du choix (`G.onBonusChoice`). Turbo / auto-play : profil équilibré. Touches 1, 2, 3 et délai de 20 s (équilibré).
+- RTP global inchangé (8 M de tours : 96,5 % standard, 96,1 % Oracle+, dans l'incertitude).
+- Les règles en jeu l'annoncent (FR/EN).

@@ -130,7 +130,7 @@
    * 1. CHUTE DES SCARABÉES — Plinko 8 rangées × 3 scarabées
    * ====================================================================== */
   function scarabScene(sp, bet) {
-    var T = I18N.t(), data = sp.bonus, rows = M.SCARAB_ROWS, vals = M.SCARAB_VALUES;
+    var T = I18N.t(), data = sp.bonus, rows = M.SCARAB_ROWS, vals = data.values || M.SCARAB_VALUES;
     var S = newScene(T.scarabIntro), g = {}; S.bgImg = 'abyss'; var ball = null, pegFlash = {}, slotPulse = [], used = 0, floats = [], aim = null, aimX = 0, fast = 1, steer = null;
     function slotColor(v) { return v >= 25 ? ['#ffe08a', '#b8861e'] : v >= 6 ? ['#c28bff', '#5a2a86'] : v >= 2.5 ? ['#ff7a5a', '#8a1b10'] : v >= 1 ? ['#5b8cff', '#1a3a8a'] : ['#6a5a40', '#2a2118']; }
     S.layout = function () {
@@ -747,6 +747,69 @@
     return S;
   }
 
+  /* ---------------- choix du profil de risque (avant le bonus) ---------------- */
+  // Trois tirages de même espérance sont déjà dans le script du tour ; la carte choisie révèle l'un d'eux.
+  function chooseScene(sp) {
+    var T = I18N.t(), S = newScene(T.chooseTitle), kind = sp.kind, cards = [], hover = -1, g = {}, sel = -1, t0 = 0;
+    S.showTotal = false; S.dim = 0.8; S.bgImg = kind === 'scarab' ? 'abyss' : kind === 'weigh' ? 'judgment' : 'vault';
+    var names = M.PROFILES;
+    function line(p) {
+      if (kind === 'scarab') { var v = M.SCARAB_PROFILES[p]; return T.lineScarab.replace('{a}', Math.min.apply(null, v)).replace('{b}', Math.max.apply(null, v)); }
+      if (kind === 'weigh') { var mx = 0; M.WEIGH_PROFILES[p].forEach(function (q) { mx = Math.max(mx, q[0][1]); }); return T.lineWeigh.replace('{b}', mx); }
+      var vp = M.VAULT_PROFILES[p], sum = vp.curse; vp.tokens.forEach(function (q) { sum += q[1]; });
+      return T.lineVault.replace('{p}', Math.round(vp.curse / sum * 100));
+    }
+    var ICON = { safe: 'amulet', std: 'coin', bold: 'scepter' };
+    S.layout = function () {
+      var w = G.w, h = G.h, top = T0() + EX(80), bot = h - hudH() - (h < 520 ? 8 : 56), narrow = w < 640 && h > 520;
+      cards = [];
+      for (var i = 0; i < 3; i++) {
+        if (narrow) { var ch = (bot - top - 16) / 3; cards.push({ x: w * 0.06, y: top + i * (ch + 8), w: w * 0.88, h: ch, row: true }); }
+        else { var cw = Math.min((w * 0.94 - 24) / 3, 300), tw = cw * 3 + 24; cards.push({ x: G.cx - tw / 2 + i * (cw + 12), y: top, w: cw, h: Math.min(bot - top, 380), row: false }); }
+      }
+    };
+    function drawCard(c, i) {
+      var p = names[i], hv = hover === i || sel === i, lift = hv ? 6 : 0, y = c.y - lift;
+      ctx.save();
+      A.roundRect(ctx, c.x, y, c.w, c.h, 16);
+      var gg = ctx.createLinearGradient(0, y, 0, y + c.h); gg.addColorStop(0, hv ? '#3a2c16' : '#241a0d'); gg.addColorStop(1, '#0c0804');
+      ctx.fillStyle = gg; ctx.shadowColor = hv ? 'rgba(255,216,106,.7)' : 'rgba(0,0,0,.7)'; ctx.shadowBlur = hv ? 30 : 14; ctx.fill(); ctx.shadowBlur = 0;
+      ctx.lineWidth = hv ? 3 : 2; ctx.strokeStyle = hv ? '#fff1b8' : A.goldGrad(ctx, c.x, y, c.x + c.w, y + c.h); ctx.stroke();
+      var ix = c.row ? c.x + c.h * 0.5 : c.x + c.w / 2, iy = c.row ? y + c.h / 2 : y + c.h * 0.24, isz = c.row ? c.h * 0.8 : c.h * 0.32;
+      G.icon(ctx, ICON[p], ix, iy, isz);
+      var tx = c.row ? c.x + c.h * 1.05 : c.x + c.w / 2, al = c.row ? 'left' : 'center', ty = c.row ? y + c.h * 0.26 : y + c.h * 0.5, fs = c.row ? clamp(c.h * 0.2, 13, 20) : clamp(c.w * 0.08, 15, 22);
+      G.txt(T.profName[p], tx, ty, { size: fs, weight: 900, fill: '#ffe08a', stroke: '#2a1802', sw: 3, align: al, spacing: 2 });
+      G.txt(T.profDesc[p], tx, ty + fs * 1.5, { size: Math.max(10, fs * 0.58), family: 'Manrope', weight: 700, fill: '#cdb98a', align: al });
+      G.txt(line(p), tx, ty + fs * 2.7, { size: Math.max(11, fs * 0.66), family: 'Manrope', weight: 800, fill: '#fff1b8', align: al });
+      // volatilité : 1 à 3 gemmes
+      var vy = c.row ? y + c.h * 0.84 : y + c.h * 0.9;
+      for (var k = 0; k < 3; k++) { ctx.beginPath(); ctx.arc((c.row ? tx + 7 : c.x + c.w / 2 - 22) + k * 22, vy, 6, 0, TAU); ctx.fillStyle = k <= i ? (i === 2 ? '#ff7a5a' : i === 1 ? '#ffd86a' : '#6ff0dd') : 'rgba(255,255,255,.12)'; ctx.fill(); }
+      ctx.restore();
+    }
+    S.draw = function () {
+      cards.forEach(drawCard);
+      var bw = G.w, by = cards.length ? cards[2].y + cards[2].h + 14 : 0;
+      if (G.h >= 520 && by < G.h - hudH() - 20) G.txt(T.chooseRtp, G.cx, by, { size: 12, family: 'Manrope', weight: 700, fill: 'rgba(205,185,138,.9)', spacing: 1 });
+      chrome(S);
+    };
+    S.run = function () {
+      return new Promise(function (res) {
+        var done = false;
+        function fin(i) { if (!done) { done = true; S.pointer = function () {}; window.removeEventListener('keydown', key, true); res(names[i]); } }
+        function key(e) { var n = { Digit1: 0, Digit2: 1, Digit3: 2, Numpad1: 0, Numpad2: 1, Numpad3: 2 }[e.code]; if (n != null) { e.preventDefault(); Sfx.shield(); fin(n); } }
+        window.addEventListener('keydown', key, true);
+        S.pointer = function (x, y, type) {
+          var h = -1; cards.forEach(function (c, i) { if (x >= c.x && x <= c.x + c.w && y >= c.y - 6 && y <= c.y + c.h) h = i; });
+          hover = h;
+          if (type === 'down' && h >= 0) { sel = h; Sfx.shield(); FX.spark(cards[h].x + cards[h].w / 2, cards[h].y + cards[h].h / 2, 24, '#ffe9a0', 300); G.sleep(0.35).then(function () { fin(h); }); }
+        };
+        G.say(T.chooseHint);
+        G.sleep(20).then(function () { fin(1); });
+      });
+    };
+    return S;
+  }
+
   /* ---------------- orchestration ---------------- */
   var FACT = { scarab: scarabScene, weigh: weighScene, vault: vaultScene, hand: handScene };
   G.runBonus = async function (sp, bet) {
@@ -754,6 +817,14 @@
     Sfx.bonus(); G.wheel.flashLamps = 1.4; FX.shake(14, 0.6); FX.flash(0.5, '#ffe9a0'); FX.ring(G.cx, G.cy, '#ffe9a0', G.R * 1.3, 1);
     await G.sleep(1.1);
     await G.setFade(1, 0.35);
+    if (sp.options && !sp.upgraded && !quick()) {
+      var cs = chooseScene(sp);
+      G.setScene(cs); await G.setFade(0, 0.5);
+      var prof = await cs.run();
+      await G.setFade(1, 0.35);
+      sp.bonus = sp.options[prof]; sp.profile = prof; sp.base = sp.bonus.total; sp.pay = sp.base * (sp.boost || 1);
+      if (G.onBonusChoice) G.onBonusChoice();
+    }
     var scene = FACT[sp.upgraded ? 'hand' : sp.kind](sp, bet);
     G.setScene(scene);
     await G.setFade(0, 0.5);
@@ -765,7 +836,7 @@
 
   // test manuel : G.testBonus('vault'|'scarab'|'weigh', boost, upgraded)
   G.testBonus = function (kind, boost, upg) {
-    var rng = M.cryptoRng(), b = upg ? M._bonus.hand(rng) : M._bonus[kind](rng), bo = boost || 1;
-    return G.runBonus({ kind: kind, boost: bo, bonus: b, upgraded: !!upg, base: b.total, pay: b.total * bo }, 100);
+    var rng = M.cryptoRng(), opts = upg ? null : M.drawOptions(rng, kind), b = upg ? M._bonus.hand(rng) : opts.std, bo = boost || 1;
+    return G.runBonus({ kind: kind, boost: bo, bonus: b, options: opts, profile: 'std', upgraded: !!upg, base: b.total, pay: b.total * bo }, 100);
   };
 })(window);

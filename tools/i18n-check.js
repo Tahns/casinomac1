@@ -40,7 +40,8 @@ files.forEach(function (f) {
 ok(hits.length === 0, 'aucun texte français écrit en dur dans le code' + (hits.length ? ' (' + hits.length + ') : ' + hits.slice(0, 8).join(' | ') : ''));
 // chiffres affichés aux joueurs vs maths réelles
 var M = require(path.join(root, 'js/math.js'));
-var scarabMax = Math.max.apply(null, M.SCARAB_VALUES), weighMax = Math.max.apply(null, M.WEIGH_PAIRS.map(function (p) { return Math.max.apply(null, p[0]); }));
+var scarabMax = Math.max.apply(null, [].concat.apply([], Object.keys(M.SCARAB_PROFILES).map(function (k) { return M.SCARAB_PROFILES[k]; })));
+var weighMax = Math.max.apply(null, [].concat.apply([], Object.keys(M.WEIGH_PROFILES).map(function (k) { return M.WEIGH_PROFILES[k].map(function (p) { return Math.max.apply(null, p[0]); }); })));
 ['fr', 'en'].forEach(function (l) {
   var d = D[l];
   ok(d.buyDesc.scarab.indexOf(scarabMax + '×') >= 0, l + ' : la description des Scarabées annonce bien ' + scarabMax + '× (max réel)');

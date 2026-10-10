@@ -124,6 +124,8 @@
     G.wheel.clearHighlight(); G.wheel.clearOracle();
     say(T.spinning);
     var total = 0;
+    // si le joueur choisit un autre profil de bonus, le gain en attente est recalculé et sauvegardé tout de suite
+    G.onBonusChoice = function () { var t = 0; round.spins.forEach(function (x) { t += x.pay; }); S.pending = Math.round(Math.min(t, M.MAX_WIN) * b * 100) / 100; save(); };
     for (var i = 0; i < round.spins.length; i++) {
       var sp = round.spins[i];
       if (!buyKind && sp.oracle) {
