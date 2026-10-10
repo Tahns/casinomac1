@@ -261,3 +261,7 @@ Cadre : l'achat est désactivé pendant l'auto-play, compte dans la limite de pe
 
 - Nouvelles illustrations Higgsfield (gpt_image_2) : médaillon d'Anubis (moyeu des deux roues et gardiens de l'écran de gros gain), fond de gros gain (rayons, pièces), Main d'Anubis dorée (descend sur le bonus en rotation 180°, fusionnée en `screen`), œil d'Horus (disponible dans `img/`, pas encore utilisé).
 - Toutes avec repli vectoriel si l'image manque. Poids total des images ≈ 0,6 Mo.
+
+## Itération graphique 3 — logos de bonus (2026-10-10)
+
+- Quatre logos illustrés (scarabée ailé, plume de Maât, pyramide d'améthyste, Main d'Anubis à l'orbe), utilisés sur la roue, l'intro de chaque bonus et les cartes d'achat. Le fond noir est rendu transparent au chargement (alpha selon la luminance), avec repli vectoriel si l'image manque.

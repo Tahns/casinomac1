@@ -228,6 +228,7 @@
   function buyIcon(kind) {
     var c = document.createElement('canvas'); c.width = c.height = 144; var x = c.getContext('2d'), A = root.Art;
     x.translate(72, 74);
+    if (G.icon(x, kind, 0, 0, 140)) return c;
     if (kind === 'vault') A.pyramid(x, 0, 2, 110, '#e8c4ff', 'rgba(60,20,90,.6)');
     else if (kind === 'scarab') A.scarab(x, 0, 0, 100, '#ffd86a', 'rgba(60,30,0,.6)');
     else if (kind === 'weigh') { A.feather(x, 0, 0, 110, '#fff8e6', 'rgba(150,110,40,.8)'); }

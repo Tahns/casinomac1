@@ -96,8 +96,33 @@
 
   var ART = G.art = {};
   Object.keys(window.HOA_IMG || {}).forEach(function (k) {
-    var im = new Image(); im.onload = function () { ART[k] = im; if (k === 'key' && G.w) buildBackdrop(); if (k === 'gold' && G.w && W.build) W.build(); }; im.src = window.HOA_IMG[k];
+    var im = new Image(); im.onload = function () { ART[k] = im; if (k === 'key' && G.w) buildBackdrop(); if ((k === 'gold' || k.indexOf('ic_') === 0) && G.w && W.build) W.build(); }; im.src = window.HOA_IMG[k];
   });
+  // logo de bonus illustré (fond noir fondu en 'screen') ; renvoie false si l'image manque
+  // le fond noir devient transparent (alpha = canal max) : le logo se pose sur n'importe quel fond
+  var cut = {};
+  function cutout(k) {
+    if (cut[k] !== undefined) return cut[k];
+    var im = ART['ic_' + k], c = null;
+    try {
+      c = document.createElement('canvas'); c.width = im.width; c.height = im.height;
+      var x = c.getContext('2d'); x.drawImage(im, 0, 0);
+      var d = x.getImageData(0, 0, c.width, c.height), p = d.data;
+      for (var i = 0; i < p.length; i += 4) {
+        var m = Math.max(p[i], p[i + 1], p[i + 2]);
+        p[i + 3] = clamp((m - 10) * 9, 0, 255); // couleurs inchangées, seul le noir pur devient transparent
+      }
+      x.putImageData(d, 0, 0);
+    } catch (e) { c = null; }
+    return (cut[k] = c);
+  }
+  G.icon = function (c, kind, x, y, s) {
+    var im = ART['ic_' + kind]; if (!im) return false;
+    var ct = cutout(kind);
+    if (ct) c.drawImage(ct, x - s / 2, y - s / 2, s, s);
+    else { c.save(); c.globalCompositeOperation = 'screen'; c.drawImage(im, x - s / 2, y - s / 2, s, s); c.restore(); }
+    return true;
+  };
   function cover(c, im, w, h) {
     var k = Math.max(w / im.width, h / im.height), iw = im.width * k, ih = im.height * k;
     c.drawImage(im, (w - iw) / 2, (h - ih) / 2, iw, ih);
@@ -281,6 +306,7 @@
         f.rotate(Math.PI / 2); // icône à l'endroit, nom en radial
         var iy = -R * 0.80, isz = R * (k === 'ankh' ? 0.115 : 0.125);
         if (v.glyph === 'ankh') A.ankh(f, 0, iy, isz * 1.1, '#3a2706');
+        else if (G.icon(f, ({ scarab: 'scarab', feather: 'weigh', pyramid: 'vault' })[v.glyph], 0, iy, isz * ({ scarab: 1.6, feather: 2.2, pyramid: 1.8 })[v.glyph])) { /* logo illustré */ }
         else if (v.glyph === 'scarab') A.scarab(f, 0, iy, isz * 1.2, '#ffd86a', 'rgba(0,0,0,.5)');
         else if (v.glyph === 'feather') A.feather(f, 0, iy, isz * 1.35, '#4a3410', 'rgba(255,255,255,.7)');
         else if (v.glyph === 'pyramid') A.pyramid(f, 0, iy, isz * 1.3, '#ffe9a0', 'rgba(0,0,0,.45)');
