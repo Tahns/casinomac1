@@ -163,3 +163,24 @@ Cadre : l'achat est désactivé pendant l'auto-play, compte dans la limite de pe
 | **Menaces** | Propriété intellectuelle ; contraintes Stake et achat de bonus selon les marchés ; cadre légal ; concurrence. |
 
 **Bloqué** : validation de la propriété intellectuelle ; doc officielle Stake ; test sonore ; test sur vrai téléphone ; RNG et solde côté serveur avec audit ; avis juridique sur l'achat de bonus ; accord pour des illustrations générées.
+
+## 13. Itération 4 de la boucle (2026-10-10, 8 h UTC)
+
+**Corrigé (défauts prouvés par des tests qui échouaient avant)**
+- **Clavier** : Espace/Entrée étaient interceptés même quand un bouton avait le focus ; appuyer sur Espace avec « Turbo » focalisé lançait un tour au lieu d'activer Turbo. Désormais un bouton focalisé garde son comportement natif, et après un clic souris le focus est rendu pour qu'Espace reste « tourner ».
+- **Fenêtres modales** : le focus entre dans la fenêtre, Tab y reste piégé, Échap la ferme et rend le focus au bouton d'origine.
+- **Zoom** : `user-scalable=no` retiré de la balise viewport (le zoom au pincement est maintenant possible ; le double-tap reste neutralisé par `touch-action: manipulation`).
+- Au passage, un bug introduit par moi pendant ce travail (remplacement global qui rendait `showModal` récursif) a été attrapé par les nouveaux tests avant tout push.
+
+`node tools/e2e.js` couvre maintenant 12 contrôles (tours, bonus, achats, reprise après rechargement, clavier, focus des fenêtres, menu d'achat).
+
+**SWOT à jour**
+
+| | |
+|---|---|
+| **Forces** | Maths et interface testées automatiquement, solde protégé, accessibilité clavier/lecteur d'écran/mouvement réduit, 3 profils de jeu à RTP ≈ 96 %, DA cohérente, jeu responsable. |
+| **Faiblesses** | Son jamais écouté ; fluidité mobile non mesurée sur appareil réel ; art procédural ; pas de progression ; solde et RNG côté navigateur ; contraste des textes secondaires non audité formellement. |
+| **Opportunités** | Profils de risque multiples ; reprise de round alignée sur Stake ; illustrations générées (sur accord) ; contenu événementiel. |
+| **Menaces** | Propriété intellectuelle ; contraintes Stake et achat de bonus selon les marchés ; cadre légal ; concurrence. |
+
+**Bloqué** : validation de la propriété intellectuelle ; doc officielle Stake ; test sonore ; test sur vrai téléphone ; RNG et solde côté serveur avec audit ; avis juridique sur l'achat de bonus ; accord pour des illustrations générées.

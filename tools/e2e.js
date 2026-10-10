@@ -56,6 +56,31 @@ var server = http.createServer(function (req, res) {
     ok(again === 0, "le gain en attente n'est crédité qu'une seule fois");
   }
 
+  // 5. clavier : un bouton focalisé garde son comportement ; après un clic souris, Espace = tourner ; focus des fenêtres
+  await p.reload(); await p.waitForTimeout(500);
+  await p.evaluate('G.turbo=false;G.speed=1');
+  var t0 = await p.evaluate('G.turbo');
+  await p.focus('#btnTurbo'); await p.keyboard.press('Space'); await p.waitForTimeout(200);
+  var st = await p.evaluate('({turbo:G.turbo,busy:G.S.busy})');
+  ok(st.turbo !== t0 && !st.busy, "Espace sur un bouton focalisé l'active (Turbo) sans lancer un tour");
+  await p.evaluate('G.turbo=false;G.speed=1');
+  await p.click('#betUp'); await p.waitForTimeout(100);
+  var bi0 = await p.evaluate('G.S.bi');
+  await p.keyboard.press('Space'); await p.waitForTimeout(300);
+  var st2 = await p.evaluate('({bi:G.S.bi,busy:G.S.busy})');
+  ok(st2.busy && st2.bi === bi0, 'après un clic souris sur « + », Espace lance un tour (et ne re-clique pas le bouton)');
+  await p.evaluate(`(async()=>{G.turbo=true;G.speed=1.6;var g=0;while(G.S.busy&&g<3000){await G.advance(0.25);g++;if(G.winOv)G.skipWinOv();}})()`);
+  await p.click('#btnInfo'); await p.waitForTimeout(150);
+  var inModal = await p.evaluate("document.getElementById('modal').contains(document.activeElement)");
+  ok(inModal, 'ouvrir les infos place le focus dans la fenêtre');
+  await p.keyboard.press('Escape'); await p.waitForTimeout(150);
+  var back = await p.evaluate("({hidden:document.getElementById('modal').hidden,id:document.activeElement&&document.activeElement.id})");
+  ok(back.hidden && back.id === 'btnInfo', "Échap ferme la fenêtre et rend le focus au bouton d'origine (" + back.id + ')');
+  await p.click('#btnBuy'); await p.waitForTimeout(150);
+  var cards = await p.evaluate("document.querySelectorAll('.buyCard').length");
+  ok(cards === 4, 'le menu « Acheter un bonus » affiche 4 cartes');
+  await p.keyboard.press('Escape'); await p.waitForTimeout(100);
+
   ok(errs.length === 0, 'aucune erreur console / page' + (errs.length ? ' : ' + errs.slice(0, 3).join(' | ') : ''));
   await b.close(); server.close();
   console.log(fails ? '\n' + fails + ' échec(s)' : '\ntout est bon'); process.exit(fails ? 1 : 0);

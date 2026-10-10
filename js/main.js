@@ -47,6 +47,10 @@
 
   /* ---------- HUD ---------- */
   G.bet = BETS[S.bi];
+  // fenêtres modales : le focus entre dans la fenêtre, y reste (Tab) et revient au bouton d'origine à la fermeture
+  var lastFocus = null;
+  function showModal() { if ($('modal').hidden) lastFocus = document.activeElement; $('modal').hidden = false; var f = $('modalClose'); if (f) f.focus(); }
+  function hideModal() { $('modal').hidden = true; if (lastFocus && lastFocus.focus && document.contains(lastFocus)) { try { lastFocus.focus(); } catch (e) {} } lastFocus = null; }
   function bet() { return BETS[S.bi]; }
   function cost() { return Math.round(bet() * M.MODES[S.mode].cost * 100) / 100; }
   G.cost = cost;
@@ -203,10 +207,20 @@
   $('btnLang').addEventListener('click', function () { I18N.setLang(I18N.lang() === 'fr' ? 'en' : 'fr'); applyLang(); save(); });
   G.onWheelTap = function () { if (S.busy && G.wheel.spinning) G.speed = 3.2; };
 
+  document.addEventListener('click', function (e) { var b = e.target.closest && e.target.closest('button'); if (b && e.detail > 0 && b.id !== 'modalClose' && !b.closest('#modal')) b.blur(); });
   root.addEventListener('keydown', function (e) {
+    if (e.code === 'Tab' && !$('modal').hidden) {
+      var fs = $('modal').querySelectorAll('button:not([disabled])'); if (!fs.length) return;
+      var first = fs[0], last = fs[fs.length - 1];
+      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+      return;
+    }
+    // un bouton qui a le focus (navigation clavier) garde son comportement natif ; sinon Espace/Entrée = tourner
+    if ((e.code === 'Space' || e.code === 'Enter') && e.target && e.target.tagName === 'BUTTON') return;
     if (e.code === 'Space' || e.code === 'Enter') { e.preventDefault(); if (!$('modal').hidden) return; if (G.skipWinOv()) return; if (S.busy && G.wheel.spinning) { G.speed = 3.2; return; } if (!S.busy) { Sfx.unlock(); play(); } }
     else if (e.code === 'ArrowUp') stepBet(1); else if (e.code === 'ArrowDown') stepBet(-1);
-    else if (e.code === 'Escape') $('modal').hidden = true;
+    else if (e.code === 'Escape') hideModal();
   });
 
   /* ---------- achat de bonus ---------- */
@@ -234,10 +248,10 @@
       var d = document.createElement('small'); d.textContent = T.buyDesc[k]; card.appendChild(d);
       var pr = document.createElement('div'); pr.className = 'pr'; pr.textContent = G.fmt(price) + '  (×' + M.BUY[k].price + ')'; card.appendChild(pr);
       var go = document.createElement('div'); go.className = 'go'; go.textContent = card.disabled ? T.buyNoFunds : T.buyNow; card.appendChild(go);
-      card.onclick = function () { $('modal').hidden = true; Sfx.unlock(); play(k); };
+      card.onclick = function () { hideModal(); Sfx.unlock(); play(k); };
       grid.appendChild(card);
     });
-    $('modal').hidden = false; Sfx.click();
+    showModal(); Sfx.click();
   }
   $('btnBuy').addEventListener('click', openBuy);
 
@@ -245,8 +259,8 @@
   function net() { return Math.round((SESS.won - SESS.wag) * 100) / 100; }
   function showMsg(title, body, btns) {
     $('modalBody').innerHTML = '<h2>' + title + '</h2><p>' + body + '</p><div class="chips" id="msgBtns" style="margin-top:14px"></div>';
-    btns.forEach(function (b) { var e = document.createElement('button'); e.type = 'button'; e.textContent = b[0]; e.onclick = function () { $('modal').hidden = true; if (b[1]) b[1](); }; $('msgBtns').appendChild(e); });
-    $('modal').hidden = false;
+    btns.forEach(function (b) { var e = document.createElement('button'); e.type = 'button'; e.textContent = b[0]; e.onclick = function () { hideModal(); if (b[1]) b[1](); }; $('msgBtns').appendChild(e); });
+    showModal();
   }
   function openLimit() { var T = I18N.t(); showMsg(T.limitTitle, T.limitMsg, [[T.settings, openInfo]]); }
   // renvoie true si l'auto-play doit s'arrêter
@@ -314,11 +328,11 @@
     $('optStop').onclick = function () { S.stopOnBonus = !S.stopOnBonus; save(); openInfo(); };
     $('optRed').onclick = function () { S.reduced = !S.reduced; FX.reduced = S.reduced; save(); openInfo(); };
     $('optReset').onclick = function () { if (S.busy) return; S.balance = 10000; shown.bal = -1; updateHud(); save(); };
-    $('modal').hidden = false; Sfx.click();
+    showModal(); Sfx.click();
   }
   $('btnInfo').addEventListener('click', openInfo);
-  $('modalClose').addEventListener('click', function () { $('modal').hidden = true; });
-  $('modal').addEventListener('click', function (e) { if (e.target === $('modal')) $('modal').hidden = true; });
+  $('modalClose').addEventListener('click', function () { hideModal(); });
+  $('modal').addEventListener('click', function (e) { if (e.target === $('modal')) hideModal(); });
 
   /* ---------- démarrage ---------- */
   load(); G.quality = S.quality; if (S.quality === 'low') FX.lite = true; I18N.apply(); refreshSound(); applyLang();
