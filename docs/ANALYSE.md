@@ -55,7 +55,7 @@ Décision : tout est **écrit en original**, sans dépendance ni asset externe. 
 | Bonus | Mécanique | EV isolée | Max |
 |---|---|---|---|
 | **Chute des Scarabées** | Plinko 8 rangées, 3 scarabées, chacun paie sa case (0,5× → 25×) | ≈ 5,1× | 75× |
-| **Pesée du Cœur** | Cœur vs plume ; le plateau le plus lourd décide, balance qui oscille | ≈ 5,8× | 150× |
+| **Pesée du Cœur** | Cœur vs plume ; valeurs cachées, le joueur choisit un plateau avant de savoir (le gain est celui du plateau choisi, déjà tiré), balance qui oscille | ≈ 5,8× | 150× |
 | **Chambre du Trésor** | Pick-me 12 chambres : valeurs, **Sceptre ×2**, **Ankh bouclier** (annule une malédiction), **Malédiction** (clôt le coffre), prime « coffre vidé » | ≈ 7,3× | 240× |
 | **Main d'Anubis** | **Chaque bonus a 8 % de chance d'être saisi** : roue géante à 24 cases, multiplicateurs ×2/×3/×4 qui **s'empilent** (jusqu'à 2 chaînes) | ≈ 24,6× | 1 600× (jusqu'à 5 000× avec un boost Oracle, plafond global) |
 
@@ -283,3 +283,8 @@ Principe : le résultat reste tiré avant l'animation (modèle Stake Engine) ; l
 - **Main d'Anubis** : maintenir pour charger une jauge circulaire, relâcher pour lancer ; la puissance change la durée et le nombre de tours, jamais le segment.
 - **Chambre du Trésor** : déjà un choix de coffres (inchangé).
 - Risque : un joueur peut croire que viser/charger influence le gain ; le texte d'aide est neutre mais une mention dans les règles est à valider avec le conseil juridique.
+
+## Itération 7 — Pesée : choisir avant de savoir, libellés de la roue (2026-10-10)
+
+- Pesée du Cœur : les valeurs des deux plateaux sont cachées (×?). Le joueur choisit un plateau, puis la balance révèle les deux valeurs ; le gain est celui du plateau choisi. Le gain est tiré avant (modèle Stake Engine) : le tirage réattribue la valeur du gain au plateau choisi et l'autre valeur de la paire à l'autre, donc la distribution et le RTP sont inchangés (50 % faible / 50 % forte). Même mécanisme que le choix de coffres du trésor ; à signaler dans les règles et à valider juridiquement.
+- Roue : ½ et ¼ remplacés par .5 et .25 (retour utilisateur), plus grands une fois ajustés à la largeur du segment.

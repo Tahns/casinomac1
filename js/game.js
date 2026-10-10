@@ -298,16 +298,16 @@
       f.save(); f.rotate(am);
       var big = M.KINDS[k].bonus || k === 'ankh';
       if (!big) {
-        var lab = k === 'm0' ? '0' : ({ m025: '¼', m05: '½', m1: '1', m2: '2', m3: '3' })[k];
+        var lab = k === 'm0' ? '0' : ({ m025: '.25', m05: '.5', m1: '1', m2: '2', m3: '3' })[k];
         // chiffres droits dans le segment (même sens que les logos) ; réduits pour tenir dans la largeur du secteur
         f.rotate(Math.PI / 2);
-        var fs = R * (k === 'm0' ? 0.085 : k === 'm025' || k === 'm05' ? 0.14 : 0.12), wMax = 2 * Math.PI / M.N * R * 0.80 * 0.9;
+        var fs = R * (k === 'm0' ? 0.085 : k === 'm025' || k === 'm05' ? 0.1 : 0.12), wMax = 2 * Math.PI / M.N * R * 0.84 * 0.94;
         f.font = '700 ' + fs + 'px ' + G.NUM;
         var tw = f.measureText(lab).width; if (tw > wMax) fs *= wMax / tw;
         f.font = '700 ' + fs + 'px ' + G.NUM; f.textAlign = 'center'; f.textBaseline = 'middle';
         f.fillStyle = v.tx;
         if (k !== 'm0') { f.shadowColor = 'rgba(0,0,0,.55)'; f.shadowBlur = 3; }
-        var ny = -R * (k === 'm0' ? 0.80 : 0.79);
+        var ny = -R * (k === 'm0' ? 0.80 : 0.81);
         f.fillText(lab, 0, ny);
         if (k !== 'm0') { f.font = '600 ' + Math.min(fs * 0.62, R * 0.06) + 'px ' + G.NUM; f.fillText('×', 0, ny + fs * 0.78); }
         f.shadowBlur = 0;

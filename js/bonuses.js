@@ -282,7 +282,7 @@
    * ====================================================================== */
   function weighScene(sp, bet) {
     var T = I18N.t(), data = sp.bonus, S = newScene(T.weighIntro), g = {}; S.bgImg = 'judgment';
-    var theta = 0, glowSide = -1, dimSide = -1, ph = 0, guess = -1, guessing = false, hoverSide = -1;
+    var theta = 0, glowSide = -1, dimSide = -1, ph = 0, guess = -1, guessing = false, hoverSide = -1, revealed = false, vals = null;
     S.layout = function () {
       var w = G.w, h = G.h;
       if (h < 520) { g.px = G.cx; g.py = h * 0.34; g.L = Math.min(w * 0.26, h * 0.27); g.chain = Math.min(h * 0.11, g.L * 0.55); g.pan = g.L * 0.38; }
@@ -336,7 +336,7 @@
         A.roundRect(ctx, cx - cw / 2, cyy - ch / 2, cw, ch, ch * 0.5);
         var cg = ctx.createLinearGradient(0, cyy - ch / 2, 0, cyy + ch / 2); cg.addColorStop(0, '#2a1f10'); cg.addColorStop(1, '#0c0804');
         ctx.fillStyle = cg; ctx.fill(); ctx.lineWidth = glowSide === si ? 3 : 1.6; ctx.strokeStyle = glowSide === si ? '#fff6c8' : A.goldGrad(ctx, cx - cw, cyy, cx + cw, cyy); ctx.stroke();
-        G.goldText('×' + data.pair[si], cx, cyy + 1, ch * 0.62, { blur: glowSide === si ? 22 : 8 });
+        G.goldText(revealed ? '×' + vals[si] : '×?', cx, cyy + 1, ch * 0.62, { blur: glowSide === si ? 22 : 8 });
         if (G.h >= 520) G.txt(si === 0 ? T.feather : T.heart, cx, cyy - ch * 0.78, { size: clamp(pr * 0.17, 10, 15), family: 'Manrope', weight: 800, fill: '#d8c590', spacing: 3 });
         ctx.restore();
       });
@@ -358,9 +358,14 @@
     S.run = async function () {
       G.say(T.weighSub);
       await G.sleep(quick() ? 1.0 : 1.8);
-      if (!quick()) { G.say(T.guessHint); guess = await waitGuess(); await G.sleep(0.4); }
+      // choix avant de savoir : les valeurs sont cachées ; le gain (déjà tiré) est celui du plateau choisi
+      G.say(T.guessHint);
+      guess = quick() ? (Math.random() < 0.5 ? 0 : 1) : await waitGuess();
+      var other = data.pair[0] + data.pair[1] - data.total;
+      vals = [0, 0]; vals[guess] = data.total; vals[1 - guess] = other;
+      await G.sleep(0.4);
       G.say(T.weighing); Sfx.roll(10, 0.09);
-      var dir = data.heavy === 1 ? 1 : -1, final = dir * 0.30, dur = 3.6, lastSign = 0;
+      var dir = vals[1] > vals[0] ? 1 : -1, final = dir * 0.30, dur = 3.6, lastSign = 0;
       await G.tween(dur, function (u) {
         var env = Math.pow(1 - u, 1.7);
         theta = final * G.ease.out3(Math.min(1, u * 1.15)) + 0.26 * env * Math.sin(u * 22 + 0.6) * (1 - u * 0.2);
@@ -368,15 +373,15 @@
         if (s !== lastSign && u > 0.05) { lastSign = s; Sfx.drum(0.1 + env * 0.25); }
       }, null);
       theta = final; Sfx.thud(); FX.shake(14, 0.5);
+      revealed = true;
       var wp = endPt(dir); FX.dust(wp.x, wp.y + g.chain + g.pan, 12, '#ffd86a');
-      glowSide = data.heavy; dimSide = 1 - data.heavy;
-      FX.ring(wp.x, wp.y + g.chain, '#ffe9a0', g.pan * 2.4, 0.9); FX.spark(wp.x, wp.y + g.chain, 40, '#ffe9a0', 420);
+      glowSide = guess; dimSide = 1 - guess;
+      var cp = endPt(guess ? 1 : -1);
+      FX.ring(cp.x, cp.y + g.chain, '#ffe9a0', g.pan * 2.4, 0.9); FX.spark(cp.x, cp.y + g.chain, 40, '#ffe9a0', 420);
       bump(S, data.total); Sfx.chime(data.total); G.say('');
-      if (guess >= 0) {
-        var ok = guess === data.heavy;
-        S.banner = { text: ok ? T.guessRight : T.guessWrong, t: 0 }; if (ok) { Sfx.fanfare(1); FX.spark(G.cx, G.cy, 50, '#6ff0dd', 420); }
-        await G.sleep(1.3); S.banner = null;
-      }
+      var ok = data.total > other;
+      S.banner = { text: ok ? T.guessRight : T.guessWrong, t: 0 }; if (ok) { Sfx.fanfare(1); FX.spark(G.cx, G.cy, 50, '#6ff0dd', 420); }
+      await G.sleep(1.3); S.banner = null;
       await G.sleep(0.9);
       await settle(S, sp, bet);
     };
