@@ -249,3 +249,10 @@ Cadre : l'achat est désactivé pendant l'auto-play, compte dans la limite de pe
 | **Menaces** | Propriété intellectuelle ; contraintes Stake et achat de bonus selon les marchés ; cadre légal ; concurrence. |
 
 **Bloqué** : validation de la propriété intellectuelle ; doc officielle Stake ; test sonore ; test sur vrais téléphones ; relecture des traductions par une personne ; RNG et solde côté serveur avec audit ; avis juridique sur l'achat de bonus ; accord pour des illustrations générées.
+
+## Itération graphique — illustrations Higgsfield (2026-10-10)
+
+- Ajout de 4 illustrations (gpt_image_2, 1k, ≈0,5 crédit chacune) : gardiens d'Anubis (décor principal), chambre du trésor, salle du jugement, abîme des scarabées. Compressées en JPEG (≈60–85 Ko chacune).
+- Chaque bonus a désormais son décor, avec voile sombre pour la lisibilité (`contrast`, `layout`, `e2e` passent).
+- Repli : sans image, le décor vectoriel d'origine s'affiche.
+- Risque à lever par l'utilisateur : droits d'usage commercial des images générées à vérifier dans les CGU Higgsfield avant une mise en ligne sur Stake.

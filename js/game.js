@@ -94,6 +94,15 @@
     [topY + 4, botY - 12].forEach(function (yy) { f.fillStyle = A.goldGrad(f, x - w / 2, yy, x + w / 2, yy); f.fillRect(x - w / 2 - 4, yy, w + 8, 8); });
   }
 
+  var ART = G.art = {};
+  Object.keys(window.HOA_IMG || {}).forEach(function (k) {
+    var im = new Image(); im.onload = function () { ART[k] = im; if (k === 'key' && G.w) buildBackdrop(); }; im.src = window.HOA_IMG[k];
+  });
+  function cover(c, im, w, h) {
+    var k = Math.max(w / im.width, h / im.height), iw = im.width * k, ih = im.height * k;
+    c.drawImage(im, (w - iw) / 2, (h - ih) / 2, iw, ih);
+  }
+
   function buildBackdrop() {
     var w = G.w, h = G.h, dpr = G.dpr;
     bg.width = Math.round(w * dpr); bg.height = Math.round(h * dpr);
@@ -101,6 +110,11 @@
     var g = f.createLinearGradient(0, 0, 0, h);
     g.addColorStop(0, '#040302'); g.addColorStop(0.5, '#16100a'); g.addColorStop(1, '#070504');
     f.fillStyle = g; f.fillRect(0, 0, w, h);
+    if (ART.key) {
+      cover(f, ART.key, w, h);
+      f.fillStyle = 'rgba(4,3,2,.35)'; f.fillRect(0, 0, w, h);
+      G.guard = null;
+    } else {
     // assises de pierre
     f.strokeStyle = 'rgba(230,185,74,.045)'; f.lineWidth = 1;
     var bh = Math.max(34, h / 18);
@@ -121,6 +135,7 @@
       });
       G.guard = { x: gx, top: G.cy - G.R * 0.28, s: G.R * 0.26, bowlY: G.cy - G.R * 0.28 + G.R * 0.78 };
     } else G.guard = null;
+    }
     // grain de pierre
     var nt = A.noiseTile(128, 0.05); f.globalCompositeOperation = 'overlay'; f.fillStyle = f.createPattern(nt, 'repeat'); f.fillRect(0, 0, w, h); f.globalCompositeOperation = 'source-over';
     // frise de hiéroglyphes sous le linteau
@@ -138,9 +153,10 @@
     f.fillStyle = v; f.fillRect(0, 0, w, h);
   }
 
-  function drawBackdrop(dim) {
+  function drawBackdrop(dim, img) {
     var w = G.w, h = G.h, t = G.t;
     ctx.drawImage(bg, 0, 0, w, h);
+    if (img && ART[img]) { ctx.globalAlpha = Math.min(1, dim * 1.2 + 0.2); cover(ctx, ART[img], w, h); ctx.globalAlpha = 1; ctx.fillStyle = 'rgba(0,0,0,.4)'; ctx.fillRect(0, 0, w, h); }
     // rayons rotatifs derrière la roue
     A.rays(ctx, G.cx, G.cy, Math.max(w, h) * 0.9, 16, t * 0.05, '#ffd86a', 0.05 * (1 - dim * 0.6));
     var gl = ctx.createRadialGradient(G.cx, G.cy, G.R * 0.4, G.cx, G.cy, G.R * 1.9);
@@ -529,7 +545,7 @@
     ctx.clearRect(0, 0, G.w, G.h);
     ctx.save(); ctx.translate(so[0], so[1]);
     var sc = G.scene;
-    drawBackdrop(sc && sc.dim != null ? sc.dim : 0);
+    drawBackdrop(sc && sc.dim != null ? sc.dim : 0, sc && sc.bgImg);
     if (!sc || sc.showsWheel) W.draw(sc && sc.wheelAlpha);
     if (sc && sc.draw) sc.draw(ctx);
     FX.draw(ctx);

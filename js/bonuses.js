@@ -129,7 +129,7 @@
    * ====================================================================== */
   function scarabScene(sp, bet) {
     var T = I18N.t(), data = sp.bonus, rows = M.SCARAB_ROWS, vals = M.SCARAB_VALUES;
-    var S = newScene(T.scarabIntro), g = {}, ball = null, pegFlash = {}, slotPulse = [], used = 0, floats = [];
+    var S = newScene(T.scarabIntro), g = {}; S.bgImg = 'abyss'; var ball = null, pegFlash = {}, slotPulse = [], used = 0, floats = [];
     function slotColor(v) { return v >= 25 ? ['#ffe08a', '#b8861e'] : v >= 6 ? ['#c28bff', '#5a2a86'] : v >= 2.5 ? ['#ff7a5a', '#8a1b10'] : v >= 1 ? ['#5b8cff', '#1a3a8a'] : ['#6a5a40', '#2a2118']; }
     S.layout = function () {
       var w = G.w, h = G.h, top = T0() + EX(150), bot = h - hudH() - (h < 520 ? 10 : 52);
@@ -252,7 +252,7 @@
    * 2. PESÉE DU CŒUR
    * ====================================================================== */
   function weighScene(sp, bet) {
-    var T = I18N.t(), data = sp.bonus, S = newScene(T.weighIntro), g = {};
+    var T = I18N.t(), data = sp.bonus, S = newScene(T.weighIntro), g = {}; S.bgImg = 'judgment';
     var theta = 0, glowSide = -1, dimSide = -1, ph = 0;
     S.layout = function () {
       var w = G.w, h = G.h;
@@ -337,7 +337,7 @@
    * 3. CHAMBRE DU TRÉSOR — pick-me, 12 chambres
    * ====================================================================== */
   function vaultScene(sp, bet) {
-    var T = I18N.t(), data = sp.bonus, S = newScene(T.vaultIntro), g = {}, tiles = [], n = 0, shield = 0, hover = -1, waiting = false, pickRes = null, shake = 0;
+    var T = I18N.t(), data = sp.bonus, S = newScene(T.vaultIntro), g = {}; S.bgImg = 'vault'; var tiles = [], n = 0, shield = 0, hover = -1, waiting = false, pickRes = null, shake = 0;
     var cols = 4, rows = 3;
     for (var i = 0; i < cols * rows; i++) tiles.push({ state: 'closed', token: null, u: 0, dim: false, lg: i % 3 });
     S.layout = function () {
@@ -445,7 +445,7 @@
    * ====================================================================== */
   function handScene(sp, bet) {
     var T = I18N.t(), data = sp.bonus, segs = M.HAND_SEGS, N = segs.length, st = TAU / N;
-    var S = newScene(T.handIntro), g = {}, rot = 0, vel = 0, ptr = 0, ptrV = 0, lastIdx = -1, lastTick = 0;
+    var S = newScene(T.handIntro), g = {}; S.bgImg = 'key'; var rot = 0, vel = 0, ptr = 0, ptrV = 0, lastIdx = -1, lastTick = 0;
     var handY = -9999, handAlpha = 1, crush = 0, wheelK = 0, multShown = 1, multPop = 0, bolts = 0, iconAlpha = 1, iconK = 1, hl = -1, flyOrb = null;
     S.dim = 0.85; S.showTotal = false;
     S.layout = function () {

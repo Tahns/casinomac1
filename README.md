@@ -1,6 +1,6 @@
 # Hand of Anubis
 
-Jeu de roue à bonus (démo, crédits fictifs) dans l'univers du jugement d'Anubis. Statique, sans dépendance, sans asset externe.
+Jeu de roue à bonus (démo, crédits fictifs) dans l'univers du jugement d'Anubis. Statique, sans dépendance. Décors illustrés (`img/`, générés avec Higgsfield, ~300 Ko) ; si les images ne chargent pas, le décor vectoriel prend le relais.
 
 ```bash
 python3 -m http.server 8000      # puis ouvrir http://localhost:8000
@@ -19,6 +19,7 @@ PLAYWRIGHT_CORE=/chemin/node_modules/playwright-core node tools/e2e.js   # tests
 | `js/game.js` | Boucle, décor du temple, roue, pointeur à ressort, overlay de gros gains |
 | `js/bonuses.js` | Les 4 bonus (Scarabées, Pesée, Trésor, Main d'Anubis) — rejouent les scripts |
 | `js/main.js` | Flux de jeu, HUD, auto-play, table des gains, sauvegarde locale |
+| `js/imgs.js` | Liste des illustrations (remplacée par des data: URI dans le build mono-fichier) |
 | `js/art.js` · `audio.js` · `fx.js` · `i18n.js` | Dessin vectoriel, audio synthétisé, particules, FR/EN |
 | `docs/ANALYSE.md` | SWOT, benchmark GitHub, DA, mathématiques, chemin vers Stake |
 
