@@ -55,6 +55,8 @@
     ctx.globalAlpha = 1;
   }
 
+  function quick() { return G.turbo || (G.S && G.S.auto > 0); }   // turbo / auto-play : aucune attente du joueur
+
   function waitTap(S, sec) {
     return new Promise(function (res) {
       var done = false;
@@ -129,7 +131,7 @@
    * ====================================================================== */
   function scarabScene(sp, bet) {
     var T = I18N.t(), data = sp.bonus, rows = M.SCARAB_ROWS, vals = M.SCARAB_VALUES;
-    var S = newScene(T.scarabIntro), g = {}; S.bgImg = 'abyss'; var ball = null, pegFlash = {}, slotPulse = [], used = 0, floats = [];
+    var S = newScene(T.scarabIntro), g = {}; S.bgImg = 'abyss'; var ball = null, pegFlash = {}, slotPulse = [], used = 0, floats = [], aim = null, aimX = 0, fast = 1;
     function slotColor(v) { return v >= 25 ? ['#ffe08a', '#b8861e'] : v >= 6 ? ['#c28bff', '#5a2a86'] : v >= 2.5 ? ['#ff7a5a', '#8a1b10'] : v >= 1 ? ['#5b8cff', '#1a3a8a'] : ['#6a5a40', '#2a2118']; }
     S.layout = function () {
       var w = G.w, h = G.h, top = T0() + EX(150), bot = h - hudH() - (h < 520 ? 10 : 52);
@@ -186,6 +188,16 @@
         ctx.fillStyle = gl; ctx.beginPath(); ctx.arc(ball.x, ball.y, g.ballR * 3, 0, TAU); ctx.fill();
         ctx.save(); ctx.translate(ball.x, ball.y); ctx.rotate(ball.rot); A.scarab(ctx, 0, 0, g.ballR * 2.3, '#ffd86a', 'rgba(60,30,0,.7)'); ctx.restore();
       }
+      // visée : scarabée au-dessus de la première cheville, guide en pointillé
+      if (aim) {
+        var ap0 = peg(0, 0), pulse = 0.6 + 0.4 * Math.sin(G.t * 6), ay = g.top - g.dy * 0.2;
+        ctx.save(); ctx.setLineDash([5, 7]); ctx.strokeStyle = 'rgba(255,230,140,' + (0.35 + 0.25 * pulse) + ')'; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(aimX, ay); ctx.lineTo(ap0.x, ap0.y - g.pegR); ctx.stroke(); ctx.restore();
+        var ag = ctx.createRadialGradient(aimX, ay, 0, aimX, ay, g.ballR * 3.4); ag.addColorStop(0, 'rgba(255,230,140,.75)'); ag.addColorStop(1, 'rgba(255,230,140,0)');
+        ctx.fillStyle = ag; ctx.beginPath(); ctx.arc(aimX, ay, g.ballR * 3.4, 0, TAU); ctx.fill();
+        ctx.save(); ctx.translate(aimX, ay); A.scarab(ctx, 0, 0, g.ballR * 2.3, '#ffd86a', 'rgba(60,30,0,.7)'); ctx.restore();
+        G.txt('◂  ▸', aimX, ay - g.ballR * 2.4, { size: clamp(g.dx * 0.3, 12, 20), family: 'Manrope', weight: 800, fill: 'rgba(255,241,184,' + (0.5 + 0.4 * pulse) + ')', spacing: 4 });
+      }
       // scarabées restants
       for (i = 0; i < data.balls.length; i++) {
         ctx.globalAlpha = i >= used ? 1 : 0.22;
@@ -199,15 +211,29 @@
       ctx.globalAlpha = 1;
       chrome(S);
     };
+    // le joueur vise (curseur / doigt) puis lâche : purement visuel, la trajectoire vient du script
+    function waitAim() {
+      return new Promise(function (res) {
+        var done = false, lim = g.dx * 1.6;
+        function fin() { if (!done) { done = true; aim = null; S.onPointer = null; res(); } }
+        aimX = G.cx; aim = true;
+        S.onPointer = function (x, y, type) {
+          aimX = clamp(x, G.cx - lim, G.cx + lim);
+          if (type === 'down') fin();
+        };
+        G.sleep(7).then(fin);
+      });
+    }
     async function drop(b) {
-      var d = data.balls[b], col = 0, pos = [];
-      pos.push({ x: G.cx, y: g.top - g.dy * 0.2 });
+      var d = data.balls[b], col = 0, pos = [], x0 = quick() ? G.cx : aimX;
+      pos.push({ x: x0, y: g.top - g.dy * 0.2 });
       var hop = g.dy * 0.28, dur = 0.27;
-      ball = { x: G.cx, y: g.top - g.dy * 0.2, rot: 0, trail: [] };
+      ball = { x: x0, y: g.top - g.dy * 0.2, rot: 0, trail: [] };
+      fast = 1; S.onPointer = function (x, y, type) { if (type === 'down' && fast === 1) { fast = 0.45; Sfx.whoosh(); } };
       for (var r = 0; r < rows; r++) {
         var p = peg(r, col), from = { x: ball.x, y: ball.y }, to = { x: p.x, y: p.y - g.pegR - g.ballR };
         var h0 = r === 0 ? 0.0 : hop * 0.4;
-        await G.tween(r === 0 ? 0.32 : dur, function (u) {
+        await G.tween((r === 0 ? 0.32 : dur) * fast, function (u) {
           ball.x = lerp(from.x, to.x, G.ease.inOut(u)); ball.y = lerp(from.y, to.y, u * u) - Math.sin(Math.PI * u) * h0; ball.rot += 0.18;
         }, null);
         pegFlash[r + '_' + col] = 1; Sfx.tick(r / rows); Sfx.coin(0.7 + r * 0.06);
@@ -218,12 +244,12 @@
           var nx = peg(r + 1, col);
           var f2 = { x: ball.x, y: ball.y }, t2 = { x: nx.x, y: nx.y - g.pegR - g.ballR };
           // petit saut latéral
-          await G.tween(0.16, function (u) {
+          await G.tween(0.16 * fast, function (u) {
             ball.x = lerp(f2.x, lerp(f2.x, t2.x, 0.9), G.ease.out3(u)); ball.y = f2.y - Math.sin(Math.PI * u) * hop;
           }, null);
         } else {
           var sx = G.cx + (col - rows / 2) * g.dx, f3 = { x: ball.x, y: ball.y };
-          await G.tween(0.42, function (u) {
+          await G.tween(0.42 * fast, function (u) {
             ball.x = lerp(f3.x, sx, G.ease.out3(Math.min(1, u * 1.4))); ball.y = lerp(f3.y, g.slotTop + g.slotH * 0.5, G.ease.outBounce(u)); ball.rot += 0.12;
           }, null);
         }
@@ -239,9 +265,12 @@
     S.run = async function () {
       slotPulse = vals.map(function () { return 0; });
       G.say(T.scarabSub);
-      await G.sleep(1.4);
+      await G.sleep(quick() ? 1.4 : 2.2);
       G.say('');
-      for (var b = 0; b < data.balls.length; b++) { await drop(b); }
+      for (var b = 0; b < data.balls.length; b++) {
+        if (!quick()) { G.say(T.aimHint); await waitAim(); G.say(T.tapFast); }
+        await drop(b); S.onPointer = null;
+      }
       G.say('');
       await settle(S, sp, bet);
     };
@@ -253,7 +282,7 @@
    * ====================================================================== */
   function weighScene(sp, bet) {
     var T = I18N.t(), data = sp.bonus, S = newScene(T.weighIntro), g = {}; S.bgImg = 'judgment';
-    var theta = 0, glowSide = -1, dimSide = -1, ph = 0;
+    var theta = 0, glowSide = -1, dimSide = -1, ph = 0, guess = -1, guessing = false, hoverSide = -1;
     S.layout = function () {
       var w = G.w, h = G.h;
       if (h < 520) { g.px = G.cx; g.py = h * 0.34; g.L = Math.min(w * 0.26, h * 0.27); g.chain = Math.min(h * 0.11, g.L * 0.55); g.pan = g.L * 0.38; }
@@ -289,6 +318,8 @@
         // chaînes
         ctx.strokeStyle = 'rgba(246,216,120,.85)'; ctx.lineWidth = 2;
         ctx.beginPath(); ctx.moveTo(e.x, e.y); ctx.lineTo(cx - pr, cy); ctx.moveTo(e.x, e.y); ctx.lineTo(cx + pr, cy); ctx.moveTo(e.x, e.y); ctx.lineTo(cx, cy - pr * 0.1); ctx.stroke();
+        if (guessing && (hoverSide === si)) { ctx.fillStyle = 'rgba(255,236,150,' + (0.16 + 0.1 * Math.sin(G.t * 7)) + ')'; ctx.beginPath(); ctx.arc(cx, cy, pr * 1.9, 0, TAU); ctx.fill(); }
+        if (guess === si) A.ankh(ctx, cx, cy - pr * 1.55, pr * 0.5, '#6ff0dd');
         if (glowSide === si) {
           var gl = ctx.createRadialGradient(cx, cy, 0, cx, cy, pr * 2.3); gl.addColorStop(0, 'rgba(255,236,150,.7)'); gl.addColorStop(1, 'rgba(255,236,150,0)');
           ctx.fillStyle = gl; ctx.beginPath(); ctx.arc(cx, cy, pr * 2.3, 0, TAU); ctx.fill();
@@ -311,9 +342,23 @@
       });
       chrome(S);
     };
+    // pronostic : purement ludique, le résultat est déjà fixé
+    function waitGuess() {
+      return new Promise(function (res) {
+        var done = false;
+        function fin(si) { if (!done) { done = true; guessing = false; S.onPointer = null; res(si); } }
+        guessing = true; hoverSide = -1;
+        S.onPointer = function (x, y, type) {
+          var si = x < g.px ? 0 : 1; hoverSide = si;
+          if (type === 'down') { Sfx.chime(2); FX.ring(endPt(si ? 1 : -1).x, endPt(si ? 1 : -1).y + g.chain, '#6ff0dd', g.pan * 1.6, 0.6); fin(si); }
+        };
+        G.sleep(7).then(function () { fin(Math.random() < 0.5 ? 0 : 1); });
+      });
+    }
     S.run = async function () {
       G.say(T.weighSub);
-      await G.sleep(1.0);
+      await G.sleep(quick() ? 1.0 : 1.8);
+      if (!quick()) { G.say(T.guessHint); guess = await waitGuess(); await G.sleep(0.4); }
       G.say(T.weighing); Sfx.roll(10, 0.09);
       var dir = data.heavy === 1 ? 1 : -1, final = dir * 0.30, dur = 3.6, lastSign = 0;
       await G.tween(dur, function (u) {
@@ -327,6 +372,11 @@
       glowSide = data.heavy; dimSide = 1 - data.heavy;
       FX.ring(wp.x, wp.y + g.chain, '#ffe9a0', g.pan * 2.4, 0.9); FX.spark(wp.x, wp.y + g.chain, 40, '#ffe9a0', 420);
       bump(S, data.total); Sfx.chime(data.total); G.say('');
+      if (guess >= 0) {
+        var ok = guess === data.heavy;
+        S.banner = { text: ok ? T.guessRight : T.guessWrong, t: 0 }; if (ok) { Sfx.fanfare(1); FX.spark(G.cx, G.cy, 50, '#6ff0dd', 420); }
+        await G.sleep(1.3); S.banner = null;
+      }
       await G.sleep(0.9);
       await settle(S, sp, bet);
     };
@@ -446,7 +496,7 @@
   function handScene(sp, bet) {
     var T = I18N.t(), data = sp.bonus, segs = M.HAND_SEGS, N = segs.length, st = TAU / N;
     var S = newScene(T.handIntro), g = {}; S.bgImg = 'key'; var rot = 0, vel = 0, ptr = 0, ptrV = 0, lastIdx = -1, lastTick = 0;
-    var handY = -9999, handAlpha = 1, crush = 0, wheelK = 0, multShown = 1, multPop = 0, bolts = 0, iconAlpha = 1, iconK = 1, hl = -1, flyOrb = null;
+    var charging = false, holding = false, power = 0, pdir = 1, handY = -9999, handAlpha = 1, crush = 0, wheelK = 0, multShown = 1, multPop = 0, bolts = 0, iconAlpha = 1, iconK = 1, hl = -1, flyOrb = null;
     S.dim = 0.85; S.showTotal = false;
     S.layout = function () {
       var w = G.w, h = G.h, top = T0() + EX(64), bot = h - hudH() - (h < 520 ? 10 : 44);
@@ -466,6 +516,7 @@
     S.update = function (dt) {
       chromeUpdate(S, dt);
       ptrV += (-520 * ptr - 15 * ptrV) * dt; ptr = clamp(ptr + ptrV * dt, -0.2, 0.6);
+      if (charging && holding) { power += pdir * dt * 1.15; if (power >= 1) { power = 1; pdir = -1; } if (power <= 0) { power = 0; pdir = 1; } }
       multPop = Math.max(0, multPop - dt * 2.4); bolts = Math.max(0, bolts - dt * 4);
       if (S.spinning) {
         var idx = Math.floor(mod(-rot, TAU) / st);
@@ -534,13 +585,39 @@
         if (G.art.hand) { var hs = u * 0.75; ctx.globalCompositeOperation = 'screen'; ctx.translate(cx, handY - hs * 0.12 + u * 0.1); ctx.rotate(Math.PI); ctx.drawImage(G.art.hand, -hs / 2, -hs / 2, hs, hs); }
         else A.hand(ctx, cx, handY, u * 0.25, {});
         ctx.restore(); }
+      if (charging) {   // jauge circulaire autour de la roue
+        var rr2 = g.R * 1.07, lw = Math.max(6, g.R * 0.035);
+        ctx.save(); ctx.lineCap = 'round'; ctx.lineWidth = lw;
+        ctx.strokeStyle = 'rgba(10,7,4,.8)'; ctx.beginPath(); ctx.arc(G.cx, g.cy, rr2, 0, TAU); ctx.stroke();
+        ctx.strokeStyle = 'rgba(230,185,74,' + (holding ? 0.9 : 0.4 + 0.2 * Math.sin(G.t * 5)) + ')'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(G.cx, g.cy, rr2 + lw * 0.6, 0, TAU); ctx.stroke();
+        if (power > 0.01) {
+          var pg2 = ctx.createLinearGradient(G.cx - rr2, 0, G.cx + rr2, 0); pg2.addColorStop(0, '#5cf0dc'); pg2.addColorStop(0.5, '#ffd86a'); pg2.addColorStop(1, '#ff7a3a');
+          ctx.strokeStyle = pg2; ctx.lineWidth = lw * 0.7; ctx.shadowColor = '#ffd86a'; ctx.shadowBlur = 12 * power;
+          ctx.beginPath(); ctx.arc(G.cx, g.cy, rr2, -Math.PI / 2, -Math.PI / 2 + TAU * power); ctx.stroke();
+        }
+        ctx.restore();
+      }
       if (bolts > 0) { ctx.save(); ctx.globalAlpha = bolts; for (var b = 0; b < 7; b++) { var a = b / 7 * TAU + G.t; drawBolt(cx, g.cy, cx + Math.cos(a) * u * 0.6, g.cy + Math.sin(a) * u * 0.6, '#9ab8ff', 3); } ctx.restore(); }
       chrome(S);
     };
-    function spinTo(idx) {
-      var off = 0.2 + Math.random() * 0.6, target = -(idx + off) * st, rot0 = rot, delta = mod(target - rot0, TAU) + (G.turbo ? 3 : 5) * TAU, prev = rot, pT = G.t;
+    // charge : maintenir puis relâcher ; la puissance ne change que la durée et le nombre de tours, pas le segment
+    function waitCharge() {
+      return new Promise(function (res) {
+        var done = false;
+        function fin(p) { if (!done) { done = true; charging = false; holding = false; S.onPointer = null; res(p); } }
+        charging = true; holding = false; power = 0; pdir = 1;
+        S.onPointer = function (x, y, type) {
+          if (type === 'down') { holding = true; Sfx.whoosh(); }
+          else if (type === 'up' && holding) fin(Math.max(0.12, power));
+        };
+        G.sleep(7).then(function () { fin(0.6); });
+      });
+    }
+    function spinTo(idx, pw) {
+      pw = pw == null ? 0.5 : pw;
+      var off = 0.2 + Math.random() * 0.6, target = -(idx + off) * st, rot0 = rot, delta = mod(target - rot0, TAU) + (G.turbo ? 3 : Math.round(3 + pw * 4)) * TAU, prev = rot, pT = G.t;
       S.spinning = true; hl = -1; Sfx.whoosh();
-      return G.tween(G.turbo ? 2.4 : 4.6, function (u) { var e = 1 - Math.pow(1 - u, 3.6), nr = rot0 + delta * e; vel = (nr - prev) / Math.max(1 / 240, G.t - pT); prev = nr; pT = G.t; rot = nr; }, null).then(function () {
+      return G.tween(G.turbo ? 2.4 : 3.2 + pw * 2.4, function (u) { var e = 1 - Math.pow(1 - u, 3.6), nr = rot0 + delta * e; vel = (nr - prev) / Math.max(1 / 240, G.t - pT); prev = nr; pT = G.t; rot = nr; }, null).then(function () {
         S.spinning = false; vel = 0; rot = mod(rot, TAU); ptrV += 4; Sfx.drum(0.3); hl = idx;
       });
     }
@@ -562,7 +639,8 @@
       var mult = 1, lastV = 0;
       for (var i = 0; i < data.spins.length; i++) {
         var sx = data.spins[i], seg = segs[sx.idx];
-        await spinTo(sx.idx);
+        var pw = null; if (!quick()) { G.say(T.holdHint); pw = await waitCharge(); G.say(T.handSpin); }
+        await spinTo(sx.idx, pw);
         await G.sleep(0.3);
         if (seg.x) {
           var col = segColor(seg)[0], isSmall = G.w < 700;

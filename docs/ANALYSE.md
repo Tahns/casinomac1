@@ -274,3 +274,12 @@ Cadre : l'achat est désactivé pendant l'auto-play, compte dans la limite de pe
 ## Itération graphique 5 — chiffres droits sur la roue (2026-10-10)
 
 - Retour utilisateur : les chiffres radiaux n'étaient pas homogènes avec les logos (droits). Les valeurs de la roue sont maintenant droites dans leur segment, comme les logos, réduites pour tenir dans la largeur du secteur ; 0,25 et 0,5 s'affichent ¼ et ½ (plus étroits).
+
+## Itération 6 — interactions dans les bonus (2026-10-10)
+
+Principe : le résultat reste tiré avant l'animation (modèle Stake Engine) ; les interactions n'ont **aucun effet sur le gain** et ne sont jamais présentées comme de l'habileté. En turbo ou auto-play, tout est automatique ; sinon un délai de 7 s lâche/choisit à la place du joueur.
+- **Chute des Scarabées** : le joueur vise (curseur/doigt) puis touche pour lâcher chaque scarabée ; un toucher pendant la chute l'accélère.
+- **Pesée du Cœur** : pronostic du plateau le plus lourd (retour « pressentiment juste » ou non), purement ludique.
+- **Main d'Anubis** : maintenir pour charger une jauge circulaire, relâcher pour lancer ; la puissance change la durée et le nombre de tours, jamais le segment.
+- **Chambre du Trésor** : déjà un choix de coffres (inchangé).
+- Risque : un joueur peut croire que viser/charger influence le gain ; le texte d'aide est neutre mais une mention dans les règles est à valider avec le conseil juridique.

@@ -640,5 +640,7 @@
     if (G.scene && G.scene.pointer) G.scene.pointer(p.x, p.y, 'down');
     else if (G.onWheelTap) G.onWheelTap(p.x, p.y);
   });
+  function up(e) { if (G.scene && G.scene.pointer) { var p = pt(e); G.scene.pointer(p.x, p.y, 'up'); } }
+  cv.addEventListener('pointerup', up); cv.addEventListener('pointercancel', up);
   cv.addEventListener('pointermove', function (e) { if (G.scene && G.scene.pointer) { var p = pt(e); G.scene.pointer(p.x, p.y, 'move'); } });
 })(window);
