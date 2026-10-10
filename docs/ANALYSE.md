@@ -320,3 +320,10 @@ Toujours : résultat tiré avant l'animation ; les actions du joueur n'ont aucun
 - **Chambre du Trésor** : après le choix, 3 touchers pour briser le sceau (fissures, tension sonore et secousses).
 - **Main d'Anubis** : charge de la jauge, rotation plus longue avec arrivée très lente sur le segment.
 - Turbo / auto-play : tout reste automatique. Risque : ces gestes peuvent faire croire à une influence sur le gain ; textes d'aide neutres, validation juridique à faire.
+
+## Itération 11 — HUD illustré et détails de la slot (2026-10-10)
+
+- Menu du bas refait avec des éléments générés (cadre de basalte et d'or aux coins améthyste/turquoise, plaques gravées pour solde / mise / gain, bouton SPIN en or serti de gemmes, boutons-pilules aux cabochons turquoise). Découpés en WebP transparent (≈ 190 Ko), appliqués en `border-image` / fonds CSS ; adaptés portrait et paysage compact (`layout.js` passe).
+- Détails : pointeur de la roue (scarabée ailé, rubis) sur les deux roues ; scarabée ailé comme bille et réserve du Plinko ; chevilles dorées ; pièces, sceptre d'Anubis, amulette ankh turquoise et crâne maudit sur les dalles du trésor.
+- Non fait : manches successives dans la Pesée (demande « et oui fait » ambiguë) — à préciser si souhaité, la règle devra rester sans effet sur le gain.
+- Poids : fichier unique ≈ 2 Mo.

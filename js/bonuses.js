@@ -163,9 +163,11 @@
         var p = peg(r, j), f = pegFlash[r + '_' + j] || 0;
         if (f > 0) { ctx.fillStyle = 'rgba(255,230,140,' + f * 0.5 + ')'; ctx.beginPath(); ctx.arc(p.x, p.y, g.pegR * (2 + f * 3), 0, TAU); ctx.fill(); }
         ctx.fillStyle = 'rgba(0,0,0,.5)'; ctx.beginPath(); ctx.arc(p.x + g.pegR * 0.35, p.y + g.pegR * 0.6, g.pegR, 0, TAU); ctx.fill();
-        ctx.beginPath(); ctx.arc(p.x, p.y, g.pegR, 0, TAU);
-        var pg = ctx.createRadialGradient(p.x - g.pegR * 0.3, p.y - g.pegR * 0.3, 0, p.x, p.y, g.pegR); pg.addColorStop(0, '#fff6c8'); pg.addColorStop(1, '#a8801e');
-        ctx.fillStyle = pg; ctx.fill();
+        if (!G.icon(ctx, 'peg', p.x, p.y, g.pegR * 3.3)) {
+          ctx.beginPath(); ctx.arc(p.x, p.y, g.pegR, 0, TAU);
+          var pg = ctx.createRadialGradient(p.x - g.pegR * 0.3, p.y - g.pegR * 0.3, 0, p.x, p.y, g.pegR); pg.addColorStop(0, '#fff6c8'); pg.addColorStop(1, '#a8801e');
+          ctx.fillStyle = pg; ctx.fill();
+        }
       }
       // cases
       for (i = 0; i <= rows; i++) {
@@ -189,7 +191,9 @@
         var gl = ctx.createRadialGradient(ball.x, ball.y, 0, ball.x, ball.y, g.ballR * 3);
         gl.addColorStop(0, 'rgba(255,230,140,.7)'); gl.addColorStop(1, 'rgba(255,230,140,0)');
         ctx.fillStyle = gl; ctx.beginPath(); ctx.arc(ball.x, ball.y, g.ballR * 3, 0, TAU); ctx.fill();
-        ctx.save(); ctx.translate(ball.x, ball.y); ctx.rotate(ball.rot); A.scarab(ctx, 0, 0, g.ballR * 2.3, '#ffd86a', 'rgba(60,30,0,.7)'); ctx.restore();
+        ctx.save(); ctx.translate(ball.x, ball.y); ctx.rotate(Math.sin(ball.rot * 0.7) * 0.28);
+        if (!G.icon(ctx, 'scarab', 0, 0, g.ballR * 4.6)) A.scarab(ctx, 0, 0, g.ballR * 2.3, '#ffd86a', 'rgba(60,30,0,.7)');
+        ctx.restore();
       }
       if (steer && ball) {
         var spp = 0.6 + 0.4 * Math.sin(G.t * 12), sd = g.dx * 0.55;
@@ -206,13 +210,13 @@
         ctx.beginPath(); ctx.moveTo(aimX, ay); ctx.lineTo(ap0.x, ap0.y - g.pegR); ctx.stroke(); ctx.restore();
         var ag = ctx.createRadialGradient(aimX, ay, 0, aimX, ay, g.ballR * 3.4); ag.addColorStop(0, 'rgba(255,230,140,.75)'); ag.addColorStop(1, 'rgba(255,230,140,0)');
         ctx.fillStyle = ag; ctx.beginPath(); ctx.arc(aimX, ay, g.ballR * 3.4, 0, TAU); ctx.fill();
-        ctx.save(); ctx.translate(aimX, ay); A.scarab(ctx, 0, 0, g.ballR * 2.3, '#ffd86a', 'rgba(60,30,0,.7)'); ctx.restore();
+        ctx.save(); ctx.translate(aimX, ay); if (!G.icon(ctx, 'scarab', 0, 0, g.ballR * 4.6)) A.scarab(ctx, 0, 0, g.ballR * 2.3, '#ffd86a', 'rgba(60,30,0,.7)'); ctx.restore();
         G.txt('◂  ▸', aimX, ay - g.ballR * 2.4, { size: clamp(g.dx * 0.3, 12, 20), family: 'Manrope', weight: 800, fill: 'rgba(255,241,184,' + (0.5 + 0.4 * pulse) + ')', spacing: 4 });
       }
       // scarabées restants
       for (i = 0; i < data.balls.length; i++) {
         ctx.globalAlpha = i >= used ? 1 : 0.22;
-        A.scarab(ctx, Math.max(30, G.cx - 5.2 * g.dx) + i * 36, T0() + EX(130), 26, i >= used ? '#ffd86a' : '#6a5a40', 'rgba(60,30,0,.6)');
+        if (!G.icon(ctx, 'scarab', Math.max(30, G.cx - 5.2 * g.dx) + i * 44, T0() + EX(130), 42)) A.scarab(ctx, Math.max(30, G.cx - 5.2 * g.dx) + i * 36, T0() + EX(130), 26, i >= used ? '#ffd86a' : '#6a5a40', 'rgba(60,30,0,.6)');
       }
       ctx.globalAlpha = 1;
       for (i = 0; i < floats.length; i++) {
@@ -477,10 +481,13 @@
           ctx.fillStyle = g2; ctx.fill(); ctx.lineWidth = 3; ctx.strokeStyle = '#fff1b8'; ctx.stroke();
           ctx.save(); A.roundRect(ctx, r.x, r.y, r.s, r.s, r.s * 0.1); ctx.clip();
           A.rays(ctx, cx, cy, r.s, 12, G.t * 0.5, '#ffffff', 0.18); ctx.restore();
-          if (kind === 'num') G.txt('+' + t.token, cx, cy + r.s * 0.01, { size: r.s * (String(t.token).length > 1 ? 0.4 : 0.5), weight: 900, fill: '#fff8d8', stroke: '#4a3208', shadow: 'rgba(255,255,255,.6)' });
+          if (kind === 'num') { G.icon(ctx, 'coin', cx, cy - r.s * 0.04, r.s * 0.92); G.txt('+' + t.token, cx, cy + r.s * 0.12, { size: r.s * (String(t.token).length > 1 ? 0.3 : 0.38), weight: 900, fill: '#fff8d8', stroke: '#3a2400', sw: r.s * 0.07, shadow: 'rgba(0,0,0,.6)', blur: 6 }); }
+          else if (false) G.txt('+' + t.token, cx, cy + r.s * 0.01, { size: r.s * (String(t.token).length > 1 ? 0.4 : 0.5), weight: 900, fill: '#fff8d8', stroke: '#4a3208', shadow: 'rgba(255,255,255,.6)' });
+          else if (kind === 'scepter' && G.icon(ctx, 'scepter', cx, cy - r.s * 0.02, r.s * 0.95)) { G.txt('×2', cx, cy + r.s * 0.34, { size: r.s * 0.3, weight: 900, fill: '#fff', stroke: '#0d2466', sw: r.s * 0.06 }); }
           else if (kind === 'scepter') { G.txt('×2', cx, cy - r.s * 0.05, { size: r.s * 0.46, weight: 900, fill: '#fff', stroke: '#0d2466' }); G.txt('SCEPTRE', cx, cy + r.s * 0.3, { size: r.s * 0.11, weight: 800, fill: '#d8e4ff', family: 'Manrope', spacing: 2 }); }
+          else if (kind === 'ankh' && G.icon(ctx, 'amulet', cx, cy, r.s * 0.92)) { /* amulette */ }
           else if (kind === 'ankh') { A.ankh(ctx, cx, cy - r.s * 0.02, r.s * 0.55, '#fff', '#0b5a50'); }
-          else { A.skull(ctx, cx, cy, r.s * 0.66, '#fff1d8', '#5a0c06'); }
+          else if (!G.icon(ctx, 'skull', cx, cy, r.s * 0.95)) { A.skull(ctx, cx, cy, r.s * 0.66, '#fff1d8', '#5a0c06'); }
         }
         ctx.restore();
       });
@@ -630,9 +637,10 @@
         ctx.restore();
         // pointeur
         ctx.save(); ctx.translate(0, -R * 1.08); ctx.rotate(ptr); var ps = R * 0.12;
+        if (G.icon(ctx, 'pointer', 0, ps * 0.2, ps * 3)) { ctx.restore(); } else {
         ctx.beginPath(); ctx.moveTo(-ps * 0.6, -ps * 0.5); ctx.quadraticCurveTo(0, -ps * 0.9, ps * 0.6, -ps * 0.5); ctx.lineTo(0, ps * 1.5); ctx.closePath();
         ctx.fillStyle = A.goldGrad(ctx, -ps, -ps, ps, ps * 1.5); ctx.shadowColor = 'rgba(0,0,0,.7)'; ctx.shadowBlur = 8; ctx.fill(); ctx.shadowBlur = 0; ctx.lineWidth = 1.5; ctx.strokeStyle = '#4b350b'; ctx.stroke(); ctx.restore();
-        ctx.restore();
+        ctx.restore(); }
       }
       // multiplicateur cumulé
       if (wheelK > 0.3) {

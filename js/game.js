@@ -448,6 +448,7 @@
     var cx = G.cx, py = G.cy - R * 1.085, s = R * 0.16;
     ctx.save(); ctx.translate(cx, py); ctx.rotate(W.ptr.a);
     ctx.shadowColor = 'rgba(0,0,0,.7)'; ctx.shadowBlur = 8; ctx.shadowOffsetY = 3;
+    if (G.icon(ctx, 'pointer', 0, s * 0.18, s * 2.7)) { ctx.restore(); return; }
     ctx.beginPath(); ctx.moveTo(-s * 0.62, -s * 0.5);
     ctx.quadraticCurveTo(0, -s * 0.9, s * 0.62, -s * 0.5);
     ctx.lineTo(s * 0.34, s * 0.45); ctx.lineTo(0, s * 1.42); ctx.lineTo(-s * 0.34, s * 0.45); ctx.closePath();

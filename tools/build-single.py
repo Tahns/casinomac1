@@ -5,6 +5,7 @@ b64 = lambda p: base64.b64encode(open(r + p, 'rb').read()).decode()
 html = open(r + 'index.html').read()
 body = html[html.index('<canvas'):html.index('<script src="js/math.js">')]
 css = re.sub(r"url\(['\"]?(\.\./)?fonts/([^)'\"]+)['\"]?\)", lambda m: 'url(data:font/woff2;base64,' + b64('fonts/' + m.group(2)) + ')', open(r + 'css/style.css').read())
+css = re.sub(r"url\(['\"]?\.\./img/([^)'\"]+)['\"]?\)", lambda m: 'url(data:image/' + ('webp' if m.group(1).endswith('webp') else 'jpeg') + ';base64,' + b64('img/' + m.group(1)) + ')', css)
 js = ''
 for n in ['math', 'art', 'audio', 'fx', 'i18n', 'imgs', 'game', 'bonuses', 'main']:
     t = open(r + 'js/' + n + '.js').read()
