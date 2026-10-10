@@ -48,7 +48,7 @@
   };
 
   /* ---------- mise en page ---------- */
-  var bg = document.createElement('canvas');
+  var bg = document.createElement('canvas'), frz = document.createElement('canvas');
   var lampOn, lampOff, torchT = 0;
   var dust = [];
   for (var di = 0; di < 46; di++) dust.push({ x: Math.random(), y: Math.random(), s: 0.6 + Math.random() * 1.8, v: 0.01 + Math.random() * 0.035, p: Math.random() * 6.28 });
@@ -168,11 +168,13 @@
     }
     // grain de pierre
     var nt = A.noiseTile(128, 0.05); f.globalCompositeOperation = 'overlay'; f.fillStyle = f.createPattern(nt, 'repeat'); f.fillRect(0, 0, w, h); f.globalCompositeOperation = 'source-over';
-    // frise de hiéroglyphes sous le linteau
+    // frise de hiéroglyphes sous le linteau : calque fixe (ne suit pas la parallaxe)
     var fh = clamp(h * 0.022, 14, 20);
-    f.fillStyle = 'rgba(0,0,0,.55)'; f.fillRect(0, 0, w, fh + 6);
-    f.fillStyle = A.goldGrad(f, 0, 0, w, 0); f.fillRect(0, fh + 6, w, 2);
-    A.glyphRow(f, 0, 3, w, fh, A.rgba(C.gold, 0.5), 7);
+    frz.width = Math.round(w * dpr); frz.height = Math.round((fh + 8) * dpr);
+    var z = frz.getContext('2d'); z.setTransform(dpr, 0, 0, dpr, 0, 0);
+    z.fillStyle = 'rgba(0,0,0,.72)'; z.fillRect(0, 0, w, fh + 6);
+    z.fillStyle = A.goldGrad(z, 0, 0, w, 0); z.fillRect(0, fh + 6, w, 2);
+    A.glyphRow(z, 0, 3, w, fh, A.rgba(C.gold, 0.5), 7);
     // sol poli
     var fl = f.createLinearGradient(0, h * 0.78, 0, h);
     fl.addColorStop(0, 'rgba(230,185,74,0)'); fl.addColorStop(1, 'rgba(230,185,74,.08)');
@@ -211,10 +213,16 @@
         });
       });
     }
+    // brume : deux nappes qui dérivent à des profondeurs différentes
+    if (!FX.lite) [[0.0, 0.62, 0.9, 26], [0.5, 0.78, 0.7, -42]].forEach(function (fg, n) {
+      var fx = ((t * 0.012 * (n ? -1 : 1) + fg[0]) % 1) * w * 1.6 - w * 0.3 + G.par.x * fg[3], fy = h * fg[1];
+      var fgr = ctx.createRadialGradient(fx, fy, 0, fx, fy, w * 0.45); fgr.addColorStop(0, 'rgba(255,214,140,' + 0.07 * fg[2] + ')'); fgr.addColorStop(1, 'rgba(255,214,140,0)');
+      ctx.save(); ctx.translate(0, fy); ctx.scale(1, 0.35); ctx.translate(0, -fy); ctx.fillStyle = fgr; ctx.fillRect(0, 0, w, h * 2.2); ctx.restore();
+    });
     // poussière d'or
     ctx.fillStyle = '#ffd86a';
     for (var i = 0; i < dust.length; i++) {
-      var d = dust[i], yy = mod(d.y - t * d.v, 1) * h, xx = (d.x + Math.sin(t * 0.3 + d.p) * 0.02) * w;
+      var d = dust[i], yy = mod(d.y - t * d.v, 1) * h, xx = (d.x + Math.sin(t * 0.3 + d.p) * 0.02) * w + G.par.x * d.s * 9;
       ctx.globalAlpha = 0.18 + 0.22 * Math.sin(t * 1.3 + d.p) * Math.sin(t * 1.3 + d.p);
       ctx.beginPath(); ctx.arc(xx, yy, d.s, 0, TAU); ctx.fill();
     }
@@ -291,6 +299,11 @@
       var sh = f.createLinearGradient(Math.cos(am - step / 2) * ro, Math.sin(am - step / 2) * ro, Math.cos(am + step / 2) * ro, Math.sin(am + step / 2) * ro);
       sh.addColorStop(0, 'rgba(255,255,255,.18)'); sh.addColorStop(0.5, 'rgba(255,255,255,0)'); sh.addColorStop(1, 'rgba(0,0,0,.25)');
       f.fillStyle = sh; f.fillRect(-R, -R, 2 * R, 2 * R);
+      f.restore();
+      // creux : ombre intérieure + arête éclairée => les secteurs semblent gravés dans la roue
+      f.save(); wedge(f, i, ri, ro); f.clip(); wedge(f, i, ri, ro);
+      f.lineWidth = R * 0.028; f.strokeStyle = 'rgba(0,0,0,.38)'; f.stroke();
+      f.lineWidth = R * 0.007; f.strokeStyle = 'rgba(255,240,190,.28)'; f.translate(R * 0.004, R * 0.006); wedge(f, i, ri, ro); f.stroke();
       f.restore();
       // arêtes dorées
       wedge(f, i, ri, ro); f.lineWidth = Math.max(1, R * 0.006); f.strokeStyle = 'rgba(255,214,110,.75)'; f.stroke();
@@ -406,6 +419,10 @@
       eg.addColorStop(0, 'rgba(111,240,221,' + 0.16 * clamp(pulse, 0, 1.2) + ')'); eg.addColorStop(1, 'rgba(111,240,221,0)');
       ctx.fillStyle = eg; ctx.fillRect(cx - r, cy - r, r * 2, r * 2);
     } else A.jackal(ctx, cx, cy - r * 0.2, r * 0.44, { glow: clamp(pulse, 0, 1) });
+    // dôme de verre : reflet qui suit la lumière
+    var dl = ctx.createRadialGradient(cx - r * 0.35 - P.x * r * 0.12, cy - r * 0.45 - P.y * r * 0.1, 0, cx - r * 0.2, cy - r * 0.25, r * 1.1);
+    dl.addColorStop(0, 'rgba(255,255,255,.34)'); dl.addColorStop(0.35, 'rgba(255,255,255,.07)'); dl.addColorStop(1, 'rgba(0,0,0,.28)');
+    ctx.fillStyle = dl; ctx.fillRect(cx - r, cy - r, r * 2, r * 2);
     ctx.restore();
   }
 
@@ -432,6 +449,14 @@
     var sg = ctx.createRadialGradient(cx, cy + R * 0.05, R * 0.9, cx, cy + R * 0.05, R * 1.3);
     sg.addColorStop(0, 'rgba(0,0,0,.6)'); sg.addColorStop(1, 'rgba(0,0,0,0)');
     ctx.fillStyle = sg; ctx.fillRect(cx - R * 1.4, cy - R * 1.4, R * 2.8, R * 2.8);
+    // épaisseur : contact au sol + tranche de la jante, décalées selon la caméra
+    var wy = R * 0.055, wx = -P.x * R * 0.014;
+    ctx.save(); ctx.translate(cx, cy + R * 1.12 + wy); ctx.scale(1, 0.13);
+    var cs = ctx.createRadialGradient(0, 0, 0, 0, 0, R * 1.15); cs.addColorStop(0, 'rgba(0,0,0,.65)'); cs.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = cs; ctx.beginPath(); ctx.arc(0, 0, R * 1.15, 0, TAU); ctx.fill(); ctx.restore();
+    ctx.beginPath(); ctx.arc(cx + wx, cy + wy, R * 1.075, 0, TAU);
+    var wall = ctx.createLinearGradient(0, cy - R, 0, cy + R * 1.14); wall.addColorStop(0, '#7a5612'); wall.addColorStop(0.55, '#3c2a08'); wall.addColorStop(1, '#0e0903');
+    ctx.fillStyle = wall; ctx.fill(); ctx.lineWidth = Math.max(1, R * 0.008); ctx.strokeStyle = 'rgba(255,214,110,.35)'; ctx.stroke();
     drawFrame(R);
     // disque rotatif (avec flou de mouvement à haute vitesse)
     var half = R + 6, sp = Math.abs(W.vel);
@@ -473,6 +498,15 @@
     }
     ctx.restore();
     drawLamps(R);
+    // éclat : une source de lumière fixe (qui suit la caméra) ; la roue tourne sous elle
+    var la = Math.atan2(-0.8 - P.y * 0.5, -0.55 - P.x * 0.6), lx = cx + Math.cos(la) * R * 0.85, ly = cy + Math.sin(la) * R * 0.85;
+    ctx.save(); ctx.beginPath(); ctx.arc(cx, cy, R * 0.99, 0, TAU); ctx.clip();
+    var gl2 = ctx.createRadialGradient(lx, ly, 0, lx, ly, R * 1.35); gl2.addColorStop(0, 'rgba(255,246,214,.26)'); gl2.addColorStop(0.45, 'rgba(255,246,214,.05)'); gl2.addColorStop(1, 'rgba(0,0,0,.3)');
+    ctx.fillStyle = gl2; ctx.fillRect(cx - R, cy - R, R * 2, R * 2); ctx.restore();
+    ctx.save(); ctx.lineCap = 'round'; ctx.lineWidth = R * 0.016; ctx.shadowColor = '#fff6c8'; ctx.shadowBlur = 8;
+    var rs = ctx.createLinearGradient(cx + Math.cos(la - 0.6) * R, cy + Math.sin(la - 0.6) * R, cx + Math.cos(la + 0.6) * R, cy + Math.sin(la + 0.6) * R);
+    rs.addColorStop(0, 'rgba(255,250,225,0)'); rs.addColorStop(0.5, 'rgba(255,250,225,.85)'); rs.addColorStop(1, 'rgba(255,250,225,0)');
+    ctx.strokeStyle = rs; ctx.beginPath(); ctx.arc(cx, cy, R * 1.065, la - 0.6, la + 0.6); ctx.stroke(); ctx.restore();
     drawHub(R);
     drawPointer(R);
     ctx.restore();
@@ -585,6 +619,7 @@
       var tw = G.tweens[i]; tw.t += sdt; var u = Math.min(1, tw.t / tw.dur); tw.fn(tw.ease ? tw.ease(u) : u);
       if (u >= 1) { G.tweens.splice(i, 1); tw.res(); }
     }
+    parUpdate(dt);
     W.update(sdt);
     if (G.scene && G.scene.update) G.scene.update(sdt);
     FX.update(sdt);
@@ -614,9 +649,14 @@
     ctx.clearRect(0, 0, G.w, G.h);
     ctx.save(); ctx.translate(so[0], so[1]);
     var sc = G.scene;
+    ctx.save(); ctx.translate(G.cx - P.x * 18, G.cy - P.y * 10); ctx.scale(1.05, 1.05); ctx.translate(-G.cx, -G.cy);   // fond : plan lointain
     drawBackdrop(sc && sc.dim != null ? sc.dim : 0, sc && sc.bgImg);
+    ctx.restore();
+    ctx.drawImage(frz, 0, 0, G.w, frz.height / G.dpr);
+    ctx.save(); ctx.translate(P.x * 5, P.y * 3);                                                                       // jeu : plan proche
     if (!sc || sc.showsWheel) W.draw(sc && sc.wheelAlpha);
     if (sc && sc.draw) sc.draw(ctx);
+    ctx.restore();
     FX.draw(ctx);
     ctx.restore();
     drawWinOv();
@@ -630,6 +670,17 @@
   G.setScene = function (s) { G.scene = s; if (s && s.layout) s.layout(); };
   G.start = function () { layout(); root.addEventListener('resize', layout); root.requestAnimationFrame(frame); };
   G.relayout = layout;
+
+  /* parallaxe : la caméra bouge un peu avec le pointeur / l'inclinaison du téléphone, sinon un balancement lent */
+  var P = G.par = { x: 0, y: 0, tx: 0, ty: 0, stamp: -99 };
+  function parAim(x, y) { P.tx = clamp(x, -1, 1); P.ty = clamp(y, -1, 1); P.stamp = G.t; }
+  root.addEventListener('pointermove', function (e) { parAim(e.clientX / G.w * 2 - 1, e.clientY / G.h * 2 - 1); });
+  root.addEventListener('deviceorientation', function (e) { if (e.gamma != null && e.beta != null) parAim(e.gamma / 25, (e.beta - 45) / 25); });
+  function parUpdate(dt) {
+    if (G.t - P.stamp > 3.5) { P.tx = Math.sin(G.t * 0.31) * 0.55; P.ty = Math.cos(G.t * 0.23) * 0.4; }
+    var k = Math.min(1, dt * 3); P.x += (P.tx - P.x) * k; P.y += (P.ty - P.y) * k;
+    if (FX.reduced) { P.x = 0; P.y = 0; }
+  }
 
   /* pointeur */
   function pt(e) { var r = cv.getBoundingClientRect(); var p = e.touches ? e.touches[0] || e.changedTouches[0] : e; return { x: p.clientX - r.left, y: p.clientY - r.top }; }

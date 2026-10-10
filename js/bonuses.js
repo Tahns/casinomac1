@@ -162,6 +162,7 @@
       for (r = 0; r < rows; r++) for (j = 0; j <= r; j++) {
         var p = peg(r, j), f = pegFlash[r + '_' + j] || 0;
         if (f > 0) { ctx.fillStyle = 'rgba(255,230,140,' + f * 0.5 + ')'; ctx.beginPath(); ctx.arc(p.x, p.y, g.pegR * (2 + f * 3), 0, TAU); ctx.fill(); }
+        ctx.fillStyle = 'rgba(0,0,0,.5)'; ctx.beginPath(); ctx.arc(p.x + g.pegR * 0.35, p.y + g.pegR * 0.6, g.pegR, 0, TAU); ctx.fill();
         ctx.beginPath(); ctx.arc(p.x, p.y, g.pegR, 0, TAU);
         var pg = ctx.createRadialGradient(p.x - g.pegR * 0.3, p.y - g.pegR * 0.3, 0, p.x, p.y, g.pegR); pg.addColorStop(0, '#fff6c8'); pg.addColorStop(1, '#a8801e');
         ctx.fillStyle = pg; ctx.fill();
@@ -170,6 +171,7 @@
       for (i = 0; i <= rows; i++) {
         var cx = G.cx + (i - rows / 2) * g.dx, v = vals[i], col = slotColor(v), pl = slotPulse[i] || 0, sw = g.dx * 0.9;
         var x = cx - sw / 2, y = g.slotTop + (1 - 0) * 0;
+        A.roundRect(ctx, x, y + g.slotH * 0.12, sw, g.slotH, 8); ctx.fillStyle = 'rgba(0,0,0,.65)'; ctx.fill();
         A.roundRect(ctx, x, y, sw, g.slotH, 8);
         var sg = ctx.createLinearGradient(0, y, 0, y + g.slotH); sg.addColorStop(0, col[0]); sg.addColorStop(1, col[1]);
         ctx.fillStyle = sg; ctx.fill();
@@ -183,6 +185,7 @@
           var t = ball.trail[i], a = (1 - i / ball.trail.length) * 0.35;
           ctx.fillStyle = 'rgba(255,216,106,' + a + ')'; ctx.beginPath(); ctx.arc(t[0], t[1], g.ballR * (1 - i / 22), 0, TAU); ctx.fill();
         }
+        ctx.fillStyle = 'rgba(0,0,0,.4)'; ctx.beginPath(); ctx.ellipse(ball.x + g.ballR * 0.8, ball.y + g.ballR * 1.2, g.ballR * 1.1, g.ballR * 0.55, 0, 0, TAU); ctx.fill();
         var gl = ctx.createRadialGradient(ball.x, ball.y, 0, ball.x, ball.y, g.ballR * 3);
         gl.addColorStop(0, 'rgba(255,230,140,.7)'); gl.addColorStop(1, 'rgba(255,230,140,0)');
         ctx.fillStyle = gl; ctx.beginPath(); ctx.arc(ball.x, ball.y, g.ballR * 3, 0, TAU); ctx.fill();
@@ -298,6 +301,8 @@
     S.update = function (dt) { chromeUpdate(S, dt); ph += dt; };
     S.draw = function () {
       var u = Math.min(G.w, G.h), i;
+      // ombre de contact du socle
+      ctx.save(); ctx.translate(g.px, G.h - hudH() - 18); ctx.scale(1, 0.16); var cg0 = ctx.createRadialGradient(0, 0, 0, 0, 0, u * 0.3); cg0.addColorStop(0, 'rgba(0,0,0,.6)'); cg0.addColorStop(1, 'rgba(0,0,0,0)'); ctx.fillStyle = cg0; ctx.beginPath(); ctx.arc(0, 0, u * 0.3, 0, TAU); ctx.fill(); ctx.restore();
       // pilier
       var pg = ctx.createLinearGradient(g.px - 16, 0, g.px + 16, 0); pg.addColorStop(0, '#6a4f12'); pg.addColorStop(0.5, '#f6d878'); pg.addColorStop(1, '#6a4f12');
       ctx.fillStyle = pg; ctx.fillRect(g.px - u * 0.018, g.py, u * 0.036, G.h - hudH() - g.py - 12);
@@ -412,7 +417,10 @@
       tiles.forEach(function (t, i) {
         var r = rect(i), cx = r.x + r.s / 2, cy = r.y + r.s / 2, hv = waiting && hover === i && t.state === 'closed';
         var sc = t.state === 'flipping' ? Math.abs(Math.cos(Math.PI * t.u)) : 1, face = t.state === 'open' || (t.state === 'flipping' && t.u > 0.5);
-        ctx.save(); ctx.translate(cx, cy); ctx.scale(Math.max(0.02, sc), 1 + (t.state === 'flipping' ? Math.sin(Math.PI * t.u) * 0.08 : 0) + (hv ? 0.04 : 0)); ctx.translate(-cx, -cy);
+        var lift = hv ? r.s * 0.035 : 0;
+        ctx.save(); if (t.dim) ctx.globalAlpha = 0.4;   // épaisseur de la dalle + ombre portée
+        A.roundRect(ctx, r.x, r.y + r.s * 0.075, r.s, r.s, r.s * 0.1); ctx.fillStyle = '#120b04'; ctx.shadowColor = 'rgba(0,0,0,.75)'; ctx.shadowBlur = 16; ctx.shadowOffsetY = 7; ctx.fill(); ctx.restore();
+        ctx.save(); ctx.translate(cx, cy - lift); ctx.scale(Math.max(0.02, sc), 1 + (t.state === 'flipping' ? Math.sin(Math.PI * t.u) * 0.08 : 0) + (hv ? 0.04 : 0)); ctx.translate(-cx, -cy);
         if (t.dim) ctx.globalAlpha = 0.4;
         A.roundRect(ctx, r.x, r.y, r.s, r.s, r.s * 0.1);
         if (!face) {
@@ -534,6 +542,7 @@
       if (R > 4) {
         ctx.save(); ctx.translate(cx, cy);
         var gl = ctx.createRadialGradient(0, 0, R * 0.7, 0, 0, R * 1.6); gl.addColorStop(0, 'rgba(255,200,90,.35)'); gl.addColorStop(1, 'rgba(255,200,90,0)'); ctx.fillStyle = gl; ctx.fillRect(-R * 1.7, -R * 1.7, R * 3.4, R * 3.4);
+        ctx.beginPath(); ctx.arc(-G.par.x * R * 0.014, R * 0.05, R * 1.07, 0, TAU); var hw = ctx.createLinearGradient(0, -R, 0, R * 1.1); hw.addColorStop(0, '#7a5612'); hw.addColorStop(0.6, '#3c2a08'); hw.addColorStop(1, '#0e0903'); ctx.fillStyle = hw; ctx.fill();
         ctx.beginPath(); ctx.arc(0, 0, R * 1.07, 0, TAU); ctx.fillStyle = '#120c05'; ctx.fill(); ctx.lineWidth = R * 0.022; ctx.strokeStyle = A.goldGrad(ctx, -R, -R, R, R); ctx.stroke();
         ctx.save(); ctx.rotate(rot);
         for (var i = 0; i < N; i++) {
@@ -551,6 +560,11 @@
           ctx.fillText(label, R * 0.9, 0); ctx.shadowBlur = 0; ctx.restore();
         }
         ctx.restore();
+        // éclat de lumière sur la roue
+        var hla = Math.atan2(-0.8 - G.par.y * 0.5, -0.55 - G.par.x * 0.6), hlx = Math.cos(hla) * R * 0.85, hly = Math.sin(hla) * R * 0.85;
+        ctx.save(); ctx.beginPath(); ctx.arc(0, 0, R * 0.97, 0, TAU); ctx.clip();
+        var hgl = ctx.createRadialGradient(hlx, hly, 0, hlx, hly, R * 1.35); hgl.addColorStop(0, 'rgba(255,246,214,.24)'); hgl.addColorStop(0.45, 'rgba(255,246,214,.04)'); hgl.addColorStop(1, 'rgba(0,0,0,.3)');
+        ctx.fillStyle = hgl; ctx.fillRect(-R, -R, R * 2, R * 2); ctx.restore();
         // moyeu
         ctx.beginPath(); ctx.arc(0, 0, R * 0.22, 0, TAU); var hg = ctx.createRadialGradient(-R * 0.06, -R * 0.08, 0, 0, 0, R * 0.22); hg.addColorStop(0, '#2a2118'); hg.addColorStop(1, '#070504'); ctx.fillStyle = hg; ctx.fill();
         ctx.lineWidth = R * 0.02; ctx.strokeStyle = A.goldGrad(ctx, -R * 0.2, -R * 0.2, R * 0.2, R * 0.2); ctx.stroke();

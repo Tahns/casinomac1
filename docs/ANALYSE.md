@@ -288,3 +288,11 @@ Principe : le résultat reste tiré avant l'animation (modèle Stake Engine) ; l
 
 - Pesée du Cœur : les valeurs des deux plateaux sont cachées (×?). Le joueur choisit un plateau, puis la balance révèle les deux valeurs ; le gain est celui du plateau choisi. Le gain est tiré avant (modèle Stake Engine) : le tirage réattribue la valeur du gain au plateau choisi et l'autre valeur de la paire à l'autre, donc la distribution et le RTP sont inchangés (50 % faible / 50 % forte). Même mécanisme que le choix de coffres du trésor ; à signaler dans les règles et à valider juridiquement.
 - Roue : ½ et ¼ remplacés par .5 et .25 (retour utilisateur), plus grands une fois ajustés à la largeur du segment.
+
+## Itération graphique 6 — profondeur, « moins 2D » (2026-10-10)
+
+- Parallaxe à trois plans : fond (±18 px, zoom 1,05), jeu (±5 px), frise fixe ; la caméra suit le pointeur ou l'inclinaison du téléphone, sinon un balancement lent ; désactivée avec `prefers-reduced-motion`.
+- Roue : tranche de jante épaisse décalée selon la caméra, ombre de contact au sol, éclat de lumière qui suit la caméra (la roue tourne sous une source fixe), reflet spéculaire sur la jante, dôme de verre sur le moyeu, secteurs en creux (ombre intérieure + arête éclairée).
+- Décor : deux nappes de brume à profondeurs différentes, poussière d'or en parallaxe.
+- Bonus : dalles du trésor épaisses et surélevées au survol, chevilles/billes/cases du Plinko avec ombres portées, ombre de contact du socle de la balance, roue géante avec tranche et éclat.
+- Limite : tout reste du canvas 2D (pas de WebGL) pour garder le poids et la compatibilité ; une vraie 3D (three.js) serait l'étape suivante si ce rendu ne suffit pas.
