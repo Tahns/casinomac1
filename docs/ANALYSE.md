@@ -146,3 +146,20 @@ Cadre : l'achat est désactivé pendant l'auto-play, compte dans la limite de pe
 | **Menaces** | Propriété intellectuelle ; contraintes Stake et achat de bonus selon les marchés ; cadre légal ; concurrence. |
 
 **Bloqué** : validation de la propriété intellectuelle ; doc officielle Stake ; test sonore ; test sur vrai téléphone ; RNG serveur et audit ; avis juridique sur l'achat de bonus ; accord pour des illustrations générées (crédits).
+
+## 12. Itération 3 de la boucle (2026-10-10, 4 h UTC)
+
+**Corrigé**
+- **Faille d'intégrité du solde** : le solde n'était sauvegardé qu'en fin de tour. Recharger la page pendant un tour perdant rendait la mise, et un gain pouvait être perdu pendant l'animation. Comme le résultat est décidé avant l'animation, la mise débitée et le gain décidé (`pending`) sont maintenant sauvegardés **dès le début du tour** ; après un rechargement, le gain est crédité une seule fois et un message l'indique. C'est le même principe que la reprise de round du web-sdk de Stake.
+- **Tests d'interface dans le repo** : `node tools/e2e.js` (Chromium via playwright-core, outil de dev uniquement) enchaîne 30 tours dans les deux modes, 9 variantes de bonus, les 4 achats, et le scénario « rechargement en plein tour ». Je l'ai fait échouer volontairement sur l'ancienne version pour vérifier qu'il détecte le défaut.
+
+**SWOT à jour**
+
+| | |
+|---|---|
+| **Forces** | Maths testées (`check.js`) et interface testée (`e2e.js`), solde protégé contre le rechargement, 3 profils de jeu à RTP ≈ 96 %, DA cohérente, accessibilité de base, jeu responsable. |
+| **Faiblesses** | Son jamais écouté ; fluidité mobile non mesurée sur appareil réel ; art procédural ; pas de progression ; le solde et le RNG restent côté navigateur (un joueur peut modifier le stockage local : démo seulement). |
+| **Opportunités** | Profils de risque multiples ; reprise de round déjà alignée sur le modèle Stake ; illustrations générées (sur accord) ; contenu événementiel. |
+| **Menaces** | Propriété intellectuelle ; contraintes Stake et achat de bonus selon les marchés ; cadre légal ; concurrence. |
+
+**Bloqué** : validation de la propriété intellectuelle ; doc officielle Stake ; test sonore ; test sur vrai téléphone ; RNG et solde côté serveur avec audit ; avis juridique sur l'achat de bonus ; accord pour des illustrations générées.

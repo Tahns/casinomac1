@@ -7,6 +7,7 @@ python3 -m http.server 8000      # puis ouvrir http://localhost:8000
 node tools/simulate.js 10000000 1 plus  # RTP, taux de gain, distribution (graine, puis mode std | plus | buy-scarab | buy-weigh | buy-vault | buy-hand)
 node tools/tune.js               # espérance de chaque bonus isolé
 node tools/check.js              # invariants des maths (sortie 1 si échec)
+PLAYWRIGHT_CORE=/chemin/node_modules/playwright-core node tools/e2e.js   # tests de bout en bout dans Chromium
 ```
 
 | Fichier | Rôle |

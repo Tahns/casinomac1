@@ -10,7 +10,7 @@
   var AUTO_STEPS = [0, 10, 25, 50, 100];
   var SAVE_KEY = 'hoa_save_v1';
 
-  var S = { balance: 10000, bi: 3, lastWin: 0, autoIdx: 0, auto: 0, stopOnBonus: true, busy: false, hist: [], reduced: false, mode: 'std', buyOn: true, limit: 0, quality: 'auto', limitHit: false };
+  var S = { pending: 0, balance: 10000, bi: 3, lastWin: 0, autoIdx: 0, auto: 0, stopOnBonus: true, busy: false, hist: [], reduced: false, mode: 'std', buyOn: true, limit: 0, quality: 'auto', limitHit: false };
   var SESS = { start: Date.now(), spins: 0, wag: 0, won: 0, lastCheck: Date.now() };
   var LIMITS = [0, 1000, 5000, 20000];
   var rng = M.cryptoRng();
@@ -27,6 +27,8 @@
         if (typeof d.stopOnBonus === 'boolean') S.stopOnBonus = d.stopOnBonus;
         if (d.reduced) { S.reduced = true; FX.reduced = true; }
         if (Array.isArray(d.hist)) S.hist = d.hist.slice(0, 10);
+        // tour interrompu (rechargement en pleine animation) : le résultat était déjà décidé, on le crédite
+        if (typeof d.pending === 'number' && d.pending > 0) { S.balance += d.pending; S.resumed = d.pending; }
         if (d.mode === 'plus') S.mode = 'plus';
         if (d.buyOn === false) S.buyOn = false;
         if (LIMITS.indexOf(d.limit) >= 0) S.limit = d.limit;
@@ -39,7 +41,7 @@
   }
   function save() {
     try {
-      localStorage.setItem(SAVE_KEY, JSON.stringify({ balance: S.balance, bi: S.bi, lang: I18N.lang(), muted: Sfx.isMuted(), turbo: G.turbo, stopOnBonus: S.stopOnBonus, reduced: S.reduced, hist: S.hist, mode: S.mode, buyOn: S.buyOn, limit: S.limit, quality: S.quality }));
+      localStorage.setItem(SAVE_KEY, JSON.stringify({ pending: S.pending, balance: S.balance, bi: S.bi, lang: I18N.lang(), muted: Sfx.isMuted(), turbo: G.turbo, stopOnBonus: S.stopOnBonus, reduced: S.reduced, hist: S.hist, mode: S.mode, buyOn: S.buyOn, limit: S.limit, quality: S.quality }));
     } catch (e) {}
   }
 
@@ -113,6 +115,8 @@
     S.busy = true; G.speed = G.turbo ? 1.6 : 1;
     S.balance -= c; SESS.spins++; SESS.wag += c; updateHud(true); setWin(0, false); setSpinBtn();
     var round = buyKind ? M.playBuy(rng, buyKind) : M.playRound(rng, S.mode), hadBonus = false;
+    // le gain est connu avant l'animation : on le met en attente et on sauvegarde tout de suite la mise débitée
+    S.pending = Math.round(Math.min(round.total, M.MAX_WIN) * b * 100) / 100; save();
     G.wheel.clearHighlight(); G.wheel.clearOracle();
     say(T.spinning);
     var total = 0;
@@ -160,7 +164,7 @@
     } else { setWin(0); say(T.ready); }
     pushHistory(total, hadBonus);
     G.wheel.clearHighlight();
-    S.busy = false; G.speed = G.turbo ? 1.6 : 1;
+    S.pending = 0; S.busy = false; G.speed = G.turbo ? 1.6 : 1;
     save();
     var stopped = responsibleCheck();
     if (S.auto > 0 && !buyKind) {
@@ -319,6 +323,7 @@
   /* ---------- démarrage ---------- */
   load(); G.quality = S.quality; if (S.quality === 'low') FX.lite = true; I18N.apply(); refreshSound(); applyLang();
   updateHud(); setWin(0); setSpinBtn(); renderHistory();
+  if (S.resumed) { say(I18N.t().resumed + ' +' + G.fmt(S.resumed)); save(); }
   G.start();
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { G.wheel.build(); });
   // utilitaires de test (?debug)
