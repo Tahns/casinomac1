@@ -340,4 +340,22 @@
   // utilitaires de test (?debug)
   G.S = S; G.play = play;
   if (/[?&]debug/.test(location.search)) { G.debug = true; }
+
+  /* ---------- écran d'accueil : ambiance + déverrouillage de l'audio ---------- */
+  (function () {
+    var sp = $('splash');
+    if (!sp || navigator.webdriver || /[?&](debug|nosplash)/.test(location.search)) { if (sp) sp.remove(); return; }
+    var T = I18N.t(), port = root.innerHeight > root.innerWidth, src = (root.HOA_IMG || {})[port ? 'splashp' : 'splash'];
+    if (src) sp.style.backgroundImage = 'url(' + src + ')';
+    $('spSub').textContent = T.splashSub; $('spBtn').textContent = T.splashEnter; $('spDemo').textContent = T.splashDemo;
+    sp.hidden = false;
+    function enter() {
+      Sfx.unlock(); Sfx.startAmbient(); Sfx.bonus();
+      sp.classList.add('out'); setTimeout(function () { sp.remove(); }, 1000);
+      document.removeEventListener('keydown', key, true);
+    }
+    function key(e) { if (e.code === 'Space' || e.code === 'Enter') { e.preventDefault(); e.stopImmediatePropagation(); enter(); } }
+    document.addEventListener('keydown', key, true);
+    sp.addEventListener('click', enter);
+  })();
 })(window);

@@ -50,7 +50,8 @@
   /* ---------- mise en page ---------- */
   var bg = document.createElement('canvas'), frz = document.createElement('canvas');
   var lampOn, lampOff, torchT = 0;
-  var dust = [];
+  var dust = [], embers = [];
+  for (var ei = 0; ei < 34; ei++) embers.push({ x: Math.random(), y: Math.random(), s: 1 + Math.random() * 2.4, v: 0.02 + Math.random() * 0.05, p: Math.random() * 6.28, teal: Math.random() < 0.55 });
   for (var di = 0; di < 46; di++) dust.push({ x: Math.random(), y: Math.random(), s: 0.6 + Math.random() * 1.8, v: 0.01 + Math.random() * 0.035, p: Math.random() * 6.28 });
 
   function layout() {
@@ -227,6 +228,24 @@
       ctx.beginPath(); ctx.arc(xx, yy, d.s, 0, TAU); ctx.fill();
     }
     ctx.globalAlpha = 1;
+    // étalonnage « Hand of Anubis » : ombres violettes en haut, lueur turquoise du sol, braises qui montent
+    var fk = 0.92 + Math.sin(t * 7.3) * 0.045 + Math.sin(t * 17.1) * 0.03;
+    ctx.save(); ctx.globalCompositeOperation = 'screen';
+    var vg1 = ctx.createLinearGradient(0, 0, 0, h * 0.6); vg1.addColorStop(0, 'rgba(96,34,170,' + 0.34 * (1 - dim * 0.4) + ')'); vg1.addColorStop(1, 'rgba(96,34,170,0)');
+    ctx.fillStyle = vg1; ctx.fillRect(0, 0, w, h);
+    var tg = ctx.createRadialGradient(G.cx, h * 1.02, 0, G.cx, h * 1.02, Math.max(w, h) * 0.55); tg.addColorStop(0, 'rgba(32,210,190,' + 0.09 * fk + ')'); tg.addColorStop(1, 'rgba(32,210,190,0)');
+    ctx.fillStyle = tg; ctx.fillRect(0, 0, w, h);
+    ctx.restore();
+    if (!FX.lite) {
+      for (var ej = 0; ej < embers.length; ej++) {
+        var em = embers[ej], ey = (1 - mod(em.y + t * em.v, 1)) * h, ex = (em.x + Math.sin(t * 0.5 + em.p) * 0.03) * w + G.par.x * em.s * 14, ea = Math.sin(Math.PI * (1 - ey / h)) * (0.35 + 0.35 * Math.sin(t * 2 + em.p));
+        ctx.globalAlpha = Math.max(0, ea); ctx.fillStyle = em.teal ? '#6ff0dd' : '#ffb347';
+        ctx.shadowColor = ctx.fillStyle; ctx.shadowBlur = 8; ctx.beginPath(); ctx.arc(ex, ey, em.s, 0, TAU); ctx.fill();
+      }
+      ctx.shadowBlur = 0; ctx.globalAlpha = 1;
+    }
+    var vv = ctx.createRadialGradient(w / 2, h * 0.5, Math.min(w, h) * 0.35, w / 2, h * 0.5, Math.max(w, h) * 0.8); vv.addColorStop(0, 'rgba(18,6,36,0)'); vv.addColorStop(1, 'rgba(34,10,70,.55)');
+    ctx.fillStyle = vv; ctx.fillRect(0, 0, w, h);
     if (dim) { ctx.fillStyle = 'rgba(0,0,0,' + dim + ')'; ctx.fillRect(0, 0, w, h); }
   }
   G.drawBackdrop = drawBackdrop;

@@ -296,3 +296,9 @@ Principe : le résultat reste tiré avant l'animation (modèle Stake Engine) ; l
 - Décor : deux nappes de brume à profondeurs différentes, poussière d'or en parallaxe.
 - Bonus : dalles du trésor épaisses et surélevées au survol, chevilles/billes/cases du Plinko avec ombres portées, ombre de contact du socle de la balance, roue géante avec tranche et éclat.
 - Limite : tout reste du canvas 2D (pas de WebGL) pour garder le poids et la compatibilité ; une vraie 3D (three.js) serait l'étape suivante si ce rendu ne suffit pas.
+
+## Itération 8 — ambiance Hand of Anubis (2026-10-10)
+
+- Écran d'accueil illustré (art clé généré, paysage et portrait) : titre en or, bouton ENTRER, mention démo/jeu responsable ; l'entrée déverrouille l'audio et lance l'ambiance. Désactivé en test automatisé (`navigator.webdriver`, `?debug`, `?nosplash`).
+- Étalonnage : ombres violettes en haut, lueur turquoise du sol, vignette violette, braises turquoise et ambrées qui montent, vacillement des torches.
+- Ambiance sonore procédurale : bourdon grave en ré (gamme phrygienne dominante), vent qui respire, cloches rares et battement sourd aléatoires. Non écoutée par l'auteur (environnement sans audio) : à valider à l'oreille.

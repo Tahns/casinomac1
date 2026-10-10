@@ -76,19 +76,45 @@
       A.thud();
     },
     countTick: function (p) { tone(900 + p * 900, 0.03, 'square', 0.03); },
+    // ambiance du temple : bourdon grave (ré, gamme phrygienne dominante), vent, cloches rares, battement sourd
     startAmbient: function () {
       if (!ensure() || ambNodes) return;
-      var o1 = ctx.createOscillator(), o2 = ctx.createOscillator(), lfo = ctx.createOscillator(), lg = ctx.createGain(), g = ctx.createGain(), f = ctx.createBiquadFilter();
-      o1.type = 'sawtooth'; o2.type = 'sawtooth'; o1.frequency.value = 82.4; o2.frequency.value = 82.9; lfo.frequency.value = 0.12; lg.gain.value = 260;
-      f.type = 'lowpass'; f.frequency.value = 520; lfo.connect(lg); lg.connect(f.frequency);
-      g.gain.value = 0; g.gain.linearRampToValueAtTime(0.05, ctx.currentTime + 3);
-      o1.connect(f); o2.connect(f); f.connect(g); g.connect(musBus); o1.start(); o2.start(); lfo.start();
-      ambNodes = { o1: o1, o2: o2, lfo: lfo, g: g };
+      var t0 = ctx.currentTime, nodes = [], g = ctx.createGain(), f = ctx.createBiquadFilter(), lfo = ctx.createOscillator(), lg = ctx.createGain();
+      f.type = 'lowpass'; f.frequency.value = 420; lfo.frequency.value = 0.07; lg.gain.value = 220; lfo.connect(lg); lg.connect(f.frequency);
+      g.gain.value = 0; g.gain.linearRampToValueAtTime(0.07, t0 + 4);
+      [[73.4, 'sawtooth'], [73.9, 'sawtooth'], [110.2, 'triangle'], [36.7, 'sine']].forEach(function (p, i) {
+        var o = ctx.createOscillator(), og = ctx.createGain(); o.type = p[1]; o.frequency.value = p[0]; og.gain.value = i === 3 ? 1.6 : i === 2 ? 0.5 : 0.8;
+        o.connect(og); og.connect(f); o.start(); nodes.push(o);
+      });
+      f.connect(g); g.connect(musBus); lfo.start(); nodes.push(lfo);
+      // vent : bruit filtré dont la fréquence respire
+      var len = ctx.sampleRate * 3, buf = ctx.createBuffer(1, len, ctx.sampleRate), d = buf.getChannelData(0);
+      for (var i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+      var ns = ctx.createBufferSource(); ns.buffer = buf; ns.loop = true;
+      var bf = ctx.createBiquadFilter(), wg = ctx.createGain(), wl = ctx.createOscillator(), wlg = ctx.createGain();
+      bf.type = 'bandpass'; bf.frequency.value = 520; bf.Q.value = 0.8; wg.gain.value = 0.035;
+      wl.frequency.value = 0.09; wlg.gain.value = 260; wl.connect(wlg); wlg.connect(bf.frequency);
+      ns.connect(bf); bf.connect(wg); wg.connect(musBus); ns.start(); wl.start(); nodes.push(ns, wl);
+      ambNodes = { nodes: nodes, g: g, alive: true };
+      // cloches et battements aléatoires
+      var PHRYG = [293.66, 311.13, 369.99, 392.0, 440.0, 466.16, 523.25, 587.33];
+      (function next() {
+        if (!ambNodes || !ambNodes.alive) return;
+        setTimeout(function () {
+          if (!ambNodes || !ambNodes.alive) return;
+          if (!muted) {
+            var r = Math.random();
+            if (r < 0.7) { var fq = PHRYG[Math.floor(Math.random() * PHRYG.length)] * (Math.random() < 0.4 ? 2 : 1); tone(fq, 2.4, 'sine', 0.035, 0, null, true, musBus); tone(fq * 2.01, 1.4, 'sine', 0.012, 0.01, null, true, musBus); }
+            else { tone(55, 0.5, 'sine', 0.09, 0, 36, false, musBus); tone(55, 0.5, 'sine', 0.06, 0.28, 36, false, musBus); }
+          }
+          next();
+        }, 4500 + Math.random() * 7000);
+      })();
     },
     stopAmbient: function () {
-      if (!ambNodes) return; var n = ambNodes; ambNodes = null;
+      if (!ambNodes) return; var n = ambNodes; ambNodes = null; n.alive = false;
       n.g.gain.cancelScheduledValues(ctx.currentTime); n.g.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.6);
-      setTimeout(function () { try { n.o1.stop(); n.o2.stop(); n.lfo.stop(); } catch (e) {} }, 700);
+      setTimeout(function () { n.nodes.forEach(function (o) { try { o.stop(); } catch (e) {} }); }, 700);
     },
     setMuted: function (m) { muted = m; if (master) master.gain.value = m ? 0 : 0.85; },
     isMuted: function () { return muted; }
