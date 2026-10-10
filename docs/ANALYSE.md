@@ -270,3 +270,7 @@ Cadre : l'achat est désactivé pendant l'auto-play, compte dans la limite de pe
 
 - Cinzel a des chiffres elzéviriens (hauteurs variables, « 5 » qui descend) : peu lisibles en gros gains et sur les segments étroits. Les chiffres passent en Oswald 600/700 (condensée, chiffres alignés), détectés automatiquement (`G.isNum`) dans toutes les fonctions de texte du canvas, plus le HUD (solde, mise, prix d'achat).
 - Les montants et multiplicateurs en or gagnent une épaisseur (ombre portée dure). Polices embarquées : +25 Ko.
+
+## Itération graphique 5 — chiffres droits sur la roue (2026-10-10)
+
+- Retour utilisateur : les chiffres radiaux n'étaient pas homogènes avec les logos (droits). Les valeurs de la roue sont maintenant droites dans leur segment, comme les logos, réduites pour tenir dans la largeur du secteur ; 0,25 et 0,5 s'affichent ¼ et ½ (plus étroits).

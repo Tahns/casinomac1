@@ -298,15 +298,20 @@
       f.save(); f.rotate(am);
       var big = M.KINDS[k].bonus || k === 'ankh';
       if (!big) {
-        var lab = k === 'm0' ? '0' : ({ m025: '0.25', m05: '0.5', m1: '1', m2: '2', m3: '3' })[k];
-        var fs = R * (k === 'm0' ? 0.07 : k === 'm025' ? 0.085 : 0.1);
-        f.font = '700 ' + fs * (k === 'm025' || k === 'm05' ? 1.06 : 1.2) + 'px ' + G.NUM; f.textAlign = 'right'; f.textBaseline = 'middle';
+        var lab = k === 'm0' ? '0' : ({ m025: '¼', m05: '½', m1: '1', m2: '2', m3: '3' })[k];
+        // chiffres droits dans le segment (même sens que les logos) ; réduits pour tenir dans la largeur du secteur
+        f.rotate(Math.PI / 2);
+        var fs = R * (k === 'm0' ? 0.085 : k === 'm025' || k === 'm05' ? 0.14 : 0.12), wMax = 2 * Math.PI / M.N * R * 0.80 * 0.9;
+        f.font = '700 ' + fs + 'px ' + G.NUM;
+        var tw = f.measureText(lab).width; if (tw > wMax) fs *= wMax / tw;
+        f.font = '700 ' + fs + 'px ' + G.NUM; f.textAlign = 'center'; f.textBaseline = 'middle';
         f.fillStyle = v.tx;
         if (k !== 'm0') { f.shadowColor = 'rgba(0,0,0,.55)'; f.shadowBlur = 3; }
-        f.fillText(lab, R * 0.78, 0);
-        if (k !== 'm0') { f.font = '600 ' + fs * 0.7 + 'px ' + G.NUM; f.textAlign = 'left'; f.fillText('×', R * 0.785, fs * 0.04); }
+        var ny = -R * (k === 'm0' ? 0.80 : 0.79);
+        f.fillText(lab, 0, ny);
+        if (k !== 'm0') { f.font = '600 ' + Math.min(fs * 0.62, R * 0.06) + 'px ' + G.NUM; f.fillText('×', 0, ny + fs * 0.78); }
         f.shadowBlur = 0;
-        if (k === 'm0') { f.globalAlpha = 0.55; A.skullX(f, R * 0.52, 0, R * 0.07, v.tx); f.globalAlpha = 1; }
+        if (k === 'm0') { f.globalAlpha = 0.55; A.skullX(f, 0, -R * 0.62, R * 0.07, v.tx); f.globalAlpha = 1; }
       } else {
         f.rotate(Math.PI / 2); // icône à l'endroit, nom en radial
         var iy = -R * 0.80, isz = R * (k === 'ankh' ? 0.115 : 0.125);
