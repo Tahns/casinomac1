@@ -497,7 +497,9 @@
         // moyeu
         ctx.beginPath(); ctx.arc(0, 0, R * 0.22, 0, TAU); var hg = ctx.createRadialGradient(-R * 0.06, -R * 0.08, 0, 0, 0, R * 0.22); hg.addColorStop(0, '#2a2118'); hg.addColorStop(1, '#070504'); ctx.fillStyle = hg; ctx.fill();
         ctx.lineWidth = R * 0.02; ctx.strokeStyle = A.goldGrad(ctx, -R * 0.2, -R * 0.2, R * 0.2, R * 0.2); ctx.stroke();
-        ctx.save(); ctx.beginPath(); ctx.arc(0, 0, R * 0.2, 0, TAU); ctx.clip(); A.jackal(ctx, 0, -R * 0.05, R * 0.09, { glow: 0.8 + 0.2 * Math.sin(G.t * 3) }); ctx.restore();
+        ctx.save(); ctx.beginPath(); ctx.arc(0, 0, R * 0.2, 0, TAU); ctx.clip();
+        if (G.art.medal) ctx.drawImage(G.art.medal, -R * 0.2, -R * 0.2, R * 0.4, R * 0.4); else A.jackal(ctx, 0, -R * 0.05, R * 0.09, { glow: 0.8 + 0.2 * Math.sin(G.t * 3) });
+        ctx.restore();
         // pointeur
         ctx.save(); ctx.translate(0, -R * 1.08); ctx.rotate(ptr); var ps = R * 0.12;
         ctx.beginPath(); ctx.moveTo(-ps * 0.6, -ps * 0.5); ctx.quadraticCurveTo(0, -ps * 0.9, ps * 0.6, -ps * 0.5); ctx.lineTo(0, ps * 1.5); ctx.closePath();
@@ -527,7 +529,10 @@
         var ig = ctx.createRadialGradient(0, 0, 0, 0, 0, u * 0.2); ig.addColorStop(0, 'rgba(255,216,106,.5)'); ig.addColorStop(1, 'rgba(255,216,106,0)'); ctx.fillStyle = ig; ctx.fillRect(-u * 0.2, -u * 0.2, u * 0.4, u * 0.4);
         iconAt(0, 0, u * 0.2); ctx.restore();
       }
-      if (handAlpha > 0.01 && handY > -9000) { ctx.save(); ctx.globalAlpha = handAlpha; A.hand(ctx, cx, handY, u * 0.25, {}); ctx.restore(); }
+      if (handAlpha > 0.01 && handY > -9000) { ctx.save(); ctx.globalAlpha = handAlpha;
+        if (G.art.hand) { var hs = u * 0.75; ctx.globalCompositeOperation = 'screen'; ctx.translate(cx, handY - hs * 0.12 + u * 0.1); ctx.rotate(Math.PI); ctx.drawImage(G.art.hand, -hs / 2, -hs / 2, hs, hs); }
+        else A.hand(ctx, cx, handY, u * 0.25, {});
+        ctx.restore(); }
       if (bolts > 0) { ctx.save(); ctx.globalAlpha = bolts; for (var b = 0; b < 7; b++) { var a = b / 7 * TAU + G.t; drawBolt(cx, g.cy, cx + Math.cos(a) * u * 0.6, g.cy + Math.sin(a) * u * 0.6, '#9ab8ff', 3); } ctx.restore(); }
       chrome(S);
     };

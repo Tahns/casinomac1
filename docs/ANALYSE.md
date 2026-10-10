@@ -256,3 +256,8 @@ Cadre : l'achat est désactivé pendant l'auto-play, compte dans la limite de pe
 - Chaque bonus a désormais son décor, avec voile sombre pour la lisibilité (`contrast`, `layout`, `e2e` passent).
 - Repli : sans image, le décor vectoriel d'origine s'affiche.
 - Risque à lever par l'utilisateur : droits d'usage commercial des images générées à vérifier dans les CGU Higgsfield avant une mise en ligne sur Stake.
+
+## Itération graphique 2 — médaillon, gros gains, Main d'Anubis (2026-10-10)
+
+- Nouvelles illustrations Higgsfield (gpt_image_2) : médaillon d'Anubis (moyeu des deux roues et gardiens de l'écran de gros gain), fond de gros gain (rayons, pièces), Main d'Anubis dorée (descend sur le bonus en rotation 180°, fusionnée en `screen`), œil d'Horus (disponible dans `img/`, pas encore utilisé).
+- Toutes avec repli vectoriel si l'image manque. Poids total des images ≈ 0,6 Mo.
