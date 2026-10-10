@@ -265,3 +265,8 @@ Cadre : l'achat est désactivé pendant l'auto-play, compte dans la limite de pe
 ## Itération graphique 3 — logos de bonus (2026-10-10)
 
 - Quatre logos illustrés (scarabée ailé, plume de Maât, pyramide d'améthyste, Main d'Anubis à l'orbe), utilisés sur la roue, l'intro de chaque bonus et les cartes d'achat. Le fond noir est rendu transparent au chargement (alpha selon la luminance), avec repli vectoriel si l'image manque.
+
+## Itération graphique 4 — chiffres (2026-10-10)
+
+- Cinzel a des chiffres elzéviriens (hauteurs variables, « 5 » qui descend) : peu lisibles en gros gains et sur les segments étroits. Les chiffres passent en Oswald 600/700 (condensée, chiffres alignés), détectés automatiquement (`G.isNum`) dans toutes les fonctions de texte du canvas, plus le HUD (solde, mise, prix d'achat).
+- Les montants et multiplicateurs en or gagnent une épaisseur (ombre portée dure). Polices embarquées : +25 Ko.

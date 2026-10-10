@@ -84,7 +84,7 @@
       ctx.save(); ctx.translate(G.cx, G.cy); ctx.scale(sc, sc);
       G.goldText(T.bonusWin, 0, -u * 0.17, clamp(u * 0.055, 20, 44), { spacing: 5 });
       G.goldText('×' + G.fmt(Math.round(f.count * 100) / 100), 0, 0, clamp(u * 0.16, 54, 150), { blur: 44 });
-      G.txt(G.fmt(Math.round(f.count * f.bet * 100) / 100), 0, u * 0.14, { size: clamp(u * 0.06, 22, 54), fill: '#fff1b8', stroke: '#2a1a02', shadow: 'rgba(255,200,60,.6)', family: 'Manrope', weight: 800 });
+      G.txt(G.fmt(Math.round(f.count * f.bet * 100) / 100), 0, u * 0.14, { size: clamp(u * 0.06, 22, 54), fill: '#fff1b8', stroke: '#2a1a02', shadow: 'rgba(255,200,60,.6)' });
       ctx.restore();
     }
   }
@@ -490,7 +490,7 @@
           ctx.save(); ctx.rotate((i + 0.5) * st - Math.PI / 2);
           ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
           var label = s.x ? '×' + s.x : String(s.n), big = s.x ? 0.12 : (label.length > 2 ? 0.095 : 0.115);
-          ctx.font = '900 ' + R * big + 'px Cinzel, serif'; ctx.fillStyle = s.x ? col[0] : '#fff'; ctx.shadowColor = 'rgba(0,0,0,.6)'; ctx.shadowBlur = 4;
+          ctx.font = '700 ' + R * big * 1.15 + 'px ' + G.NUM; ctx.fillStyle = s.x ? col[0] : '#fff'; ctx.shadowColor = 'rgba(0,0,0,.6)'; ctx.shadowBlur = 4;
           if (s.x) { ctx.shadowColor = col[0]; ctx.shadowBlur = 12; }
           ctx.fillText(label, R * 0.9, 0); ctx.shadowBlur = 0; ctx.restore();
         }
@@ -513,8 +513,8 @@
         if (G.h < 520) { mx = 70; my = g.cy; }
         else if (G.w < 700) { mx = G.w - 52; my = g.cy - g.R * 1.0; }
         ctx.save(); ctx.translate(mx, (G.w < 700 || G.h < 520) ? my : T0() + EX(130)); ctx.scale(ms, ms);
-        G.txt(I18N.lang() === 'fr' ? (G.w < 700 ? 'MULTIPL.' : 'MULTIPLICATEUR') : (G.w < 700 ? 'MULT.' : 'MULTIPLIER'), 0, -28, { size: 10, family: 'Manrope', weight: 800, fill: '#b9a780', spacing: G.w < 700 ? 1 : 3 });
-        G.goldText('×' + multShown, 0, 6, Math.min(64, G.w * 0.08), { blur: 28 });
+        G.txt(I18N.lang() === 'fr' ? (G.w < 700 ? 'MULTIPL.' : 'MULTIPLICATEUR') : (G.w < 700 ? 'MULT.' : 'MULTIPLIER'), 0, -38, { size: 10, family: 'Manrope', weight: 800, fill: '#b9a780', spacing: G.w < 700 ? 1 : 3 });
+        G.goldText('×' + multShown, 0, 8, Math.min(64, G.w * 0.08), { blur: 28 });
         ctx.restore();
       }
       // orbe volant

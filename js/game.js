@@ -20,9 +20,13 @@
   G.nextFrame = function () { return G.sleep(0); };
 
   /* ---------- texte ---------- */
+  // chiffres : police condensée à chiffres alignés (Cinzel a des chiffres elzéviriens, peu lisibles)
+  G.NUM = "Oswald, 'Cinzel', serif";
+  var isNum = G.isNum = function (s) { return /^[+×x\d\s.,\u00a0\u202f]+$/.test(String(s)) && /\d/.test(String(s)); };
   G.txt = function (s, x, y, o) {
     o = o || {};
-    ctx.font = (o.weight || 800) + ' ' + (o.size || 20) + 'px ' + (o.family || 'Cinzel, serif');
+    var num = !o.family && isNum(s);
+    ctx.font = (num ? 700 : (o.weight || 800)) + ' ' + (o.size || 20) * (num ? 1.14 : 1) + 'px ' + (num ? G.NUM : (o.family || 'Cinzel, serif'));
     ctx.textAlign = o.align || 'center'; ctx.textBaseline = o.base || 'middle';
     if (o.spacing && ctx.letterSpacing !== undefined) ctx.letterSpacing = o.spacing + 'px';
     if (o.shadow) { ctx.shadowColor = o.shadow; ctx.shadowBlur = o.blur || 12; }
@@ -35,6 +39,7 @@
     o = o || {};
     var g = ctx.createLinearGradient(0, y - size * 0.55, 0, y + size * 0.55);
     g.addColorStop(0, '#fffbe0'); g.addColorStop(0.45, '#f6c850'); g.addColorStop(0.62, '#b8861e'); g.addColorStop(1, '#ffe596');
+    if (isNum(s)) G.txt(s, x, y + size * 0.05, { size: size, fill: '#6a4208', stroke: '#2a1802', sw: o.sw || size * 0.1, align: o.align, spacing: o.spacing }); // épaisseur
     G.txt(s, x, y, { size: size, weight: 900, fill: g, stroke: o.stroke || '#3a2706', sw: o.sw || size * 0.1, shadow: o.shadow || 'rgba(230,185,74,.55)', blur: o.blur || 18, align: o.align, spacing: o.spacing });
   };
   G.fmt = function (n) {
@@ -295,11 +300,11 @@
       if (!big) {
         var lab = k === 'm0' ? '0' : ({ m025: '0.25', m05: '0.5', m1: '1', m2: '2', m3: '3' })[k];
         var fs = R * (k === 'm0' ? 0.07 : k === 'm025' ? 0.085 : 0.1);
-        f.font = '900 ' + fs + 'px Cinzel, serif'; f.textAlign = 'right'; f.textBaseline = 'middle';
+        f.font = '700 ' + fs * (k === 'm025' || k === 'm05' ? 1.06 : 1.2) + 'px ' + G.NUM; f.textAlign = 'right'; f.textBaseline = 'middle';
         f.fillStyle = v.tx;
         if (k !== 'm0') { f.shadowColor = 'rgba(0,0,0,.55)'; f.shadowBlur = 3; }
         f.fillText(lab, R * 0.78, 0);
-        if (k !== 'm0') { f.font = '800 ' + fs * 0.62 + 'px Cinzel, serif'; f.textAlign = 'left'; f.fillText('×', R * 0.785, fs * 0.04); }
+        if (k !== 'm0') { f.font = '600 ' + fs * 0.7 + 'px ' + G.NUM; f.textAlign = 'left'; f.fillText('×', R * 0.785, fs * 0.04); }
         f.shadowBlur = 0;
         if (k === 'm0') { f.globalAlpha = 0.55; A.skullX(f, R * 0.52, 0, R * 0.07, v.tx); f.globalAlpha = 1; }
       } else {
