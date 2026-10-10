@@ -184,3 +184,23 @@ Cadre : l'achat est désactivé pendant l'auto-play, compte dans la limite de pe
 | **Menaces** | Propriété intellectuelle ; contraintes Stake et achat de bonus selon les marchés ; cadre légal ; concurrence. |
 
 **Bloqué** : validation de la propriété intellectuelle ; doc officielle Stake ; test sonore ; test sur vrai téléphone ; RNG et solde côté serveur avec audit ; avis juridique sur l'achat de bonus ; accord pour des illustrations générées.
+
+## 14. Itération 5 de la boucle (2026-10-10, 12 h UTC)
+
+**Mesuré puis corrigé : le contraste des textes** (`node tools/contrast.js`, WCAG AA : 4,5 pour le texte normal, 3 pour le grand texte, 23 couples texte/fond testés).
+- Défaut réel : le texte « TOURNER » du bouton principal tombait à **2,2:1** dans le coin le plus sombre du dégradé doré, et trois autres couples (bouton « Acheter », boutons des cartes d'achat, libellé 0,25× de la roue) étaient entre 4,2 et 4,4.
+- Correction : dégradés dorés éclaircis (le point le plus sombre passe de `#6d4f10` à `#b8861e`), texte plus sombre (`#140a00` / `#1a0f00`), libellé 0,25× plus clair. Tous les couples passent (plus petit ratio : 3,1 sur des libellés de roue, au-dessus du seuil de 3).
+- Le test vérifie aussi que les couleurs testées sont bien celles du CSS et de `game.js`, pour qu'il ne dérive pas.
+
+**Limites de cette mesure** : seuls les couples listés sont testés (pas les textes posés sur des effets lumineux ou des dégradés animés du canvas) ; aucun test de daltonisme ; mesure théorique, pas un audit avec utilisateurs.
+
+**SWOT à jour**
+
+| | |
+|---|---|
+| **Forces** | Maths, interface et contrastes testés automatiquement ; solde protégé ; accessibilité clavier, lecteur d'écran, mouvement réduit, zoom ; 3 profils de jeu à RTP ≈ 96 % ; DA cohérente ; jeu responsable. |
+| **Faiblesses** | Son jamais écouté ; fluidité mobile non mesurée sur appareil réel ; art procédural ; pas de progression ; solde et RNG côté navigateur ; daltonisme non évalué. |
+| **Opportunités** | Profils de risque multiples ; reprise de round alignée sur Stake ; illustrations générées (sur accord) ; contenu événementiel. |
+| **Menaces** | Propriété intellectuelle ; contraintes Stake et achat de bonus selon les marchés ; cadre légal ; concurrence. |
+
+**Bloqué** : validation de la propriété intellectuelle ; doc officielle Stake ; test sonore ; test sur vrai téléphone ; RNG et solde côté serveur avec audit ; avis juridique sur l'achat de bonus ; accord pour des illustrations générées.
