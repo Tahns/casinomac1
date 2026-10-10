@@ -279,11 +279,7 @@
   /* ---------- table des gains & réglages ---------- */
   function openInfo() {
     var T = I18N.t(), k, rows = '';
-    var desc = {
-      scarab: I18N.lang() === 'fr' ? '3 scarabées dans le Plinko : jusqu\'à 25× chacun' : '3 scarabs in the Plinko: up to 25× each',
-      weigh: I18N.lang() === 'fr' ? 'Cœur vs plume : jusqu\'à 200×' : 'Heart vs feather: up to 200×',
-      vault: I18N.lang() === 'fr' ? 'Chambres à ouvrir, évitez la malédiction' : 'Open chambers, dodge the curse'
-    };
+    var desc = T.buyDesc; // mêmes descriptions que le menu d'achat : une seule source, une seule vérité
     ['m0', 'm025', 'm05', 'm1', 'm2', 'm3', 'ankh', 'scarab', 'weigh', 'vault'].forEach(function (id) {
       var def = M.KINDS[id], pays = def.bonus ? desc[id] : def.respin ? T.respinLabel : (def.mult ? def.mult + '×' : T.noWin);
       rows += '<tr><td><span class="sw" style="background:' + G.kindColor(id) + '"></span>' + T.kinds[id] + '</td><td class="n">' + def.count + ' / ' + M.N + '</td><td>' + pays + '</td></tr>';

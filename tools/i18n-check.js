@@ -1,0 +1,52 @@
+// node tools/i18n-check.js — FR/EN : mêmes clés partout, mêmes types, pas de texte vide ; et repère le français écrit en dur hors de i18n.js.
+var fs = require('fs'), path = require('path'), vm = require('vm');
+var root = path.join(__dirname, '..'), fails = 0;
+function ok(c, m) { if (!c) { fails++; console.log('ÉCHEC  ' + m); } else console.log('ok     ' + m); }
+
+var sandbox = { window: {}, document: { documentElement: {}, querySelectorAll: function () { return []; } } };
+vm.createContext(sandbox);
+// i18n.js expose window.I18N ; on récupère les deux dictionnaires en les interrogeant
+vm.runInContext(fs.readFileSync(path.join(root, 'js/i18n.js'), 'utf8').replace('root.I18N = {', 'root.I18N = { _D: D,'), sandbox);
+sandbox.root = sandbox.window;
+var D = sandbox.window.I18N && sandbox.window.I18N._D;
+ok(!!D && D.fr && D.en, 'dictionnaires fr et en chargés');
+
+function walk(a, b, p, out) {
+  Object.keys(a).forEach(function (k) {
+    var q = p ? p + '.' + k : k;
+    if (!(k in b)) { out.push('absent côté en: ' + q); return; }
+    if (typeof a[k] !== typeof b[k]) { out.push('type différent: ' + q); return; }
+    if (Array.isArray(a[k])) { if (a[k].length !== b[k].length) out.push('longueur différente: ' + q); }
+    else if (a[k] && typeof a[k] === 'object') walk(a[k], b[k], q, out);
+    else if (typeof a[k] === 'string' && !a[k].trim() && k !== 'brandTop') out.push('texte vide: ' + q);
+  });
+}
+var diffs = [];
+walk(D.fr, D.en, '', diffs); walk(D.en, D.fr, '', diffs.fr = []);
+(diffs.fr || []).forEach(function (d) { diffs.push(d.replace('côté en', 'côté fr')); });
+ok(diffs.length === 0, 'clés, types et longueurs identiques en FR et EN' + (diffs.length ? ' : ' + diffs.slice(0, 6).join(' | ') : ''));
+
+// français écrit en dur dans le code (hors i18n.js), dans les chaînes de caractères
+var files = fs.readdirSync(path.join(root, 'js')).filter(function (f) { return /\.js$/.test(f) && f !== 'i18n.js'; });
+var hits = [];
+files.forEach(function (f) {
+  fs.readFileSync(path.join(root, 'js', f), 'utf8').split('\n').forEach(function (line, i) {
+    var code = line.replace(/\/\/.*$/, '').replace(/\/\*.*?\*\//g, '');
+    var m = code.match(/(['"`])((?:\\.|(?!\1).)*[éèêàâùûçôîï](?:\\.|(?!\1).)*)\1/g);
+    if (m) m.forEach(function (s) { if (/[a-zA-Z]{3}/.test(s)) hits.push(f + ':' + (i + 1) + ' ' + s.slice(0, 60)); });
+  });
+});
+// textes affichés à l'écran qui doivent passer par I18N (les commentaires et les noms internes sont exclus ci-dessus)
+ok(hits.length === 0, 'aucun texte français écrit en dur dans le code' + (hits.length ? ' (' + hits.length + ') : ' + hits.slice(0, 8).join(' | ') : ''));
+// chiffres affichés aux joueurs vs maths réelles
+var M = require(path.join(root, 'js/math.js'));
+var scarabMax = Math.max.apply(null, M.SCARAB_VALUES), weighMax = Math.max.apply(null, M.WEIGH_PAIRS.map(function (p) { return Math.max.apply(null, p[0]); }));
+['fr', 'en'].forEach(function (l) {
+  var d = D[l];
+  ok(d.buyDesc.scarab.indexOf(scarabMax + '×') >= 0, l + ' : la description des Scarabées annonce bien ' + scarabMax + '× (max réel)');
+  ok(d.buyDesc.weigh.indexOf(weighMax + '×') >= 0, l + ' : la description de la Pesée annonce bien ' + weighMax + '× (max réel)');
+  ok(d.rules.join(' ').indexOf(String(M.MAX_WIN)) >= 0, l + ' : les règles annoncent le plafond ' + M.MAX_WIN + '×');
+});
+var mainSrc = fs.readFileSync(path.join(root, 'js/main.js'), 'utf8');
+ok(!/jusqu.à 200×|up to 200×/.test(mainSrc), 'plus de description chiffrée en dur dans main.js');
+console.log(fails ? '\n' + fails + ' échec(s)' : '\ntout est bon'); process.exit(fails ? 1 : 0);

@@ -228,3 +228,24 @@ Cadre : l'achat est désactivé pendant l'auto-play, compte dans la limite de pe
 | **Menaces** | Propriété intellectuelle ; contraintes Stake et achat de bonus selon les marchés ; cadre légal ; concurrence. |
 
 **Bloqué** : validation de la propriété intellectuelle ; doc officielle Stake ; test sonore ; test sur vrais téléphones ; RNG et solde côté serveur avec audit ; avis juridique sur l'achat de bonus ; accord pour des illustrations générées.
+
+## 16. Itération 7 de la boucle (2026-10-10, 20 h UTC)
+
+**Audit de la traduction (`node tools/i18n-check.js`)**
+- Les dictionnaires FR et EN sont alignés (mêmes clés, mêmes types, pas de texte vide).
+- **Défaut réel trouvé : une information fausse affichée au joueur.** La table des gains annonçait la Pesée du Cœur « jusqu'à 200× » alors que le maximum réel est **150×** (le menu d'achat disait déjà 150×). Cause : des descriptions françaises/anglaises écrites en dur dans `main.js`, en double de celles du dictionnaire.
+- Corrigé : la table des gains réutilise les descriptions du dictionnaire (une seule source). Le contrôle compare maintenant les maxima affichés (Scarabées 25×, Pesée 150×, plafond 5 000×) aux valeurs réelles de `math.js`, en FR et en EN, et repère tout français écrit en dur dans le code.
+- `e2e.js` vérifie en plus la bascule FR → EN (HUD traduit, table des gains sans accent résiduel, bon maximum). Le test échoue sur l'ancienne version.
+
+**Limites** : la qualité des traductions (ton, justesse) n'est pas évaluée par une personne ; seules la complétude et les chiffres le sont. Aucune autre langue n'existe.
+
+**SWOT à jour**
+
+| | |
+|---|---|
+| **Forces** | Maths, interface, contrastes, mises en page et traductions testés automatiquement ; chiffres affichés vérifiés contre les maths ; solde protégé ; accessibilité ; 3 profils de jeu à RTP ≈ 96 % ; DA cohérente ; jeu responsable. |
+| **Faiblesses** | Son jamais écouté ; vrais téléphones jamais essayés ; roue petite en paysage ; art procédural ; deux langues seulement, traductions non relues par une personne ; pas de progression ; solde et RNG côté navigateur. |
+| **Opportunités** | Profils de risque multiples ; reprise de round alignée sur Stake ; autres langues (le dictionnaire est prêt) ; illustrations générées (sur accord) ; contenu événementiel. |
+| **Menaces** | Propriété intellectuelle ; contraintes Stake et achat de bonus selon les marchés ; cadre légal ; concurrence. |
+
+**Bloqué** : validation de la propriété intellectuelle ; doc officielle Stake ; test sonore ; test sur vrais téléphones ; relecture des traductions par une personne ; RNG et solde côté serveur avec audit ; avis juridique sur l'achat de bonus ; accord pour des illustrations générées.

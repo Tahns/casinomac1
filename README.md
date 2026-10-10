@@ -8,6 +8,7 @@ node tools/simulate.js 10000000 1 plus  # RTP, taux de gain, distribution (grain
 node tools/tune.js               # espérance de chaque bonus isolé
 node tools/check.js              # invariants des maths (sortie 1 si échec)
 node tools/contrast.js           # contraste WCAG AA des couples texte/fond
+node tools/i18n-check.js         # FR/EN complets, pas de français en dur, chiffres affichés = maths
 PLAYWRIGHT_CORE=... node tools/layout.js # mises en page sur 10 tailles d'écran (portrait, paysage, grand écran)
 PLAYWRIGHT_CORE=/chemin/node_modules/playwright-core node tools/e2e.js   # tests de bout en bout dans Chromium
 ```

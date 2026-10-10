@@ -81,6 +81,17 @@ var server = http.createServer(function (req, res) {
   ok(cards === 4, 'le menu « Acheter un bonus » affiche 4 cartes');
   await p.keyboard.press('Escape'); await p.waitForTimeout(100);
 
+  // 6. bascule FR -> EN : le HUD et la table des gains suivent, et le maximum annoncé pour la Pesée est le bon
+  await p.click('#btnLang'); await p.waitForTimeout(200);
+  var en = await p.evaluate("({spin:document.getElementById('spinText').textContent,bal:document.querySelector('#statBal label').textContent,html:document.documentElement.lang})");
+  ok(en.spin === 'SPIN' && en.bal === 'BALANCE' && en.html === 'en', 'passage en anglais : HUD traduit (' + en.spin + ' / ' + en.bal + ')');
+  await p.click('#btnInfo'); await p.waitForTimeout(200);
+  var tbl = await p.evaluate("document.getElementById('modalBody').innerText");
+  ok(/150×/.test(tbl) && !/200×/.test(tbl.replace(/×200/g, '')), 'table des gains en anglais : Pesée annoncée jusqu\'à 150×');
+  ok(!/[éèêà]/.test(tbl.replace(/Jugement/g, '')), 'table des gains en anglais : aucun accent français résiduel');
+  await p.keyboard.press('Escape'); await p.waitForTimeout(100);
+  await p.click('#btnLang'); await p.waitForTimeout(150);
+
   ok(errs.length === 0, 'aucune erreur console / page' + (errs.length ? ' : ' + errs.slice(0, 3).join(' | ') : ''));
   await b.close(); server.close();
   console.log(fails ? '\n' + fails + ' échec(s)' : '\ntout est bon'); process.exit(fails ? 1 : 0);
