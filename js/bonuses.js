@@ -8,11 +8,14 @@
   var ctx = G.ctx, clamp = G.clamp, mod = G.mod;
   function $(id) { return document.getElementById(id); }
   function hudH() { return parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--hud-h')) || 110; }
+  // paysage de téléphone (hauteur < 520 px) : bandeau et réserves verticales réduits
+  function T0() { return G.h < 520 ? 38 : clamp(G.h * 0.075, 56, 72); }
+  function EX(n) { return G.h < 520 ? Math.round(n * 0.45) : n; }
   function lerp(a, b, t) { return a + (b - a) * t; }
 
   /* ---------------- éléments communs ---------------- */
   function plate(cx, y, text, sub, alpha) {
-    var w = G.w, fs = clamp(w * 0.034, 17, 34), subS = clamp(w * 0.0125, 11, 15);
+    var w = G.w, fs = G.h < 520 ? 16 : clamp(w * 0.034, 17, 34), subS = clamp(w * 0.0125, 11, 15);
     ctx.save(); if (alpha != null) ctx.globalAlpha = alpha;
     ctx.font = '900 ' + fs + 'px Cinzel, serif'; if (ctx.letterSpacing !== undefined) ctx.letterSpacing = '4px';
     var tw = Math.min(w * 0.94, ctx.measureText(text).width + fs * 3), th = fs * 1.9 + (sub ? subS * 1.6 : 0);
@@ -63,8 +66,11 @@
   // dessine l'enveloppe commune (titre, total, bannière, résultat final)
   function chrome(S) {
     var w = G.w, h = G.h;
-    plate(G.cx, clamp(h * 0.075, 56, 72), S.title, S.sub ? null : null);
-    if (S.showTotal) totalBox(S, clamp(h * 0.075, 56, 72) + clamp(w * 0.034, 17, 34) * 1.9 + 52, I18N.t().total);
+    plate(G.cx, T0(), S.title, S.sub ? null : null);
+    if (S.showTotal) {
+      if (h < 520) { ctx.save(); ctx.translate(w - 64 - G.cx, 62); totalBox(S, 40, I18N.t().total); ctx.restore(); } // coin haut-droit, sous les boutons
+      else totalBox(S, T0() + clamp(w * 0.034, 17, 34) * 1.9 + 52, I18N.t().total);
+    }
     if (S.banner) {
       var b = S.banner, k = G.ease.outBack(clamp(b.t / 0.4, 0, 1));
       ctx.save(); ctx.translate(G.cx, G.cy); ctx.scale(k, k);
@@ -126,7 +132,7 @@
     var S = newScene(T.scarabIntro), g = {}, ball = null, pegFlash = {}, slotPulse = [], used = 0, floats = [];
     function slotColor(v) { return v >= 25 ? ['#ffe08a', '#b8861e'] : v >= 6 ? ['#c28bff', '#5a2a86'] : v >= 2.5 ? ['#ff7a5a', '#8a1b10'] : v >= 1 ? ['#5b8cff', '#1a3a8a'] : ['#6a5a40', '#2a2118']; }
     S.layout = function () {
-      var w = G.w, h = G.h, top = clamp(h * 0.075, 56, 72) + 150, bot = h - hudH() - 52;
+      var w = G.w, h = G.h, top = T0() + EX(150), bot = h - hudH() - (h < 520 ? 10 : 52);
       g.slotH = clamp((bot - top) * 0.11, 34, 60);
       g.dy = (bot - top - g.slotH - 14) / (rows + 1.2);
       g.dx = Math.min(g.dy * 1.55, (w * 0.94) / 9.2);
@@ -183,7 +189,7 @@
       // scarabées restants
       for (i = 0; i < data.balls.length; i++) {
         ctx.globalAlpha = i >= used ? 1 : 0.22;
-        A.scarab(ctx, Math.max(30, G.cx - 5.2 * g.dx) + i * 36, clamp(G.h * 0.075, 56, 72) + 130, 26, i >= used ? '#ffd86a' : '#6a5a40', 'rgba(60,30,0,.6)');
+        A.scarab(ctx, Math.max(30, G.cx - 5.2 * g.dx) + i * 36, T0() + EX(130), 26, i >= used ? '#ffd86a' : '#6a5a40', 'rgba(60,30,0,.6)');
       }
       ctx.globalAlpha = 1;
       for (i = 0; i < floats.length; i++) {
@@ -250,7 +256,8 @@
     var theta = 0, glowSide = -1, dimSide = -1, ph = 0;
     S.layout = function () {
       var w = G.w, h = G.h;
-      g.px = G.cx; g.py = h * 0.42; g.L = Math.min(w * 0.28, h * 0.33); g.chain = Math.min(h * 0.14, g.L * 0.6); g.pan = g.L * 0.4;
+      if (h < 520) { g.px = G.cx; g.py = h * 0.34; g.L = Math.min(w * 0.26, h * 0.27); g.chain = Math.min(h * 0.11, g.L * 0.55); g.pan = g.L * 0.38; }
+      else { g.px = G.cx; g.py = h * 0.42; g.L = Math.min(w * 0.28, h * 0.33); g.chain = Math.min(h * 0.14, g.L * 0.6); g.pan = g.L * 0.4; }
     };
     function endPt(side) { var a = theta, x = side * g.L; return { x: g.px + Math.cos(a) * x, y: g.py + Math.sin(a) * x }; }
     function heart(x, y, s, col) {
@@ -299,7 +306,7 @@
         var cg = ctx.createLinearGradient(0, cyy - ch / 2, 0, cyy + ch / 2); cg.addColorStop(0, '#2a1f10'); cg.addColorStop(1, '#0c0804');
         ctx.fillStyle = cg; ctx.fill(); ctx.lineWidth = glowSide === si ? 3 : 1.6; ctx.strokeStyle = glowSide === si ? '#fff6c8' : A.goldGrad(ctx, cx - cw, cyy, cx + cw, cyy); ctx.stroke();
         G.goldText('×' + data.pair[si], cx, cyy + 1, ch * 0.62, { blur: glowSide === si ? 22 : 8 });
-        G.txt(si === 0 ? T.feather : T.heart, cx, cyy - ch * 0.78, { size: clamp(pr * 0.17, 10, 15), family: 'Manrope', weight: 800, fill: '#d8c590', spacing: 3 });
+        if (G.h >= 520) G.txt(si === 0 ? T.feather : T.heart, cx, cyy - ch * 0.78, { size: clamp(pr * 0.17, 10, 15), family: 'Manrope', weight: 800, fill: '#d8c590', spacing: 3 });
         ctx.restore();
       });
       chrome(S);
@@ -334,7 +341,7 @@
     var cols = 4, rows = 3;
     for (var i = 0; i < cols * rows; i++) tiles.push({ state: 'closed', token: null, u: 0, dim: false, lg: i % 3 });
     S.layout = function () {
-      var w = G.w, h = G.h, top = clamp(h * 0.075, 56, 72) + 140, bot = h - hudH() - 52;
+      var w = G.w, h = G.h, top = T0() + EX(140), bot = h - hudH() - (h < 520 ? 10 : 52);
       g.t = Math.min((w * 0.92) / (cols * 1.12), (bot - top) / (rows * 1.12), 170); g.gap = g.t * 0.12;
       g.x0 = G.cx - (cols * g.t + (cols - 1) * g.gap) / 2; g.y0 = top + ((bot - top) - (rows * g.t + (rows - 1) * g.gap)) / 2;
     };
@@ -442,7 +449,7 @@
     var handY = -9999, handAlpha = 1, crush = 0, wheelK = 0, multShown = 1, multPop = 0, bolts = 0, iconAlpha = 1, iconK = 1, hl = -1, flyOrb = null;
     S.dim = 0.85; S.showTotal = false;
     S.layout = function () {
-      var w = G.w, h = G.h, top = clamp(h * 0.075, 56, 72) + 64, bot = h - hudH() - 44;
+      var w = G.w, h = G.h, top = T0() + EX(64), bot = h - hudH() - (h < 520 ? 10 : 44);
       g.R = Math.min(w * 0.4, (bot - top) / 2.3); g.cy = top + g.R * 1.2; g.u = Math.min(w, h);
     };
     function iconAt(x, y, s) {
@@ -500,8 +507,9 @@
       // multiplicateur cumulé
       if (wheelK > 0.3) {
         var ms = 1 + multPop * 0.35, mx = Math.min(G.w * 0.14, 110) + 14, my = g.cy - g.R * 0.0;
-        if (G.w < 700) { mx = G.w - 52; my = g.cy - g.R * 1.0; }
-        ctx.save(); ctx.translate(G.w < 700 ? mx : mx, G.w < 700 ? my : clamp(G.h * 0.075, 56, 72) + 130); ctx.scale(ms, ms);
+        if (G.h < 520) { mx = 70; my = g.cy; }
+        else if (G.w < 700) { mx = G.w - 52; my = g.cy - g.R * 1.0; }
+        ctx.save(); ctx.translate(mx, (G.w < 700 || G.h < 520) ? my : T0() + EX(130)); ctx.scale(ms, ms);
         G.txt(I18N.lang() === 'fr' ? (G.w < 700 ? 'MULTIPL.' : 'MULTIPLICATEUR') : (G.w < 700 ? 'MULT.' : 'MULTIPLIER'), 0, -28, { size: 10, family: 'Manrope', weight: 800, fill: '#b9a780', spacing: G.w < 700 ? 1 : 3 });
         G.goldText('×' + multShown, 0, 6, Math.min(64, G.w * 0.08), { blur: 28 });
         ctx.restore();
@@ -552,10 +560,10 @@
         await G.sleep(0.3);
         if (seg.x) {
           var col = segColor(seg)[0], isSmall = G.w < 700;
-          flyOrb = { x0: G.cx, y0: g.cy - g.R * 0.7, x1: isSmall ? G.w - 52 : Math.min(G.w * 0.14, 110) + 14, y1: isSmall ? g.cy - g.R : clamp(G.h * 0.075, 56, 72) + 130, t: 0, c: col, v: seg.x };
+          flyOrb = { x0: G.cx, y0: g.cy - g.R * 0.7, x1: G.h < 520 ? 70 : isSmall ? G.w - 52 : Math.min(G.w * 0.14, 110) + 14, y1: G.h < 520 ? g.cy : isSmall ? g.cy - g.R : T0() + EX(130), t: 0, c: col, v: seg.x };
           Sfx.lightning(); FX.flash(0.3, '#9ab8ff'); FX.shake(10, 0.4);
           await G.tween(0.7, function (k) { flyOrb.t = k; }, null);
-          flyOrb = null; mult = sx.mult; multShown = mult; multPop = 1; Sfx.chime(mult * 4); FX.ring(G.w < 700 ? G.w - 52 : 110, G.h * 0.3, col, 90, 0.8);
+          flyOrb = null; mult = sx.mult; multShown = mult; multPop = 1; Sfx.chime(mult * 4); FX.ring(G.h < 520 ? 70 : G.w < 700 ? G.w - 52 : 110, G.h < 520 ? g.cy : G.h * 0.3, col, 90, 0.8);
           await G.sleep(0.6);
         } else {
           lastV = seg.n;

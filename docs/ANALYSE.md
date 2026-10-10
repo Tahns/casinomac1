@@ -204,3 +204,27 @@ Cadre : l'achat est désactivé pendant l'auto-play, compte dans la limite de pe
 | **Menaces** | Propriété intellectuelle ; contraintes Stake et achat de bonus selon les marchés ; cadre légal ; concurrence. |
 
 **Bloqué** : validation de la propriété intellectuelle ; doc officielle Stake ; test sonore ; test sur vrai téléphone ; RNG et solde côté serveur avec audit ; avis juridique sur l'achat de bonus ; accord pour des illustrations générées.
+
+## 15. Itération 6 de la boucle (2026-10-10, 16 h UTC)
+
+**Trouvé en balayant 10 tailles d'écran (`node tools/layout.js`) : le jeu était cassé en paysage de téléphone** (844×390, 667×375, 740×360).
+- Le HUD gardait la mise en page empilée des petits écrans : 118 à 193 px de haut (plus de la moitié de l'écran), la roue tombait au rayon minimum, passait sous le HUD et, à 740×360, était coupée en haut.
+- Les bonus étaient inutilisables : le Plinko était un petit triangle, la Chambre du Trésor et la Pesée débordaient sous le HUD.
+
+**Corrigé**
+- HUD en une seule rangée compacte en paysage (67 px), bandeau et en-tête réduits ; calcul de la roue adapté (R de 90 à 110–124 px, HUD ≤ 25 % de la hauteur).
+- Bonus : réserves verticales réduites (`T0()`/`EX()`), total déplacé en haut à droite, balance plus compacte, multiplicateur de la Main d'Anubis à gauche, étiquettes PLUME/CŒUR retirées en compact (l'icône suffit).
+- `tools/layout.js` ajouté : il échoue sur l'ancienne version (3 tailles) et passe sur la nouvelle (10 tailles). Il contrôle roue/HUD/débordements et que les 3 bonus à plateau se lancent et se terminent sans erreur ; la géométrie fine des bonus reste vérifiée à l'œil (captures sur 667×375).
+
+**Limites** : mesuré dans Chromium avec des tailles émulées, pas sur de vrais téléphones (encoches, barres du navigateur, clavier virtuel) ; la roue reste petite en paysage (R ≈ 110–124 px) faute de hauteur.
+
+**SWOT à jour**
+
+| | |
+|---|---|
+| **Forces** | Maths, interface, contrastes et mises en page testés automatiquement (10 tailles, portrait et paysage) ; solde protégé ; accessibilité clavier/lecteur d'écran/mouvement réduit/zoom ; 3 profils de jeu à RTP ≈ 96 % ; DA cohérente ; jeu responsable. |
+| **Faiblesses** | Son jamais écouté ; vrais téléphones jamais essayés (encoches, barres système) ; roue petite en paysage ; art procédural ; pas de progression ; solde et RNG côté navigateur. |
+| **Opportunités** | Profils de risque multiples ; reprise de round alignée sur Stake ; illustrations générées (sur accord) ; contenu événementiel. |
+| **Menaces** | Propriété intellectuelle ; contraintes Stake et achat de bonus selon les marchés ; cadre légal ; concurrence. |
+
+**Bloqué** : validation de la propriété intellectuelle ; doc officielle Stake ; test sonore ; test sur vrais téléphones ; RNG et solde côté serveur avec audit ; avis juridique sur l'achat de bonus ; accord pour des illustrations générées.

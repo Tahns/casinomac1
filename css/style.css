@@ -113,9 +113,21 @@ label{font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--d
   .brand .b-big{font-size:22px}.ibtn{width:36px;height:36px}
 }
 @media (max-height:520px) and (orientation:landscape){
-  #hud{padding-top:4px;padding-bottom:6px}#spin{width:68px}.stat b{font-size:17px}.step{height:30px;width:30px}.brand .b-small{display:none}
+  #top{padding-top:max(24px,calc(env(safe-area-inset-top) + 20px))}
+  .brand .b-small{display:none}.brand .b-big{font-size:20px}.ibtn{width:32px;height:32px}
+  #hud{grid-template-columns:1fr auto auto auto 1fr;grid-template-areas:none;gap:10px;row-gap:0;padding:4px 14px calc(4px + var(--safe-b))}
+  #statBal,.stat.win,.betbox,#spin,.toggles{grid-area:auto}
+  #statBal{justify-self:end;text-align:right}.stat.win{justify-self:start;text-align:left}
+  .stat b{font-size:16px}label{font-size:9px}
+  .betbox{padding:3px 5px;gap:6px}.step{width:28px;height:28px;font-size:18px}.betval{min-width:52px}.betval b{font-size:15px}.betval small{display:none}
+  #spin{width:58px}#spin .ank{width:26%;height:34%}.spin-t{font-size:8px}#spin .ring{inset:-5px}
+  .toggles{grid-template-columns:auto auto;gap:4px}.tgl.plus,.tgl.buy{grid-column:auto}.tgl{padding:4px 9px;font-size:9px;gap:6px}
   #history{display:none}
+  #status{justify-content:flex-start;padding-left:12px;bottom:calc(var(--hud-h,80px) + 4px)}
+  #statusText{max-width:30vw;white-space:normal;text-align:left;font-size:10px;padding:4px 10px;letter-spacing:.12em}
+  .pill{top:34px;font-size:12px;padding:5px 12px 5px 8px}
 }
+
 
 /* ---------- modale ---------- */
 #modal{position:fixed;inset:0;pointer-events:auto;background:rgba(5,4,3,.82);backdrop-filter:blur(6px);display:grid;place-items:center;padding:16px;z-index:9;animation:fade .2s}

@@ -55,11 +55,13 @@
     var hud = document.getElementById('hud');
     var hudH = hud ? hud.offsetHeight : 110;
     document.documentElement.style.setProperty('--hud-h', hudH + 'px');
-    var topH = G.w < 760 ? 52 : 62;
-    var availH = G.h - hudH - topH - 38;
+    G.compact = G.h < 520;                       // paysage de téléphone : tout est resserré
+    var land = G.compact && G.w > G.h;
+    var topH = land ? 38 : G.w < 760 ? 52 : 62;
+    var availH = G.h - hudH - topH - (land ? 12 : 38);
     var R = Math.min(G.w * 0.455, availH * 0.5) / 1.1;
-    if (G.w < 760) R = Math.min(G.w * 0.46 / 1.08, availH * 0.5 / 1.08);
-    G.R = Math.max(90, R);
+    if (G.w < 760 && !land) R = Math.min(G.w * 0.46 / 1.08, availH * 0.5 / 1.08);
+    G.R = Math.max(land ? 60 : 90, R);
     G.cx = G.w / 2; G.cy = topH + availH / 2 + 6;
     FX.floorY = G.h - hudH - 10;
     buildLamps(); buildBackdrop(); if (G.wheel) G.wheel.build();
