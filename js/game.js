@@ -96,7 +96,7 @@
 
   var ART = G.art = {};
   Object.keys(window.HOA_IMG || {}).forEach(function (k) {
-    var im = new Image(); im.onload = function () { ART[k] = im; if (k === 'key' && G.w) buildBackdrop(); }; im.src = window.HOA_IMG[k];
+    var im = new Image(); im.onload = function () { ART[k] = im; if (k === 'key' && G.w) buildBackdrop(); if (k === 'gold' && G.w && W.build) W.build(); }; im.src = window.HOA_IMG[k];
   });
   function cover(c, im, w, h) {
     var k = Math.max(w / im.width, h / im.height), iw = im.width * k, ih = im.height * k;
@@ -219,6 +219,27 @@
     f.beginPath(); f.arc(0, 0, ro, a0, a1); f.arc(0, 0, ri, a1, a0, true); f.closePath();
   }
 
+  // anneau métallique : dégradé conique + martelage (texture) + biseau
+  function metalRing(f, rOut, rIn) {
+    var cg = f.createConicGradient ? f.createConicGradient(-0.6, 0, 0) : null;
+    if (cg) {
+      ['#8a5e12', '#ffe9a0', '#c8901e', '#fff3c4', '#9a6a14', '#f6cf68', '#7a5010', '#ffe08a', '#8a5e12'].forEach(function (c, n, a) { cg.addColorStop(n / (a.length - 1), c); });
+    }
+    f.save();
+    f.beginPath(); f.arc(0, 0, rOut, 0, TAU); f.arc(0, 0, rIn, 0, TAU, true);
+    f.fillStyle = cg || A.goldGrad(f, -rOut, -rOut, rOut, rOut); f.fill('evenodd');
+    if (ART.gold) {
+      f.clip('evenodd'); f.globalCompositeOperation = 'overlay'; f.globalAlpha = 0.6;
+      f.drawImage(ART.gold, -rOut, -rOut, rOut * 2, rOut * 2);
+      f.globalCompositeOperation = 'source-over'; f.globalAlpha = 1;
+    }
+    f.restore();
+    // biseau : filet clair dehors, filet sombre dedans
+    f.lineWidth = Math.max(1, rOut * 0.006);
+    f.strokeStyle = 'rgba(255,248,210,.8)'; f.beginPath(); f.arc(0, 0, rOut - f.lineWidth * 0.5, 0, TAU); f.stroke();
+    f.strokeStyle = 'rgba(40,24,2,.75)'; f.beginPath(); f.arc(0, 0, rIn + f.lineWidth * 0.5, 0, TAU); f.stroke();
+  }
+
   W.build = function () {
     var R = G.R, dpr = G.dpr, pad = 6;
     var fc = W.face || (W.face = document.createElement('canvas'));
@@ -271,11 +292,12 @@
       f.restore();
     }
     // anneau intérieur or
-    f.beginPath(); f.arc(0, 0, ri, 0, TAU); f.arc(0, 0, ri * 0.93, 0, TAU, true);
-    f.fillStyle = A.goldGrad(f, -ri, -ri, ri, ri); f.fill('evenodd');
+    metalRing(f, ri, ri * 0.93);
     // anneau extérieur or (jante rotative)
-    f.beginPath(); f.arc(0, 0, R * 0.96, 0, TAU); f.arc(0, 0, ro, 0, TAU, true);
-    f.fillStyle = A.goldGrad(f, -R, -R, R, R); f.fill('evenodd');
+    // ombre portée des segments sous la jante
+    var sg2 = f.createRadialGradient(0, 0, ro * 0.9, 0, 0, ro); sg2.addColorStop(0, 'rgba(0,0,0,0)'); sg2.addColorStop(1, 'rgba(0,0,0,.45)');
+    f.beginPath(); f.arc(0, 0, ro, 0, TAU); f.fillStyle = sg2; f.fill();
+    metalRing(f, R * 0.96, ro);
     // rivets
     for (i = 0; i < M.N; i++) {
       var ra = i * step - Math.PI / 2, rx = Math.cos(ra) * R * 0.948, ry = Math.sin(ra) * R * 0.948;
