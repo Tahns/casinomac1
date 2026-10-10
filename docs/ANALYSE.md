@@ -311,3 +311,12 @@ Principe : le résultat reste tiré avant l'animation (modèle Stake Engine) ; l
 | **Externe** | **Opportunités** — Stake Originals/Engine : format rare de roue à bonus non live ; Hand of Anubis (Main d'Anubis) comme mécanique signature ; vraie 3D (three.js) possible ; musique/voix originales ; mode tournoi / missions ; traductions supplémentaires ; clips vidéo générés pour la promo | **Menaces** — droits d'usage commercial des images générées à vérifier (CGU Higgsfield) ; risque de ressemblance avec Crazy Time (Evolution) et avec le slot Hand of Anubis de Play'n GO (marque/DA) ; conformité des « choix » factices selon les juridictions ; achat de bonus interdit dans certains pays ; exigences techniques et d'audit de Stake non vérifiées ; perf sur téléphones modestes |
 
 Priorités proposées : (1) valider droits des images et ressemblance IP, (2) test sur vrais téléphones + audio, (3) harmoniser les × restants, (4) ajouter des tests aux nouveaux gestes, (5) décider d'une vraie 3D.
+
+## Itération 10 — bonus plus complexes, plus de suspense (2026-10-10)
+
+Toujours : résultat tiré avant l'animation ; les actions du joueur n'ont aucun effet sur le gain.
+- **Chute des Scarabées** : visée du lâcher, puis guidage gauche/droite à chaque cheville. Le « destin » n'accepte que les trajets menant à la case déjà tirée (contrainte : nombre de droites restant), sinon « LE DESTIN RÉSISTE ». Ralenti sur les deux dernières rangées et au rebond final. Une assertion console signale tout écart entre la case atteinte et le tirage.
+- **Pesée du Cœur** : choix à l'aveugle, puis 7 s de pesée : la balance hésite, penche vers le plateau choisi puis revient (faux espoir si c'est perdu) ; les touchers donnent de l'élan, verdict inchangé.
+- **Chambre du Trésor** : après le choix, 3 touchers pour briser le sceau (fissures, tension sonore et secousses).
+- **Main d'Anubis** : charge de la jauge, rotation plus longue avec arrivée très lente sur le segment.
+- Turbo / auto-play : tout reste automatique. Risque : ces gestes peuvent faire croire à une influence sur le gain ; textes d'aide neutres, validation juridique à faire.

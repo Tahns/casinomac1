@@ -131,7 +131,7 @@
    * ====================================================================== */
   function scarabScene(sp, bet) {
     var T = I18N.t(), data = sp.bonus, rows = M.SCARAB_ROWS, vals = M.SCARAB_VALUES;
-    var S = newScene(T.scarabIntro), g = {}; S.bgImg = 'abyss'; var ball = null, pegFlash = {}, slotPulse = [], used = 0, floats = [], aim = null, aimX = 0, fast = 1;
+    var S = newScene(T.scarabIntro), g = {}; S.bgImg = 'abyss'; var ball = null, pegFlash = {}, slotPulse = [], used = 0, floats = [], aim = null, aimX = 0, fast = 1, steer = null;
     function slotColor(v) { return v >= 25 ? ['#ffe08a', '#b8861e'] : v >= 6 ? ['#c28bff', '#5a2a86'] : v >= 2.5 ? ['#ff7a5a', '#8a1b10'] : v >= 1 ? ['#5b8cff', '#1a3a8a'] : ['#6a5a40', '#2a2118']; }
     S.layout = function () {
       var w = G.w, h = G.h, top = T0() + EX(150), bot = h - hudH() - (h < 520 ? 10 : 52);
@@ -191,6 +191,14 @@
         ctx.fillStyle = gl; ctx.beginPath(); ctx.arc(ball.x, ball.y, g.ballR * 3, 0, TAU); ctx.fill();
         ctx.save(); ctx.translate(ball.x, ball.y); ctx.rotate(ball.rot); A.scarab(ctx, 0, 0, g.ballR * 2.3, '#ffd86a', 'rgba(60,30,0,.7)'); ctx.restore();
       }
+      if (steer && ball) {
+        var spp = 0.6 + 0.4 * Math.sin(G.t * 12), sd = g.dx * 0.55;
+        [-1, 1].forEach(function (sg) {
+          var ax = ball.x + sg * sd, ay = ball.y + g.dy * 0.15;
+          ctx.save(); ctx.translate(ax, ay); ctx.scale(sg, 1); ctx.fillStyle = 'rgba(255,236,150,' + (0.45 + 0.4 * spp) + ')'; ctx.shadowColor = '#ffd86a'; ctx.shadowBlur = 14;
+          ctx.beginPath(); ctx.moveTo(-g.dx * 0.12, -g.dx * 0.16); ctx.lineTo(g.dx * 0.14, 0); ctx.lineTo(-g.dx * 0.12, g.dx * 0.16); ctx.closePath(); ctx.fill(); ctx.restore();
+        });
+      }
       // visée : scarabée au-dessus de la première cheville, guide en pointillé
       if (aim) {
         var ap0 = peg(0, 0), pulse = 0.6 + 0.4 * Math.sin(G.t * 6), ay = g.top - g.dy * 0.2;
@@ -227,21 +235,39 @@
         G.sleep(7).then(fin);
       });
     }
+    // fenêtre de guidage à chaque cheville : un toucher à gauche / droite de la bille
+    function waitSteer() {
+      return new Promise(function (res) {
+        var done = false;
+        function fin(v) { if (!done) { done = true; steer = null; S.onPointer = null; res(v); } }
+        steer = true;
+        S.onPointer = function (x, y, type) { if (type === 'down') fin(x < ball.x ? 0 : 1); };
+        G.sleep(0.7).then(function () { fin(-1); });
+      });
+    }
     async function drop(b) {
       var d = data.balls[b], col = 0, pos = [], x0 = quick() ? G.cx : aimX;
       pos.push({ x: x0, y: g.top - g.dy * 0.2 });
       var hop = g.dy * 0.28, dur = 0.27;
       ball = { x: x0, y: g.top - g.dy * 0.2, rot: 0, trail: [] };
-      fast = 1; S.onPointer = function (x, y, type) { if (type === 'down' && fast === 1) { fast = 0.45; Sfx.whoosh(); } };
+      fast = 1; S.onPointer = null;
       for (var r = 0; r < rows; r++) {
         var p = peg(r, col), from = { x: ball.x, y: ball.y }, to = { x: p.x, y: p.y - g.pegR - g.ballR };
         var h0 = r === 0 ? 0.0 : hop * 0.4;
-        await G.tween((r === 0 ? 0.32 : dur) * fast, function (u) {
+        await G.tween((r === 0 ? 0.32 : dur) * fast * (r >= rows - 2 && !quick() ? 1.7 : 1), function (u) {
           ball.x = lerp(from.x, to.x, G.ease.inOut(u)); ball.y = lerp(from.y, to.y, u * u) - Math.sin(Math.PI * u) * h0; ball.rot += 0.18;
         }, null);
         pegFlash[r + '_' + col] = 1; Sfx.tick(r / rows); Sfx.coin(0.7 + r * 0.06);
         FX.spark(p.x, p.y, 4, '#ffe9a0', 120, 0.4);
-        col += d.path[r];
+        // guidage : le joueur choisit gauche/droite ; le destin n'accepte que les trajets qui mènent à la case déjà tirée
+        var nLeft = rows - r, rightsLeft = d.slot - col, canR = rightsLeft >= 1, canL = rightsLeft <= nLeft - 1, want = d.path[r], asked = -1;
+        if (!quick()) asked = await waitSteer();
+        if (asked >= 0) { want = asked; }
+        if (want === 1 && !canR) want = 0; else if (want === 0 && !canL) want = 1;
+        if (asked >= 0 && asked !== want) { Sfx.curse(); FX.shake(6, 0.3); FX.float(T.fateResists, ball.x, ball.y - g.dy * 0.9, '#ff9a8a', 18); }
+        else if (asked >= 0) Sfx.shield();
+        if (!canR) want = 0; if (!canL) want = 1;
+        col += want;
         // rebond vers la rangée suivante (position gauche/droite)
         if (r < rows - 1) {
           var nx = peg(r + 1, col);
@@ -252,11 +278,12 @@
           }, null);
         } else {
           var sx = G.cx + (col - rows / 2) * g.dx, f3 = { x: ball.x, y: ball.y };
-          await G.tween(0.42 * fast, function (u) {
+          await G.tween(0.42 * fast * (quick() ? 1 : 2.2), function (u) {
             ball.x = lerp(f3.x, sx, G.ease.out3(Math.min(1, u * 1.4))); ball.y = lerp(f3.y, g.slotTop + g.slotH * 0.5, G.ease.outBounce(u)); ball.rot += 0.12;
           }, null);
         }
       }
+      if (col !== d.slot) console.error('plinko: case atteinte ' + col + ' ≠ tirage ' + d.slot);
       var v = d.value;
       slotPulse[d.slot] = 1; used = b + 1; ball = null;
       var sx2 = G.cx + (d.slot - rows / 2) * g.dx, sy = g.slotTop;
@@ -271,7 +298,7 @@
       await G.sleep(quick() ? 1.4 : 2.2);
       G.say('');
       for (var b = 0; b < data.balls.length; b++) {
-        if (!quick()) { G.say(T.aimHint); await waitAim(); G.say(T.tapFast); }
+        if (!quick()) { G.say(T.aimHint); await waitAim(); G.say(T.steerHint); }
         await drop(b); S.onPointer = null;
       }
       G.say('');
@@ -285,7 +312,7 @@
    * ====================================================================== */
   function weighScene(sp, bet) {
     var T = I18N.t(), data = sp.bonus, S = newScene(T.weighIntro), g = {}; S.bgImg = 'judgment';
-    var theta = 0, glowSide = -1, dimSide = -1, ph = 0, guess = -1, guessing = false, hoverSide = -1, revealed = false, vals = null;
+    var theta = 0, glowSide = -1, dimSide = -1, ph = 0, guess = -1, guessing = false, hoverSide = -1, revealed = false, vals = null, push = 0;
     S.layout = function () {
       var w = G.w, h = G.h;
       if (h < 520) { g.px = G.cx; g.py = h * 0.34; g.L = Math.min(w * 0.26, h * 0.27); g.chain = Math.min(h * 0.11, g.L * 0.55); g.pan = g.L * 0.38; }
@@ -298,7 +325,7 @@
       var hg = ctx.createRadialGradient(-3, -4, 0, 0, 0, 16); hg.addColorStop(0, '#ff9a8a'); hg.addColorStop(1, col || '#a01810'); ctx.fillStyle = hg; ctx.fill();
       ctx.lineWidth = 1.2; ctx.strokeStyle = '#5a0c06'; ctx.stroke(); ctx.restore();
     }
-    S.update = function (dt) { chromeUpdate(S, dt); ph += dt; };
+    S.update = function (dt) { chromeUpdate(S, dt); ph += dt; push = Math.max(0, push - dt * 0.55); };
     S.draw = function () {
       var u = Math.min(G.w, G.h), i;
       // ombre de contact du socle
@@ -324,6 +351,7 @@
         ctx.strokeStyle = 'rgba(246,216,120,.85)'; ctx.lineWidth = 2;
         ctx.beginPath(); ctx.moveTo(e.x, e.y); ctx.lineTo(cx - pr, cy); ctx.moveTo(e.x, e.y); ctx.lineTo(cx + pr, cy); ctx.moveTo(e.x, e.y); ctx.lineTo(cx, cy - pr * 0.1); ctx.stroke();
         if (guessing && (hoverSide === si)) { ctx.fillStyle = 'rgba(255,236,150,' + (0.16 + 0.1 * Math.sin(G.t * 7)) + ')'; ctx.beginPath(); ctx.arc(cx, cy, pr * 1.9, 0, TAU); ctx.fill(); }
+        if (guess === si && push > 0.05 && !revealed) { var pgl = ctx.createRadialGradient(cx, cy, 0, cx, cy, pr * 2.4); pgl.addColorStop(0, 'rgba(111,240,221,' + Math.min(0.6, push * 0.45) + ')'); pgl.addColorStop(1, 'rgba(111,240,221,0)'); ctx.fillStyle = pgl; ctx.beginPath(); ctx.arc(cx, cy, pr * 2.4, 0, TAU); ctx.fill(); }
         if (guess === si) A.ankh(ctx, cx, cy - pr * 1.55, pr * 0.5, '#6ff0dd');
         if (glowSide === si) {
           var gl = ctx.createRadialGradient(cx, cy, 0, cx, cy, pr * 2.3); gl.addColorStop(0, 'rgba(255,236,150,.7)'); gl.addColorStop(1, 'rgba(255,236,150,0)');
@@ -370,13 +398,17 @@
       vals = [0, 0]; vals[guess] = data.total; vals[1 - guess] = other;
       await G.sleep(0.4);
       G.say(T.weighing); Sfx.roll(10, 0.09);
-      var dir = vals[1] > vals[0] ? 1 : -1, final = dir * 0.30, dur = 3.6, lastSign = 0;
+      var dir = vals[1] > vals[0] ? 1 : -1, final = dir * 0.30, dur = quick() ? 3.6 : 7, lastSign = 0, mine = guess ? 1 : -1;
+      // suspense : la balance hésite, penche vers votre plateau puis revient ; vos touchers lui donnent de l'élan, le verdict reste celui du tirage
+      if (!quick()) { G.say(T.pushHint); S.onPointer = function (x, y, type) { if (type === 'down') { push = Math.min(1.5, push + 0.45); Sfx.tick(0.5); FX.spark(G.cx + (mine > 0 ? 1 : -1) * g.L, g.py + g.chain, 4, '#6ff0dd', 140, 0.3); } }; }
       await G.tween(dur, function (u) {
-        var env = Math.pow(1 - u, 1.7);
-        theta = final * G.ease.out3(Math.min(1, u * 1.15)) + 0.26 * env * Math.sin(u * 22 + 0.6) * (1 - u * 0.2);
-        var s = Math.sign(Math.sin(u * 22 + 0.6));
+        var env = Math.pow(1 - u, 1.5), lock = clamp((0.9 - u) / 0.25, 0, 1);
+        var fake = dir !== mine ? mine * 0.30 * Math.sin(Math.PI * clamp((u - 0.35) / 0.4, 0, 1)) : 0;
+        theta = final * G.ease.out3(Math.min(1, u * 1.1)) + 0.3 * env * Math.sin(u * 17 + 0.6) + fake * (1 - u * 0.4) + mine * push * 0.2 * env * lock;
+        var s = Math.sign(Math.sin(u * 17 + 0.6));
         if (s !== lastSign && u > 0.05) { lastSign = s; Sfx.drum(0.1 + env * 0.25); }
       }, null);
+      S.onPointer = null; push = 0;
       theta = final; Sfx.thud(); FX.shake(14, 0.5);
       revealed = true;
       var wp = endPt(dir); FX.dust(wp.x, wp.y + g.chain + g.pan, 12, '#ffd86a');
@@ -399,7 +431,7 @@
   function vaultScene(sp, bet) {
     var T = I18N.t(), data = sp.bonus, S = newScene(T.vaultIntro), g = {}; S.bgImg = 'vault'; var tiles = [], n = 0, shield = 0, hover = -1, waiting = false, pickRes = null, shake = 0;
     var cols = 4, rows = 3;
-    for (var i = 0; i < cols * rows; i++) tiles.push({ state: 'closed', token: null, u: 0, dim: false, lg: i % 3 });
+    for (var i = 0; i < cols * rows; i++) tiles.push({ state: 'closed', token: null, u: 0, dim: false, lg: i % 3, crack: 0 });
     S.layout = function () {
       var w = G.w, h = G.h, top = T0() + EX(140), bot = h - hudH() - (h < 520 ? 10 : 52);
       g.t = Math.min((w * 0.92) / (cols * 1.12), (bot - top) / (rows * 1.12), 170); g.gap = g.t * 0.12;
@@ -420,7 +452,8 @@
         var lift = hv ? r.s * 0.035 : 0;
         ctx.save(); if (t.dim) ctx.globalAlpha = 0.4;   // épaisseur de la dalle + ombre portée
         A.roundRect(ctx, r.x, r.y + r.s * 0.075, r.s, r.s, r.s * 0.1); ctx.fillStyle = '#120b04'; ctx.shadowColor = 'rgba(0,0,0,.75)'; ctx.shadowBlur = 16; ctx.shadowOffsetY = 7; ctx.fill(); ctx.restore();
-        ctx.save(); ctx.translate(cx, cy - lift); ctx.scale(Math.max(0.02, sc), 1 + (t.state === 'flipping' ? Math.sin(Math.PI * t.u) * 0.08 : 0) + (hv ? 0.04 : 0)); ctx.translate(-cx, -cy);
+        var jx = t.crack && t.state === 'closed' ? (Math.random() - 0.5) * t.crack * 3.2 : 0;
+        ctx.save(); ctx.translate(cx + jx, cy - lift); ctx.scale(Math.max(0.02, sc), 1 + (t.state === 'flipping' ? Math.sin(Math.PI * t.u) * 0.08 : 0) + (hv ? 0.04 : 0)); ctx.translate(-cx, -cy);
         if (t.dim) ctx.globalAlpha = 0.4;
         A.roundRect(ctx, r.x, r.y, r.s, r.s, r.s * 0.1);
         if (!face) {
@@ -430,6 +463,13 @@
           // angles dorés + glyphe
           ctx.strokeStyle = 'rgba(230,185,74,.35)'; ctx.lineWidth = 1; A.roundRect(ctx, r.x + r.s * 0.1, r.y + r.s * 0.1, r.s * 0.8, r.s * 0.8, r.s * 0.06); ctx.stroke();
           ctx.globalAlpha *= hv ? 1 : 0.8;
+          if (t.crack) {   // sceau fissuré : la lumière filtre
+            var cgl = ctx.createRadialGradient(cx, cy, 0, cx, cy, r.s * 0.6); cgl.addColorStop(0, 'rgba(255,236,150,' + 0.16 * t.crack + ')'); cgl.addColorStop(1, 'rgba(255,236,150,0)');
+            ctx.fillStyle = cgl; ctx.fillRect(r.x, r.y, r.s, r.s);
+            ctx.save(); ctx.strokeStyle = 'rgba(255,240,170,.95)'; ctx.shadowColor = '#ffd86a'; ctx.shadowBlur = 8 + t.crack * 8; ctx.lineWidth = 1.6 + t.crack * 0.5; ctx.lineJoin = 'round';
+            for (var ck = 0; ck < t.crack * 3; ck++) { var ca = ck * 2.4 + t.lg, cl = r.s * (0.16 + 0.13 * t.crack); ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + Math.cos(ca) * cl * 0.55 + Math.sin(ca * 3) * 5, cy + Math.sin(ca) * cl * 0.55); ctx.lineTo(cx + Math.cos(ca + 0.25) * cl, cy + Math.sin(ca + 0.25) * cl); ctx.stroke(); }
+            ctx.restore();
+          }
           if (t.lg === 0) A.eye(ctx, cx, cy, r.s * 0.52, '#f1c85a'); else if (t.lg === 1) A.ankh(ctx, cx, cy, r.s * 0.46, '#f1c85a'); else A.pyramid(ctx, cx, cy + r.s * 0.02, r.s * 0.46, '#f1c85a', 'rgba(0,0,0,.5)');
         } else {
           var kind = typeof t.token === 'number' ? 'num' : t.token, col = colorOf[kind];
@@ -467,6 +507,22 @@
         });
       });
     }
+    // briser le sceau : 3 touchers (n'importe où), chaque coup fissure la dalle et fait monter la tension
+    function crackSeal(i) {
+      var t = tiles[i], r = rect(i), cx = r.x + r.s / 2, cy = r.y + r.s / 2;
+      G.say(T.crackHint);
+      return new Promise(function (res) {
+        var done = false, tmr = null, prevPtr = S.onPointer;
+        function fin() { if (!done) { done = true; S.onPointer = prevPtr; t.crack = 0; res(); } }
+        function arm() { if (tmr) tmr.cancelled = true; var me = tmr = { cancelled: false }; G.sleep(1.3).then(function () { if (!me.cancelled && !done) { hit(); } }); }
+        function hit() {
+          t.crack++; Sfx.drum(0.18 + t.crack * 0.12); FX.shake(3 + t.crack * 3, 0.25); FX.spark(cx, cy, 6 + t.crack * 4, '#ffe9a0', 160 + t.crack * 60, 0.4);
+          if (t.crack >= 3) { FX.flash(0.25, '#ffe9a0'); fin(); } else arm();
+        }
+        S.onPointer = function (x, y, type) { if (type === 'down') hit(); };
+        arm();
+      });
+    }
     async function reveal(i, rec) {
       var t = tiles[i], r = rect(i), cx = r.x + r.s / 2, cy = r.y + r.s / 2;
       t.token = rec.token; t.state = 'flipping'; t.u = 0; Sfx.reveal();
@@ -486,6 +542,7 @@
       for (n = 0; n < data.picks.length; n++) {
         G.say(T.pick);
         var i = await waitPick(); hover = -1;
+        if (!quick()) await crackSeal(i);
         await reveal(i, data.picks[n]);
         if (data.picks[n].token === 'curse' && !data.picks[n].saved) break;
       }
@@ -636,7 +693,7 @@
       pw = pw == null ? 0.5 : pw;
       var off = 0.2 + Math.random() * 0.6, target = -(idx + off) * st, rot0 = rot, delta = mod(target - rot0, TAU) + (G.turbo ? 3 : Math.round(3 + pw * 4)) * TAU, prev = rot, pT = G.t;
       S.spinning = true; hl = -1; Sfx.whoosh();
-      return G.tween(G.turbo ? 2.4 : 3.2 + pw * 2.4, function (u) { var e = 1 - Math.pow(1 - u, 3.6), nr = rot0 + delta * e; vel = (nr - prev) / Math.max(1 / 240, G.t - pT); prev = nr; pT = G.t; rot = nr; }, null).then(function () {
+      return G.tween(G.turbo ? 2.4 : 4.2 + pw * 2.6, function (u) { var e = 1 - Math.pow(1 - u, 4.8), nr = rot0 + delta * e; vel = (nr - prev) / Math.max(1 / 240, G.t - pT); prev = nr; pT = G.t; rot = nr; }, null).then(function () {
         S.spinning = false; vel = 0; rot = mod(rot, TAU); ptrV += 4; Sfx.drum(0.3); hl = idx;
       });
     }
