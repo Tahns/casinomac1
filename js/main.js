@@ -33,6 +33,8 @@
         if (d.quality) S.quality = d.quality;
       }
     } catch (e) {}
+    // mouvement réduit : suit le réglage du système tant que le joueur n'a rien choisi
+    try { if (!localStorage.getItem(SAVE_KEY) && root.matchMedia && root.matchMedia('(prefers-reduced-motion: reduce)').matches) { S.reduced = true; FX.reduced = true; } } catch (e) {}
     if (S.balance < BETS[0]) S.balance = 10000;
   }
   function save() {

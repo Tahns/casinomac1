@@ -129,3 +129,20 @@ Cadre : l'achat est désactivé pendant l'auto-play, compte dans la limite de pe
 | **Menaces** | Propriété intellectuelle (Plinko/Pachinko, Coin Flip), contraintes Stake non vérifiées (achat de bonus autorisé ou non selon marché), cadre légal par pays (achat interdit dans certains), concurrence des roues à bonus. |
 
 **Bloqué (dépend de l'utilisateur ou d'un tiers)** : validation de la propriété intellectuelle ; lecture de la doc officielle Stake ; test du son à l'oreille ; test sur vrai téléphone ; RNG serveur et audit ; avis juridique sur l'achat de bonus.
+
+## 11. Itération 2 de la boucle (2026-10-10, 00 h UTC)
+
+**Corrigé**
+- **Filet de tests des maths** : `node tools/check.js` (code de sortie 1 si un invariant casse). Il vérifie la roue (48 cases, comptes, jamais deux cases identiques côte à côte), le déterminisme par graine, la structure de 600 000 tours (plafond, chaîne Ankh, cohérence boost/Oracle, gains = base × boost), les achats (un bonus, coût = prix affiché) et un RTP grossier de chaque mode. Résultat : 0 anomalie ; RTP mesuré Standard 95,9 %, Oracle+ 96,3 %, achats 96,0 à 96,2 %.
+- **Accessibilité** : le texte de statut est annoncé aux lecteurs d'écran (`role="status"`, `aria-live`), contour de focus visible au clavier, canvas décrit, et **mouvement réduit** activé automatiquement si le système le demande (tant que le joueur n'a pas choisi).
+
+**SWOT à jour**
+
+| | |
+|---|---|
+| **Forces** | Maths vérifiées par un test reproductible, 3 profils de jeu (roue, Oracle+, achat) à RTP ≈ 96 %, rendu cohérent, jeu responsable, accessibilité de base, bundle léger. |
+| **Faiblesses** | Son jamais écouté ; fluidité mobile non mesurée sur appareil réel ; art procédural ; pas de tests automatisés de l'interface au-delà du soak ; pas de progression ; RNG navigateur. |
+| **Opportunités** | Profils de risque multiples à proposer à Stake ; illustrations générées (sur accord) ; contenu événementiel. |
+| **Menaces** | Propriété intellectuelle ; contraintes Stake et achat de bonus selon les marchés ; cadre légal ; concurrence. |
+
+**Bloqué** : validation de la propriété intellectuelle ; doc officielle Stake ; test sonore ; test sur vrai téléphone ; RNG serveur et audit ; avis juridique sur l'achat de bonus ; accord pour des illustrations générées (crédits).
