@@ -178,7 +178,7 @@ label{font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--d
 .stat label{font:800 8px Manrope;letter-spacing:.22em;color:#bfa56a;display:block;line-height:1}
 .stat b{display:block;font:600 clamp(19px,2.2vw,26px)/1.1 Oswald,Manrope;text-shadow:0 2px 0 #000,0 0 14px rgba(230,185,74,.25);white-space:nowrap}
 .stat.win{justify-self:start}.stat.win b{color:#ffe08a;text-shadow:0 2px 0 #3a2706,0 0 20px rgba(255,200,60,.6)}
-.betbox{min-width:clamp(168px,17vw,220px);padding:17px 24px 10px;gap:6px}
+.betbox{min-width:clamp(168px,17vw,220px);padding:23px 24px 8px;gap:6px}
 .betval{min-width:0;flex:1}
 .step{width:34px;height:34px;border-radius:50%;font:900 20px/1 Manrope;color:#2a1a00;border:0;
   background:radial-gradient(circle at 35% 28%,#fff6c8,#e6b94a 45%,#a8761a);box-shadow:0 0 0 2px #3a2a0c,0 3px 8px #000a,inset 0 -3px 6px rgba(90,60,5,.5)}

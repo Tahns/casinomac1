@@ -10,6 +10,6 @@ js = ''
 for n in ['math', 'art', 'audio', 'fx', 'i18n', 'imgs', 'game', 'bonuses', 'main']:
     t = open(r + 'js/' + n + '.js').read()
     if n == 'imgs':
-        t = re.sub(r"'img/([a-z_]+)\.jpg'", lambda m: "'data:image/jpeg;base64," + b64('img/' + m.group(1) + '.jpg') + "'", t)
+        t = re.sub(r"'img/([a-z_]+)\.(jpg|webp)'", lambda m: "'data:image/" + ('webp' if m.group(2) == 'webp' else 'jpeg') + ";base64," + b64('img/' + m.group(1) + '.' + m.group(2)) + "'", t)
     js += t + '\n'
 open(sys.argv[1], 'w').write('<title>Hand of Anubis</title><style>' + css + '</style>' + body + '<script>' + js + '</script>')

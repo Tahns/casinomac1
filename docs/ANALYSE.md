@@ -353,3 +353,9 @@ Corrigé : (1) le RTP standard avait dérivé à ≈ 96,5 % (10 séries × 10 M 
 Corrigé (code seul, sans nouvelle image) : les fenêtres Règles / Achat de bonus / Limites reprennent le cadre de basalte du menu du bas et les plaques gravées sur les cartes d'achat (portrait et paysage vérifiés, contraste inchangé).
 
 **SWOT (mis à jour)** — Forces : DA homogène du menu aux fenêtres, 3 profils de risque, bonus interactifs, maths revalidées, 6 suites de tests. Faiblesses : fichier ≈ 1,9 Mo ; audio jamais écouté ; pas de test sur vrai téléphone ; les × restent hétérogènes dans les bonus (en attente de la décision de l'utilisateur). Opportunités : nom et habillage originaux, format Stake Engine, musique originale, vraie 3D. Menaces / bloqué : nom « Hand of Anubis » (Play'n GO) et ressemblance Crazy Time (avis juridique) ; droits des images générées ; exigences Stake (RNG serveur, audit) ; légalité de l'achat de bonus.
+
+## Itération 15 — poids du fichier (2026-10-11)
+
+Corrigé : les 9 fonds illustrés (décors, gros gain, accueil, médaillon, main) passent de JPEG à WebP (−183 Ko d'images) ; les logos découpés et la texture d'or restent en JPEG (le bruit WebP près du noir créerait des franges au détourage). Fichier unique : 1,94 → 1,81 Mo. Ajustement du libellé MISE, qui touchait l'ornement de la plaque.
+
+**SWOT (mis à jour)** — Forces : DA homogène, 3 profils de risque, bonus interactifs, maths revalidées, 6 suites de tests, fichier plus léger. Faiblesses : 1,8 Mo restant (chaque image est déjà compressée : gain suivant = moins d'images ou images plus petites) ; audio jamais écouté ; pas de test sur vrai téléphone ; × hétérogènes dans les bonus (décision utilisateur attendue). Opportunités : nom et habillage originaux, format Stake Engine, musique originale, vraie 3D. Menaces / bloqué : nom « Hand of Anubis » (Play'n GO) et ressemblance Crazy Time ; droits des images générées ; exigences Stake (RNG serveur, audit) ; légalité de l'achat de bonus.
