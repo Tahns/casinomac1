@@ -11,6 +11,8 @@ node tools/contrast.js           # contraste WCAG AA des couples texte/fond
 node tools/i18n-check.js         # FR/EN complets, pas de français en dur, chiffres affichés = maths
 PLAYWRIGHT_CORE=... node tools/layout.js # mises en page sur 10 tailles d'écran (portrait, paysage, grand écran)
 PLAYWRIGHT_CORE=/chemin/node_modules/playwright-core node tools/e2e.js   # tests de bout en bout dans Chromium
+PLAYWRIGHT_CORE=... node tools/gestures.js  # joue au hasard les gestes de chaque bonus et profil : jamais de blocage ni d'erreur
+node tools/tune-profiles.js     # espérance des profils Prudent / Équilibré / Audacieux (doit rester égale)
 ```
 
 | Fichier | Rôle |

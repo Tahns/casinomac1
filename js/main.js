@@ -5,7 +5,7 @@
   function $(id) { return document.getElementById(id); }
 
   // Statistiques mesurées par tools/simulate.js (36M tours par mode, ±0,2 pt) — affichées dans la table des gains
-  var STATS = { rtp: '96.2', rtpPlus: '95.9', hit: '61.3', bonusEvery: '14.7' };
+  var STATS = { rtp: '96.3', rtpPlus: '96.0', hit: '61.4', bonusEvery: '14.7' };
   var BETS = [10, 20, 50, 100, 200, 500, 1000, 2000, 5000];
   var AUTO_STEPS = [0, 10, 25, 50, 100];
   var SAVE_KEY = 'hoa_save_v1';

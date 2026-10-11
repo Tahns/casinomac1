@@ -88,7 +88,7 @@
   var N = LAYOUT.length;
 
   /* ---------- Oracle (booster pré-tour, façon « top slot ») ---------- */
-  var MODES = { std: { cost: 1, oracle: 0.32 }, plus: { cost: 1.1, oracle: 0.72 } };
+  var MODES = { std: { cost: 1, oracle: 0.31 }, plus: { cost: 1.1, oracle: 0.72 } };
   var ORACLE_CHANCE = MODES.std.oracle;
   var ORACLE_KIND_W = [['m05', 3], ['m1', 4], ['m2', 3], ['m3', 2], ['scarab', 3], ['weigh', 3], ['vault', 3]];
   var ORACLE_BOOST = {

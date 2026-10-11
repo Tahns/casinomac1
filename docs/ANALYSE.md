@@ -337,3 +337,13 @@ Toujours : résultat tiré avant l'animation ; les actions du joueur n'ont aucun
 - Modèle Stake Engine : les trois tirages sont dans le script du tour ; le choix révèle l'un d'eux. Le gain en attente est recalculé et sauvegardé au moment du choix (`G.onBonusChoice`). Turbo / auto-play : profil équilibré. Touches 1, 2, 3 et délai de 20 s (équilibré).
 - RTP global inchangé (8 M de tours : 96,5 % standard, 96,1 % Oracle+, dans l'incertitude).
 - Les règles en jeu l'annoncent (FR/EN).
+
+## Itération 13 — validation des maths après les profils, tests des gestes (2026-10-11)
+
+Corrigé : (1) le RTP standard avait dérivé à ≈ 96,5 % (10 séries × 10 M de tours, moyenne 96,5 %) : la chance d'Oracle du mode standard passe de 0,32 à 0,31 → **96,26 % (4 × 10 M)** ; Oracle+ **≈ 96,0 %** (3 × 10 M) ; achats de bonus 95,9–96,4 % (10 M chacun) ; STATS mis à jour. (2) Nouveau `tools/gestures.js` : 9 parties (3 bonus × 3 profils) jouées au clavier et à la souris, sans blocage ni erreur.
+
+**SWOT**
+- Forces : DA et profondeur, 3 profils de risque à espérance égale, bonus interactifs, maths revalidées, 6 suites de tests.
+- Faiblesses : fichier ≈ 1,9 Mo ; audio jamais écouté ; pas testé sur vrai téléphone ; choix cosmétiques (trésor, pesée, visée) à encadrer ; HUD et fenêtres secondaires encore à harmoniser.
+- Opportunités : renommer et habiller l'univers de façon originale ; format Stake Engine ; musique originale ; vraie 3D.
+- Menaces / bloqué (dépend de l'utilisateur ou d'un tiers) : nom « Hand of Anubis » (Play'n GO) et ressemblance Crazy Time → avis juridique ; droits des images générées ; exigences Stake (RNG serveur, audit) non vérifiées ; achat de bonus interdit selon les pays.
