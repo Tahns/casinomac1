@@ -216,3 +216,10 @@ label{font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--d
   .toggles{gap:3px 3px}
   .tgl{border-width:0 14px;border-image-width:0 14px;height:20px;font-size:7px;letter-spacing:.1em}.tgl i{display:none}
 }
+
+/* fenêtres (infos, achat, limites) : même cadre de basalte que le menu du bas */
+.sheet{background:none;border:0;border-style:solid;border-width:20px 34px;border-image:url(../img/hudframe.webp) 22% 14% fill / 20px 34px stretch;border-radius:0;padding:16px clamp(8px,3vw,22px) 20px;filter:drop-shadow(0 12px 40px rgba(0,0,0,.8))}
+.sheet .x{right:4px;top:4px;background:radial-gradient(circle at 35% 28%,#3a2c16,#120d07);border:2px solid #b8861e;box-shadow:0 0 0 2px #2a1c06,0 3px 10px #000a;font-size:22px;line-height:1}
+.buyCard{background:url(../img/plaque.webp) center/100% 100% no-repeat;border:0;border-radius:0;padding:28px 14px 34px;filter:drop-shadow(0 4px 8px rgba(0,0,0,.6))}
+.buyCard:hover:not(:disabled){border:0;box-shadow:none;filter:drop-shadow(0 0 14px rgba(230,185,74,.55)) brightness(1.12)}
+@media (max-width:760px){.sheet{border-width:16px 24px;border-image-width:16px 24px}}

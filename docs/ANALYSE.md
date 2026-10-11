@@ -347,3 +347,9 @@ Corrigé : (1) le RTP standard avait dérivé à ≈ 96,5 % (10 séries × 10 M 
 - Faiblesses : fichier ≈ 1,9 Mo ; audio jamais écouté ; pas testé sur vrai téléphone ; choix cosmétiques (trésor, pesée, visée) à encadrer ; HUD et fenêtres secondaires encore à harmoniser.
 - Opportunités : renommer et habiller l'univers de façon originale ; format Stake Engine ; musique originale ; vraie 3D.
 - Menaces / bloqué (dépend de l'utilisateur ou d'un tiers) : nom « Hand of Anubis » (Play'n GO) et ressemblance Crazy Time → avis juridique ; droits des images générées ; exigences Stake (RNG serveur, audit) non vérifiées ; achat de bonus interdit selon les pays.
+
+## Itération 14 — fenêtres harmonisées (2026-10-11)
+
+Corrigé (code seul, sans nouvelle image) : les fenêtres Règles / Achat de bonus / Limites reprennent le cadre de basalte du menu du bas et les plaques gravées sur les cartes d'achat (portrait et paysage vérifiés, contraste inchangé).
+
+**SWOT (mis à jour)** — Forces : DA homogène du menu aux fenêtres, 3 profils de risque, bonus interactifs, maths revalidées, 6 suites de tests. Faiblesses : fichier ≈ 1,9 Mo ; audio jamais écouté ; pas de test sur vrai téléphone ; les × restent hétérogènes dans les bonus (en attente de la décision de l'utilisateur). Opportunités : nom et habillage originaux, format Stake Engine, musique originale, vraie 3D. Menaces / bloqué : nom « Hand of Anubis » (Play'n GO) et ressemblance Crazy Time (avis juridique) ; droits des images générées ; exigences Stake (RNG serveur, audit) ; légalité de l'achat de bonus.
