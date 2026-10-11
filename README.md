@@ -23,6 +23,8 @@ node tools/tune-profiles.js     # espérance des profils Prudent / Équilibré /
 | `js/main.js` | Flux de jeu, HUD, auto-play, table des gains, sauvegarde locale |
 | `js/imgs.js` | Liste des illustrations (remplacée par des data: URI dans le build mono-fichier) |
 | `js/art.js` · `audio.js` · `fx.js` · `i18n.js` | Dessin vectoriel, audio synthétisé, particules, FR/EN |
+| `img/` | Illustrations générées (WebP/JPEG, ≈ 1 Mo) : décors, logos de bonus, médaillon, accueil, cadre et plaques du menu |
+| `tools/build-single.py` | Construit le fichier HTML unique (CSS, polices, JS, images en data: URI) : `python3 -I tools/build-single.py sortie.html` |
 | `docs/ANALYSE.md` | SWOT, benchmark GitHub, DA, mathématiques, chemin vers Stake |
 
 Commandes : `Espace` = tourner / accélérer, `↑ ↓` = mise. Ajouter `?debug` à l'URL expose `G.testBonus('vault'|'scarab'|'weigh', boost, upgraded)` pour tester un bonus.
