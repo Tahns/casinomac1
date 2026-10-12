@@ -496,7 +496,7 @@
    * 3. CHAMBRE DU TRÉSOR — pick-me, 12 chambres
    * ====================================================================== */
   function vaultScene(sp, bet) {
-    var T = I18N.t(), data = sp.bonus, S = newScene(T.vaultIntro), g = {}; S.bgImg = 'vault'; var tiles = [], n = 0, shield = 0, hover = -1, waiting = false, pickRes = null, shake = 0, vig = 0, vigCol = '255,40,20', beams = [], entry = 0, endGlow = 0;
+    var T = I18N.t(), data = sp.bonus, S = newScene(T.vaultIntro), g = {}; S.bgImg = 'vault'; var tiles = [], n = 0, shield = 0, hover = -1, waiting = false, pickRes = null, queued = -1, shake = 0, vig = 0, vigCol = '255,40,20', beams = [], entry = 0, endGlow = 0;
     var cols = 4, rows = 3;
     for (var i = 0; i < cols * rows; i++) tiles.push({ state: 'closed', token: null, u: 0, dim: false, lg: i % 3, crack: 0, tens: 0, pop: 0, col: null, dark: 0 });
     S.layout = function () {
@@ -580,38 +580,26 @@
       for (var s = 0; s < shield; s++) A.ankh(ctx, G.cx - (shield - 1) * 20 + s * 40, g.y0 - 26, 28, '#4ff0d8');
       chrome(S);
     };
+    // un seul toucher ouvre la dalle (hitbox élargie à l'espace entre dalles, aucun survol requis) ;
+    // un toucher pendant l'animation précédente est mémorisé (une seule fois) pour le prochain choix
     S.onPointer = function (x, y, type) {
-      var h = -1;
-      for (var i = 0; i < tiles.length; i++) { var r = rect(i); if (x >= r.x && x <= r.x + r.s && y >= r.y && y <= r.y + r.s) { h = i; break; } }
+      var h = -1, m = g.gap / 2;
+      for (var i = 0; i < tiles.length; i++) { var r = rect(i); if (x >= r.x - m && x <= r.x + r.s + m && y >= r.y - m && y <= r.y + r.s + m) { h = i; break; } }
       hover = h;
-      if (type === 'down' && waiting && h >= 0 && tiles[h].state === 'closed' && pickRes) { var f = pickRes; pickRes = null; f(h); }
+      if (type !== 'down' || h < 0 || tiles[h].state !== 'closed') return;
+      if (waiting && pickRes) { var f = pickRes; pickRes = null; f(h); } else queued = h;
     };
     function waitPick() {
       return new Promise(function (res) {
         var done = false;
         function fin(i) { if (!done) { done = true; waiting = false; pickRes = null; res(i); } }
-        waiting = true; pickRes = fin;
+        if (queued >= 0 && tiles[queued].state === 'closed') { var q = queued; queued = -1; fin(q); return; }
+        queued = -1; waiting = true; pickRes = fin;
         var auto = (G.turbo || (G.S && G.S.auto > 0)) ? 0.55 : 7;
         G.sleep(auto).then(function () {
           var closed = []; tiles.forEach(function (t, i) { if (t.state === 'closed') closed.push(i); });
           fin(closed[Math.floor(Math.random() * closed.length)]);
         });
-      });
-    }
-    // briser le sceau : 3 touchers (n'importe où), chaque coup fissure la dalle et fait monter la tension
-    function crackSeal(i) {
-      var t = tiles[i], r = rect(i), cx = r.x + r.s / 2, cy = r.y + r.s / 2;
-      G.say(T.crackHint);
-      return new Promise(function (res) {
-        var done = false, tmr = null, prevPtr = S.onPointer;
-        function fin() { if (!done) { done = true; S.onPointer = prevPtr; t.crack = 0; t.tens = 1; res(); } }
-        function arm() { if (tmr) tmr.cancelled = true; var me = tmr = { cancelled: false }; G.sleep(1.3).then(function () { if (!me.cancelled && !done) { hit(); } }); }
-        function hit() {
-          t.crack++; t.tens = t.crack / 3; FX.ring(cx, cy, '#ffe9a0', r.s * (0.8 + t.crack * 0.3), 0.5); Sfx.drum(0.18 + t.crack * 0.12); FX.shake(3 + t.crack * 3, 0.25); FX.spark(cx, cy, 6 + t.crack * 4, '#ffe9a0', 160 + t.crack * 60, 0.4);
-          if (t.crack >= 3) { FX.flash(0.25, '#ffe9a0'); fin(); } else arm();
-        }
-        S.onPointer = function (x, y, type) { if (type === 'down') hit(); };
-        arm();
       });
     }
     async function reveal(i, rec) {
@@ -648,7 +636,6 @@
       for (n = 0; n < data.picks.length; n++) {
         G.say(T.pick);
         var i = await waitPick(); hover = -1;
-        if (!quick()) await crackSeal(i);
         await reveal(i, data.picks[n]);
         if (data.picks[n].token === 'curse' && !data.picks[n].saved) break;
       }
