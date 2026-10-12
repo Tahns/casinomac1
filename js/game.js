@@ -581,6 +581,67 @@
     });
   };
 
+  /* ======== ANUBIS SURGIT DU CENTRE DE LA ROUE (gros bonus) : le médaillon grandit vers l'écran, yeux rouges ======== */
+  G.emerge = function () {
+    return new Promise(function (res) {
+      if (!ART.medal || FX.reduced) { res(); return; }
+      G.eg = { t: 0, dur: 2.7, res: res, flashed: false, growled: false };
+      if (Sfx.anubisRise) Sfx.anubisRise();
+      FX.shake(6, 0.6);
+    });
+  };
+  function updateEmerge(sdt) {
+    var e = G.eg; if (!e) return;
+    e.t += sdt; var u = e.t / e.dur;
+    if (u > 0.3 && !e.growled) { e.growled = true; FX.shake(14, 1.0); }
+    if (u > 0.72 && !e.flashed) { e.flashed = true; FX.flash(0.7, '#ff3a2a'); FX.shake(22, 0.7); FX.ring(G.cx, G.cy, '#ff5a3a', G.R * 1.4, 0.9); if (Sfx.thud) Sfx.thud(); }
+    if (e.t >= e.dur) { var r = e.res; G.eg = null; r(); }
+  }
+  function drawEmerge() {
+    var e = G.eg; if (!e || !ART.medal) return;
+    var u = clamp(e.t / e.dur, 0, 1), W_ = G.w, H_ = G.h, cx = G.cx, cy = G.cy;
+    var grow = G.ease.inOut(clamp((u - 0.08) / 0.62, 0, 1)), s0 = G.R * 0.36, s1 = Math.min(W_ * 1.15, H_ * 1.05);
+    var size = s0 + (s1 - s0) * grow, py = cy + (H_ * 0.46 - cy) * grow * 0.0 + (G.h * 0.5 - cy) * grow;      // glisse vers le centre de l'écran
+    var fadeOut = clamp((u - 0.86) / 0.14, 0, 1), dark = clamp(u / 0.3, 0, 1) * 0.72 * (1 - fadeOut);
+    var jit = (u > 0.25 ? (Math.random() - 0.5) * (2 + 8 * grow) : 0);
+    // 1) pénombre rouge
+    ctx.save(); ctx.fillStyle = 'rgba(8,0,0,' + dark + ')'; ctx.fillRect(0, 0, W_, H_);
+    var rg = ctx.createRadialGradient(cx, py, size * 0.05, cx, py, Math.max(W_, H_) * 0.7);
+    rg.addColorStop(0, 'rgba(255,40,20,' + (0.5 * grow * (1 - fadeOut)) + ')'); rg.addColorStop(1, 'rgba(120,0,0,0)'); ctx.fillStyle = rg; ctx.fillRect(0, 0, W_, H_); ctx.restore();
+    // 2) médaillon qui sort du centre (anneau sombre derrière pour le détacher de la roue)
+    ctx.save(); ctx.globalAlpha = (1 - fadeOut); ctx.translate(cx + jit, py + jit * 0.6); ctx.rotate(Math.sin(e.t * 9) * 0.006 * grow);
+    ctx.shadowColor = 'rgba(255,40,20,.85)'; ctx.shadowBlur = 30 + 50 * grow;
+    ctx.beginPath(); ctx.arc(0, 0, size * 0.49, 0, TAU); ctx.fillStyle = '#050102'; ctx.fill(); ctx.shadowBlur = 0;
+    ctx.save(); ctx.beginPath(); ctx.arc(0, 0, size * 0.49, 0, TAU); ctx.clip(); ctx.drawImage(ART.medal, -size / 2, -size / 2, size, size);
+    // 3) yeux rouges : on éteint le turquoise puis on allume deux braises
+    var eyes = [[-0.061, -0.066], [0.07, -0.066]], pw = clamp((u - 0.22) / 0.3, 0, 1), pulse = 0.75 + 0.25 * Math.sin(e.t * 14);
+    ctx.globalCompositeOperation = 'source-over';
+    eyes.forEach(function (p, i) {
+      var ex = p[0] * size, ey = p[1] * size, ew = size * 0.05, eh = size * 0.02;
+      ctx.save(); ctx.translate(ex, ey); ctx.rotate(i ? -0.18 : 0.18);
+      ctx.fillStyle = 'rgba(25,0,0,' + (0.85 * pw) + ')'; ctx.beginPath(); ctx.ellipse(0, 0, ew * 1.1, eh * 1.5, 0, 0, TAU); ctx.fill();
+      ctx.restore();
+    });
+    ctx.globalCompositeOperation = 'lighter';
+    eyes.forEach(function (p, i) {
+      var ex = p[0] * size, ey = p[1] * size, ew = size * 0.05, eh = size * 0.02;
+      var hg = ctx.createRadialGradient(ex, ey, 0, ex, ey, size * 0.2 * pw * pulse); hg.addColorStop(0, 'rgba(255,60,30,' + (0.75 * pw) + ')'); hg.addColorStop(0.35, 'rgba(255,20,10,' + (0.3 * pw) + ')'); hg.addColorStop(1, 'rgba(255,0,0,0)');
+      ctx.fillStyle = hg; ctx.beginPath(); ctx.arc(ex, ey, size * 0.2 * pw * pulse, 0, TAU); ctx.fill();
+      ctx.save(); ctx.translate(ex, ey); ctx.rotate(i ? -0.18 : 0.18);
+      ctx.fillStyle = 'rgba(255,70,40,' + (0.95 * pw * pulse) + ')'; ctx.beginPath(); ctx.ellipse(0, 0, ew, eh, 0, 0, TAU); ctx.fill();
+      ctx.fillStyle = 'rgba(255,235,210,' + (0.9 * pw) + ')'; ctx.beginPath(); ctx.ellipse(0, 0, ew * 0.45, eh * 0.45, 0, 0, TAU); ctx.fill();
+      ctx.restore();
+    });
+    ctx.restore();   // fin clip
+    // 4) rayons rouges qui jaillissent des yeux
+    if (pw > 0.3) eyes.forEach(function (p, i) {
+      var ex = p[0] * size, ey = p[1] * size, bl = Math.max(W_, H_), bg = ctx.createLinearGradient(ex, ey, ex + (i ? 1 : -1) * bl * 0.5, ey - bl * 0.35);
+      bg.addColorStop(0, 'rgba(255,50,30,' + (0.4 * pw * pulse) + ')'); bg.addColorStop(1, 'rgba(255,0,0,0)');
+      ctx.fillStyle = bg; ctx.beginPath(); ctx.moveTo(ex, ey - size * 0.02); ctx.lineTo(ex + (i ? 1 : -1) * bl * 0.5, ey - bl * 0.5); ctx.lineTo(ex + (i ? 1 : -1) * bl * 0.5, ey - bl * 0.1); ctx.lineTo(ex, ey + size * 0.02); ctx.closePath(); ctx.fill();
+    });
+    ctx.restore();
+  }
+
   /* ============================ OVERLAY GROS GAIN ============================ */
   G.showBigWin = function (mult, amount, tier) {
     return new Promise(function (res) {
@@ -665,6 +726,7 @@
       FX.update(h);
     }
     updateWinOv(dt);
+    updateEmerge(sdt);
   }
   G.advance = async function (sec) { for (var n = Math.round(sec * 60), i = 0; i < n; i++) { tick(1 / 60); await null; } };
   var perf = { acc: 0, n: 0, stage: 0 };
@@ -701,6 +763,7 @@
     FX.draw(ctx);
     ctx.restore();
     drawWinOv();
+    drawEmerge();
     FX.drawFlash(ctx, G.w, G.h);
     if (G.fade > 0.001) { ctx.fillStyle = 'rgba(4,3,2,' + G.fade + ')'; ctx.fillRect(0, 0, G.w, G.h); }
     for (i = 0; i < G.onFrame.length; i++) G.onFrame[i](dt);

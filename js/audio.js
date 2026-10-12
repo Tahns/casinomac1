@@ -109,6 +109,21 @@
     tick: function (speed) { tone(1700 + (speed || 0) * 900, 0.03, 'triangle', 0.035); tone(620, 0.04, 'sine', 0.045); },
     click: function () { bell(880, 0.25, 0.07, 0, false); },
     whoosh: function () { swell(0.9, 0.16, 0, 300, 3600); },
+    // Anubis surgit : grondement qui monte, grognement filtré, battement sourd, puis coup rouge
+    anubisRise: function () {
+      if (!ensure()) return; var t = ctx.currentTime;
+      noise(2.4, 0.2, 0, 90, 'lowpass', 600);
+      tone(46, 2.6, 'sine', 0.3, 0, 90, true);
+      var o = ctx.createOscillator(), f = ctx.createBiquadFilter(), g = ctx.createGain(), l = ctx.createOscillator(), lg = ctx.createGain();       // grognement : dent de scie grave, filtre et trémolo
+      o.type = 'sawtooth'; o.frequency.setValueAtTime(62 * PK, t + 0.3); o.frequency.exponentialRampToValueAtTime(41 * PK, t + 2.4);
+      f.type = 'lowpass'; f.Q.value = 4; f.frequency.setValueAtTime(260, t + 0.3); f.frequency.exponentialRampToValueAtTime(900, t + 1.9); f.frequency.exponentialRampToValueAtTime(200, t + 2.5);
+      l.frequency.value = 14; lg.gain.value = 0.05; l.connect(lg); lg.connect(g.gain);
+      g.gain.setValueAtTime(0.0001, t + 0.3); g.gain.exponentialRampToValueAtTime(0.16, t + 1.2); g.gain.exponentialRampToValueAtTime(0.0001, t + 2.6);
+      o.connect(f); f.connect(g); g.connect(sfxBus); g.connect(verb); o.start(t + 0.3); o.stop(t + 2.7); l.start(t + 0.3); l.stop(t + 2.7);
+      A.heartbeat(0.6); setTimeout(function () { A.heartbeat(0.9); }, 650); setTimeout(function () { A.heartbeat(1); }, 1250);
+      swell(1.6, 0.12, 1.0, 120, 2400);
+      boom(0.5, 1.95);
+    },
     // lancement d'un tour : rythme de darbouka (dum-tak-tak-dum), sistre qui frémit, souffle qui monte, cloche de départ
     spinStart: function () {
       var i;
