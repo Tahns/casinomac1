@@ -864,7 +864,7 @@
     function numColor(v) { return v >= 100 ? ['#f4f2ff', '#6e6e8a'] : v >= 40 ? ['#ff9a3a', '#8a3a08'] : v >= 20 ? ['#c28bff', '#5a2a86'] : v >= 10 ? ['#8a7bff', '#2e2a8a'] : v >= 6 ? ['#5b8cff', '#1a3a8a'] : ['#8d8470', '#443c2e']; }
     S.update = function (dt) {
       chromeUpdate(S, dt);
-      ptrV += (-520 * ptr - 15 * ptrV) * dt; ptr = clamp(ptr + ptrV * dt, -0.2, 0.6);
+      ptrV += (-520 * ptr - 15 * ptrV) * dt; ptr = clamp(ptr + ptrV * dt, -0.6, 0.2);
       if (charging && holding) { power += pdir * dt * 1.15; if (power >= 1) { power = 1; pdir = -1; } if (power <= 0) { power = 0; pdir = 1; } }
       multPop = Math.max(0, multPop - dt * 2.4); bolts = Math.max(0, bolts - dt * 4); shock = Math.max(0, shock - dt * 1.4); rays = Math.max(0, rays - dt * 0.45); vig = Math.max(0, vig - dt * 1.2); upPulse = Math.max(0, upPulse - dt * 1.1);
       if (hb) hb.t += dt;
@@ -872,7 +872,7 @@
       if (tense > 0.5 && S.spinning && Math.random() < dt * 14 * tense) FX.spark(G.cx, g.cy - g.R * 1.05, 1, '#fff1b8', 140);
       if (S.spinning) {
         var idx = Math.floor(mod(-rot, TAU) / st);
-        if (idx !== lastIdx) { if (lastIdx >= 0) { ptrV += 5 + Math.min(Math.abs(vel), 18) * 0.4; if (G.t - lastTick > 0.03) { Sfx.tick(Math.min(1, Math.abs(vel) / 18)); lastTick = G.t; } } lastIdx = idx; }
+        if (idx !== lastIdx) { if (lastIdx >= 0) { ptrV -= 5 + Math.min(Math.abs(vel), 18) * 0.4; if (G.t - lastTick > 0.03) { Sfx.tick(Math.min(1, Math.abs(vel) / 18)); lastTick = G.t; } } lastIdx = idx; }
       }
     };
     function wedgeH(i, ri, ro) { ctx.beginPath(); ctx.arc(0, 0, ro, i * st - Math.PI / 2, (i + 1) * st - Math.PI / 2); ctx.arc(0, 0, ri, (i + 1) * st - Math.PI / 2, i * st - Math.PI / 2, true); ctx.closePath(); }
@@ -1105,7 +1105,7 @@
       var off = 0.2 + Math.random() * 0.6, target = -(idx + off) * st, rot0 = rot, delta = mod(target - rot0, TAU) + (G.turbo ? 3 : Math.round(3 + pw * 4)) * TAU, prev = rot, pT = G.t;
       S.spinning = true; hl = -1; Sfx.whoosh();
       return G.tween(G.turbo ? 2.4 : 4.2 + pw * 2.6, function (u) { var e = 1 - Math.pow(1 - u, 4.8), nr = rot0 + delta * e; vel = (nr - prev) / Math.max(1 / 240, G.t - pT); prev = nr; pT = G.t; rot = nr; var tn = clamp((u - 0.72) / 0.28, 0, 1), bt = Math.floor(tn * 6); if (tn > 0.3 && bt !== lastBeat) { lastBeat = bt; Sfx.drum(0.15 + 0.3 * tn); } tense = tn; vig = Math.max(vig, tn * 0.8); }, null).then(function () {
-        tense = 0; lastBeat = -1; S.spinning = false; vel = 0; rot = mod(rot, TAU); ptrV += 4; Sfx.drum(0.3); hl = idx;
+        tense = 0; lastBeat = -1; S.spinning = false; vel = 0; rot = mod(rot, TAU); ptrV -= 4; Sfx.drum(0.3); hl = idx;
       });
     }
     function banner(text, sub, col) { hb = { text: text, sub: sub, col: col, t: 0 }; }
