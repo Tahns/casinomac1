@@ -10,7 +10,7 @@
   var AUTO_STEPS = [0, 10, 25, 50, 100];
   var SAVE_KEY = 'hoa_save_v1';
 
-  var S = { pending: 0, balance: 10000, bi: 3, lastWin: 0, autoIdx: 0, auto: 0, stopOnBonus: true, busy: false, hist: [], reduced: false, mode: 'std', buyOn: true, limit: 0, quality: 'auto', limitHit: false };
+  var S = { pending: 0, balance: 10000, bi: 3, lastWin: 0, autoIdx: 0, auto: 0, stopOnBonus: false, busy: false, hist: [], reduced: false, mode: 'std', buyOn: true, limit: 0, quality: 'auto', limitHit: false };
   var SESS = { start: Date.now(), spins: 0, wag: 0, won: 0, lastCheck: Date.now() };
   var LIMITS = [0, 1000, 5000, 20000];
   var rng = M.cryptoRng();
@@ -24,7 +24,7 @@
         if (d.lang) I18N.setLang(d.lang);
         if (d.muted) Sfx.setMuted(true);
         if (d.turbo) { G.turbo = true; G.ultra = !!d.ultra; G.speed = spd(); }
-        if (typeof d.stopOnBonus === 'boolean') S.stopOnBonus = d.stopOnBonus;
+        if (typeof d.sobV2 === 'boolean') S.stopOnBonus = d.sobV2;   // (l'ancienne clé valait « oui » par défaut : ignorée)
         if (d.reduced) { S.reduced = true; FX.reduced = true; }
         if (Array.isArray(d.hist)) S.hist = d.hist.slice(0, 10);
         // tour interrompu (rechargement en pleine animation) : le résultat était déjà décidé, on le crédite
@@ -41,7 +41,7 @@
   }
   function save() {
     try {
-      localStorage.setItem(SAVE_KEY, JSON.stringify({ pending: S.pending, balance: S.balance, bi: S.bi, lang: I18N.lang(), muted: Sfx.isMuted(), turbo: G.turbo, ultra: !!G.ultra, stopOnBonus: S.stopOnBonus, reduced: S.reduced, hist: S.hist, mode: S.mode, buyOn: S.buyOn, limit: S.limit, quality: S.quality }));
+      localStorage.setItem(SAVE_KEY, JSON.stringify({ pending: S.pending, balance: S.balance, bi: S.bi, lang: I18N.lang(), muted: Sfx.isMuted(), turbo: G.turbo, ultra: !!G.ultra, sobV2: S.stopOnBonus, reduced: S.reduced, hist: S.hist, mode: S.mode, buyOn: S.buyOn, limit: S.limit, quality: S.quality }));
     } catch (e) {}
   }
 

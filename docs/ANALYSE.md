@@ -371,3 +371,8 @@ Rien de nouveau n'était réellement corrigeable par du code : seule la document
 - Scarabées : plus de visée ni de guidage ; ils tombent seuls, de façon aléatoire, en vraie physique balistique : contact sur le flanc de chaque cheville, rebonds de hauteur variable, parfois un petit rebond sur place. Le côté de chaque rebond suit le script déjà tiré, donc la case finale reste celle du tirage (assertion console conservée).
 - Mode **ULTRA** (bouton Turbo : arrêt → TURBO → ULTRA) : vitesse ×6, une manche se termine en ≈ 0,5 s ; le panneau de gros gain reste lisible (temps plafonné). Bonus automatiques.
 - Compte à rebours de l'auto affiché sur le bouton AUTO (nombre qui diminue) ; coût Oracle+ affiché dans le bouton Oracle+ ; boutons − / + et textes SOLDE / MISE / GAIN recentrés dans leurs plaques.
+
+## Itération 18 — retours utilisateur (2026-10-12)
+
+- Turbo / Ultra : les bonus gardent maintenant une vitesse élevée (×3,4 en turbo, ×8 en ultra, puis retour à la vitesse du mode) ; en turbo un bonus passe de 9–13 s à 4–6 s, en ultra 2–3 s.
+- L'auto-play ne s'arrête plus après un bonus par défaut (« Stopper l'auto sur bonus » passe à Non ; l'ancien réglage sauvegardé est ignoré, option toujours disponible dans les Règles). Vérifié : un bonus tombé en plein auto, le compteur continue jusqu'à 0.
