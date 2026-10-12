@@ -376,12 +376,12 @@
     // dérive douce à l'arrêt
     if (W.mode === 'idle') { W.rot += dt * 0.045; W.vel = 0; }
     // pointeur : ressort amorti
-    var p = W.ptr; p.v += (-520 * p.a - 15 * p.v) * dt; p.a += p.v * dt; p.a = clamp(p.a, -0.2, 0.62);
+    var p = W.ptr; p.v += (-520 * p.a - 15 * p.v) * dt; p.a += p.v * dt; p.a = clamp(p.a, -0.62, 0.2);
     var idx = Math.floor(mod(-W.rot, TAU) / step);
     if (idx !== W.lastIdx) {
       if (W.lastIdx >= 0 && W.mode === 'spin') {
         var sp = Math.abs(W.vel);
-        p.v += 5.5 + Math.min(sp, 22) * 0.45;
+        p.v -= 5.5 + Math.min(sp, 22) * 0.45;   // la cheville entraîne la pointe dans le sens de la roue (vers la droite en haut)
         var now = G.t;
         if (now - W.lastTick > 0.028) { Sfx.tick(Math.min(1, sp / 25)); W.lastTick = now; }
       }
@@ -556,7 +556,7 @@
       }, null);
     }).then(function () {
       W.rot = mod(W.rot, TAU); W.vel = 0; W.mode = 'idle'; W.spinning = false;
-      W.ptr.v += 3; Sfx.drum(0.3);
+      W.ptr.v -= 3; Sfx.drum(0.3);
       W.hl = { idx: spin.index, t: 0 };
       var cell = M.LAYOUT[spin.index];
       if (!M.KINDS[cell].bonus) FX.spark(G.cx, G.cy - G.R * 0.9, 14, '#ffe9a0', 220, 0.7);
