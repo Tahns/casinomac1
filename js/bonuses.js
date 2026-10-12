@@ -1307,7 +1307,7 @@
   // bloc vectoriel centré en (x, y), taille s ; o : sc, sx, sy, a, glow, rot, charge, jaw, crack
   function cryBlock(t, x, y, s, v, o) {
     o = o || {};
-    var pal = CRY_PAL[t], h = s / 2, epic = t === 'epic' || t === 'epicx', lab = (t === 'skull' || t === 'epic') ? '+' + G.fmt(v) : (t === 'anubis' || t === 'epicx') ? '×' + G.fmt(v) : '';
+    var pal = CRY_PAL[t], h = s / 2, epic = t === 'epic' || t === 'epicx', lab = o.nolabel ? '' : (t === 'skull' || t === 'epic') ? '+' + G.fmt(v) : (t === 'anubis' || t === 'epicx') ? '×' + G.fmt(v) : '';
     ctx.save(); ctx.translate(x, y); if (o.rot) ctx.rotate(o.rot);
     var sc = o.sc == null ? 1 : o.sc; ctx.scale(sc * (o.sx || 1), sc * (o.sy || 1));
     if (o.a != null) ctx.globalAlpha *= o.a;
@@ -1401,8 +1401,8 @@
       ctx.save(); A.roundRect(ctx, x0, g.legY - g.legH / 2, w, g.legH, 10); ctx.fillStyle = 'rgba(8,6,3,.62)'; ctx.fill(); ctx.lineWidth = 1.2; ctx.strokeStyle = 'rgba(255,216,106,.45)'; ctx.stroke(); ctx.restore();
       types.forEach(function (t, i) {
         var cx = x0 + (i + 0.5) * cw;
-        if (inline) { cryBlock(t, cx - cw * 0.5 + ls * 0.7, g.legY, ls, 0, { sc: 1 }); G.txt(T.cryptLeg[i], cx - cw * 0.5 + ls * 1.4, g.legY, { size: fs, family: 'Manrope', weight: 800, fill: '#e9d9aa', align: 'left' }); }
-        else { cryBlock(t, cx, g.legY - g.legH * 0.15, ls, 0, { sc: 1 }); G.txt(T.cryptLeg[i], cx, g.legY + g.legH * 0.33, { size: fs, family: 'Manrope', weight: 800, fill: '#e9d9aa' }); }
+        if (inline) { cryBlock(t, cx - cw * 0.5 + ls * 0.7, g.legY, ls, 0, { nolabel: true }); G.txt(T.cryptLeg[i], cx - cw * 0.5 + ls * 1.4, g.legY, { size: fs, family: 'Manrope', weight: 800, fill: '#e9d9aa', align: 'left' }); }
+        else { cryBlock(t, cx, g.legY - g.legH * 0.15, ls, 0, { nolabel: true }); G.txt(T.cryptLeg[i], cx, g.legY + g.legH * 0.33, { size: fs, family: 'Manrope', weight: 800, fill: '#e9d9aa' }); }
       });
     }
     S.draw = function () {

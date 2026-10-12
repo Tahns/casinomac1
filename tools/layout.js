@@ -22,7 +22,7 @@ var server = http.createServer(function (req, res) {
       return { R:G.R, top:G.cy-1.2*G.R, bot:G.cy+1.1*G.R, left:G.cx-1.1*G.R, right:G.cx+1.1*G.R, hudTop:hud.top, hudH:hud.height, sw:document.documentElement.scrollWidth, iw:innerWidth }; })()`);
     // les trois bonus « à plateau » se lancent et se terminent sans erreur à cette taille (la géométrie fine se vérifie à l'œil)
     var sc = await p.evaluate(`(async()=>{ var bad=[]; G.turbo=true; G.speed=1.6;
-      for (var k of ['scarab','weigh','vault']) { G.testBonus(k,1,false); await G.advance(3.2);
+      for (var k of ['scarab','weigh','vault','crypt']) { G.testBonus(k,1,false); await G.advance(3.2);
         var s=G.scene; if(!s) { bad.push(k+':pas de scène'); continue; }
         var gg=0; while(G.scene && gg<400){ await G.advance(0.5); gg++; if(G.winOv) G.skipWinOv(); if(G.scene&&G.scene.tap) G.scene.tap(); } if(G.scene) bad.push(k+':bloquée'); }
       return bad; })()`).catch(function (e) { return ['exception ' + e.message]; });
