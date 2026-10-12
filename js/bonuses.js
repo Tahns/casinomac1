@@ -396,9 +396,9 @@
    * 3. CHAMBRE DU TRÉSOR — pick-me, 12 chambres
    * ====================================================================== */
   function vaultScene(sp, bet) {
-    var T = I18N.t(), data = sp.bonus, S = newScene(T.vaultIntro), g = {}; S.bgImg = 'vault'; var tiles = [], n = 0, shield = 0, hover = -1, waiting = false, pickRes = null, shake = 0;
+    var T = I18N.t(), data = sp.bonus, S = newScene(T.vaultIntro), g = {}; S.bgImg = 'vault'; var tiles = [], n = 0, shield = 0, hover = -1, waiting = false, pickRes = null, shake = 0, vig = 0, vigCol = '255,40,20', beams = [], entry = 0, endGlow = 0;
     var cols = 4, rows = 3;
-    for (var i = 0; i < cols * rows; i++) tiles.push({ state: 'closed', token: null, u: 0, dim: false, lg: i % 3, crack: 0 });
+    for (var i = 0; i < cols * rows; i++) tiles.push({ state: 'closed', token: null, u: 0, dim: false, lg: i % 3, crack: 0, tens: 0, pop: 0, col: null, dark: 0 });
     S.layout = function () {
       var w = G.w, h = G.h, top = T0() + EX(140), bot = h - hudH() - (h < 520 ? 10 : 52);
       g.t = Math.min((w * 0.92) / (cols * 1.12), (bot - top) / (rows * 1.12), 170); g.gap = g.t * 0.12;
@@ -407,8 +407,9 @@
     function rect(i) { var c = i % cols, r = Math.floor(i / cols); return { x: g.x0 + c * (g.t + g.gap), y: g.y0 + r * (g.t + g.gap), s: g.t }; }
     var colorOf = { num: ['#f3cf6a', '#7a5a12'], scepter: ['#6a95ff', '#1a3a8a'], ankh: ['#4ff0d8', '#0b6f64'], curse: ['#ff6a50', '#7a1209'] };
     S.update = function (dt) {
-      chromeUpdate(S, dt); shake = Math.max(0, shake - dt * 2);
-      tiles.forEach(function (t) { if (t.state === 'flipping') t.u = Math.min(1, t.u + dt / 0.5); if (t.u >= 1 && t.state === 'flipping') t.state = 'open'; });
+      chromeUpdate(S, dt); shake = Math.max(0, shake - dt * 2); vig = Math.max(0, vig - dt * 0.9); endGlow = Math.max(0, endGlow - dt * 0.6); entry = Math.min(1.6, entry + dt * 1.4);
+      for (var bi = beams.length - 1; bi >= 0; bi--) { beams[bi].t += dt; if (beams[bi].t > beams[bi].life) beams.splice(bi, 1); }
+      tiles.forEach(function (t) { t.pop = Math.max(0, t.pop - dt * 2.2); t.dark = Math.max(0, t.dark - dt * 0.5); if (t.state !== 'closed') t.tens = Math.max(0, t.tens - dt * 4); if (t.state === 'flipping') t.u = Math.min(1, t.u + dt / 0.5); if (t.u >= 1 && t.state === 'flipping') t.state = 'open'; });
     };
     S.draw = function () {
       var sx = shake > 0 ? (Math.random() - 0.5) * shake * 18 : 0;
@@ -416,11 +417,18 @@
       tiles.forEach(function (t, i) {
         var r = rect(i), cx = r.x + r.s / 2, cy = r.y + r.s / 2, hv = waiting && hover === i && t.state === 'closed';
         var sc = t.state === 'flipping' ? Math.abs(Math.cos(Math.PI * t.u)) : 1, face = t.state === 'open' || (t.state === 'flipping' && t.u > 0.5);
-        var lift = hv ? r.s * 0.035 : 0;
+        ctx.globalAlpha = 1; var ek = clamp(entry - (i % cols + Math.floor(i / cols)) * 0.12, 0, 1); if (ek <= 0) return;
+        var lift = (hv ? r.s * 0.035 : 0) + (1 - G.ease.outBack(ek)) * r.s * 0.6;
+        if (ek < 1) ctx.globalAlpha = ek;
+        if (t.tens > 0 && t.state === 'closed') {   // tension : halo pulsant derrière la dalle
+          var tp = 0.6 + 0.4 * Math.sin(G.t * (14 + t.tens * 16)), hr = r.s * (0.75 + 0.35 * t.tens);
+          var tg = ctx.createRadialGradient(cx, cy, r.s * 0.2, cx, cy, hr); tg.addColorStop(0, 'rgba(255,230,140,' + 0.55 * t.tens * tp + ')'); tg.addColorStop(1, 'rgba(255,200,60,0)');
+          ctx.fillStyle = tg; ctx.fillRect(cx - hr, cy - hr, hr * 2, hr * 2);
+        }
         ctx.save(); if (t.dim) ctx.globalAlpha = 0.4;   // épaisseur de la dalle + ombre portée
         A.roundRect(ctx, r.x, r.y + r.s * 0.075, r.s, r.s, r.s * 0.1); ctx.fillStyle = '#120b04'; ctx.shadowColor = 'rgba(0,0,0,.75)'; ctx.shadowBlur = 16; ctx.shadowOffsetY = 7; ctx.fill(); ctx.restore();
-        var jx = t.crack && t.state === 'closed' ? (Math.random() - 0.5) * t.crack * 3.2 : 0;
-        ctx.save(); ctx.translate(cx + jx, cy - lift); ctx.scale(Math.max(0.02, sc), 1 + (t.state === 'flipping' ? Math.sin(Math.PI * t.u) * 0.08 : 0) + (hv ? 0.04 : 0)); ctx.translate(-cx, -cy);
+        var jx = t.state === 'closed' ? (Math.random() - 0.5) * (t.crack * 3.2 + t.tens * 7) : 0;
+        ctx.save(); ctx.translate(cx + jx, cy - lift); var ps = 1 + t.pop * 0.16 * Math.sin(Math.min(1, t.pop) * Math.PI * 0.5 + 0.3); ctx.scale(Math.max(0.02, sc) * ps, ps * (1 + (t.state === 'flipping' ? Math.sin(Math.PI * t.u) * 0.08 : 0) + (hv ? 0.04 : 0))); ctx.translate(-cx, -cy);
         if (t.dim) ctx.globalAlpha = 0.4;
         A.roundRect(ctx, r.x, r.y, r.s, r.s, r.s * 0.1);
         if (!face) {
@@ -441,7 +449,8 @@
         } else {
           var kind = typeof t.token === 'number' ? 'num' : t.token, col = colorOf[kind];
           var g2 = ctx.createLinearGradient(r.x, r.y, r.x, r.y + r.s); g2.addColorStop(0, col[0]); g2.addColorStop(1, col[1]);
-          ctx.fillStyle = g2; ctx.fill(); ctx.lineWidth = 3; ctx.strokeStyle = '#fff1b8'; ctx.stroke();
+          ctx.save(); ctx.shadowColor = col[0]; ctx.shadowBlur = 10 + t.pop * 40; ctx.fillStyle = g2; ctx.fill(); ctx.restore();
+          ctx.lineWidth = 3; ctx.strokeStyle = kind === 'curse' ? '#ff9a80' : '#fff1b8'; ctx.stroke();
           ctx.save(); A.roundRect(ctx, r.x, r.y, r.s, r.s, r.s * 0.1); ctx.clip();
           A.rays(ctx, cx, cy, r.s, 12, G.t * 0.5, '#ffffff', 0.18); ctx.restore();
           if (kind === 'num') { G.icon(ctx, 'coin', cx, cy - r.s * 0.04, r.s * 0.92); G.txt('+' + t.token, cx, cy + r.s * 0.12, { size: r.s * (String(t.token).length > 1 ? 0.3 : 0.38), weight: 900, fill: '#fff8d8', stroke: '#3a2400', sw: r.s * 0.07, shadow: 'rgba(0,0,0,.6)', blur: 6 }); }
@@ -451,10 +460,22 @@
           else if (kind === 'ankh' && G.icon(ctx, 'amulet', cx, cy, r.s * 0.92)) { /* amulette */ }
           else if (kind === 'ankh') { A.ankh(ctx, cx, cy - r.s * 0.02, r.s * 0.55, '#fff', '#0b5a50'); }
           else if (!G.icon(ctx, 'skull', cx, cy, r.s * 0.95)) { A.skull(ctx, cx, cy, r.s * 0.66, '#fff1d8', '#5a0c06'); }
+          if (kind === 'curse' && t.dark > 0) { A.roundRect(ctx, r.x, r.y, r.s, r.s, r.s * 0.1); ctx.fillStyle = 'rgba(40,0,0,' + (0.5 * t.dark * (0.6 + 0.4 * Math.sin(G.t * 30))) + ')'; ctx.fill(); }
         }
         ctx.restore();
       });
-      ctx.restore();
+      ctx.restore(); ctx.globalAlpha = 1;
+      beams.forEach(function (b) {   // colonne de lumière à la révélation
+        var k = b.t / b.life, a = (1 - k) * (1 - k), bw = b.w * (0.4 + k * 0.6);
+        var lg = ctx.createLinearGradient(b.x - bw, 0, b.x + bw, 0); lg.addColorStop(0, 'rgba(' + b.c + ',0)'); lg.addColorStop(0.5, 'rgba(' + b.c + ',' + 0.55 * a + ')'); lg.addColorStop(1, 'rgba(' + b.c + ',0)');
+        ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.fillStyle = lg; ctx.fillRect(b.x - bw, 0, bw * 2, b.y); ctx.restore();
+      });
+      if (vig > 0.01) {   // vignette de malédiction
+        var vg = ctx.createRadialGradient(G.cx, G.cy, Math.min(G.w, G.h) * 0.25, G.cx, G.cy, Math.max(G.w, G.h) * 0.75);
+        vg.addColorStop(0, 'rgba(' + vigCol + ',0)'); vg.addColorStop(1, 'rgba(' + vigCol + ',' + Math.min(0.75, vig * 0.75) + ')');
+        ctx.fillStyle = vg; ctx.fillRect(0, 0, G.w, G.h);
+      }
+      if (endGlow > 0.01) A.rays(ctx, G.cx, G.cy, Math.max(G.w, G.h), 16, G.t * 0.5, '#ffd86a', 0.16 * Math.min(1, endGlow));
       // boucliers Ankh
       for (var s = 0; s < shield; s++) A.ankh(ctx, G.cx - (shield - 1) * 20 + s * 40, g.y0 - 26, 28, '#4ff0d8');
       chrome(S);
@@ -483,10 +504,10 @@
       G.say(T.crackHint);
       return new Promise(function (res) {
         var done = false, tmr = null, prevPtr = S.onPointer;
-        function fin() { if (!done) { done = true; S.onPointer = prevPtr; t.crack = 0; res(); } }
+        function fin() { if (!done) { done = true; S.onPointer = prevPtr; t.crack = 0; t.tens = 1; res(); } }
         function arm() { if (tmr) tmr.cancelled = true; var me = tmr = { cancelled: false }; G.sleep(1.3).then(function () { if (!me.cancelled && !done) { hit(); } }); }
         function hit() {
-          t.crack++; Sfx.drum(0.18 + t.crack * 0.12); FX.shake(3 + t.crack * 3, 0.25); FX.spark(cx, cy, 6 + t.crack * 4, '#ffe9a0', 160 + t.crack * 60, 0.4);
+          t.crack++; t.tens = t.crack / 3; FX.ring(cx, cy, '#ffe9a0', r.s * (0.8 + t.crack * 0.3), 0.5); Sfx.drum(0.18 + t.crack * 0.12); FX.shake(3 + t.crack * 3, 0.25); FX.spark(cx, cy, 6 + t.crack * 4, '#ffe9a0', 160 + t.crack * 60, 0.4);
           if (t.crack >= 3) { FX.flash(0.25, '#ffe9a0'); fin(); } else arm();
         }
         S.onPointer = function (x, y, type) { if (type === 'down') hit(); };
@@ -495,14 +516,29 @@
     }
     async function reveal(i, rec) {
       var t = tiles[i], r = rect(i), cx = r.x + r.s / 2, cy = r.y + r.s / 2;
-      t.token = rec.token; t.state = 'flipping'; t.u = 0; Sfx.reveal();
+      var bad = rec.token === 'curse' && !rec.saved, big = typeof rec.token === 'number' && rec.token >= 5;
+      // tension avant révélation : la dalle vibre, la lumière monte, le cœur bat
+      t.tens = 1; Sfx.drum(0.3);
+      if (!quick()) { await G.sleep(0.3); Sfx.drum(0.45); FX.spark(cx, cy, 10, '#ffe9a0', 120, 0.5); await G.sleep(0.3); } else await G.sleep(0.12);
+      t.token = rec.token; t.state = 'flipping'; t.u = 0; t.pop = 1; Sfx.reveal();
+      var kc = rec.token === 'curse' ? '255,70,40' : rec.token === 'ankh' ? '79,240,216' : rec.token === 'scepter' ? '120,160,255' : '255,216,106';
+      beams.push({ x: cx, y: cy + r.s * 0.5, w: r.s * (bad ? 0.3 : 0.55), c: kc, t: 0, life: bad ? 0.9 : 0.7 });
+      FX.ring(cx, cy, bad ? '#ff3b20' : '#fff1b8', r.s * 1.2, 0.5);
       await G.sleep(0.28);
       if (rec.token === 'curse') {
         if (rec.saved) { shield--; Sfx.shield(); FX.float(T.vaultSaved, cx, cy - r.s * 0.7, '#6ff0dd', 26); FX.ring(cx, cy, '#6ff0dd', r.s * 1.6, 0.8); FX.flash(0.25, '#6ff0dd'); }
-        else { Sfx.curse(); shake = 1; FX.shake(18, 0.7); FX.flash(0.45, '#ff3b20'); FX.float(T.vaultCurse, cx, cy - r.s * 0.7, '#ff7a5a', 34); }
+        else {   // malédiction : vignette rouge, double flash, tuiles assombries, fumée
+          Sfx.curse(); shake = 1.4; vig = 1.4; t.dark = 1; FX.shake(26, 1.0); FX.flash(0.6, '#ff3b20');
+          FX.ring(cx, cy, '#ff3b20', r.s * 3.2, 1.1); FX.dust(cx, cy, 26, '#5a0c06'); FX.spark(cx, cy, 30, '#ff5a3a', 360, 0.8);
+          FX.float(T.vaultCurse, cx, cy - r.s * 0.7, '#ff7a5a', 40);
+          tiles.forEach(function (o) { if (o !== t && o.state === 'closed') o.dim = true; });
+          G.sleep(0.18).then(function () { FX.flash(0.4, '#ff3b20'); FX.shake(14, 0.5); });
+          await G.sleep(quick() ? 0.3 : 0.9);
+          tiles.forEach(function (o) { if (o.state === 'closed') o.dim = false; });
+        }
       } else if (rec.token === 'ankh') { shield++; Sfx.shield(); FX.float(T.vaultShield, cx, cy - r.s * 0.7, '#6ff0dd', 24); FX.ring(cx, cy, '#6ff0dd', r.s * 1.4, 0.8); }
-      else if (rec.token === 'scepter') { Sfx.lightning(); FX.flash(0.35, '#9ab8ff'); FX.float(T.vaultScepter, cx, cy - r.s * 0.7, '#9ab8ff', 28); FX.ring(cx, cy, '#9ab8ff', r.s * 2, 0.9); FX.shake(8, 0.3); }
-      else { Sfx.chime(rec.token); FX.coins(cx, cy, 6 + Math.min(20, rec.token * 2), 650, 20); FX.spark(cx, cy, 12, '#ffe9a0', 240); FX.float('+' + rec.token, cx, cy - r.s * 0.7, '#fff1b8', 30); }
+      else if (rec.token === 'scepter') { Sfx.lightning(); FX.flash(0.35, '#9ab8ff'); FX.float(T.vaultScepter, cx, cy - r.s * 0.7, '#9ab8ff', 28); FX.ring(cx, cy, '#9ab8ff', r.s * 2, 0.9); FX.ring(cx, cy, '#dbe6ff', r.s * 3, 1.2); FX.spark(cx, cy, 24, '#9ab8ff', 380); FX.shake(8, 0.3); }
+      else { Sfx.chime(rec.token); FX.coins(cx, cy, 10 + Math.min(34, rec.token * 4), 700 + (big ? 200 : 0), 40); FX.spark(cx, cy, 18, '#ffe9a0', 300); FX.ring(cx, cy, '#ffd86a', r.s * 2.2, 0.8); if (big) { FX.rain(G.w, 18); FX.flash(0.2, '#ffe9a0'); FX.shake(6, 0.3); } FX.float('+' + rec.token, cx, cy - r.s * 0.7, '#fff1b8', 30); }
       if (rec.token !== 'curse' || !rec.saved) bump(S, rec.total); else bump(S, S.totalT);
       await G.sleep(0.65);
     }
@@ -518,13 +554,15 @@
       }
       G.say('');
       if (data.ended === 'cleared') {
-        S.banner = { text: T.vaultClear, t: 0 }; Sfx.fanfare(1); FX.flash(0.4, '#ffe9a0'); FX.rain(G.w, 40); bump(S, data.total);
-        await G.sleep(1.4); S.banner = null;
+        S.banner = { text: T.vaultClear, t: 0 }; Sfx.fanfare(1); FX.flash(0.5, '#ffe9a0'); FX.rain(G.w, 70); FX.shake(10, 0.5); endGlow = 1.6; bump(S, data.total);
+        FX.ring(G.cx, G.cy, '#ffd86a', G.R || Math.min(G.w, G.h) * 0.6, 1.2);
+        for (var wv = 1; wv <= 3; wv++) { (function (k) { G.sleep(0.25 * k).then(function () { FX.coins(G.cx + (k - 2) * G.w * 0.2, G.cy, 18, 900, 90); FX.rain(G.w, 20); }); })(wv); }
+        await G.sleep(quick() ? 0.8 : 1.6); S.banner = null;
       }
       // révèle le reste, estompé
       var rest = tiles.map(function (t, i) { return i; }).filter(function (i) { return tiles[i].state === 'closed'; });
-      rest.forEach(function (i, k) { var t = tiles[i]; t.token = leftovers[k % leftovers.length]; t.dim = true; t.state = 'flipping'; t.u = 0.0; });
-      await G.sleep(0.9);
+      rest.forEach(function (i, k) { G.sleep(quick() ? 0 : 0.09 * k).then(function () { var t = tiles[i]; t.token = leftovers[k % leftovers.length]; t.dim = true; t.state = 'flipping'; t.u = 0.0; if (!quick()) Sfx.reveal(); }); });
+      await G.sleep(0.9 + (quick() ? 0 : 0.09 * rest.length));
       await settle(S, sp, bet);
     };
     return S;
