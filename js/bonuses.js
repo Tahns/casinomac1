@@ -131,15 +131,17 @@
    * ====================================================================== */
   function scarabScene(sp, bet) {
     var T = I18N.t(), data = sp.bonus, rows = M.SCARAB_ROWS, vals = data.values || M.SCARAB_VALUES;
-    var S = newScene(T.scarabIntro), g = {}; S.bgImg = 'abyss'; var ball = null, pegFlash = {}, slotPulse = [], used = 0, floats = [], ent = 0, landed = [], beam = null, pegRings = [], sparkAcc = 0, lastPulse = 0;
+    var S = newScene(T.scarabIntro), g = {}; S.bgImg = 'scarabwall'; S.dim = 0.9; var ball = null, pegFlash = {}, slotPulse = [], used = 0, floats = [], ent = 0, landed = [], beam = null, pegRings = [], sparkAcc = 0, lastPulse = 0;
     function slotColor(v) { return v >= 25 ? ['#ffe08a', '#b8861e'] : v >= 6 ? ['#c28bff', '#5a2a86'] : v >= 2.5 ? ['#ff7a5a', '#8a1b10'] : v >= 1 ? ['#5b8cff', '#1a3a8a'] : ['#6a5a40', '#2a2118']; }
     S.layout = function () {
-      var w = G.w, h = G.h, top = T0() + EX(150), bot = h - hudH() - (h < 520 ? 10 : 52);
-      g.slotH = clamp((bot - top) * 0.11, 34, 60);
-      g.dy = (bot - top - g.slotH - 14) / (rows + 1.2);
-      g.dx = Math.min(g.dy * 1.55, (w * 0.94) / 9.2);
-      g.top = top; g.pegR = Math.max(3, Math.min(g.dx, g.dy) * 0.12); g.ballR = g.pegR * 2.4;
+      // grand plateau « mur de chevilles » : il occupe presque tout l'écran, entre le bandeau et le menu du bas
+      var w = G.w, h = G.h, top = T0() + EX(118), bot = h - hudH() - (h < 520 ? 6 : 30);
+      g.slotH = clamp((bot - top) * 0.1, 34, 64);
+      g.dy = (bot - top - g.slotH - 18) / (rows + 1.15);
+      g.dx = Math.min(g.dy * 2.3, (w * 0.88) / (rows + 1.5));
+      g.top = top; g.pegR = Math.max(3.5, Math.min(g.dx, g.dy) * 0.17); g.ballR = g.pegR * 2.6;
       g.slotTop = top + (rows + 1) * g.dy + 6;
+      g.px0 = G.cx - (rows / 2 + 0.78) * g.dx; g.px1 = G.cx + (rows / 2 + 0.78) * g.dx; g.py0 = top - g.dy * 0.15; g.py1 = g.slotTop + g.slotH + 12;
     };
     function peg(r, j) { return { x: G.cx + (j - r / 2) * g.dx, y: g.top + (r + 1) * g.dy }; }
     S.update = function (dt) {
@@ -157,13 +159,24 @@
     };
     S.draw = function () {
       var i, r, j;
-      // plateau en triangle sombre
-      var ap = peg(0, 0), l = peg(rows - 1, 0), rr = peg(rows - 1, rows - 1);
+      // décor : temple illustré (piliers de chaque côté) étiré sur toute la zone de jeu
+      if (G.art && G.art.scarabwall) ctx.drawImage(G.art.scarabwall, 0, 0, G.w, G.h - hudH() + 6);
+      // mur du plateau : cadre doré, fond sombre violet, grille de points lumineux
       ctx.save();
-      ctx.beginPath(); ctx.moveTo(ap.x, g.top - g.dy * 0.4); ctx.lineTo(rr.x + g.dx * 0.9, g.slotTop); ctx.lineTo(l.x - g.dx * 0.9, g.slotTop); ctx.closePath();
-      var bgG = ctx.createLinearGradient(0, g.top, 0, g.slotTop); bgG.addColorStop(0, 'rgba(255,216,106,.02)'); bgG.addColorStop(1, 'rgba(255,216,106,.10)');
-      ctx.fillStyle = bgG; ctx.fill(); ctx.strokeStyle = 'rgba(230,185,74,.35)'; ctx.lineWidth = 1.5; ctx.stroke();
+      A.roundRect(ctx, g.px0, g.py0, g.px1 - g.px0, g.py1 - g.py0, 18);
+      var wl = ctx.createLinearGradient(0, g.py0, 0, g.py1); wl.addColorStop(0, 'rgba(46,18,62,.22)'); wl.addColorStop(1, 'rgba(10,4,18,.3)');
+      ctx.fillStyle = wl; ctx.shadowColor = 'rgba(0,0,0,.8)'; ctx.shadowBlur = 30; ctx.fill(); ctx.shadowBlur = 0;
+      ctx.lineWidth = 4; ctx.strokeStyle = A.goldGrad(ctx, g.px0, g.py0, g.px1, g.py1); ctx.stroke();
+      ctx.lineWidth = 1.2; ctx.strokeStyle = 'rgba(255,233,160,.35)'; A.roundRect(ctx, g.px0 + 6, g.py0 + 6, g.px1 - g.px0 - 12, g.py1 - g.py0 - 12, 14); ctx.stroke();
       ctx.restore();
+      // séparateurs dorés entre les cases (comme les barres du Pachinko)
+      for (i = 0; i <= rows + 1; i++) {
+        var bx = G.cx + (i - 0.5 - rows / 2) * g.dx, be = clamp((ent - 0.9) / 0.5, 0, 1);
+        if (be <= 0) continue;
+        var bh = g.slotH + g.dy * 1.5, bgr = ctx.createLinearGradient(0, g.slotTop + g.slotH - bh * be, 0, g.slotTop + g.slotH);
+        bgr.addColorStop(0, 'rgba(255,233,160,0)'); bgr.addColorStop(0.3, '#ffe08a'); bgr.addColorStop(1, '#b8861e');
+        ctx.fillStyle = bgr; ctx.fillRect(bx - 1.6, g.slotTop + g.slotH - bh * be, 3.2, bh * be);
+      }
       // chevilles
       for (r = 0; r < rows; r++) for (j = 0; j <= r; j++) {
         var p = peg(r, j), f = pegFlash[r + '_' + j] || 0;
@@ -174,8 +187,9 @@
         ctx.fillStyle = 'rgba(0,0,0,.5)'; ctx.beginPath(); ctx.arc(p.x + g.pegR * 0.35, p.y + g.pegR * 0.6, g.pegR, 0, TAU); ctx.fill();
         if (!G.icon(ctx, 'peg', p.x, p.y, g.pegR * 3.3 * (1 + f * 0.35))) {
           ctx.beginPath(); ctx.arc(p.x, p.y, g.pegR, 0, TAU);
-          var pg = ctx.createRadialGradient(p.x - g.pegR * 0.3, p.y - g.pegR * 0.3, 0, p.x, p.y, g.pegR); pg.addColorStop(0, '#fff6c8'); pg.addColorStop(1, '#a8801e');
-          ctx.fillStyle = pg; ctx.fill();
+          var pg = ctx.createRadialGradient(p.x - g.pegR * 0.3, p.y - g.pegR * 0.3, 0, p.x, p.y, g.pegR); pg.addColorStop(0, '#ffffff'); pg.addColorStop(0.6, '#fff1c0'); pg.addColorStop(1, '#d8a93a');
+          ctx.save(); ctx.shadowColor = 'rgba(255,240,190,.9)'; ctx.shadowBlur = g.pegR * 2.2;
+          ctx.fillStyle = pg; ctx.fill(); ctx.restore();
         }
         ctx.restore();
       }
@@ -233,7 +247,7 @@
       // scarabées restants
       for (i = 0; i < data.balls.length; i++) {
         ctx.globalAlpha = i >= used ? 1 : 0.22;
-        if (!G.icon(ctx, 'scarab', Math.max(30, G.cx - 5.2 * g.dx) + i * 44, T0() + EX(130), 42)) A.scarab(ctx, Math.max(30, G.cx - 5.2 * g.dx) + i * 36, T0() + EX(130), 26, i >= used ? '#ffd86a' : '#6a5a40', 'rgba(60,30,0,.6)');
+        if (!G.icon(ctx, 'scarab', g.px0 + 34 + i * 44, T0() + EX(96), 42)) A.scarab(ctx, g.px0 + 34 + i * 36, T0() + EX(96), 26, i >= used ? '#ffd86a' : '#6a5a40', 'rgba(60,30,0,.6)');
       }
       ctx.globalAlpha = 1;
       for (i = 0; i < floats.length; i++) {
@@ -992,9 +1006,11 @@
         var bg = ctx.createLinearGradient(0, -btn.h / 2, 0, btn.h / 2); bg.addColorStop(0, '#ffe9a0'); bg.addColorStop(0.5, '#f0b73c'); bg.addColorStop(1, '#a36a12');
         ctx.fillStyle = bg; ctx.shadowColor = 'rgba(255,216,106,' + (0.55 + Math.sin(t * 5) * 0.25) + ')'; ctx.shadowBlur = 34 + Math.sin(t * 5) * 12; ctx.fill(); ctx.shadowBlur = 0;
         ctx.lineWidth = 3; ctx.strokeStyle = '#fff6d0'; ctx.stroke();
-        G.txt(T.launchBonus, 0, 1, { size: clamp(btn.h * 0.36, 16, 28), weight: 900, fill: '#3a2203', spacing: 3 });
+        var lfs = clamp(btn.h * 0.36, 14, 28); ctx.font = '900 ' + lfs + 'px Cinzel, serif'; if (ctx.letterSpacing !== undefined) ctx.letterSpacing = '3px';
+        while (lfs > 11 && ctx.measureText(T.launchBonus).width > btn.w * 0.82) { lfs -= 1; ctx.font = '900 ' + lfs + 'px Cinzel, serif'; }
+        if (ctx.letterSpacing !== undefined) ctx.letterSpacing = '0px';
+        G.txt(T.launchBonus, 0, 1, { size: lfs, weight: 900, fill: '#3a2203', spacing: 3 });
         ctx.restore();
-        if (G.h >= 640) { ctx.save(); ctx.globalAlpha = ba * 0.8; G.txt(T.launchHint, G.cx, btn.y + btn.h + 22, { size: 12, family: 'Manrope', weight: 700, fill: '#cdb98a', spacing: 1 }); ctx.restore(); }
       }
     };
     S.run = function () {
