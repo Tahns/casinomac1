@@ -1,4 +1,6 @@
-# Hand of Anubis — analyse, choix et architecture
+# Anubis Unchained — analyse, choix et architecture
+
+> **Note de renommage (2026-10-12).** Le jeu « Hand of Anubis » s'appelle désormais **Anubis Unchained**, et le bonus 4 « Main d'Anubis » est devenu **Fureur d'Anubis** (« Fury of Anubis »). Les sections 1 à 9 ont été mises à jour ; les sections datées « Itération N » et les SWOT d'époque conservent volontairement les anciens noms (historique).
 
 Document de travail qui accompagne le jeu. Ce qui est **mesuré** (simulation, rendu réel dans Chromium) est séparé de ce qui est **supposé** ou **à vérifier**.
 
@@ -33,7 +35,7 @@ Décision : tout est **écrit en original**, sans dépendance ni asset externe. 
 1. **Une mise, un tour** au lieu des paris multi-cases. Contrepartie assumée : on perd le plaisir de « répartir ses jetons », on gagne la compatibilité avec le modèle de round de Stake et un RTP calculable et honnête. *(L'incompatibilité exacte du multi-paris avec Stake Engine n'est pas documentée dans ce que j'ai pu lire : à confirmer.)*
 2. **Résultat décidé avant l'animation.** `AnubisMath.playRound(rng)` renvoie tout le tour (cases, Oracle, billes du Plinko, plateaux, tuiles, rotations de la Main). Les scènes **n'inventent rien**.
 3. **Canvas 2D pur + WebAudio synthétisé** : zéro réseau, zéro asset, démarrage instantané, net sur écrans Retina.
-4. **Mathématiques d'abord** : le catalogue de bonus a été dimensionné par la simulation (voir §5), pas l'inverse. Piège rencontré : en mise unique, `fréquence × espérance` des bonus doit tenir dans ~50 % d'RTP, ce qui interdit un bonus fréquent ET très généreux. D'où l'idée de la **Main d'Anubis** (ci-dessous).
+4. **Mathématiques d'abord** : le catalogue de bonus a été dimensionné par la simulation (voir §5), pas l'inverse. Piège rencontré : en mise unique, `fréquence × espérance` des bonus doit tenir dans ~50 % d'RTP, ce qui interdit un bonus fréquent ET très généreux. D'où l'idée de la **Fureur d'Anubis** (ci-dessous).
 
 ## 4. Direction artistique
 
@@ -57,7 +59,7 @@ Décision : tout est **écrit en original**, sans dépendance ni asset externe. 
 | **Chute des Scarabées** | Plinko 8 rangées, 3 scarabées, chacun paie sa case (0,5× → 25×) | ≈ 5,1× | 75× |
 | **Pesée du Cœur** | Cœur vs plume ; valeurs cachées, le joueur choisit un plateau avant de savoir (le gain est celui du plateau choisi, déjà tiré), balance qui oscille | ≈ 5,8× | 150× |
 | **Chambre du Trésor** | Pick-me 12 chambres : valeurs, **Sceptre ×2**, **Ankh bouclier** (annule une malédiction), **Malédiction** (clôt le coffre), prime « coffre vidé » | ≈ 7,3× | 240× |
-| **Main d'Anubis** | **Chaque bonus a 8 % de chance d'être saisi** : roue géante à 24 cases, multiplicateurs ×2/×3/×4 qui **s'empilent** (jusqu'à 2 chaînes) | ≈ 24,6× | 1 600× (jusqu'à 5 000× avec un boost Oracle, plafond global) |
+| **Fureur d'Anubis** | **Chaque bonus a 8 % de chance d'être saisi** : roue géante à 24 cases, multiplicateurs ×2/×3/×4 qui **s'empilent** (jusqu'à 2 chaînes) | ≈ 24,6× | 1 600× (jusqu'à 5 000× avec un boost Oracle, plafond global) |
 
 **Résultats de simulation** (`node tools/simulate.js 12000000 <graine> <std|plus>`, 3 graines × 12 M de tours par mode) :
 
@@ -70,7 +72,7 @@ Décision : tout est **écrit en original**, sans dépendance ni asset externe. 
 
 Marge d'erreur ≈ ±0,2 pt (l'écart-type d'un tour est ~6×). Les boosts Oracle pèsent ≈ 7 pts de RTP en Standard et ≈ 20 pts en Oracle+ (compensés par la mise ×1,1).
 
-Volatilité moyenne-haute : 61 % des tours rendent quelque chose (0,25× et 0,5× compris), la relance Ankh lisse la série, et la queue de distribution (Main d'Anubis) apporte le « rêve de gros gain ».
+Volatilité moyenne-haute : 61 % des tours rendent quelque chose (0,25× et 0,5× compris), la relance Ankh lisse la série, et la queue de distribution (Fureur d'Anubis) apporte le « rêve de gros gain ».
 
 ## 6. Chemin vers Stake Engine
 
@@ -104,14 +106,14 @@ Reste non résolu (hors de portée d'un correctif de code) : validation de la pr
 
 ## 9. Achat de bonus
 
-Le joueur choisit **au départ** : jouer la roue, ou acheter directement un bonus (Pyramide/Trésor, Scarabées, Pesée, Main d'Anubis), à un prix plus élevé que la mise normale. Le bonus s'ouvre aussitôt, sans passer par la roue. Prix = mise × multiplicateur, calé sur l'espérance réelle du bonus (la Main d'Anubis peut toujours saisir un bonus acheté, avec la même probabilité que sur la roue ; aucun boost Oracle à l'achat).
+Le joueur choisit **au départ** : jouer la roue, ou acheter directement un bonus (Pyramide/Trésor, Scarabées, Pesée, Fureur d'Anubis), à un prix plus élevé que la mise normale. Le bonus s'ouvre aussitôt, sans passer par la roue. Prix = mise × multiplicateur, calé sur l'espérance réelle du bonus (la Fureur d'Anubis peut toujours saisir un bonus acheté, avec la même probabilité que sur la roue ; aucun boost Oracle à l'achat).
 
 | Bonus | Prix (× mise) | RTP simulé (2 graines × 10 M) |
 |---|---|---|
 | Chute des Scarabées | 6,9 | 96,3 % |
 | Pesée du Cœur | 7,6 | 96,4 % |
 | Chambre du Trésor (pyramide) | 9,1 | 95,7 % |
-| Main d'Anubis | 25,6 | 96,3 % |
+| Fureur d'Anubis | 25,6 | 96,3 % |
 
 Cadre : l'achat est désactivé pendant l'auto-play, compte dans la limite de perte de séance, et peut être coupé dans les réglages (« Achat de bonus : Non »), car il est interdit dans certaines juridictions. L'overlay de gros gain se déclenche sur le gain rapporté au **prix payé**, pas à la mise de base.
 
@@ -376,3 +378,59 @@ Rien de nouveau n'était réellement corrigeable par du code : seule la document
 
 - Turbo / Ultra : les bonus gardent maintenant une vitesse élevée (×3,4 en turbo, ×8 en ultra, puis retour à la vitesse du mode) ; en turbo un bonus passe de 9–13 s à 4–6 s, en ultra 2–3 s.
 - L'auto-play ne s'arrête plus après un bonus par défaut (« Stopper l'auto sur bonus » passe à Non ; l'ancien réglage sauvegardé est ignoré, option toujours disponible dans les Règles). Vérifié : un bonus tombé en plein auto, le compteur continue jusqu'à 0.
+
+## SWOT face aux concurrents (2026-10-12)
+
+Compare Anubis Unchained aux jeux de [CONCURRENTS.md](CONCURRENTS.md) (Crazy Time, Monopoly Live, Mega Wheel, Wheel of Fortune Megaways, Book of Dead, Legacy of Dead, Cleopatra, Gates of Olympus, Sweet Bonanza, Plinko Stake). Les RTP des concurrents restent **non vérifiés** (sources faibles, aucune source primaire d'éditeur) : aucune comparaison chiffrée n'en est tirée. Légende : **[mesuré]** = simulation ou test automatisé du dépôt ; **[supposé]** = jugement ou hypothèse non vérifiée.
+
+**Évolutions en cours (non encore mesurées, à re-simuler et re-tester à leur arrivée)** : refonte de la Pesée (plume contre cœur, le plus lourd gagne) ; refonte de la Fureur d'Anubis (choix de couleur, doublement, bandes de bonus) ; Trésor en un seul appui ; grand plateau des Scarabées. Tant que ces refontes ne sont pas validées, les chiffres de bonus ci-dessous (≈ 24,6× pour la Fureur, achats 95,9–96,4 %) sont ceux des versions précédentes.
+
+### Forces
+
+- Annonce de bonus en deux temps (la roue s'arrête, puis bouton « LANCER LE BONUS »), là où Crazy Time et Monopoly Live enchaînent le bonus sans geste du joueur [supposé : lecture des sources, pas de test live].
+- Choix Prudent / Équilibré / Audacieux avant chaque bonus, à même espérance [mesuré : écarts ≤ 0,15 % par `tools/tune-profiles.js`]. Le Plinko de Stake propose un choix de risque comparable mais sans bonus.
+- 4 bonus interactifs et distincts (Scarabées, Pesée, Trésor, Fureur d'Anubis) ; le bonus de Crazy Time est surtout spectateur [supposé].
+- Achat de bonus avec prix en multiple de la mise (comme Gates of Olympus / Sweet Bonanza, qui annoncent 100x [non vérifié]) ; RTP des achats 95,9–96,4 % [mesuré].
+- Mode Oracle+ (mise ×1,1) : RTP ≈ 96,0 % ; mode standard ≈ 96,3 % [mesuré, simulation de 10 millions de tours].
+- Turbo / Ultra : une manche en ≈ 0,5 s en Ultra, bonus compris [mesuré en Chromium].
+- Maths rejouables : noyau `js/math.js` pur, tour = script d'événements (modèle Stake Engine) ; 6 suites de tests (maths, i18n, contraste, mise en page 10 tailles, e2e, gestes) [mesuré].
+- FR/EN complets, contraste WCAG AA vérifié, limite de perte et rappels de séance [mesuré par les outils du dépôt].
+
+### Faiblesses
+
+- Aucune certification ni audit tiers (laboratoire, régulateur) ; le RNG est `Math.random` côté client, donc inutilisable en argent réel [mesuré : lecture du code].
+- Pas de live, pas d'animateur : l'attrait « spectacle partagé » de Crazy Time / Monopoly Live est hors de portée [supposé].
+- RTP et volatilité non validés hors de nos simulations : la simulation vérifie le modèle codé, pas un échantillon réel ni un avis d'expert ; la volatilité affichée est une estimation (≈ 61 % de tours gagnants [mesuré]).
+- Poids du fichier ≈ 1,8 Mo en mono-fichier [mesuré] ; performance sur téléphones modestes non testée sur appareil réel [supposé].
+- Son jamais écouté par un humain ; test de gestes tactiles seulement simulé.
+- Pas de multijoueur, pas de jackpot progressif ni de tournoi (les concurrents live partagent une table ; certains slots ont des progressifs) [supposé].
+- Gain maximal modeste face à Sweet Bonanza (≈ 21 100x, non vérifié) : plafond global à 5 000x [mesuré].
+- Nom « Anubis Unchained » non vérifié légalement ; images générées dont les droits commerciaux restent à confirmer.
+- Refontes de bonus en cours : risque de régression des maths et des tests tant qu'elles ne sont pas validées.
+
+### Opportunités
+
+- Format rare de roue à bonus **non live** à maths ouvertes, adapté à Stake Engine (partage de revenus de 10 % du GGR cité, non vérifié).
+- Thème égyptien saturé de slots à symbole expansif (Book of Dead, Legacy of Dead, Cleopatra) : se démarquer par « roue + 4 mini-jeux interactifs » plutôt que par le thème seul.
+- Transparence : publier RTP et volatilité par mode, profil et achat dans l'écran d'info ; les sources concurrentes se contredisent, ce qui valorise un affichage exact.
+- Drapeau de configuration par juridiction pour couper l'achat de bonus sans toucher au jeu.
+- Musique et voix originales, vraie 3D, missions / tournois, traductions supplémentaires, clips promotionnels.
+
+### Menaces
+
+- Propriété intellectuelle : Crazy Time et Monopoly Live (Evolution) sont des marques et dispositifs protégés ; Gates of Olympus et Sweet Bonanza (Pragmatic Play) aussi. Toute ressemblance de roue, de bonus ou de présentation est un risque [supposé, avis juridique nécessaire].
+- Juridictions : l'achat de bonus est interdit ou désactivé dans plusieurs marchés (France/Europe pour Gates of Olympus, Italie pour Sweet Bonanza, d'après des sources faibles) ; la présentation de « choix » à même espérance peut être jugée trompeuse selon les pays.
+- Similarité de nom : le slot « Hand of Anubis » de Play'n GO a motivé le renommage ; « Anubis Unchained » doit être vérifié contre les marques et titres existants (non fait).
+- Exigences techniques et d'audit de Stake non vérifiées (RNG serveur, certification).
+- Concurrents établis : base de joueurs, licences, budgets marketing et studios live hors d'atteinte.
+
+### 8 actions priorisées
+
+1. **Avis juridique** sur le nom « Anubis Unchained » (recherche de marques, titres existants) et sur la ressemblance avec Crazy Time / Monopoly Live. Bloquant pour toute diffusion.
+2. **Valider les droits commerciaux** des images générées (CGU Higgsfield) ou les remplacer.
+3. **Terminer et re-valider les refontes en cours** (Pesée plume/cœur, Fureur d'Anubis, Trésor en un appui, grand plateau des Scarabées) : relancer `tools/simulate.js`, `tools/tune.js`, `tools/check.js`, `tools/tune-profiles.js` et mettre à jour les RTP d'achat et de profil.
+4. **Lire la documentation officielle Stake Engine** et porter le noyau `js/math.js` (RNG serveur, format de tables), puis viser un audit externe.
+5. **Afficher RTP et volatilité exacts** par mode, profil et achat dans l'écran d'info, avec la phrase « même espérance, volatilité différente ».
+6. **Drapeau par juridiction** pour désactiver l'achat de bonus (et Oracle+ si besoin) sans modifier le jeu.
+7. **Tester sur vrais téléphones** (performance, gestes, son) et poursuivre l'allègement du fichier (≈ 1,8 Mo).
+8. **Renforcer la différenciation** : mettre en avant l'annonce en deux temps et les 4 bonus interactifs dans le titre et les visuels ; envisager musique originale, missions / tournois et une page de règles publiant les maths.
