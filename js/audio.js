@@ -84,6 +84,23 @@
     var g = ctx.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol0, t + dur * 0.85); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
     s.connect(f); f.connect(g); g.connect(sfxBus); g.connect(verb); s.start(t);
   }
+  // cor chaud : deux dents de scie désaccordées, filtre qui s'ouvre à l'attaque, léger vibrato
+  function horn(f, dur, vol0, delay, wet) {
+    if (!ensure()) return;
+    var t = ctx.currentTime + (delay || 0), flt = ctx.createBiquadFilter(), g = ctx.createGain(), lfo = ctx.createOscillator(), lg = ctx.createGain();
+    flt.type = 'lowpass'; flt.Q.value = 1.1; flt.frequency.setValueAtTime(500 * PK, t); flt.frequency.exponentialRampToValueAtTime(Math.min(7000, f * PK * 6), t + Math.min(0.18, dur * 0.4)); flt.frequency.exponentialRampToValueAtTime(900 * PK, t + dur);
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol0 || 0.08, t + 0.05); g.gain.setValueAtTime(vol0 || 0.08, t + dur * 0.6); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    lfo.frequency.value = 5.5; lg.gain.value = f * PK * 0.006; lfo.connect(lg);
+    [-5, 5].forEach(function (c) {
+      var o = ctx.createOscillator(); o.type = 'sawtooth'; o.frequency.value = f * PK * Math.pow(2, c / 1200); lg.connect(o.frequency); o.connect(flt); o.start(t); o.stop(t + dur + 0.05);
+    });
+    lfo.start(t); lfo.stop(t + dur + 0.05);
+    flt.connect(g); g.connect(sfxBus); if (wet !== false) g.connect(verb);
+  }
+  // gamme des gains : phrygienne dominante (mi fa sol# la si do ré), couleur égyptienne ; les phrases se résolvent sur la tonique (mi)
+  var WIN = [329.63, 349.23, 415.3, 440.0, 493.88, 523.25, 587.33];
+  function winNote(i, oct) { return WIN[((i % 7) + 7) % 7] * Math.pow(2, Math.floor(i / 7) + (oct || 0)); }
+  var lastShower = 0;
   // impact grave : sinus qui plonge + claque filtrée
   function boom(vol0, delay) { tone(110, 0.8, 'sine', vol0, delay, 32); tone(55, 1.1, 'sine', vol0 * 0.8, delay, 28); noise(0.35, vol0 * 0.5, delay, 900, 'lowpass', 120); }
 
@@ -92,6 +109,16 @@
     tick: function (speed) { tone(1700 + (speed || 0) * 900, 0.03, 'triangle', 0.035); tone(620, 0.04, 'sine', 0.045); },
     click: function () { bell(880, 0.25, 0.07, 0, false); },
     whoosh: function () { swell(0.9, 0.16, 0, 300, 3600); },
+    // lancement d'un tour : rythme de darbouka (dum-tak-tak-dum), sistre qui frémit, souffle qui monte, cloche de départ
+    spinStart: function () {
+      var i;
+      function dum(t, v) { tone(105, 0.3, 'sine', v, t, 48); noise(0.12, v * 0.35, t, 420, 'lowpass', 150); }
+      function tak(t, v) { noise(0.06, v, t, 2200, 'bandpass', 1500, 2.5); tone(780, 0.05, 'triangle', v * 0.5, t, 520); }
+      dum(0, 0.34); tak(0.12, 0.1); tak(0.22, 0.08); dum(0.32, 0.28); tak(0.44, 0.1);
+      for (i = 0; i < 9; i++) noise(0.045, 0.014 + i * 0.004, 0.04 + i * 0.05, 6500, 'highpass');       // sistre
+      swell(0.9, 0.12, 0.05, 220, 3000);
+      bell(WIN[0] * 2, 0.9, 0.06, 0.02, true); bell(WIN[4] * 2, 0.9, 0.04, 0.1, true);
+    },
     drum: function (v) { v = v || 0.34; tone(100, 0.38, 'sine', v, 0, 44); noise(0.16, v * 0.35, 0, 450, 'lowpass', 150); },
     thud: function () { boom(0.34); },
     roll: function (n, step) { step = step || 0.09; for (var i = 0; i < n; i++) { tone(105, 0.12, 'sine', 0.1 + i * 0.015, i * step, 62); noise(0.07, 0.035 + i * 0.008, i * step, 520); } },
@@ -109,19 +136,55 @@
     curse: function () { tone(190, 1.1, 'triangle', 0.13, 0, 42, true); tone(143, 1.1, 'sine', 0.12, 0.04, 34, true); pad([SCALE[0] / 2, SCALE[1] / 2, SCALE[0]], 1.3, 0.14, 0, 0.1); noise(0.7, 0.1, 0, 800, 'lowpass', 110); },
     shield: function () { tone(520, 0.35, 'sine', 0.08, 0, 1040, true); bell(1046, 0.7, 0.08, 0.1, true); bell(1568, 0.8, 0.06, 0.22, true); },
     lightning: function () { noise(0.28, 0.26, 0, 5200, 'highpass'); tone(2400, 0.16, 'triangle', 0.06, 0, 300); boom(0.3, 0.03); },
+    // jingle de gain : plus le multiplicateur est grand, plus la phrase est longue, riche et brillante
     chime: function (mult) {
-      var n = Math.min(8, 2 + Math.floor(Math.log(Math.max(1, mult) + 1) * 1.6));
-      for (var i = 0; i < n; i++) { var f = SCALE[(i * 2) % 7] * (i > 3 ? 4 : 2); bell(f * 2, 0.9, 0.09, i * 0.085, true); if (i % 2 === 0) bell(f * 3, 0.6, 0.04, i * 0.085 + 0.02, true, 4.2); }
-      if (mult >= 6) pad([SCALE[0], SCALE[4], SCALE[0] * 2], 1.6, 0.12, 0.1, 0.5);
-      if (mult >= 15) boom(0.28, 0.05);
+      mult = Math.max(0, +mult || 0);
+      var n = mult < 1 ? 2 : mult < 3 ? 3 : mult < 8 ? 5 : mult < 20 ? 7 : 9, st = mult < 8 ? 0.075 : 0.065, i;
+      for (i = 0; i < n; i++) {
+        var f = winNote(i + (mult < 3 ? 2 : 0), 1), t = i * st;
+        bell(f, 0.8 + i * 0.05, 0.085, t, true); bell(f * 2, 0.5, 0.03, t + 0.01, true, 4.2);
+      }
+      var tail = n * st;
+      bell(WIN[0] * 2, 1.4, 0.1, tail, true); bell(WIN[0] * 4, 1.1, 0.04, tail + 0.02, true, 4.2);          // note d'arrivée sur la tonique, plus longue
+      if (mult >= 3) A.sparkle();
+      if (mult >= 8) pad([winNote(0, 0), winNote(2, 0), winNote(4, 0)], 1.8, 0.12, tail - 0.1, 0.25);
+      if (mult >= 12) { horn(winNote(0, 1), 0.9, 0.05, tail, true); horn(winNote(4, 1), 0.9, 0.04, tail, true); }
+      if (mult >= 15) boom(0.26, 0.02);
     },
+    // fanfare des gros gains : cors + cloches + timbales ; tier 1 (grand) à 4 (jugement divin) : plus long, plus riche
     fanfare: function (tier) {
-      var seq = [0, 2, 4, 5, 6, 4, 6, 5], n = 4 + tier * 2;
-      for (var i = 0; i < n; i++) { var f = SCALE[seq[i % seq.length]] * 4; tone(f, 0.34, 'triangle', 0.07, i * 0.12, null, true); bell(f, 0.7, 0.07, i * 0.12, true); tone(f / 2, 0.5, 'sine', 0.1, i * 0.12, null, true); }
-      pad([SCALE[0], SCALE[2], SCALE[4], SCALE[0] * 2], 2.0, 0.16, n * 0.12 - 0.2, 0.3);
-      boom(0.32, 0.02);
+      tier = Math.max(1, Math.min(4, tier || 1));
+      var motif = [0, 2, 4, 2, 4, 5, 4, 5, 6, 7], n = 4 + tier * 2, st = 0.13 - tier * 0.006, i;
+      swell(0.5 + tier * 0.12, 0.12, 0, 300, 4200);
+      for (i = 0; i < n; i++) {
+        var f = winNote(motif[i % motif.length], 0), t = 0.1 + i * st;
+        horn(f, 0.42 + (i === n - 1 ? 0.6 : 0), 0.055, t, true); bell(f * 2, 0.8, 0.06, t, true); tone(f / 2, 0.45, 'sine', 0.09, t, null, true);
+      }
+      var tEnd = 0.1 + n * st;
+      pad([winNote(0, -1), winNote(2, -1), winNote(4, -1), winNote(0, 0), winNote(2, 0)], 2.0 + tier * 0.5, 0.2, tEnd - 0.1, 0.25);
+      [0, 2, 4].forEach(function (k, j) { horn(winNote(k, 0), 1.2 + tier * 0.3, 0.06, tEnd, true); bell(winNote(k, 2), 1.4, 0.05, tEnd + j * 0.05, true); });
+      boom(0.36 + tier * 0.03, tEnd);
+      for (i = 0; i < tier * 2 + 2; i++) { tone(95, 0.18, 'sine', 0.2, 0.02 + i * 0.065, 48); noise(0.07, 0.06, 0.02 + i * 0.065, 500); }          // roulement de timbale
+      if (tier >= 3) for (i = 0; i < 12; i++) bell(1800 + Math.random() * 2600, 0.5, 0.03, tEnd + 0.1 + i * 0.07, true, 3.1);
     },
-    countTick: function (p) { tone(900 + p * 900, 0.03, 'triangle', 0.03); },
+    // le total se pose : accord résolu + petit éclat (fin du décompte)
+    winLand: function (tier) {
+      tier = Math.max(1, Math.min(4, tier || 1));
+      [0, 2, 4].forEach(function (k, j) { bell(winNote(k, 1), 1.4, 0.09, j * 0.04, true); });
+      bell(winNote(0, 2), 1.8, 0.06, 0.12, true); pad([winNote(0, 0), winNote(4, 0)], 1.4, 0.1, 0, 0.1);
+      if (tier >= 2) A.sparkle();
+    },
+    // pluie de pièces : tintements rapprochés (limitée pour ne pas saturer)
+    coinShower: function (n) {
+      if (!ensure()) return; var now = ctx.currentTime; if (now - lastShower < 0.18) return; lastShower = now;
+      n = Math.max(3, Math.min(14, n | 0));
+      for (var i = 0; i < n; i++) bell(1700 + Math.random() * 2300, 0.22 + Math.random() * 0.12, 0.022 + Math.random() * 0.015, i * (0.035 + Math.random() * 0.03), true, 3.6);
+    },
+    // décompte du gain : petite mélodie de cloches qui monte avec le total (pentatonique, une note sur deux plus douce)
+    countTick: function (p) {
+      p = Math.max(0, Math.min(1, p || 0)); var k = Math.floor(p * 15);
+      bell(winNote(k % 10, 1), 0.2, 0.03 + p * 0.025, 0, true, 3.51);
+    },
 
     // ambiance très douce : nappe de ré mineur (sinus filtrés), respiration lente, rares cloches lointaines. Aucun bourdon, aucun battement.
     startAmbient: function () {

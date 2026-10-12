@@ -598,7 +598,7 @@
     var cd = (1.6 + o.tier * 1.1) / (G.turbo ? 2 : 1);
     var prev = o.count;
     o.count = o.done ? o.amount : clamp((o.t - 0.45) / cd, 0, 1) * o.amount;
-    if (!o.done && o.count >= o.amount) { o.done = true; o.doneAt = o.t; FX.ring(G.cx, G.cy, '#ffe9a0', G.R, 0.9); Sfx.thud(); FX.shake(8, 0.4); }
+    if (!o.done && o.count >= o.amount) { o.done = true; o.doneAt = o.t; FX.ring(G.cx, G.cy, '#ffe9a0', G.R, 0.9); Sfx.thud(); Sfx.winLand && Sfx.winLand(o.tier); FX.shake(8, 0.4); }
     if (!o.done && Math.floor(prev / o.amount * 40) !== Math.floor(o.count / o.amount * 40)) Sfx.countTick(o.count / o.amount);
     if (o.t % 0.22 < dt * G.speed && o.t < 3 + o.tier * 1.5) FX.coins(G.cx + (Math.random() - 0.5) * G.w * 0.5, G.cy + G.R * 0.6, 4, 950, 60);
     if (o.done && !o.closing && o.t - o.doneAt > (G.turbo ? 0.9 : 2.0)) o.closing = 0.0001;
