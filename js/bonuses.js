@@ -945,7 +945,9 @@
       sv(function () {
         ctx.globalAlpha = a; ctx.translate(G.cx, g.cy); ctx.scale(k, k);
         ctx.font = '900 ' + fs + 'px Cinzel, serif'; if (ctx.letterSpacing !== undefined) ctx.letterSpacing = '3px';
-        var tw = Math.min(G.w * 0.94, ctx.measureText(b.text).width + fs * 1.6); if (ctx.letterSpacing !== undefined) ctx.letterSpacing = '0px';
+        var tw0 = ctx.measureText(b.text).width + fs * 1.6; if (ctx.letterSpacing !== undefined) ctx.letterSpacing = '0px';
+        if (b.sub) { ctx.font = '700 ' + sfs + 'px Manrope'; tw0 = Math.max(tw0, ctx.measureText(b.sub).width + sfs * 2); }
+        var tw = Math.min(G.w * 0.94, tw0);
         var th = fs * 1.5 + (b.sub ? sfs * 2.2 : 0), y0 = -th / 2;
         A.roundRect(ctx, -tw / 2, y0, tw, th, 14);
         ctx.fillStyle = 'rgba(8,5,3,.82)'; ctx.fill(); ctx.lineWidth = 2.5; ctx.strokeStyle = b.col || '#ffd86a'; ctx.stroke();
@@ -1102,7 +1104,7 @@
         await scene.run();
         await G.setFade(1, 0.35);
       } finally { G.onBonusChoice = prevCb; }
-      G.setScene(S); S.spinning = false; G.say(T.handRule);
+      G.setScene(S); S.spinning = false; G.say(g.land ? T.handRule : T.handSpin);
       await G.setFade(0, 0.5);
       M.handRecalc(data); sp.base = data.total; sp.pay = sp.base * (sp.boost || 1);
       if (G.onBonusChoice) G.onBonusChoice();
@@ -1170,7 +1172,7 @@
           await endBanner(quick() ? 0.8 : 1.6);
           await playNested(sx, bet);
           var shown = Math.round(sx.bonus.total * 100) / 100;
-          banner(T.handBandRes.replace('{b}', '×' + G.fmt(shown)).replace('{x}', '×' + sx.x).replace('{m}', '×' + sx.mult).replace('{t}', '×' + G.fmt(Math.round(data.total * 100) / 100)), T.bandName[sx.band] + ' ×' + sx.x, bc);
+          banner(T.handBandRes.replace('{b}', G.fmt(shown)).replace('{x}', sx.x).replace('{m}', sx.mult).replace('{t}', G.fmt(Math.round(data.total * 100) / 100)), T.bandName[sx.band] + ' ×' + sx.x, bc);
           Sfx.fanfare(1); FX.coins(G.cx, g.cy, 40, 900, 110); FX.flash(0.35, '#ffe9a0'); FX.shake(10, 0.5); FX.ring(G.cx, g.cy, '#ffd86a', g.R * 1.1, 1);
           bump(S, data.total);
           await endBanner(1.6);
