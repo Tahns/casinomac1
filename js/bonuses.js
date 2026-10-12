@@ -131,7 +131,7 @@
    * ====================================================================== */
   function scarabScene(sp, bet) {
     var T = I18N.t(), data = sp.bonus, rows = M.SCARAB_ROWS, vals = data.values || M.SCARAB_VALUES;
-    var S = newScene(T.scarabIntro), g = {}; S.bgImg = 'abyss'; var ball = null, pegFlash = {}, slotPulse = [], used = 0, floats = [], aim = null, aimX = 0, fast = 1, steer = null;
+    var S = newScene(T.scarabIntro), g = {}; S.bgImg = 'abyss'; var ball = null, pegFlash = {}, slotPulse = [], used = 0, floats = [];
     function slotColor(v) { return v >= 25 ? ['#ffe08a', '#b8861e'] : v >= 6 ? ['#c28bff', '#5a2a86'] : v >= 2.5 ? ['#ff7a5a', '#8a1b10'] : v >= 1 ? ['#5b8cff', '#1a3a8a'] : ['#6a5a40', '#2a2118']; }
     S.layout = function () {
       var w = G.w, h = G.h, top = T0() + EX(150), bot = h - hudH() - (h < 520 ? 10 : 52);
@@ -195,24 +195,6 @@
         if (!G.icon(ctx, 'scarab', 0, 0, g.ballR * 4.6)) A.scarab(ctx, 0, 0, g.ballR * 2.3, '#ffd86a', 'rgba(60,30,0,.7)');
         ctx.restore();
       }
-      if (steer && ball) {
-        var spp = 0.6 + 0.4 * Math.sin(G.t * 12), sd = g.dx * 0.55;
-        [-1, 1].forEach(function (sg) {
-          var ax = ball.x + sg * sd, ay = ball.y + g.dy * 0.15;
-          ctx.save(); ctx.translate(ax, ay); ctx.scale(sg, 1); ctx.fillStyle = 'rgba(255,236,150,' + (0.45 + 0.4 * spp) + ')'; ctx.shadowColor = '#ffd86a'; ctx.shadowBlur = 14;
-          ctx.beginPath(); ctx.moveTo(-g.dx * 0.12, -g.dx * 0.16); ctx.lineTo(g.dx * 0.14, 0); ctx.lineTo(-g.dx * 0.12, g.dx * 0.16); ctx.closePath(); ctx.fill(); ctx.restore();
-        });
-      }
-      // visée : scarabée au-dessus de la première cheville, guide en pointillé
-      if (aim) {
-        var ap0 = peg(0, 0), pulse = 0.6 + 0.4 * Math.sin(G.t * 6), ay = g.top - g.dy * 0.2;
-        ctx.save(); ctx.setLineDash([5, 7]); ctx.strokeStyle = 'rgba(255,230,140,' + (0.35 + 0.25 * pulse) + ')'; ctx.lineWidth = 2;
-        ctx.beginPath(); ctx.moveTo(aimX, ay); ctx.lineTo(ap0.x, ap0.y - g.pegR); ctx.stroke(); ctx.restore();
-        var ag = ctx.createRadialGradient(aimX, ay, 0, aimX, ay, g.ballR * 3.4); ag.addColorStop(0, 'rgba(255,230,140,.75)'); ag.addColorStop(1, 'rgba(255,230,140,0)');
-        ctx.fillStyle = ag; ctx.beginPath(); ctx.arc(aimX, ay, g.ballR * 3.4, 0, TAU); ctx.fill();
-        ctx.save(); ctx.translate(aimX, ay); if (!G.icon(ctx, 'scarab', 0, 0, g.ballR * 4.6)) A.scarab(ctx, 0, 0, g.ballR * 2.3, '#ffd86a', 'rgba(60,30,0,.7)'); ctx.restore();
-        G.txt('◂  ▸', aimX, ay - g.ballR * 2.4, { size: clamp(g.dx * 0.3, 12, 20), family: 'Manrope', weight: 800, fill: 'rgba(255,241,184,' + (0.5 + 0.4 * pulse) + ')', spacing: 4 });
-      }
       // scarabées restants
       for (i = 0; i < data.balls.length; i++) {
         ctx.globalAlpha = i >= used ? 1 : 0.22;
@@ -226,65 +208,49 @@
       ctx.globalAlpha = 1;
       chrome(S);
     };
-    // le joueur vise (curseur / doigt) puis lâche : purement visuel, la trajectoire vient du script
-    function waitAim() {
-      return new Promise(function (res) {
-        var done = false, lim = g.dx * 1.6;
-        function fin() { if (!done) { done = true; aim = null; S.onPointer = null; res(); } }
-        aimX = G.cx; aim = true;
-        S.onPointer = function (x, y, type) {
-          aimX = clamp(x, G.cx - lim, G.cx + lim);
-          if (type === 'down') fin();
-        };
-        G.sleep(7).then(fin);
-      });
+    // Chute physique : le scarabée rebondit réellement de cheville en cheville (trajectoires balistiques,
+    // contact sur le flanc de la cheville, parfois un petit rebond sur place). Le côté du rebond suit le script
+    // déjà tiré, donc la case finale est celle du tirage — seul le chemin visuel est « libre ».
+    var gAcc = 0;
+    function rnd(a, b) { return a + Math.random() * (b - a); }
+    function contactPt(r, c, dirNext) {
+      var p = peg(r, c), R0 = g.pegR + g.ballR, a = rnd(0.5, 0.85);
+      return { x: p.x + dirNext * R0 * Math.sin(a), y: p.y - R0 * Math.cos(a), p: p };
     }
-    // fenêtre de guidage à chaque cheville : un toucher à gauche / droite de la bille
-    function waitSteer() {
-      return new Promise(function (res) {
-        var done = false;
-        function fin(v) { if (!done) { done = true; steer = null; S.onPointer = null; res(v); } }
-        steer = true;
-        S.onPointer = function (x, y, type) { if (type === 'down') fin(x < ball.x ? 0 : 1); };
-        G.sleep(0.7).then(function () { fin(-1); });
-      });
+    // vol balistique de A vers B avec une impulsion verticale initiale (rebond) ; renvoie la durée de vol
+    function flight(A, B, apex, speedK) {
+      var vy0 = -Math.sqrt(2 * gAcc * apex), disc = vy0 * vy0 + 2 * gAcc * (B.y - A.y), t = (-vy0 + Math.sqrt(Math.max(0, disc))) / gAcc, vx = (B.x - A.x) / t;
+      return G.tween(t * speedK, function (u) {
+        var tt = u * t; ball.x = A.x + vx * tt; ball.y = A.y + vy0 * tt + 0.5 * gAcc * tt * tt; ball.rot += vx * 0.0009 + 0.02;
+      }, null);
     }
     async function drop(b) {
-      var d = data.balls[b], col = 0, pos = [], x0 = quick() ? G.cx : aimX;
-      pos.push({ x: x0, y: g.top - g.dy * 0.2 });
-      var hop = g.dy * 0.28, dur = 0.27;
-      ball = { x: x0, y: g.top - g.dy * 0.2, rot: 0, trail: [] };
-      fast = 1; S.onPointer = null;
+      var d = data.balls[b], col = 0, sk = quick() ? 0.6 : 1;
+      gAcc = g.dy * 26;
+      var dirs = d.path.map(function (x) { return x ? 1 : -1; });
+      var P = contactPt(0, 0, dirs[0]);
+      ball = { x: G.cx + rnd(-0.3, 0.3) * g.dx, y: g.top - g.dy * 1.5, rot: rnd(0, 6), trail: [] };
+      // chute libre depuis le haut jusqu'à la première cheville
+      await flight({ x: ball.x, y: ball.y }, P, 0.0001, sk);
       for (var r = 0; r < rows; r++) {
-        var p = peg(r, col), from = { x: ball.x, y: ball.y }, to = { x: p.x, y: p.y - g.pegR - g.ballR };
-        var h0 = r === 0 ? 0.0 : hop * 0.4;
-        await G.tween((r === 0 ? 0.32 : dur) * fast * (r >= rows - 2 && !quick() ? 1.7 : 1), function (u) {
-          ball.x = lerp(from.x, to.x, G.ease.inOut(u)); ball.y = lerp(from.y, to.y, u * u) - Math.sin(Math.PI * u) * h0; ball.rot += 0.18;
-        }, null);
-        pegFlash[r + '_' + col] = 1; Sfx.tick(r / rows); Sfx.coin(0.7 + r * 0.06);
-        FX.spark(p.x, p.y, 4, '#ffe9a0', 120, 0.4);
-        // guidage : le joueur choisit gauche/droite ; le destin n'accepte que les trajets qui mènent à la case déjà tirée
-        var nLeft = rows - r, rightsLeft = d.slot - col, canR = rightsLeft >= 1, canL = rightsLeft <= nLeft - 1, want = d.path[r], asked = -1;
-        if (!quick()) asked = await waitSteer();
-        if (asked >= 0) { want = asked; }
-        if (want === 1 && !canR) want = 0; else if (want === 0 && !canL) want = 1;
-        if (asked >= 0 && asked !== want) { Sfx.curse(); FX.shake(6, 0.3); FX.float(T.fateResists, ball.x, ball.y - g.dy * 0.9, '#ff9a8a', 18); }
-        else if (asked >= 0) Sfx.shield();
-        if (!canR) want = 0; if (!canL) want = 1;
-        col += want;
-        // rebond vers la rangée suivante (position gauche/droite)
+        var pk = r + '_' + col, pp = peg(r, col);
+        pegFlash[pk] = 1; Sfx.tick(r / rows); Sfx.coin(0.7 + r * 0.06); FX.spark(pp.x, pp.y - g.pegR, 5, '#ffe9a0', 130, 0.4);
+        var here = { x: ball.x, y: ball.y };
+        // petit rebond sur place une fois sur trois
+        if (Math.random() < 0.33) {
+          await flight(here, { x: here.x + dirs[r] * g.dx * 0.03, y: here.y }, g.dy * rnd(0.12, 0.2), sk);
+          Sfx.tick(0.4); here = { x: ball.x, y: ball.y };
+        }
+        col += d.path[r];
         if (r < rows - 1) {
-          var nx = peg(r + 1, col);
-          var f2 = { x: ball.x, y: ball.y }, t2 = { x: nx.x, y: nx.y - g.pegR - g.ballR };
-          // petit saut latéral
-          await G.tween(0.16 * fast, function (u) {
-            ball.x = lerp(f2.x, lerp(f2.x, t2.x, 0.9), G.ease.out3(u)); ball.y = f2.y - Math.sin(Math.PI * u) * hop;
-          }, null);
+          var Q = contactPt(r + 1, col, dirs[r + 1]);
+          await flight(here, Q, g.dy * rnd(0.2, 0.42), sk);
         } else {
+          // dernière cheville : chute dans la case, avec rebond sur le fond
           var sx = G.cx + (col - rows / 2) * g.dx, f3 = { x: ball.x, y: ball.y };
-          await G.tween(0.42 * fast * (quick() ? 1 : 2.2), function (u) {
-            ball.x = lerp(f3.x, sx, G.ease.out3(Math.min(1, u * 1.4))); ball.y = lerp(f3.y, g.slotTop + g.slotH * 0.5, G.ease.outBounce(u)); ball.rot += 0.12;
-          }, null);
+          await flight(here, { x: sx, y: g.slotTop - g.ballR * 0.2 }, g.dy * rnd(0.15, 0.3), sk);
+          var f4 = { x: ball.x, y: ball.y };
+          await G.tween(0.42 * sk, function (u) { ball.x = lerp(f4.x, sx, G.ease.out3(u)); ball.y = lerp(f4.y, g.slotTop + g.slotH * 0.5, G.ease.outBounce(u)); ball.rot += 0.1; }, null);
         }
       }
       if (col !== d.slot) console.error('plinko: case atteinte ' + col + ' ≠ tirage ' + d.slot);
@@ -299,16 +265,13 @@
     S.run = async function () {
       slotPulse = vals.map(function () { return 0; });
       G.say(T.scarabSub);
-      await G.sleep(quick() ? 1.4 : 2.2);
+      await G.sleep(quick() ? 1.2 : 2);
       G.say('');
-      for (var b = 0; b < data.balls.length; b++) {
-        if (!quick()) { G.say(T.aimHint); await waitAim(); G.say(T.steerHint); }
-        await drop(b); S.onPointer = null;
-      }
+      for (var b = 0; b < data.balls.length; b++) { await drop(b); await G.sleep(quick() ? 0.1 : 0.4); }
       G.say('');
       await settle(S, sp, bet);
     };
-    return S;
+        return S;
   }
 
   /* ======================================================================

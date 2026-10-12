@@ -365,3 +365,9 @@ Corrigé : les 9 fonds illustrés (décors, gros gain, accueil, médaillon, main
 Rien de nouveau n'était réellement corrigeable par du code : seule la documentation a été complétée (README : dossier `img/`, script de build). Aucune modification du jeu, donc pas de republication.
 
 **État final (SWOT)** — Forces : DA et ambiance cohérentes (art généré, profondeur, accueil), 3 profils de risque à espérance égale, bonus interactifs, RTP vérifié (std ≈ 96,3 %, Oracle+ ≈ 96,0 %, achats 95,9–96,4 %), 6 suites de tests. Faiblesses : fichier ≈ 1,8 Mo ; × hétérogènes dans les bonus (décision attendue) ; gestes testés sans faute mais pas sur vrai téléphone. Opportunités : nom et habillage originaux, format Stake Engine, musique originale, vraie 3D. **Bloqué (utilisateur / tiers)** : nom « Hand of Anubis » (Play'n GO) et ressemblance Crazy Time → avis juridique ; droits commerciaux des images générées ; exigences Stake (RNG serveur, audit) ; écoute du son ; test sur vrais téléphones ; légalité de l'achat de bonus.
+
+## Itération 17 — retours utilisateur (2026-10-12)
+
+- Scarabées : plus de visée ni de guidage ; ils tombent seuls, de façon aléatoire, en vraie physique balistique : contact sur le flanc de chaque cheville, rebonds de hauteur variable, parfois un petit rebond sur place. Le côté de chaque rebond suit le script déjà tiré, donc la case finale reste celle du tirage (assertion console conservée).
+- Mode **ULTRA** (bouton Turbo : arrêt → TURBO → ULTRA) : vitesse ×6, une manche se termine en ≈ 0,5 s ; le panneau de gros gain reste lisible (temps plafonné). Bonus automatiques.
+- Compte à rebours de l'auto affiché sur le bouton AUTO (nombre qui diminue) ; coût Oracle+ affiché dans le bouton Oracle+ ; boutons − / + et textes SOLDE / MISE / GAIN recentrés dans leurs plaques.

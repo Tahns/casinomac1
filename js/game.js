@@ -542,7 +542,7 @@
 
   W.spinTo = function (spin) {
     var off = 0.2 + Math.random() * 0.6, target = -(spin.index + off) * step;
-    var turns = G.turbo ? 3 : 6, dur = G.turbo ? 2.5 : 6.2;
+    var turns = G.turbo ? 3 : 6, dur = G.ultra ? 2 : G.turbo ? 2.5 : 6.2;
     W.hl = null; W.mode = 'spin'; W.spinning = true;
     Sfx.whoosh();
     var wind = G.turbo ? Promise.resolve() : G.tween(0.5, function (u) { var e = G.ease.inOut(u); W.vel = 0; W.rot = W.r0 - 0.2 * e; }, null);
@@ -577,7 +577,7 @@
   };
   function updateWinOv(dt) {
     var o = G.winOv; if (!o) return;
-    o.t += dt * G.speed;
+    o.t += dt * Math.min(G.speed, 1.6);
     var cd = (1.6 + o.tier * 1.1) / (G.turbo ? 2 : 1);
     var prev = o.count;
     o.count = o.done ? o.amount : clamp((o.t - 0.45) / cd, 0, 1) * o.amount;

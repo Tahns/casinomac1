@@ -23,7 +23,7 @@
         if (typeof d.bi === 'number' && BETS[d.bi]) S.bi = d.bi;
         if (d.lang) I18N.setLang(d.lang);
         if (d.muted) Sfx.setMuted(true);
-        if (d.turbo) { G.turbo = true; G.speed = 1.6; }
+        if (d.turbo) { G.turbo = true; G.ultra = !!d.ultra; G.speed = spd(); }
         if (typeof d.stopOnBonus === 'boolean') S.stopOnBonus = d.stopOnBonus;
         if (d.reduced) { S.reduced = true; FX.reduced = true; }
         if (Array.isArray(d.hist)) S.hist = d.hist.slice(0, 10);
@@ -41,7 +41,7 @@
   }
   function save() {
     try {
-      localStorage.setItem(SAVE_KEY, JSON.stringify({ pending: S.pending, balance: S.balance, bi: S.bi, lang: I18N.lang(), muted: Sfx.isMuted(), turbo: G.turbo, stopOnBonus: S.stopOnBonus, reduced: S.reduced, hist: S.hist, mode: S.mode, buyOn: S.buyOn, limit: S.limit, quality: S.quality }));
+      localStorage.setItem(SAVE_KEY, JSON.stringify({ pending: S.pending, balance: S.balance, bi: S.bi, lang: I18N.lang(), muted: Sfx.isMuted(), turbo: G.turbo, ultra: !!G.ultra, stopOnBonus: S.stopOnBonus, reduced: S.reduced, hist: S.hist, mode: S.mode, buyOn: S.buyOn, limit: S.limit, quality: S.quality }));
     } catch (e) {}
   }
 
@@ -80,15 +80,20 @@
     countTo($('win'), 'win', v, anim ? 700 : 0);
     if (v > 0) { var el = $('statWin'); el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop'); }
   }
+  function spd() { return G.ultra ? 6 : G.turbo ? 1.6 : 1; }
   function setSpinBtn() {
     var b = $('spin'), T = I18N.t();
     b.classList.toggle('stop', S.auto > 0);
     b.disabled = S.busy && S.auto === 0;
     $('spinText').textContent = S.auto > 0 ? T.stop + (isFinite(S.auto) ? ' ' + S.auto : '') : T.spin;
-    $('autoText').textContent = AUTO_STEPS[S.autoIdx] ? T.auto + ' ' + AUTO_STEPS[S.autoIdx] : T.auto;
+    var rem = S.auto > 0 ? (isFinite(S.auto) ? String(S.auto) : '∞') : '';
+    $('spinText').textContent = S.auto > 0 ? T.stop : T.spin;
+    var at = $('autoText');
+    if (S.auto > 0) { if (at.getAttribute('data-n') !== rem) { at.setAttribute('data-n', rem); at.textContent = T.auto + ' '; var nb = document.createElement('b'); nb.className = 'autoCount'; nb.textContent = rem; at.appendChild(nb); } }
+    else { at.removeAttribute('data-n'); at.textContent = AUTO_STEPS[S.autoIdx] ? T.auto + ' ' + AUTO_STEPS[S.autoIdx] : T.auto; }
     $('btnAuto').classList.toggle('on', S.autoIdx > 0);
-    $('btnTurbo').classList.toggle('on', G.turbo);
-    $('btnPlus').classList.toggle('on', S.mode === 'plus'); $('plusText').textContent = T.oraclePlus;
+    $('btnTurbo').classList.toggle('on', G.turbo); $('btnTurbo').classList.toggle('ultra', !!G.ultra); $('btnTurbo').querySelector('span').textContent = G.ultra ? 'ULTRA' : T.turbo;
+    $('btnPlus').classList.toggle('on', S.mode === 'plus'); $('plusText').textContent = T.oraclePlus + (S.mode === 'plus' ? ' · ' + G.fmt(cost()) : '');
     $('btnBuy').hidden = !S.buyOn; $('btnBuy').disabled = S.busy || S.auto > 0 || S.autoIdx > 0; $('buyText').textContent = T.buyBtn;
   }
   function pushHistory(mult, bonus) {
@@ -116,7 +121,7 @@
     if (S.limitHit) { openLimit(); return; }
     if (S.balance < c) { say(T.noFunds); Sfx.curse(); stopAuto(); return; }
     Sfx.unlock(); Sfx.startAmbient();
-    S.busy = true; G.speed = G.turbo ? 1.6 : 1;
+    S.busy = true; G.speed = spd();
     S.balance -= c; SESS.spins++; SESS.wag += c; updateHud(true); setWin(0, false); setSpinBtn();
     var round = buyKind ? M.playBuy(rng, buyKind) : M.playRound(rng, S.mode), hadBonus = false;
     // le gain est connu avant l'animation : on le met en attente et on sauvegarde tout de suite la mise débitée
@@ -134,7 +139,7 @@
         await G.wheel.showOracle(sp.oracle);
       }
       if (!buyKind) await G.wheel.spinTo(sp);
-      G.speed = G.turbo ? 1.6 : 1;
+      G.speed = spd();
       var def = M.KINDS[sp.kind] || { bonus: true };
       if (def.respin) {
         Sfx.shield(); FX.spark(G.cx, G.cy - G.R * 0.9, 30, '#ffe9a0', 300); FX.flash(0.3, '#ffe9a0');
@@ -170,7 +175,7 @@
     } else { setWin(0); say(T.ready); }
     pushHistory(total, hadBonus);
     G.wheel.clearHighlight();
-    S.pending = 0; S.busy = false; G.speed = G.turbo ? 1.6 : 1;
+    S.pending = 0; S.busy = false; G.speed = spd();
     save();
     var stopped = responsibleCheck();
     if (S.auto > 0 && !buyKind) {
@@ -193,7 +198,10 @@
   function stepBet(d) { if (S.busy) return; var n = S.bi + d; if (n < 0 || n >= BETS.length) return; S.bi = n; Sfx.click(); updateHud(); save(); }
   $('betDn').addEventListener('click', function () { stepBet(-1); });
   $('betUp').addEventListener('click', function () { stepBet(1); });
-  $('btnTurbo').addEventListener('click', function () { G.turbo = !G.turbo; G.speed = G.turbo ? 1.6 : 1; Sfx.click(); setSpinBtn(); save(); });
+  $('btnTurbo').addEventListener('click', function () {   // arrêt → TURBO → ULTRA (résultat quasi instantané) → arrêt
+    if (!G.turbo) { G.turbo = true; G.ultra = false; } else if (!G.ultra) G.ultra = true; else { G.turbo = false; G.ultra = false; }
+    G.speed = spd(); Sfx.click(); setSpinBtn(); save();
+  });
   $('btnPlus').addEventListener('click', function () { if (S.busy) return; S.mode = S.mode === 'plus' ? 'std' : 'plus'; Sfx.click(); updateHud(); setSpinBtn(); save(); say(S.mode === 'plus' ? I18N.t().plusHint : I18N.t().ready); });
   $('btnAuto').addEventListener('click', function () {
     if (S.auto > 0) { stopAuto(); return; }
