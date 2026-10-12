@@ -241,13 +241,14 @@
   //  - gain = MOYENNE des 5 colonnes (colonne = haut + blocs fixes), plafonné à MAX_WIN. (Une simple somme aurait donné une espérance ≈ 5 fois trop forte
   //    pour rester neutre sur le RTP : le secret remplace un bonus ordinaire, son espérance doit égaler la sienne.)
   var CRYPT_COLS = 5, CRYPT_CAP = 4, CRYPT_BLOCKS = 9, CRYPT_START = 1;
+  var CRYPT_STACK = 0.4;   // part des glaces lâchées sur une colonne déjà partiellement garnie
   var CRYPT_COL_CAP = MAX_WIN * CRYPT_COLS;   // plafond d'une colonne (la moyenne ne peut pas dépasser MAX_WIN)
-  var CRYPT_TYPES = [['skull', 22], ['epic', 3], ['anubis', 12], ['epicx', 3], ['ice', 10], ['crusher', 12]];
+  var CRYPT_TYPES = [['skull', 21.5], ['epic', 3], ['anubis', 10.25], ['epicx', 2.65], ['ice', 24], ['crusher', 20]];   // le broyeur est retiré au sort tant qu'aucune colonne n'a 2 blocs fixes
   var CRYPT_VALUES = {
     skull:  [[1, 58], [2, 28], [3, 9], [5, 4], [10, 1]],
     epic:   [[1, 60], [2, 30], [3, 10]],
-    anubis: [[2, 64], [3, 22], [5, 9], [10, 4], [25, 1]],
-    epicx:  [[2, 68], [3, 20], [5, 8], [10, 3.6], [25, 0.4]]
+    anubis: [[2, 60], [3, 23], [5, 10], [10, 5.5], [25, 1.5]],
+    epicx:  [[2, 64], [3, 20], [5, 9], [10, 5], [25, 2]]
   };
   var SECRET_UPGRADE = 0.03;   // chance qu'un bonus gagné soit remplacé par le secret (≈ 1 tour sur 490)
   // rejoue un script de blocs [{t, c, v}] : renvoie les étapes (instantanés) et le résultat. Source unique des règles (scène et tests).
@@ -277,13 +278,28 @@
     var avg = sumAll / CRYPT_COLS;
     return { steps: steps, tops: tops, fixed: fixed, cols: cols, sum: sumAll, capped: avg > MAX_WIN, total: Math.min(avg, MAX_WIN) };
   }
-  // forced : liste de blocs imposée (tests visuels), complétée au hasard
+  // forced : liste de blocs imposée (tests visuels), complétée au hasard.
+  // Le tirage suit les emplacements occupés : un BROYEUR n'est jamais lâché sur une colonne qui n'a pas au moins 2 blocs fixes à écraser
+  // (il est alors retiré au sort à nouveau, et vise une colonne éligible) ; la glace, elle, peut tomber partout (colonne pleine : elle fond).
   function crypt(rng, forced) {
-    var drops = [], i;
+    var drops = [], cnt = [], i, c;
+    for (c = 0; c < CRYPT_COLS; c++) cnt.push(0);
     for (i = 0; i < CRYPT_BLOCKS; i++) {
-      if (forced && forced[i]) { var f = forced[i]; drops.push({ t: f.t, c: (f.t === 'epic' || f.t === 'epicx') ? -1 : f.c, v: f.v || 0 }); continue; }
-      var t = weighted(rng, CRYPT_TYPES), v = CRYPT_VALUES[t] ? weighted(rng, CRYPT_VALUES[t]) : 0;
-      drops.push({ t: t, c: (t === 'epic' || t === 'epicx') ? -1 : Math.floor(rng() * CRYPT_COLS), v: v });
+      var f = forced && forced[i], t, v, col, elig = [];
+      for (c = 0; c < CRYPT_COLS; c++) if (cnt[c] >= 2) elig.push(c);
+      if (f) { t = f.t; v = f.v || 0; col = (t === 'epic' || t === 'epicx') ? -1 : f.c; }
+      else {
+        do { t = weighted(rng, CRYPT_TYPES); } while (t === 'crusher' && !elig.length);
+        v = CRYPT_VALUES[t] ? weighted(rng, CRYPT_VALUES[t]) : 0;
+        col = (t === 'epic' || t === 'epicx') ? -1 : t === 'crusher' ? elig[Math.floor(rng() * elig.length)] : Math.floor(rng() * CRYPT_COLS);
+        if (t === 'ice' && rng() < CRYPT_STACK) {   // la glace s'empile volontiers sur une colonne déjà garnie (les colonnes restent interchangeables)
+          var part = []; for (c = 0; c < CRYPT_COLS; c++) if (cnt[c] >= 1 && cnt[c] < CRYPT_CAP) part.push(c);
+          if (part.length) col = part[Math.floor(rng() * part.length)];
+        }
+      }
+      if (t === 'ice' && cnt[col] < CRYPT_CAP) cnt[col]++;
+      else if (t === 'crusher' && cnt[col] >= 2) cnt[col] = 1;
+      drops.push({ t: t, c: col, v: v });
     }
     var r = cryptReplay(drops);
     return { drops: drops, steps: r.steps, tops: r.tops, fixed: r.fixed, cols: r.cols, sum: r.sum, capped: r.capped, total: r.total, profile: 'crypt' };
@@ -372,7 +388,7 @@
     MAX_WIN: MAX_WIN, MODES: MODES, N: N, LAYOUT: LAYOUT, KINDS: KINDS,
     SCARAB_ROWS: SCARAB_ROWS, SCARAB_VALUES: SCARAB_VALUES, SCARAB_BALLS: SCARAB_BALLS,
     WEIGH_PAIRS: WEIGH_PAIRS, weighGain: weighGain, VAULT_TILES: VAULT_TILES, VAULT_MAX_PICKS: VAULT_MAX_PICKS,
-    CRYPT_COLS: CRYPT_COLS, CRYPT_CAP: CRYPT_CAP, CRYPT_BLOCKS: CRYPT_BLOCKS, CRYPT_START: CRYPT_START, CRYPT_TYPES: CRYPT_TYPES, CRYPT_VALUES: CRYPT_VALUES, SECRET_UPGRADE: SECRET_UPGRADE, cryptReplay: cryptReplay,
+    CRYPT_COLS: CRYPT_COLS, CRYPT_CAP: CRYPT_CAP, CRYPT_BLOCKS: CRYPT_BLOCKS, CRYPT_START: CRYPT_START, CRYPT_STACK: CRYPT_STACK, CRYPT_TYPES: CRYPT_TYPES, CRYPT_VALUES: CRYPT_VALUES, SECRET_UPGRADE: SECRET_UPGRADE, cryptReplay: cryptReplay,
     HAND_SEGS: HAND_SEGS, HAND_COLORS: HAND_COLORS, HAND_MAX_CHAIN: HAND_MAX_CHAIN, HAND_MIN_N: HAND_MIN_N, handOptions: handOptions, handRecalc: handRecalc, HAND_UPGRADE: HAND_UPGRADE, ORACLE_CHANCE: ORACLE_CHANCE,
     mulberry32: mulberry32, cryptoRng: cryptoRng,
     playRound: playRound, playSpin: playSpin,

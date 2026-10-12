@@ -98,6 +98,77 @@ for (var wi = 0; wi < 20000; wi++) { var hh = M._bonus.hand(rw2, 0, [0]); if (hh
 var forcedW = M._bonus.hand(M.mulberry32(3), 1, [12]); var d0 = forcedW.spins[0].bonus; d0.pick = 1 - d0.heavy; d0.total = M.weighGain(d0, d0.pick); M.handRecalc(forcedW);
 ok(badR === 0 && forcedW.total === 0 && forcedW.spins[0].band === 'weigh', 'Fureur : le total se recalcule si le joueur change son choix dans la Pesée imbriquée');
 
+// 4d. Bonus SECRET « Crypte d'Anubis » : colonnes de multiplicateurs, tirées d'avance, remplace un bonus gagné
+var CR = M._bonus.crypt, COLS = M.CRYPT_COLS, rc = M.mulberry32(404), badC = 0, nC = 300000, colCnt = [0, 0, 0, 0, 0], typeCnt = {}, iceFull = 0, crushNoop = 0, crushReal = 0, sumTot = 0;
+// implémentation de référence, écrite à part des maths : le total rejoué doit être celui du script
+function refCrypt(drops) {
+  var top = [], fx = [], c; for (c = 0; c < 5; c++) { top.push(1); fx.push([]); }
+  drops.forEach(function (d) {
+    if (d.t === 'skull') top[d.c] += d.v; else if (d.t === 'epic') top = top.map(function (x) { return x + d.v; });
+    else if (d.t === 'anubis') top[d.c] *= d.v; else if (d.t === 'epicx') top = top.map(function (x) { return x * d.v; });
+    else if (d.t === 'ice') { if (fx[d.c].length < 4) { fx[d.c].push(top[d.c]); top[d.c] = 1; } }
+    else if (d.t === 'crusher') { if (fx[d.c].length >= 2) fx[d.c] = [fx[d.c].reduce(function (a, b) { return a + b; }, 0)]; }
+  });
+  var s = 0; for (c = 0; c < 5; c++) { s += top[c]; fx[c].forEach(function (x) { s += x; }); }
+  return Math.min(s / 5, M.MAX_WIN);
+}
+for (var ci = 0; ci < nC; ci++) {
+  var cd = CR(rc), ds = cd.drops;
+  if (ds.length !== M.CRYPT_BLOCKS || cd.steps.length !== ds.length || cd.profile !== 'crypt') badC++;
+  ds.forEach(function (d, j) {
+    var st = cd.steps[j], all = d.t === 'epic' || d.t === 'epicx';
+    typeCnt[d.t] = (typeCnt[d.t] || 0) + 1;
+    if (!M.CRYPT_TYPES.some(function (q) { return q[0] === d.t; })) badC++;
+    if (all ? d.c !== -1 : !(d.c >= 0 && d.c < COLS)) badC++;
+    if (!all) colCnt[d.c]++;
+    if (d.t !== 'ice' && d.t !== 'crusher' && !M.CRYPT_VALUES[d.t].some(function (q) { return q[0] === d.v; })) badC++;
+    if (st.fixed.some(function (f) { return f.length > M.CRYPT_CAP; }) || st.tops.some(function (x) { return x < 1; })) badC++;
+    if (d.t === 'ice') { if (st.full) { iceFull++; if (j && cd.steps[j - 1].fixed[d.c].length !== M.CRYPT_CAP) badC++; } else if (st.froze !== (j ? cd.steps[j - 1].tops[d.c] : 1) || st.tops[d.c] !== 1) badC++; }
+    if (d.t === 'crusher') { if (st.crushed) { crushReal++; if (st.fixed[d.c].length !== 1 || st.fixed[d.c][0] !== st.crushed.reduce(function (a, b) { return a + b; }, 0)) badC++; } else crushNoop++; }
+    if (j) { // un bloc fixe n'est jamais modifié par les blocs suivants (sauf broyage de sa colonne)
+      var pv = cd.steps[j - 1];
+      for (var cc = 0; cc < COLS; cc++) if (d.t !== 'crusher' || d.c !== cc) { for (var q = 0; q < pv.fixed[cc].length; q++) if (st.fixed[cc][q] !== pv.fixed[cc][q]) badC++; }
+    }
+  });
+  if (Math.abs(cd.total - refCrypt(ds)) > 1e-9 || cd.total < 1 || cd.total > M.MAX_WIN || Math.abs(cd.total - Math.min(cd.cols.reduce(function (a, b) { return a + b; }, 0) / COLS, M.MAX_WIN)) > 1e-9) badC++;
+  sumTot += cd.total;
+}
+ok(badC === 0, 'Crypte : script de ' + M.CRYPT_BLOCKS + ' blocs, colonnes/valeurs valides, glace/broyeur/colonne pleine conformes, blocs fixes intouchés, total rejoué = total du script (référence indépendante) sur ' + nC + ' scripts (anomalies: ' + badC + ')');
+ok(colCnt.every(function (v) { return Math.abs(v / (colCnt[0]) - 1) < 0.02; }), 'Crypte : les 5 colonnes sont strictement symétriques (' + colCnt.join(' / ') + ' blocs)');
+var noop = CR(M.mulberry32(1), [{ t: 'crusher', c: 0 }, { t: 'ice', c: 0 }, { t: 'crusher', c: 0 }]);
+ok(iceFull > 0 && crushNoop === 0 && crushReal > 0 && !noop.steps[0].effect && !noop.steps[2].effect && noop.fixed[0].length === 1, 'Crypte : cas limites rencontrés (glace sur colonne pleine ' + iceFull + ', broyeur tiré sans cible: ' + crushNoop + ' (jamais), broyeur actif ' + crushReal + ')');
+// plafond : un script extrême est plafonné à MAX_WIN
+var ext = []; for (var ei = 0; ei < 9; ei++) ext.push({ t: 'epicx', v: 25 });
+var capd = CR(M.mulberry32(1), ext);
+ok(capd.total === M.MAX_WIN && capd.capped && Math.max.apply(null, capd.tops) <= M.MAX_WIN * COLS, 'Crypte : un script extrême est plafonné à ' + M.MAX_WIN + '×');
+var mini = CR(M.mulberry32(1), [{ t: 'skull', c: 0, v: 3 }, { t: 'ice', c: 0 }, { t: 'anubis', c: 0, v: 5 }, { t: 'epic', v: 1 }, { t: 'ice', c: 0 }, { t: 'ice', c: 0 }, { t: 'crusher', c: 0 }, { t: 'skull', c: 1, v: 2 }, { t: 'epicx', v: 2 }]);
+// colonne 0 : haut 1+3=4 -> glace (fixe 4, haut 1) -> ×5 -> +1 = 6 -> glace (4, 6) -> glace (4, 6, 1) -> broyeur (11) -> ×2 : haut 2 + 11 = 13 ; colonne 1 : 2+2=4 puis ×2 = 8 ; colonnes 2-4 : 2 puis ×2 = 4
+ok(mini.cols[0] === 13 && mini.fixed[0].length === 1 && mini.fixed[0][0] === 11 && mini.cols[1] === 8 && mini.total === 33 / 5, 'Crypte : script écrit à la main rejoué correctement (colonnes ' + mini.cols.join(', ') + ')');
+// fréquence et espérance du secret dans les vrais tours
+var rs = M.mulberry32(2024), nS = 2000000, secrets = 0, bonuses = 0, badS = 0;
+['std', 'plus'].forEach(function (mode) {
+  for (var si = 0; si < nS; si++) {
+    var rr = M.playRound(rs, mode);
+    rr.spins.forEach(function (sp) {
+      if (M.KINDS[sp.kind] && M.KINDS[sp.kind].bonus) bonuses++;
+      if (sp.secret) { secrets++; if (!M.KINDS[sp.kind].bonus || sp.upgraded || sp.options || sp.bonus.profile !== 'crypt' || sp.base !== sp.bonus.total) badS++; }
+    });
+  }
+});
+var perRound = secrets / (2 * nS);
+ok(badS === 0 && perRound > 1 / 600 && perRound < 1 / 400, 'Secret : 1 tour sur ' + (1 / perRound).toFixed(0) + ' (cible 450-550), uniquement à la place d\'un bonus de la roue, sans choix de profil (anomalies: ' + badS + ')');
+ok(Math.abs(secrets / bonuses - M.SECRET_UPGRADE) < 0.004, 'Secret : ' + (secrets / bonuses * 100).toFixed(2) + ' % des bonus gagnés (réglé à ' + M.SECRET_UPGRADE * 100 + ' %) — ' + (1 / (M.SECRET_UPGRADE * 0.0682)).toFixed(0) + ' tours en théorie');
+var rbuy = M.mulberry32(8), secBuy = 0; ['scarab', 'weigh', 'vault', 'hand'].forEach(function (k) { for (var i = 0; i < 50000; i++) if (M.playBuy(rbuy, k).spins[0].secret) secBuy++; });
+ok(secBuy === 0, 'Secret : jamais proposé à l\'achat');
+// espérance du secret = espérance moyenne du bonus qu'il remplace (RTP global inchangé)
+var rE = M.mulberry32(31), nE = 2000000, eS = 0, eR = { scarab: 0, weigh: 0, vault: 0, hand: 0 };
+for (var ei2 = 0; ei2 < nE; ei2++) {
+  eS += Math.min(CR(rE).total, M.MAX_WIN);
+  ['scarab', 'weigh', 'vault', 'hand'].forEach(function (k) { eR[k] += Math.min(M._bonus[k](rE, k === 'hand' ? 0 : 'std').total, M.MAX_WIN); });
+}
+var replaced = (1 - M.HAND_UPGRADE) * (eR.scarab + eR.weigh + eR.vault) / 3 / nE + M.HAND_UPGRADE * eR.hand / nE;
+ok(Math.abs(eS / nE - replaced) < 0.35, 'Secret : espérance ≈ ' + (eS / nE).toFixed(2) + '× pour ' + replaced.toFixed(2) + '× de bonus remplacé (écart ' + ((eS / nE - replaced) * M.SECRET_UPGRADE * 0.0682 * 100).toFixed(3) + ' pt de RTP)');
+
 // 5. RTP grossier (tolérance large : 2 M de tours ≈ ±0,5 pt)
 function rtp(f, cost, n) { var s = 0; for (var i = 0; i < n; i++) s += f().total; return s / n / cost * 100; }
 var r1 = M.mulberry32(11), n = 2000000;
