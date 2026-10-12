@@ -303,6 +303,7 @@
     fc.width = fc.height = Math.ceil((2 * R + pad * 2) * dpr);
     var f = fc.getContext('2d'); f.setTransform(dpr, 0, 0, dpr, 0, 0); f.translate(R + pad, R + pad);
     var T = I18N.t(), ri = R * 0.30, ro = R * 0.935, i, k, v;
+    var RC = (ri + ro) / 2, chord = function (r) { return r * step; }; // RC : milieu radial de la case ; chord : largeur du secteur à ce rayon
     // fond
     f.beginPath(); f.arc(0, 0, R * 0.96, 0, TAU); f.fillStyle = '#0a0705'; f.fill();
     for (i = 0; i < M.N; i++) {
@@ -326,35 +327,42 @@
       f.restore();
       // arêtes dorées
       wedge(f, i, ri, ro); f.lineWidth = Math.max(1, R * 0.006); f.strokeStyle = 'rgba(255,214,110,.75)'; f.stroke();
-      // contenu
+      // contenu : tout est centré dans la case (axe radial) et borné par la largeur réelle du secteur
       f.save(); f.rotate(am);
-      var big = M.KINDS[k].bonus || k === 'ankh';
+      var big = M.KINDS[k].bonus || k === 'ankh', fr = I18N.lang() === 'fr';
       if (!big) {
-        var lab = k === 'm0' ? '0' : ({ m025: '.25', m05: '.5', m1: '1', m2: '2', m3: '3' })[k];
-        // chiffres droits dans le segment (même sens que les logos) ; réduits pour tenir dans la largeur du secteur
-        f.rotate(Math.PI / 2);
-        var fs = R * (k === 'm0' ? 0.085 : k === 'm025' || k === 'm05' ? 0.115 : 0.14), wMax = 2 * Math.PI / M.N * R * 0.84 * 0.94;
+        var lab = k === 'm0' ? '0' : ({ m025: fr ? '0,25' : '0.25', m05: fr ? '0,5' : '0.5', m1: '1', m2: '2', m3: '3' })[k];
+        var frac = k === 'm025' || k === 'm05';
+        // fractions : écrites le long du rayon (assez de place pour « 0,25 »), entiers : debout comme les logos
+        var fs = R * (k === 'm0' ? 0.1 : frac ? 0.12 : 0.15);
         f.font = '700 ' + fs + 'px ' + G.NUM;
-        var tw = f.measureText(lab).width; if (tw > wMax) fs *= wMax / tw;
-        f.font = '700 ' + fs + 'px ' + G.NUM; f.textAlign = 'center'; f.textBaseline = 'middle';
-        f.fillStyle = v.tx;
+        var tm = f.measureText(lab), tl = tm.actualBoundingBoxLeft, tr = tm.actualBoundingBoxRight, ta = tm.actualBoundingBoxAscent, td = tm.actualBoundingBoxDescent;
+        var dh = f.measureText('0').actualBoundingBoxAscent, rc = RC + (k === 'm0' ? R * 0.045 : 0); // la poussière : « 0 » au-dessus du soleil éteint
+        var shrink = frac ? Math.min(1, R * 0.30 / (tl + tr), chord(rc - (tl + tr) * 0.5) * 0.70 / dh) : Math.min(1, chord(rc - (ta + td) * 0.5) * 0.86 / (tl + tr));
+        if (shrink < 1) { fs *= shrink; f.font = '700 ' + fs + 'px ' + G.NUM; tm = f.measureText(lab); tl = tm.actualBoundingBoxLeft; tr = tm.actualBoundingBoxRight; ta = tm.actualBoundingBoxAscent; td = tm.actualBoundingBoxDescent; }
+        f.textAlign = 'left'; f.textBaseline = 'alphabetic'; f.fillStyle = v.tx;
         if (k !== 'm0') { f.shadowColor = 'rgba(0,0,0,.55)'; f.shadowBlur = 3; }
-        var ny = -R * 0.80;
-        f.fillText(lab, 0, ny);
+        if (frac) f.fillText(lab, rc - (tr - tl) / 2, (ta - td) / 2); // le long du rayon, centré sur l'axe de la case
+        else { f.rotate(Math.PI / 2); f.fillText(lab, -(tr - tl) / 2, -rc + (ta - td) / 2); }
         f.shadowBlur = 0;
-        if (k === 'm0') { f.globalAlpha = 0.55; A.skullX(f, 0, -R * 0.62, R * 0.07, v.tx); f.globalAlpha = 1; }
+        if (k === 'm0') { f.globalAlpha = 0.55; A.skullX(f, 0, -(RC - R * 0.05), Math.min(R * 0.07, chord(RC) * 0.8), v.tx); f.globalAlpha = 1; }
       } else {
-        f.rotate(Math.PI / 2); // icône à l'endroit, nom en radial
-        var iy = -R * 0.80, isz = R * (k === 'ankh' ? 0.115 : 0.125);
-        if (v.glyph === 'ankh') A.ankh(f, 0, iy, isz * 1.1, '#3a2706');
-        else if (G.icon(f, ({ scarab: 'scarab', feather: 'weigh', pyramid: 'vault' })[v.glyph], 0, iy, isz * ({ scarab: 1.6, feather: 2.2, pyramid: 1.8 })[v.glyph])) { /* logo illustré */ }
-        else if (v.glyph === 'scarab') A.scarab(f, 0, iy, isz * 1.2, '#ffd86a', 'rgba(0,0,0,.5)');
-        else if (v.glyph === 'feather') A.feather(f, 0, iy, isz * 1.35, '#4a3410', 'rgba(255,255,255,.7)');
-        else if (v.glyph === 'pyramid') A.pyramid(f, 0, iy, isz * 1.3, '#ffe9a0', 'rgba(0,0,0,.45)');
-        f.restore(); f.save(); f.rotate(am);
-        f.font = '900 ' + R * 0.05 + 'px Cinzel, serif'; f.textAlign = 'right'; f.textBaseline = 'middle'; f.fillStyle = v.tx;
-        f.shadowColor = 'rgba(0,0,0,.6)'; f.shadowBlur = 3;
-        f.fillText(T.kinds[k], R * 0.64, 0); f.shadowBlur = 0;
+        // icône (debout) vers l'extérieur, nom le long du rayon vers le centre ; l'ensemble est centré dans la case
+        var isz = Math.min(chord(RC + R * 0.12) * ({ scarab: 1.35, feather: 1.6, pyramid: 1.2, ankh: 1.2 })[v.glyph], R * 0.17), nm = T.kinds[k];
+        var nfs = R * 0.056; f.font = '900 ' + nfs + 'px Cinzel, serif';
+        var nlen = f.measureText(nm).width, nmax = R * 0.30; if (nlen > nmax) { nfs *= nmax / nlen; nlen = nmax; f.font = '900 ' + nfs + 'px Cinzel, serif'; }
+        var gap = R * 0.025, tot = nlen + gap + isz, r1 = RC + tot / 2;      // r1 : bord extérieur de l'icône
+        var iy = r1 - isz / 2, nEnd = r1 - isz - gap;                         // fin du nom (côté icône)
+        f.save(); f.rotate(Math.PI / 2);
+        if (v.glyph === 'ankh') A.ankh(f, 0, -iy + isz * 0.02, isz * 0.74, '#3a2706');
+        else if (G.icon(f, ({ scarab: 'scarab', feather: 'weigh', pyramid: 'vault' })[v.glyph], 0, -iy, isz)) { /* logo illustré */ }
+        else if (v.glyph === 'scarab') A.scarab(f, 0, -iy, isz * 0.8, '#ffd86a', 'rgba(0,0,0,.5)');
+        else if (v.glyph === 'feather') A.feather(f, 0, -iy, isz * 0.9, '#4a3410', 'rgba(255,255,255,.7)');
+        else if (v.glyph === 'pyramid') A.pyramid(f, 0, -iy, isz * 0.85, '#ffe9a0', 'rgba(0,0,0,.45)');
+        f.restore();
+        f.font = '900 ' + nfs + 'px Cinzel, serif'; f.textAlign = 'right'; f.textBaseline = 'alphabetic'; f.fillStyle = v.tx;
+        var nb = f.measureText(nm); f.shadowColor = 'rgba(0,0,0,.6)'; f.shadowBlur = 3;
+        f.fillText(nm, nEnd, (nb.actualBoundingBoxAscent - nb.actualBoundingBoxDescent) / 2); f.shadowBlur = 0;
       }
       f.restore();
     }
