@@ -10,7 +10,7 @@
       realityTitle: 'POINT DE SÉANCE', realityMsg: function (m, n) { return 'Vous jouez depuis ' + m + ' min. Résultat net : ' + n + '.'; }, limitTitle: 'LIMITE ATTEINTE', limitMsg: 'Votre limite de perte est atteinte. Modifiez-la dans les réglages pour continuer.', keepPlaying: 'CONTINUER', takeBreak: 'FAIRE UNE PAUSE',
       rulesPlus: 'Mode ORACLE+ : mise ×1,1, l\'Oracle apparaît sur ≈ 3 tours sur 4. RTP équivalent (≈ 96 %).',
       buyBtn: 'ACHETER UN BONUS', buyTitle: 'ACHETER UN BONUS', buySub: 'Ouvrez directement un bonus, sans passer par la roue. Prix = mise × multiplicateur. La Fureur d\'Anubis peut toujours le saisir.', buyPrice: 'PRIX', buyNow: 'ACHETER', buyOn: 'Achat de bonus', buyWheel: 'Retour à la roue', buyNoFunds: 'Solde insuffisant pour ce bonus', buyRtp: 'RTP ≈ 96 %',
-      buyDesc: { scarab: '3 scarabées, jusqu\'à 75× chacun', weigh: 'Plume ou cœur : le plus lourd gagne, jusqu\'à 300×', vault: 'Pyramide : 12 chambres, évitez la malédiction', hand: 'Roue géante à multiplicateurs' },
+      buyDesc: { scarab: '3 scarabées, jusqu\'à 75× chacun', weigh: 'Plume ou cœur : le plus lourd gagne, jusqu\'à 300×', vault: 'Pyramide : 12 chambres, évitez la malédiction', hand: 'Choisissez une couleur : DOUBLE = roue doublée (jusqu\'à ×16), bandes de bonus ×2 à ×10' },
       resumed: 'Tour interrompu : gain crédité',
       noFunds: 'Solde insuffisant', oracleSpeaks: 'L\'Oracle parle…', oracleOn: 'ORACLE', ankhRespin: 'ANKH — RELANCE GRATUITE !',
       dust: 'La poussière retourne à la poussière…', winLine: 'Gain', respinLabel: 'RELANCE',
@@ -28,6 +28,11 @@
       lineScarab: '×{a} à ×{b} par scarabée', lineWeigh: 'Plateaux jusqu\'à ×{b}', lineVault: 'Malédiction : {p} % par coffre', volat: 'Volatilité',
       aimHint: 'Visez, puis touchez pour lâcher le scarabée', guessHint: 'Plume ou cœur ? Touchez une carte (touches 1 / 2)', guessRight: 'GAGNÉ !', guessWrong: 'PERDU', holdHint: 'Maintenez pour charger, relâchez pour lancer', tapFast: 'Touchez pour accélérer',
       handIntro: 'LA FUREUR D\'ANUBIS', handSub: 'Le dieu saisit votre bonus et le transforme en jugement suprême.', handSpin: 'Les multiplicateurs s\'empilent…', handFinal: 'JUGEMENT RENDU',
+      handColorTitle: 'VOTRE COULEUR', handColorHint: 'Touchez une carte (touches 1 / 2 / 3). Les trois couleurs ont exactement les mêmes chances.',
+      handColorName: { turq: 'TURQUOISE', gold: 'OR', ruby: 'RUBIS' }, handColorSub: '2 cases DOUBLE', handColorRule: 'DOUBLE de votre couleur : la roue double et on relance. DOUBLE d\'une autre couleur : la chaîne s\'arrête.', handColorRtp: 'Les trois couleurs ont le même RTP',
+      handYour: 'VOTRE COULEUR', handRule: 'Votre couleur sur DOUBLE : roue doublée, on relance · autre couleur : fin', handTier: 'PALIER', handDouble: 'DOUBLE',
+      handUp: 'LA ROUE DOUBLE !', handUpSub: 'Les nombres sont doublés — relancez', handWrong: 'MAUVAISE COULEUR', handWrongSub: 'La chaîne s\'arrête : palier encaissé', handNum: 'NOMBRE', handBandAt: 'BANDE BONUS',
+      handBandRes: '{b} × {x} × {m} = {t}', bandName: { scarab: 'SCARABÉES', weigh: 'PESÉE', vault: 'TRÉSOR' },
       boostApplied: 'BOOST ORACLE', tapSkip: 'Touchez pour passer', continueBtn: 'CONTINUER', bonusWin: 'GAIN DU BONUS',
       infoTitle: 'RÈGLES & TABLE DES GAINS', rtp: 'RTP', maxWin: 'Gain max', hitRate: 'Tours gagnants', bonusFreq: 'Bonus', volat: 'Volatilité',
       volatV: 'Moyenne-haute', demo: 'Crédits fictifs — démo sans argent réel.',
@@ -37,7 +42,8 @@
         'ANKH : relance gratuite de la roue, sans remise.',
         'Pesée du Cœur : choisissez la plume de Maât ou le cœur, les multiplicateurs défilent et se révèlent, puis la balance tranche. Le plateau le plus lourd gagne son multiplicateur (jusqu\'à ×300), le plus léger n\'a rien : une chance sur deux.',
         'Avant un bonus (Scarabées, Pesée, Trésor), choisissez un profil : Prudent, Équilibré ou Audacieux. Les trois ont le même RTP ; seule la volatilité change. Le tirage est fait à l\'avance pour chaque profil.',
-        'Un bonus peut être saisi par la FUREUR D\'ANUBIS : roue géante à multiplicateurs cumulés, jusqu\'à ×5000.'
+        'Un bonus peut être saisi par la FUREUR D\'ANUBIS : choisissez une couleur (turquoise, or ou rubis) puis lancez la roue géante. Un nombre : gain = nombre × palier. DOUBLE de VOTRE couleur : les nombres de la roue sont doublés (palier ×2, jusqu\'à ×16) et vous relancez. DOUBLE d\'une AUTRE couleur : la chaîne s\'arrête et vous encaissez le plus petit nombre de la roue (5) × palier.',
+        'Les bandes de la Fureur lancent un bonus (Scarabées ×2 ou ×10, Pesée ×5, Trésor ×3) : gain du bonus × le multiplicateur de la bande × palier, jusqu\'à ×5000. Une bande ne ramène jamais à la Fureur.'
       ],
       tableCols: ['Case', 'Sur la roue', 'Gain'], settings: 'RÉGLAGES', language: 'Langue', sound: 'Son', reducedFx: 'Effets réduits', stopBonus: 'Stopper l\'auto sur bonus',
       autoOpts: 'Nombre de tours auto', off: 'Non', on: 'Oui', close: 'Fermer', noWin: 'Pas de gain', handLabel: 'FUREUR D\'ANUBIS'
@@ -50,7 +56,7 @@
       realityTitle: 'SESSION CHECK', realityMsg: function (m, n) { return 'You have been playing for ' + m + ' min. Net result: ' + n + '.'; }, limitTitle: 'LIMIT REACHED', limitMsg: 'Your loss limit has been reached. Change it in settings to keep playing.', keepPlaying: 'KEEP PLAYING', takeBreak: 'TAKE A BREAK',
       rulesPlus: 'ORACLE+ mode: bet ×1.1, the Oracle shows up on ≈ 3 of 4 spins. Same RTP (≈ 96%).',
       buyBtn: 'BUY A BONUS', buyTitle: 'BUY A BONUS', buySub: 'Open a bonus directly, skipping the wheel. Price = bet × multiplier. Anubis\' Fury can still seize it.', buyPrice: 'PRICE', buyNow: 'BUY', buyOn: 'Bonus buy', buyWheel: 'Back to the wheel', buyNoFunds: 'Not enough balance for this bonus', buyRtp: 'RTP ≈ 96%',
-      buyDesc: { scarab: '3 scarabs, up to 75× each', weigh: 'Feather or heart: the heavier wins, up to 300×', vault: 'Pyramid: 12 chambers, dodge the curse', hand: 'Giant wheel with stacking multipliers' },
+      buyDesc: { scarab: '3 scarabs, up to 75× each', weigh: 'Feather or heart: the heavier wins, up to 300×', vault: 'Pyramid: 12 chambers, dodge the curse', hand: 'Pick a colour: DOUBLE = doubled wheel (up to ×16), bonus bands ×2 to ×10' },
       resumed: 'Interrupted round: winnings credited',
       noFunds: 'Insufficient balance', oracleSpeaks: 'The Oracle speaks…', oracleOn: 'ORACLE', ankhRespin: 'ANKH — FREE RESPIN!',
       dust: 'Dust returns to dust…', winLine: 'Win', respinLabel: 'RESPIN',
@@ -68,6 +74,11 @@
       lineScarab: '×{a} to ×{b} per scarab', lineWeigh: 'Pans up to ×{b}', lineVault: 'Curse: {p}% per chamber', volat: 'Volatility',
       aimHint: 'Aim, then tap to release the scarab', guessHint: 'Feather or heart? Tap a card (keys 1 / 2)', guessRight: 'YOU WIN!', guessWrong: 'LOST', holdHint: 'Hold to charge, release to spin', tapFast: 'Tap to speed up',
       handIntro: 'FURY OF ANUBIS', handSub: 'The god seizes your bonus and turns it into supreme judgement.', handSpin: 'Multipliers stack up…', handFinal: 'JUDGEMENT PASSED',
+      handColorTitle: 'YOUR COLOUR', handColorHint: 'Tap a card (keys 1 / 2 / 3). The three colours have exactly the same odds.',
+      handColorName: { turq: 'TURQUOISE', gold: 'GOLD', ruby: 'RUBY' }, handColorSub: '2 DOUBLE slots', handColorRule: 'DOUBLE in your colour: the wheel doubles and you spin again. DOUBLE in another colour: the chain stops.', handColorRtp: 'All three colours have the same RTP',
+      handYour: 'YOUR COLOUR', handRule: 'Your colour on DOUBLE: wheel doubled, spin again · other colour: it ends', handTier: 'TIER', handDouble: 'DOUBLE',
+      handUp: 'THE WHEEL DOUBLES!', handUpSub: 'Every number is doubled — spin again', handWrong: 'WRONG COLOUR', handWrongSub: 'The chain stops: current tier cashed', handNum: 'NUMBER', handBandAt: 'BONUS BAND',
+      handBandRes: '{b} × {x} × {m} = {t}', bandName: { scarab: 'SCARABS', weigh: 'WEIGHING', vault: 'VAULT' },
       boostApplied: 'ORACLE BOOST', tapSkip: 'Tap to skip', continueBtn: 'CONTINUE', bonusWin: 'BONUS WIN',
       infoTitle: 'RULES & PAYTABLE', rtp: 'RTP', maxWin: 'Max win', hitRate: 'Hit rate', bonusFreq: 'Bonus', volat: 'Volatility',
       volatV: 'Medium-high', demo: 'Play credits — demo, no real money.',
@@ -77,7 +88,8 @@
         'ANKH: free respin of the wheel, no extra stake.',
         'Weighing of the Heart: pick the feather of Ma\'at or the heart, the multipliers roll and are revealed, then the scales decide. The heavier pan wins its multiplier (up to ×300), the lighter one gets nothing: a 1-in-2 chance.',
         'Before a bonus (Scarabs, Weighing, Vault) pick a profile: Cautious, Balanced or Daring. All three share the same RTP; only volatility differs. Each profile\'s draw is made in advance.',
-        'Any bonus can be seized by the FURY OF ANUBIS: a giant wheel with stacking multipliers, up to ×5000.'
+        'Any bonus can be seized by the FURY OF ANUBIS: pick a colour (turquoise, gold or ruby), then spin the giant wheel. A number: win = number × tier. DOUBLE in YOUR colour: every number on the wheel is doubled (tier ×2, up to ×16) and you spin again. DOUBLE in ANOTHER colour: the chain stops and you cash the smallest number on the wheel (5) × tier.',
+        'The Fury\'s bands launch a bonus (Scarabs ×2 or ×10, Weighing ×5, Vault ×3): bonus win × the band multiplier × tier, up to ×5000. A band never leads back to the Fury.'
       ],
       tableCols: ['Segment', 'On wheel', 'Pays'], settings: 'SETTINGS', language: 'Language', sound: 'Sound', reducedFx: 'Reduced effects', stopBonus: 'Stop autoplay on bonus',
       autoOpts: 'Autoplay spins', off: 'Off', on: 'On', close: 'Close', noWin: 'No win', handLabel: 'FURY OF ANUBIS'

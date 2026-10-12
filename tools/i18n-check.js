@@ -47,6 +47,13 @@ var weighMax = Math.max.apply(null, [].concat.apply([], Object.keys(M.WEIGH_PROF
   ok(d.buyDesc.scarab.indexOf(scarabMax + '×') >= 0, l + ' : la description des Scarabées annonce bien ' + scarabMax + '× (max réel)');
   ok(d.buyDesc.weigh.indexOf(weighMax + '×') >= 0, l + ' : la description de la Pesée annonce bien ' + weighMax + '× (max réel)');
   ok(d.rules.join(' ').indexOf(String(M.MAX_WIN)) >= 0, l + ' : les règles annoncent le plafond ' + M.MAX_WIN + '×');
+  // Fureur d'Anubis : palier maximal, multiplicateurs des bandes, plus petit nombre (consolation) : tout vient des maths
+  var tierMax = Math.pow(2, M.HAND_MAX_CHAIN), bandXs = [], rulesTxt = d.rules.join(' ');
+  M.HAND_SEGS.forEach(function (sg) { if (sg.b && bandXs.indexOf(sg.x) < 0) bandXs.push(sg.x); });
+  var bandMax = Math.max.apply(null, bandXs), bandMin = Math.min.apply(null, bandXs);
+  ok(d.buyDesc.hand.indexOf('×' + tierMax) >= 0 && d.buyDesc.hand.indexOf('×' + bandMin) >= 0 && d.buyDesc.hand.indexOf('×' + bandMax) >= 0, l + ' : la description de la Fureur annonce palier ×' + tierMax + ' et bandes ×' + bandMin + ' à ×' + bandMax);
+  ok(rulesTxt.indexOf('×' + tierMax) >= 0 && rulesTxt.indexOf('(' + M.HAND_MIN_N + ')') >= 0 && bandXs.every(function (x) { return rulesTxt.indexOf('×' + x) >= 0; }), l + ' : les règles de la Fureur citent palier max ×' + tierMax + ', plus petit nombre (' + M.HAND_MIN_N + ') et les bandes ×' + bandXs.join(', ×'));
+  ok(M.HAND_SEGS.every(function (sg) { return !sg.b || d.bandName[sg.b]; }) && ['turq', 'gold', 'ruby'].every(function (c) { return d.handColorName[c]; }), l + ' : noms de bandes et de couleurs présents');
 });
 var mainSrc = fs.readFileSync(path.join(root, 'js/main.js'), 'utf8');
 ok(!/jusqu.à 200×|up to 200×/.test(mainSrc), 'plus de description chiffrée en dur dans main.js');
