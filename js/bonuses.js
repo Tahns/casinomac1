@@ -131,17 +131,17 @@
    * ====================================================================== */
   function scarabScene(sp, bet) {
     var T = I18N.t(), data = sp.bonus, rows = M.SCARAB_ROWS, vals = data.values || M.SCARAB_VALUES;
-    var S = newScene(T.scarabIntro), g = {}; S.bgImg = 'scarabwall'; S.dim = 0.9; var ball = null, pegFlash = {}, slotPulse = [], used = 0, floats = [], ent = 0, landed = [], beam = null, pegRings = [], sparkAcc = 0, lastPulse = 0;
+    var S = newScene(T.scarabIntro), g = {}; S.bgImg = 'scarabwall'; S.dim = 0.9; S.showTotal = false; var ball = null, pegFlash = {}, slotPulse = [], used = 0, floats = [], ent = 0, landed = [], beam = null, pegRings = [], sparkAcc = 0, lastPulse = 0;
     function slotColor(v) { return v >= 25 ? ['#ffe08a', '#b8861e'] : v >= 6 ? ['#c28bff', '#5a2a86'] : v >= 2.5 ? ['#ff7a5a', '#8a1b10'] : v >= 1 ? ['#5b8cff', '#1a3a8a'] : ['#6a5a40', '#2a2118']; }
     S.layout = function () {
-      // grand plateau « mur de chevilles » : il occupe presque tout l'écran, entre le bandeau et le menu du bas
-      var w = G.w, h = G.h, top = T0() + EX(118), bot = h - hudH() - (h < 520 ? 6 : 30);
-      g.slotH = clamp((bot - top) * 0.1, 34, 64);
-      g.dy = (bot - top - g.slotH - 18) / (rows + 1.15);
+      // grand plateau « mur de chevilles » : sous le bandeau, jusqu'au menu du bas ; scarabées restants et total sont dans l'en-tête du cadre
+      var w = G.w, h = G.h, bot = h - hudH() - (h < 520 ? 6 : 24), py0 = T0() + (h < 520 ? 40 : clamp(w * 0.034, 17, 34) * 1.9 + 10);
+      g.slotH = clamp((bot - py0) * 0.1, 32, 64);
+      g.dy = (bot - py0 - g.slotH - 18) / (rows + 2.15);
       g.dx = Math.min(g.dy * 2.3, (w * 0.88) / (rows + 1.5));
-      g.top = top; g.pegR = Math.max(3.5, Math.min(g.dx, g.dy) * 0.17); g.ballR = g.pegR * 2.6;
-      g.slotTop = top + (rows + 1) * g.dy + 6;
-      g.px0 = G.cx - (rows / 2 + 0.78) * g.dx; g.px1 = G.cx + (rows / 2 + 0.78) * g.dx; g.py0 = top - g.dy * 0.15; g.py1 = g.slotTop + g.slotH + 12;
+      g.top = py0 + g.dy * 1.15; g.pegR = Math.max(3.5, Math.min(g.dx, g.dy) * 0.17); g.ballR = g.pegR * 2.6;
+      g.slotTop = g.top + (rows + 1) * g.dy + 6;
+      g.px0 = G.cx - (rows / 2 + 0.78) * g.dx; g.px1 = G.cx + (rows / 2 + 0.78) * g.dx; g.py0 = py0; g.py1 = g.slotTop + g.slotH + 12;
     };
     function peg(r, j) { return { x: G.cx + (j - r / 2) * g.dx, y: g.top + (r + 1) * g.dy }; }
     S.update = function (dt) {
@@ -160,7 +160,12 @@
     S.draw = function () {
       var i, r, j;
       // décor : temple illustré (piliers de chaque côté) étiré sur toute la zone de jeu
-      if (G.art && G.art.scarabwall) ctx.drawImage(G.art.scarabwall, 0, 0, G.w, G.h - hudH() + 6);
+      var wim = G.art && G.art.scarabwall;
+      if (wim) {   // proportions respectées (cover) : jamais étiré
+        var zh = G.h - hudH() + 6, kk = Math.max(G.w / wim.width, zh / wim.height);
+        ctx.save(); ctx.beginPath(); ctx.rect(0, 0, G.w, zh); ctx.clip();
+        ctx.drawImage(wim, (G.w - wim.width * kk) / 2, (zh - wim.height * kk) / 2, wim.width * kk, wim.height * kk); ctx.restore();
+      }
       // mur du plateau : cadre doré, fond sombre violet, grille de points lumineux
       ctx.save();
       A.roundRect(ctx, g.px0, g.py0, g.px1 - g.px0, g.py1 - g.py0, 18);
@@ -169,6 +174,13 @@
       ctx.lineWidth = 4; ctx.strokeStyle = A.goldGrad(ctx, g.px0, g.py0, g.px1, g.py1); ctx.stroke();
       ctx.lineWidth = 1.2; ctx.strokeStyle = 'rgba(255,233,160,.35)'; A.roundRect(ctx, g.px0 + 6, g.py0 + 6, g.px1 - g.px0 - 12, g.py1 - g.py0 - 12, 14); ctx.stroke();
       ctx.restore();
+      // grille dense de petites lumières (décor, comme le mur du Pachinko) : les vraies chevilles restent les plus grosses
+      var dsx = g.dx / 2, dsy = g.dy / 2, dr = Math.max(1.1, g.pegR * 0.26), de = clamp((ent - 0.2) / 0.6, 0, 1);
+      if (de > 0) {
+        ctx.save(); ctx.globalAlpha = 0.5 * de; ctx.fillStyle = '#fff6dc'; ctx.shadowColor = 'rgba(255,240,190,.9)'; ctx.shadowBlur = dr * 3; ctx.beginPath();
+        for (var dyy = g.py0 + 16; dyy < g.slotTop - 8; dyy += dsy) for (var dxx = g.px0 + 14; dxx < g.px1 - 10; dxx += dsx) { ctx.moveTo(dxx + dr, dyy); ctx.arc(dxx, dyy, dr, 0, TAU); }
+        ctx.fill(); ctx.restore();
+      }
       // séparateurs dorés entre les cases (comme les barres du Pachinko)
       for (i = 0; i <= rows + 1; i++) {
         var bx = G.cx + (i - 0.5 - rows / 2) * g.dx, be = clamp((ent - 0.9) / 0.5, 0, 1);
@@ -247,7 +259,7 @@
       // scarabées restants
       for (i = 0; i < data.balls.length; i++) {
         ctx.globalAlpha = i >= used ? 1 : 0.22;
-        if (!G.icon(ctx, 'scarab', g.px0 + 34 + i * 44, T0() + EX(96), 42)) A.scarab(ctx, g.px0 + 34 + i * 36, T0() + EX(96), 26, i >= used ? '#ffd86a' : '#6a5a40', 'rgba(60,30,0,.6)');
+        if (!G.icon(ctx, 'scarab', g.px0 + 34 + i * 44, g.py0 + g.dy * 0.6, Math.min(42, g.dy * 1.0))) A.scarab(ctx, g.px0 + 34 + i * 36, g.py0 + g.dy * 0.6, 26, i >= used ? '#ffd86a' : '#6a5a40', 'rgba(60,30,0,.6)');
       }
       ctx.globalAlpha = 1;
       for (i = 0; i < floats.length; i++) {
@@ -255,6 +267,11 @@
         G.txt('+×' + fl.v, fl.x, fl.y - fl.t * 50, { size: clamp(g.dx * 0.42, 18, 36), weight: 900, fill: '#fff1b8', stroke: '#2a1a02', shadow: 'rgba(255,200,60,.8)' });
       }
       ctx.globalAlpha = 1;
+      // total en haut à droite du cadre
+      ctx.save(); var tsc = 1 + (S.pop || 0) * 0.18, tfs = clamp(g.dy * 0.9, 17, 34); ctx.translate(g.px1 - 22, g.py0 + g.dy * 0.62); ctx.scale(tsc, tsc);
+      var tval = '×' + G.fmt(Math.round(S.total * 100) / 100), tw = tval.length * tfs * 0.6;
+      G.txt(T.total, -tw - 10, 2, { size: clamp(tfs * 0.4, 9, 13), family: 'Manrope', weight: 800, fill: '#b9a780', spacing: 3, align: 'right' });
+      G.goldText(tval, 0, 0, tfs, { blur: 18, align: 'right' }); ctx.restore();
       chrome(S);
     };
     // Chute physique : le scarabée rebondit réellement de cheville en cheville (trajectoires balistiques,
@@ -278,14 +295,14 @@
       gAcc = g.dy * 26;
       var dirs = d.path.map(function (x) { return x ? 1 : -1; });
       var P = contactPt(0, 0, dirs[0]);
-      var last = b === data.balls.length - 1, hx = G.cx + rnd(-0.3, 0.3) * g.dx, hy = g.top - g.dy * 1.5;
-      ball = { x: hx, y: hy - g.dy * 1.2, rot: rnd(0, 6), trail: [], hover: true, charge: 0 };
+      var last = b === data.balls.length - 1, hx = G.cx + rnd(-0.3, 0.3) * g.dx, hy = g.top - g.dy * 0.5;
+      ball = { x: hx, y: hy - g.dy * 0.45, rot: rnd(0, 6), trail: [], hover: true, charge: 0 };
       // apparition + suspense : le scarabée plane, vibre et se charge avant d'être lâché
       var cd = quick() ? 0.25 : last ? 1.1 : 0.7;
       Sfx.oracle && b === 0 && !quick() && Sfx.oracle();
       FX.ring(hx, hy, '#ffe9a0', g.dx * 2, 0.6);
       await G.tween(cd, function (u) {
-        ball.charge = u; ball.y = hy - g.dy * 1.2 * (1 - G.ease.out3(Math.min(1, u * 2.5)));
+        ball.charge = u; ball.y = hy - g.dy * 0.45 * (1 - G.ease.out3(Math.min(1, u * 2.5)));
         ball.x = hx + Math.sin(u * 60) * g.ballR * 0.18 * u; ball.rot += 0.08 + u * 0.3;
         if (Math.random() < 0.3) Sfx.tick(0.2 + u * 0.8);
       }, null);
