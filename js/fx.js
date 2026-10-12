@@ -1,4 +1,4 @@
-/* HAND OF ANUBIS — particules, secousses, flashs, compteurs. */
+/* ANUBIS UNCHAINED — particules, secousses, flashs, compteurs. */
 (function (root) {
   'use strict';
   var TAU = Math.PI * 2;

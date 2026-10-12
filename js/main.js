@@ -1,4 +1,4 @@
-/* HAND OF ANUBIS — flux de jeu, HUD, réglages. */
+/* ANUBIS UNCHAINED — flux de jeu, HUD, réglages. */
 (function (root) {
   'use strict';
   var M = root.AnubisMath, G = root.G, FX = root.FX, Sfx = root.Sfx;

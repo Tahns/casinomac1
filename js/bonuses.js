@@ -1,7 +1,7 @@
-/* HAND OF ANUBIS — les 4 bonus.
+/* ANUBIS UNCHAINED — les 4 bonus.
  * Chaque scène REJOUE un script déjà tiré par le noyau mathématique (AnubisMath) : elle n'invente aucun résultat.
  *  - Chute des Scarabées (Plinko)      - Pesée du Cœur (balance)
- *  - Chambre du Trésor (pick-me)       - Main d'Anubis (roue géante à multiplicateurs cumulés) */
+ *  - Chambre du Trésor (pick-me)       - Fureur d'Anubis (roue géante à multiplicateurs cumulés) */
 (function (root) {
   'use strict';
   var M = root.AnubisMath, A = root.Art, C = A.C, TAU = A.TAU, G = root.G, FX = root.FX, Sfx = root.Sfx;
@@ -655,7 +655,7 @@
   }
 
   /* ======================================================================
-   * 4. MAIN D'ANUBIS — roue géante à multiplicateurs cumulés
+   * 4. FUREUR D'ANUBIS — roue géante à multiplicateurs cumulés
    * ====================================================================== */
   function handScene(sp, bet) {
     var T = I18N.t(), data = sp.bonus, segs = M.HAND_SEGS, N = segs.length, st = TAU / N;

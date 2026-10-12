@@ -29,7 +29,7 @@ var server = http.createServer(function (req, res) {
       if(G.S.busy){stuck++;break;} if(G.S.balance<0) neg++; } return {stuck:stuck,neg:neg}; })()`);
   ok(soak.stuck === 0 && soak.neg === 0, '30 tours (Standard + Oracle+) sans blocage ni solde négatif');
 
-  // 2. tous les bonus, avec boost et via la Main d'Anubis
+  // 2. tous les bonus, avec boost et via la Fureur d'Anubis
   var bon = await p.evaluate(`(async()=>{ var cs=[['scarab',1,false],['scarab',3,false],['weigh',1,false],['weigh',5,false],['vault',1,false],['vault',2,false],['scarab',1,true],['weigh',2,true],['vault',1,true]], bad=[];
     for(var i=0;i<cs.length;i++){ var done=false; G.testBonus.apply(null,cs[i]).then(function(){done=true}); var g=0; while(!done&&g<3000){await G.advance(0.25);g++} if(!done) bad.push(cs[i].join('/')); } return bad; })()`);
   ok(bon.length === 0, '9 variantes de bonus se terminent (' + (bon.join(',') || 'aucune bloquée') + ')');

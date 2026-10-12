@@ -1,4 +1,4 @@
-/* HAND OF ANUBIS — moteur de rendu : boucle, décor, roue, overlay de gros gains. */
+/* ANUBIS UNCHAINED — moteur de rendu : boucle, décor, roue, overlay de gros gains. */
 (function (root) {
   'use strict';
   var M = root.AnubisMath, A = root.Art, C = A.C, TAU = A.TAU, FX = root.FX, Sfx = root.Sfx;
@@ -228,7 +228,7 @@
       ctx.beginPath(); ctx.arc(xx, yy, d.s, 0, TAU); ctx.fill();
     }
     ctx.globalAlpha = 1;
-    // étalonnage « Hand of Anubis » : ombres violettes en haut, lueur turquoise du sol, braises qui montent
+    // étalonnage « Anubis Unchained » : ombres violettes en haut, lueur turquoise du sol, braises qui montent
     var fk = 0.92 + Math.sin(t * 7.3) * 0.045 + Math.sin(t * 17.1) * 0.03;
     ctx.save(); ctx.globalCompositeOperation = 'screen';
     var vg1 = ctx.createLinearGradient(0, 0, 0, h * 0.6); vg1.addColorStop(0, 'rgba(96,34,170,' + 0.34 * (1 - dim * 0.4) + ')'); vg1.addColorStop(1, 'rgba(96,34,170,0)');

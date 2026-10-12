@@ -1,4 +1,4 @@
-/* HAND OF ANUBIS — noyau mathématique.
+/* ANUBIS UNCHAINED — noyau mathématique.
  *
  * Module pur (aucun DOM). Il produit pour chaque mise un « script » complet d'événements que le front se
  * contente de rejouer — exactement le modèle de Stake Engine (le RNG et les gains vivent côté serveur,
@@ -52,7 +52,7 @@
     vault: { id: 'vault', count: 1,  tier: 10, bonus: true }
   };
   var KIND_ORDER = ['weigh', 'vault', 'scarab', 'm3', 'ankh', 'm2', 'm1', 'm05', 'm025', 'm0'];
-  var HAND_UPGRADE = 0.08; // chance qu'un bonus soit saisi par la Main d'Anubis
+  var HAND_UPGRADE = 0.08; // chance qu'un bonus soit saisi par la Fureur d'Anubis
 
   // Disposition déterministe : les plus rares d'abord, répartis régulièrement, jamais deux cases identiques côte à côte.
   function buildLayout() {
@@ -163,7 +163,7 @@
     return { picks: picks, ended: ended, bonusFinish: ended === 'cleared' ? 5 : 0, total: total, profile: prof || 'std' };
   }
 
-  /* ---------- Bonus 4 : Main d'Anubis (roue géante à multiplicateurs) ---------- */
+  /* ---------- Bonus 4 : Fureur d'Anubis (roue géante à multiplicateurs) ---------- */
   var HAND_SEGS = [
     { n: 2 }, { n: 3 }, { n: 3 }, { x: 2 }, { n: 4 }, { n: 4 }, { n: 5 }, { n: 5 }, { n: 6 }, { x: 2 }, { n: 6 }, { n: 8 }, { n: 8 }, { n: 10 }, { n: 10 }, { x: 3 }, { n: 12 }, { n: 15 }, { n: 20 }, { n: 25 }, { n: 40 }, { x: 4 }, { n: 60 }, { n: 100 }
   ];
@@ -248,7 +248,7 @@
 
   /* ---------- Achat de bonus ---------- */
   // Prix en x la mise, calés par simulation pour un RTP ≈ 96 % (voir tools/simulate.js <n> <graine> buy-<bonus>).
-  // La Main d'Anubis peut toujours saisir un bonus acheté (même probabilité que sur la roue), sans boost Oracle.
+  // La Fureur d'Anubis peut toujours saisir un bonus acheté (même probabilité que sur la roue), sans boost Oracle.
   var BUY = { scarab: { price: 6.9 }, weigh: { price: 7.6 }, vault: { price: 9.1 }, hand: { price: 25.6 } };
   function playBuy(rng, kind) {
     var b, upgraded = false;

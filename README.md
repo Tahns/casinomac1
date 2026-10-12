@@ -1,4 +1,4 @@
-# Hand of Anubis
+# Anubis Unchained
 
 Jeu de roue à bonus (démo, crédits fictifs) dans l'univers du jugement d'Anubis. Statique, sans dépendance. Décors illustrés (`img/`, générés avec Higgsfield, ~300 Ko) ; si les images ne chargent pas, le décor vectoriel prend le relais.
 
@@ -19,7 +19,7 @@ node tools/tune-profiles.js     # espérance des profils Prudent / Équilibré /
 |---|---|
 | `js/math.js` | Noyau mathématique pur : tire un tour complet sous forme de script d'événements (modèle Stake Engine) |
 | `js/game.js` | Boucle, décor du temple, roue, pointeur à ressort, overlay de gros gains |
-| `js/bonuses.js` | Les 4 bonus (Scarabées, Pesée, Trésor, Main d'Anubis) — rejouent les scripts |
+| `js/bonuses.js` | Les 4 bonus (Scarabées, Pesée, Trésor, Fureur d'Anubis) — rejouent les scripts |
 | `js/main.js` | Flux de jeu, HUD, auto-play, table des gains, sauvegarde locale |
 | `js/imgs.js` | Liste des illustrations (remplacée par des data: URI dans le build mono-fichier) |
 | `js/art.js` · `audio.js` · `fx.js` · `i18n.js` | Dessin vectoriel, audio synthétisé, particules, FR/EN |

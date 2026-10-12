@@ -1,4 +1,4 @@
-/* HAND OF ANUBIS — direction artistique procédurale.
+/* ANUBIS UNCHAINED — direction artistique procédurale.
  * Aucune image externe : tout est tracé en canvas (net à toutes les densités, 0 Ko d'assets, bundle Stake léger).
  * Palette : obsidienne, or massif, lapis-lazuli, turquoise, cornaline, améthyste. */
 (function (root) {
@@ -184,7 +184,7 @@
     ctx.restore();
   }
 
-  /* ---------- Main d'Anubis (géante, paume vers le bas) ---------- */
+  /* ---------- Fureur d'Anubis (géante, paume vers le bas) ---------- */
   function hand(ctx, cx, cy, s, o) {
     o = o || {};
     ctx.save(); ctx.translate(cx, cy); ctx.scale(s / 100, s / 100);

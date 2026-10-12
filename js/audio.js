@@ -1,4 +1,4 @@
-/* HAND OF ANUBIS — audio 100 % synthétisé (WebAudio) : zéro fichier, zéro droit à gérer. */
+/* ANUBIS UNCHAINED — audio 100 % synthétisé (WebAudio) : zéro fichier, zéro droit à gérer. */
 (function (root) {
   'use strict';
   var ctx = null, master, sfxBus, musBus, verb, muted = false, ambNodes = null;

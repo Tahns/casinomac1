@@ -9,7 +9,7 @@ L.forEach(function (k) { counts[k] = (counts[k] || 0) + 1; });
 ok(L.length === M.N && M.N === 48, 'la roue compte 48 cases');
 ok(Object.keys(M.KINDS).every(function (k) { return counts[k] === M.KINDS[k].count; }), 'chaque case apparaît autant de fois que déclaré');
 ok(L.every(function (k, i) { return k !== L[(i + 1) % L.length]; }), 'jamais deux cases identiques côte à côte (circulaire)');
-ok(M.HAND_SEGS.length === 24, 'la roue de la Main d\'Anubis compte 24 cases');
+ok(M.HAND_SEGS.length === 24, 'la roue de la Fureur d\'Anubis compte 24 cases');
 
 // 2. déterminisme
 function sig(seed, mode) { var r = M.mulberry32(seed), out = []; for (var i = 0; i < 200; i++) out.push(M.playRound(r, mode).total); return out.join(','); }
