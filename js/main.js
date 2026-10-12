@@ -23,6 +23,9 @@
         if (typeof d.bi === 'number' && BETS[d.bi]) S.bi = d.bi;
         if (d.lang) I18N.setLang(d.lang);
         if (d.muted) Sfx.setMuted(true);
+        if (typeof d.pitch === 'number') Sfx.setPitch(d.pitch);
+        if (typeof d.vol === 'number') Sfx.setVolume(d.vol);
+        if (d.music === false) Sfx.setMusic(false);
         if (d.turbo) { G.turbo = true; G.ultra = !!d.ultra; G.speed = spd(); }
         if (typeof d.sobV2 === 'boolean') S.stopOnBonus = d.sobV2;   // (l'ancienne clé valait « oui » par défaut : ignorée)
         if (d.reduced) { S.reduced = true; FX.reduced = true; }
@@ -41,7 +44,7 @@
   }
   function save() {
     try {
-      localStorage.setItem(SAVE_KEY, JSON.stringify({ pending: S.pending, balance: S.balance, bi: S.bi, lang: I18N.lang(), muted: Sfx.isMuted(), turbo: G.turbo, ultra: !!G.ultra, sobV2: S.stopOnBonus, reduced: S.reduced, hist: S.hist, mode: S.mode, buyOn: S.buyOn, limit: S.limit, quality: S.quality }));
+      localStorage.setItem(SAVE_KEY, JSON.stringify({ pending: S.pending, balance: S.balance, bi: S.bi, lang: I18N.lang(), muted: Sfx.isMuted(), pitch: Sfx.getPitch(), vol: Sfx.getVolume(), music: Sfx.isMusic(), turbo: G.turbo, ultra: !!G.ultra, sobV2: S.stopOnBonus, reduced: S.reduced, hist: S.hist, mode: S.mode, buyOn: S.buyOn, limit: S.limit, quality: S.quality }));
     } catch (e) {}
   }
 
@@ -306,6 +309,9 @@
       '<div class="kv"><div><label>' + T.sessTime + '</label><b>' + Math.round((Date.now() - SESS.start) / 60000) + ' min</b></div><div><label>' + T.sessSpins + '</label><b>' + SESS.spins + '</b></div>' +
       '<div><label>' + T.sessWag + '</label><b>' + G.fmt(SESS.wag) + '</b></div><div><label>' + T.sessWon + '</label><b>' + G.fmt(SESS.won) + '</b></div><div><label>' + T.sessNet + '</label><b>' + (net() >= 0 ? '+' : '') + G.fmt(net()) + '</b></div></div>' +
       '<h3>' + T.settings + '</h3>' +
+      '<div class="opt"><span>' + T.volumeL + '</span><div class="rng"><input id="optVol" type="range" min="0" max="100" step="5" value="' + Math.round(Sfx.getVolume() * 100) + '"><b id="optVolV">' + Math.round(Sfx.getVolume() * 100) + '%</b></div></div>' +
+      '<div class="opt"><span>' + T.pitchL + '</span><div class="rng"><input id="optPitch" type="range" min="-12" max="12" step="1" value="' + Sfx.getPitch() + '"><b id="optPitchV">' + (Sfx.getPitch() > 0 ? '+' : '') + Sfx.getPitch() + '</b></div></div>' +
+      '<div class="opt"><span>' + T.musicL + '</span><div class="chips"><button id="optMusic" class="' + (Sfx.isMusic() ? 'on' : '') + '" type="button">' + (Sfx.isMusic() ? T.on : T.off) + '</button></div></div>' +
       '<div class="opt"><span>' + T.lossLimit + '</span><div class="chips" id="optLimit"></div></div>' +
       '<div class="opt"><span>' + T.qualityL + '</span><div class="chips" id="optQ"></div></div>' +
       '<div class="opt"><span>' + T.autoOpts + '</span><div class="chips" id="optAuto"></div></div>' +
@@ -334,6 +340,11 @@
     });
     $('optBuy').onclick = function () { S.buyOn = !S.buyOn; save(); setSpinBtn(); openInfo(); };
     $('optStop').onclick = function () { S.stopOnBonus = !S.stopOnBonus; save(); openInfo(); };
+    $('optVol').oninput = function () { var v = +this.value; Sfx.unlock(); Sfx.setVolume(v / 100); $('optVolV').textContent = v + '%'; save(); };
+    $('optVol').onchange = function () { Sfx.coin(1); };
+    $('optPitch').oninput = function () { var v = +this.value; Sfx.unlock(); Sfx.setPitch(v); $('optPitchV').textContent = (v > 0 ? '+' : '') + v; save(); };
+    $('optPitch').onchange = function () { Sfx.coin(1); Sfx.chime(4); };
+    $('optMusic').onclick = function () { Sfx.unlock(); Sfx.setMusic(!Sfx.isMusic()); save(); openInfo(); };
     $('optRed').onclick = function () { S.reduced = !S.reduced; FX.reduced = S.reduced; save(); openInfo(); };
     $('optReset').onclick = function () { if (S.busy) return; S.balance = 10000; shown.bal = -1; updateHud(); save(); };
     showModal(); Sfx.click();

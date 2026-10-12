@@ -46,7 +46,7 @@
         'Les bandes de la Fureur lancent un bonus (Scarabées ×2 ou ×10, Pesée ×5, Trésor ×3) : gain du bonus × le multiplicateur de la bande × palier, jusqu\'à ×5000. Une bande ne ramène jamais à la Fureur.'
       ],
       tableCols: ['Case', 'Sur la roue', 'Gain'], settings: 'RÉGLAGES', language: 'Langue', sound: 'Son', reducedFx: 'Effets réduits', stopBonus: 'Stopper l\'auto sur bonus',
-      autoOpts: 'Nombre de tours auto', off: 'Non', on: 'Oui', close: 'Fermer', noWin: 'Pas de gain', handLabel: 'FUREUR D\'ANUBIS'
+      volumeL: 'Volume', pitchL: 'Hauteur des sons (demi-tons)', musicL: 'Ambiance musicale', autoOpts: 'Nombre de tours auto', off: 'Non', on: 'Oui', close: 'Fermer', noWin: 'Pas de gain', handLabel: 'FUREUR D\'ANUBIS'
     },
     en: {
       brandTop: 'ANUBIS', balance: 'BALANCE', bet: 'BET', win: 'WIN', turbo: 'TURBO', auto: 'AUTO',
@@ -92,7 +92,7 @@
         'The Fury\'s bands launch a bonus (Scarabs ×2 or ×10, Weighing ×5, Vault ×3): bonus win × the band multiplier × tier, up to ×5000. A band never leads back to the Fury.'
       ],
       tableCols: ['Segment', 'On wheel', 'Pays'], settings: 'SETTINGS', language: 'Language', sound: 'Sound', reducedFx: 'Reduced effects', stopBonus: 'Stop autoplay on bonus',
-      autoOpts: 'Autoplay spins', off: 'Off', on: 'On', close: 'Close', noWin: 'No win', handLabel: 'FURY OF ANUBIS'
+      volumeL: 'Volume', pitchL: 'Sound pitch (semitones)', musicL: 'Background ambience', autoOpts: 'Autoplay spins', off: 'Off', on: 'On', close: 'Close', noWin: 'No win', handLabel: 'FURY OF ANUBIS'
     }
   };
   var lang = 'fr';

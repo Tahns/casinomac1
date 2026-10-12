@@ -243,3 +243,7 @@ label{font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--d
 .betval small{display:none}
 
 .tgl.ultra{color:#fff;filter:drop-shadow(0 0 10px rgba(255,120,60,.85)) brightness(1.25)}
+
+/* réglages sonores */
+.rng{display:flex;align-items:center;gap:10px}.rng b{min-width:42px;text-align:right;font:800 12px Manrope;color:var(--gold-hi)}
+.rng input[type=range]{width:min(190px,34vw);accent-color:#e6b94a;height:22px;cursor:pointer}
