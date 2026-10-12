@@ -15,7 +15,7 @@
       noFunds: 'Solde insuffisant', oracleSpeaks: 'L\'Oracle parle…', oracleOn: 'ORACLE', ankhRespin: 'ANKH — RELANCE GRATUITE !',
       dust: 'La poussière retourne à la poussière…', winLine: 'Gain', respinLabel: 'RELANCE',
       kinds: { m0: 'POUSSIÈRE', m025: '0,25×', m05: '0,5×', m1: '1×', m2: '2×', m3: '3×', ankh: 'ANKH', scarab: 'SCARABÉES', weigh: 'PESÉE', vault: 'TRÉSOR' },
-      kindsLong: { scarab: 'Chute des Scarabées', weigh: 'Pesée du Cœur', vault: 'Chambre du Trésor', hand: 'Fureur d\'Anubis' },
+      kindsLong: { scarab: 'Chute des Scarabées', weigh: 'Pesée du Cœur', vault: 'Chambre du Trésor', hand: 'Fureur d\'Anubis', crypt: 'Crypte d\'Anubis' },
       tiers: ['', 'GRAND GAIN', 'MÉGA GAIN', 'ÉPIQUE', 'JUGEMENT DIVIN'],
       scarabSub: 'Trois scarabées traversent les ténèbres. Chacun rapporte la case où il tombe.', scarabIntro: 'CHUTE DES SCARABÉES',
       weighIntro: 'PESÉE DU CŒUR', weighSub: 'Plume de Maât ou cœur ? Le plateau le plus lourd gagne son multiplicateur, le plus léger n\'a rien.', feather: 'PLUME', featherOf: 'DE MAÂT', heart: 'CŒUR', heartOf: 'DE VOTRE ÂME', weighRoll: 'Les multiplicateurs se révèlent…', weighWon: 'GAGNÉ', weighLost: 'PERDU', sayRight: 'Votre plateau est le plus lourd : ×{m} !', sayWrong: 'L\'autre plateau est plus lourd : pas de gain', weighing: 'Les dieux pèsent votre âme…',
@@ -43,8 +43,14 @@
         'Pesée du Cœur : choisissez la plume de Maât ou le cœur, les multiplicateurs défilent et se révèlent, puis la balance tranche. Le plateau le plus lourd gagne son multiplicateur (jusqu\'à ×300), le plus léger n\'a rien : une chance sur deux.',
         'Avant un bonus (Scarabées, Pesée, Trésor), choisissez un profil : Prudent, Équilibré ou Audacieux. Les trois ont le même RTP ; seule la volatilité change. Le tirage est fait à l\'avance pour chaque profil.',
         'Un bonus peut être saisi par la FUREUR D\'ANUBIS : choisissez une couleur (turquoise, or ou rubis) puis lancez la roue géante. Un nombre : gain = nombre × palier. DOUBLE de VOTRE couleur : les nombres de la roue sont doublés (palier ×2, jusqu\'à ×16) et vous relancez. DOUBLE d\'une AUTRE couleur : la chaîne s\'arrête et vous encaissez le plus petit nombre de la roue (5) × palier.',
-        'Les bandes de la Fureur lancent un bonus (Scarabées ×2 ou ×10, Pesée ×5, Trésor ×3) : gain du bonus × le multiplicateur de la bande × palier, jusqu\'à ×5000. Une bande ne ramène jamais à la Fureur.'
+        'Les bandes de la Fureur lancent un bonus (Scarabées ×2 ou ×10, Pesée ×5, Trésor ×3) : gain du bonus × le multiplicateur de la bande × palier, jusqu\'à ×5000. Une bande ne ramène jamais à la Fureur.',
+        '??? Un bonus secret se cache parfois derrière un bonus gagné… extrêmement rare. À vous de le découvrir.'
       ],
+      secretWord: 'BONUS SECRET', secretUnlocked: 'DÉBLOQUÉ !', secretHint: 'Un bonus caché vient de s\'ouvrir… Touchez le bouton ou appuyez sur Espace',
+      cryptIntro: 'CRYPTE D\'ANUBIS', cryptAvg: 'MOYENNE DES COLONNES', cryptCount: 'BLOC {n} / {m}', cryptFull: 'COLONNE PLEINE', cryptCapped: 'PLAFOND ATTEINT',
+      cryptRule: 'Colonne = haut + blocs fixes · gain = moyenne des 5 colonnes · touchez pour lâcher chaque bloc',
+      cryptLeg: ['+ COLONNE', '+ TOUTES', '× COLONNE', '× TOUTES', 'GLACE', 'BROYEUR'],
+      cryptHint: { skull: 'CRÂNE : ajoute sa valeur au haut de sa colonne. Touchez pour lâcher', epic: 'CRÂNE ÉPIQUE : ajoute sa valeur au haut de TOUTES les colonnes', anubis: 'CRÂNE D\'ANUBIS : multiplie le haut de sa colonne', epicx: 'CRÂNE D\'ANUBIS ÉPIQUE : multiplie le haut de TOUTES les colonnes', ice: 'GLACE : fige le haut en bloc fixe, le haut repart à ×1', crusher: 'BROYEUR : écrase les blocs fixes de la colonne en un seul' },
       tableCols: ['Case', 'Sur la roue', 'Gain'], settings: 'RÉGLAGES', language: 'Langue', sound: 'Son', reducedFx: 'Effets réduits', stopBonus: 'Stopper l\'auto sur bonus',
       volumeL: 'Volume', pitchL: 'Hauteur des sons (demi-tons)', musicL: 'Ambiance musicale', autoOpts: 'Nombre de tours auto', off: 'Non', on: 'Oui', close: 'Fermer', noWin: 'Pas de gain', handLabel: 'FUREUR D\'ANUBIS'
     },
@@ -61,7 +67,7 @@
       noFunds: 'Insufficient balance', oracleSpeaks: 'The Oracle speaks…', oracleOn: 'ORACLE', ankhRespin: 'ANKH — FREE RESPIN!',
       dust: 'Dust returns to dust…', winLine: 'Win', respinLabel: 'RESPIN',
       kinds: { m0: 'DUST', m025: '0.25×', m05: '0.5×', m1: '1×', m2: '2×', m3: '3×', ankh: 'ANKH', scarab: 'SCARABS', weigh: 'WEIGHING', vault: 'VAULT' },
-      kindsLong: { scarab: 'Scarab Drop', weigh: 'Weighing of the Heart', vault: 'Treasure Vault', hand: 'Fury of Anubis' },
+      kindsLong: { scarab: 'Scarab Drop', weigh: 'Weighing of the Heart', vault: 'Treasure Vault', hand: 'Fury of Anubis', crypt: 'Anubis\' Crypt' },
       tiers: ['', 'BIG WIN', 'MEGA WIN', 'EPIC WIN', 'DIVINE JUDGEMENT'],
       scarabSub: 'Three scarabs plunge through the dark. Each pays the slot it lands in.', scarabIntro: 'SCARAB DROP',
       weighIntro: 'WEIGHING OF THE HEART', weighSub: 'Feather of Ma\'at or heart? The heavier pan wins its multiplier, the lighter one gets nothing.', feather: 'FEATHER', featherOf: 'OF MA\'AT', heart: 'HEART', heartOf: 'OF YOUR SOUL', weighRoll: 'The multipliers are revealed…', weighWon: 'WON', weighLost: 'LOST', sayRight: 'Your pan is the heavier one: ×{m}!', sayWrong: 'The other pan is heavier: no win', weighing: 'The gods weigh your soul…',
@@ -89,8 +95,14 @@
         'Weighing of the Heart: pick the feather of Ma\'at or the heart, the multipliers roll and are revealed, then the scales decide. The heavier pan wins its multiplier (up to ×300), the lighter one gets nothing: a 1-in-2 chance.',
         'Before a bonus (Scarabs, Weighing, Vault) pick a profile: Cautious, Balanced or Daring. All three share the same RTP; only volatility differs. Each profile\'s draw is made in advance.',
         'Any bonus can be seized by the FURY OF ANUBIS: pick a colour (turquoise, gold or ruby), then spin the giant wheel. A number: win = number × tier. DOUBLE in YOUR colour: every number on the wheel is doubled (tier ×2, up to ×16) and you spin again. DOUBLE in ANOTHER colour: the chain stops and you cash the smallest number on the wheel (5) × tier.',
-        'The Fury\'s bands launch a bonus (Scarabs ×2 or ×10, Weighing ×5, Vault ×3): bonus win × the band multiplier × tier, up to ×5000. A band never leads back to the Fury.'
+        'The Fury\'s bands launch a bonus (Scarabs ×2 or ×10, Weighing ×5, Vault ×3): bonus win × the band multiplier × tier, up to ×5000. A band never leads back to the Fury.',
+        '??? A secret bonus sometimes hides behind a won bonus… extremely rare. Find it yourself.'
       ],
+      secretWord: 'SECRET BONUS', secretUnlocked: 'UNLOCKED!', secretHint: 'A hidden bonus has opened… Tap the button or press Space',
+      cryptIntro: 'ANUBIS\' CRYPT', cryptAvg: 'COLUMN AVERAGE', cryptCount: 'BLOCK {n} / {m}', cryptFull: 'COLUMN FULL', cryptCapped: 'MAX WIN REACHED',
+      cryptRule: 'Column = top + fixed blocks · win = average of the 5 columns · tap to drop each block',
+      cryptLeg: ['+ COLUMN', '+ ALL', '× COLUMN', '× ALL', 'ICE', 'CRUSHER'],
+      cryptHint: { skull: 'SKULL: adds its value to the top of its column. Tap to drop', epic: 'EPIC SKULL: adds its value to the top of ALL columns', anubis: 'ANUBIS SKULL: multiplies the top of its column', epicx: 'EPIC ANUBIS SKULL: multiplies the top of ALL columns', ice: 'ICE: freezes the top as a fixed block, the top restarts at ×1', crusher: 'CRUSHER: crushes the column\'s fixed blocks into one' },
       tableCols: ['Segment', 'On wheel', 'Pays'], settings: 'SETTINGS', language: 'Language', sound: 'Sound', reducedFx: 'Reduced effects', stopBonus: 'Stop autoplay on bonus',
       volumeL: 'Volume', pitchL: 'Sound pitch (semitones)', musicL: 'Background ambience', autoOpts: 'Autoplay spins', off: 'Off', on: 'On', close: 'Close', noWin: 'No win', handLabel: 'FURY OF ANUBIS'
     }

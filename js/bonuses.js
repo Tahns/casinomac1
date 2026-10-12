@@ -1,6 +1,7 @@
 /* ANUBIS UNCHAINED — les 4 bonus.
  * Chaque scène REJOUE un script déjà tiré par le noyau mathématique (AnubisMath) : elle n'invente aucun résultat.
  *  - Chute des Scarabées (Plinko)      - Pesée du Cœur (balance)
+ *  - Crypte d'Anubis (SECRET : colonnes de multiplicateurs)
  *  - Chambre du Trésor (pick-me)       - Fureur d'Anubis (roue géante : couleur au choix, DOUBLE, bandes de bonus) */
 (function (root) {
   'use strict';
@@ -1287,6 +1288,294 @@
     return S;
   }
 
+  /* ======================================================================
+   * 5. CRYPTE D'ANUBIS — bonus SECRET : 5 colonnes de multiplicateurs, 9 blocs qui tombent (script pré-tiré, aucune décision ici)
+   * ====================================================================== */
+  var CRY_PAL = {
+    skull:   { a: '#2c4a52', b: '#0f1e24', rim: '#9fe8f2', ink: '#e9fbff', tag: '#9fe8f2' },
+    epic:    { a: '#ffe9a0', b: '#9a6a10', rim: '#fff6d0', ink: '#3a2203', tag: '#ffe08a' },
+    anubis:  { a: '#3b4fb8', b: '#10173f', rim: '#9fb6ff', ink: '#ffffff', tag: '#9fb6ff' },
+    epicx:   { a: '#ffd86a', b: '#7a4a08', rim: '#fff6d0', ink: '#3a2203', tag: '#ffe08a' },
+    ice:     { a: '#e4fcff', b: '#58b0e4', rim: '#ffffff', ink: '#0b3a55', tag: '#bfefff' },
+    crusher: { a: '#6b7380', b: '#252a32', rim: '#ffd86a', ink: '#ffd86a', tag: '#ffb347' }
+  };
+  function cryStar(x, y, r, col) {
+    ctx.beginPath();
+    for (var i = 0; i < 10; i++) { var a = -Math.PI / 2 + i * Math.PI / 5, rr = i % 2 ? r * 0.45 : r; ctx.lineTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr); }
+    ctx.closePath(); ctx.fillStyle = col; ctx.fill();
+  }
+  // bloc vectoriel centré en (x, y), taille s ; o : sc, sx, sy, a, glow, rot, charge, jaw, crack
+  function cryBlock(t, x, y, s, v, o) {
+    o = o || {};
+    var pal = CRY_PAL[t], h = s / 2, epic = t === 'epic' || t === 'epicx', lab = (t === 'skull' || t === 'epic') ? '+' + G.fmt(v) : (t === 'anubis' || t === 'epicx') ? '×' + G.fmt(v) : '';
+    ctx.save(); ctx.translate(x, y); if (o.rot) ctx.rotate(o.rot);
+    var sc = o.sc == null ? 1 : o.sc; ctx.scale(sc * (o.sx || 1), sc * (o.sy || 1));
+    if (o.a != null) ctx.globalAlpha *= o.a;
+    var gl = (epic ? 0.7 : 0.25) + (o.glow || 0) + (o.charge || 0) * 0.6;
+    var hg = ctx.createRadialGradient(0, 0, h * 0.3, 0, 0, h * (1.5 + gl));
+    hg.addColorStop(0, t === 'ice' ? 'rgba(160,230,255,' + gl * 0.6 + ')' : epic ? 'rgba(255,216,106,' + gl * 0.7 + ')' : 'rgba(' + (t === 'anubis' ? '120,150,255' : t === 'crusher' ? '255,140,60' : '120,230,240') + ',' + gl * 0.5 + ')'); hg.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = hg; ctx.fillRect(-h * 3, -h * 3, h * 6, h * 6);
+    A.roundRect(ctx, -h, -h, s, s, s * 0.16);
+    var bg = ctx.createLinearGradient(0, -h, 0, h); bg.addColorStop(0, pal.a); bg.addColorStop(1, pal.b);
+    ctx.globalAlpha *= (t === 'ice' ? 0.92 : 1); ctx.fillStyle = bg; ctx.fill(); ctx.globalAlpha = o.a == null ? 1 : o.a;
+    ctx.lineWidth = Math.max(2, s * 0.05); ctx.strokeStyle = pal.rim; ctx.stroke();
+    ctx.save(); A.roundRect(ctx, -h, -h, s, s, s * 0.16); ctx.clip();
+    var sh = ctx.createLinearGradient(-h, -h, h, h); sh.addColorStop(0, 'rgba(255,255,255,.35)'); sh.addColorStop(0.35, 'rgba(255,255,255,0)'); ctx.fillStyle = sh; ctx.fillRect(-h, -h, s, s);
+    if (t === 'skull') { A.skull(ctx, 0, -s * 0.1, s * 0.66, '#e8f6f0', '#0c1a1e'); }
+    else if (t === 'epic') { if (!G.icon(ctx, 'skull', 0, -s * 0.08, s * 0.95)) A.skull(ctx, 0, -s * 0.1, s * 0.66, '#fff1b8', '#3a2203'); }
+    else if (t === 'anubis') { A.jackal(ctx, 0, -s * 0.3, s * 0.3, { glow: 0.3 }); }
+    else if (t === 'epicx') { A.jackal(ctx, 0, -s * 0.3, s * 0.3, { glow: 0.6, nemesColor: '#c8921c' }); }
+    else if (t === 'ice') {
+      ctx.strokeStyle = 'rgba(255,255,255,.9)'; ctx.lineWidth = Math.max(1.5, s * 0.04); ctx.lineCap = 'round';
+      for (var i = 0; i < 3; i++) { var a = i * Math.PI / 3; ctx.beginPath(); ctx.moveTo(Math.cos(a) * s * 0.3, Math.sin(a) * s * 0.3); ctx.lineTo(-Math.cos(a) * s * 0.3, -Math.sin(a) * s * 0.3); ctx.stroke(); }
+      ctx.lineWidth = Math.max(1, s * 0.025); ctx.strokeStyle = 'rgba(40,120,180,.55)';
+      ctx.beginPath(); ctx.moveTo(-h * 0.9, -h * 0.2); ctx.lineTo(-h * 0.2, -h * 0.5); ctx.lineTo(h * 0.3, -h * 0.1); ctx.lineTo(h * 0.9, -h * 0.55); ctx.stroke();
+      if (o.crack) { ctx.beginPath(); ctx.moveTo(0, -h); ctx.lineTo(h * 0.1, -h * 0.2); ctx.lineTo(-h * 0.2, h * 0.3); ctx.lineTo(0, h); ctx.stroke(); }
+    } else if (t === 'crusher') {
+      var jaw = o.jaw == null ? 1 : o.jaw, gap = jaw * s * 0.16, th = s * 0.2, n = 5, tw = s / n;
+      ctx.fillStyle = '#10131a'; ctx.fillRect(-h, -h, s, s);
+      ctx.fillStyle = 'rgba(255,90,40,' + (0.25 + (1 - jaw) * 0.5) + ')'; ctx.fillRect(-h, -s * 0.03, s, s * 0.06);
+      for (var sd = -1; sd <= 1; sd += 2) {
+        var by = sd * (h * 0.92 - gap * 0.0), g2 = ctx.createLinearGradient(0, sd * h, 0, sd * s * 0.1); g2.addColorStop(0, '#9aa3b2'); g2.addColorStop(1, '#4a525e');
+        ctx.fillStyle = g2; ctx.fillRect(-h, sd > 0 ? s * 0.18 + gap : -h, s, sd > 0 ? h - s * 0.18 - gap : h - s * 0.18 - gap);
+        ctx.fillStyle = '#e6ebf2';
+        for (var k = 0; k < n; k++) { var tx = -h + k * tw; ctx.beginPath(); ctx.moveTo(tx, sd * (s * 0.18 + gap)); ctx.lineTo(tx + tw, sd * (s * 0.18 + gap)); ctx.lineTo(tx + tw / 2, sd * (s * 0.18 + gap - th)); ctx.closePath(); ctx.fill(); }
+      }
+    }
+    ctx.restore();
+    if (lab) {
+      A.roundRect(ctx, -h * 0.86, h * 0.36, s * 0.86, s * 0.3, s * 0.08); ctx.fillStyle = 'rgba(0,0,0,.62)'; ctx.fill();
+      G.txt(lab, 0, h * 0.52, { size: Math.max(11, s * 0.27), weight: 900, fill: pal.tag, stroke: 'rgba(0,0,0,.6)', sw: 3 });
+    }
+    if (epic) cryStar(h * 0.72, -h * 0.72, s * 0.17, '#fff6d0');
+    ctx.restore();
+  }
+  // bloc fixe (valeur figée par la glace) : plaque sombre à liseré de glace
+  function cryFixed(x, y, w, h, v, o) {
+    o = o || {};
+    ctx.save(); ctx.translate(x, y); ctx.scale((o.sc == null ? 1 : o.sc), (o.sc == null ? 1 : o.sc) * (o.sy == null ? 1 : o.sy));
+    if (o.a != null) ctx.globalAlpha *= o.a;
+    var gl = o.glow || 0;
+    A.roundRect(ctx, -w / 2, -h / 2, w, h, Math.min(10, h * 0.25));
+    var g = ctx.createLinearGradient(0, -h / 2, 0, h / 2); g.addColorStop(0, '#3b3018'); g.addColorStop(1, '#17100a');
+    ctx.shadowColor = 'rgba(150,225,255,' + (0.3 + gl * 0.7) + ')'; ctx.shadowBlur = 8 + gl * 22; ctx.fillStyle = g; ctx.fill(); ctx.shadowBlur = 0;
+    ctx.lineWidth = 2; ctx.strokeStyle = gl > 0.3 ? '#ffffff' : '#8fdcf0'; ctx.stroke();
+    var sg = ctx.createLinearGradient(-w / 2, -h / 2, w / 2, h / 2); sg.addColorStop(0, 'rgba(160,230,255,.28)'); sg.addColorStop(0.5, 'rgba(160,230,255,0)'); ctx.fillStyle = sg; ctx.fill();
+    G.goldText('×' + G.fmt(v), 0, 1, Math.min(h * 0.62, w * 0.9 / Math.max(2, ('×' + G.fmt(v)).length * 0.62)), { blur: 6 });
+    ctx.restore();
+  }
+
+  function cryptScene(sp, bet) {
+    var T = I18N.t(), data = sp.bonus, steps = data.steps, NC = M.CRYPT_COLS, CAP = M.CRYPT_CAP;
+    var S = newScene(T.cryptIntro), g = {}; S.bgImg = 'vault'; S.dim = 0.86; S.showTotal = false;
+    var cols = [], blk = null, shards = [], tt = 0, hl = [], hlA = 0, idx = 0, rush = false, floats = [], legPulse = -1;
+    for (var c0 = 0; c0 < NC; c0++) cols.push({ top: M.CRYPT_START, fx: [], flash: 0, tint: '#fff', wave: 0, pulse: 0 });
+    function lerp2(a, b, k) { return a + (b - a) * k; }
+    function K() { return quick() ? 0.4 : rush ? 0.55 : 1; }
+    function avgOf(st) { var s = 0; for (var c = 0; c < NC; c++) { s += st.tops[c]; st.fixed[c].forEach(function (x) { s += x; }); } return s / NC; }
+    S.layout = function () {
+      var w = G.w, h = G.h, land = h < 520, narrow = w < 640;
+      var top = land ? T0() + 40 : T0() + clamp(w * 0.034, 17, 34) * 1.9 + 52 + clamp(w * 0.03, 20, 36) * 0.9 + 10;
+      var bot = h - hudH() - (land ? 6 : 34), legH = land ? 30 : 48, availH = bot - legH - top - 4;
+      var colW = Math.min(w * 0.94 / NC, land ? 112 : 132), bs = Math.min(colW * 0.84, availH / 5.6);
+      g.land = land; g.colW = Math.max(colW, bs * 1.1); g.bs = bs;
+      g.dropY = top + bs * 0.52; g.shaftTop = top + bs * 1.7; g.plateH = bs * 0.82; g.plateCY = g.shaftTop + g.plateH / 2;
+      g.stackTop = g.shaftTop + g.plateH + bs * 0.08;
+      g.sh = clamp((availH - bs * (1.7 + 0.82 + 0.08 + 0.45 + 0.1)) / CAP, bs * 0.5, bs * 0.95);
+      g.stackBot = g.stackTop + CAP * g.sh; g.chipY = g.stackBot + bs * 0.27; g.legY = bot - legH / 2 + 2; g.legH = legH; g.top = top;
+      g.fw = g.colW * 0.86; g.shaftW = g.colW * 0.9;
+    };
+    function colX(c) { return G.cx + (c - (NC - 1) / 2) * g.colW; }
+    function slotY(s) { return g.stackBot - (s + 0.5) * g.sh; }
+    function colSum(c) { var s = cols[c].top; cols[c].fx.forEach(function (f) { s += f.v; }); return s; }
+    S.update = function (dt) {
+      chromeUpdate(S, dt); tt += dt; hlA += ((hl.length ? 1 : 0) - hlA) * Math.min(1, dt * 8);
+      cols.forEach(function (c) { c.flash = Math.max(0, c.flash - dt * 2.4); c.wave = Math.max(0, c.wave - dt * 1.6); c.pulse = Math.max(0, c.pulse - dt * 2); c.fx.forEach(function (f) { f.glow = Math.max(0, (f.glow || 0) - dt * 1.6); }); });
+      for (var i = shards.length - 1; i >= 0; i--) { var p = shards[i]; p.t += dt; if (p.t > p.life) { shards.splice(i, 1); continue; } p.vy += 1100 * dt; p.x += p.vx * dt; p.y += p.vy * dt; p.rot += p.vr * dt; }
+      for (i = floats.length - 1; i >= 0; i--) { floats[i].t += dt; if (floats[i].t > 1.2) floats.splice(i, 1); }
+      if (legPulse >= 0) legPulse = Math.max(-1, legPulse - dt * 2);
+    };
+    function drawLegend() {
+      var types = ['skull', 'epic', 'anubis', 'epicx', 'ice', 'crusher'], w = Math.min(G.w * 0.98, 6 * 150), cw = w / 6, x0 = G.cx - w / 2, inline = cw >= 100;
+      var ls = Math.min(g.legH * (inline ? 0.8 : 0.56), cw * 0.5), fs = clamp(cw * 0.115, 8, 12);
+      ctx.save(); A.roundRect(ctx, x0, g.legY - g.legH / 2, w, g.legH, 10); ctx.fillStyle = 'rgba(8,6,3,.62)'; ctx.fill(); ctx.lineWidth = 1.2; ctx.strokeStyle = 'rgba(255,216,106,.45)'; ctx.stroke(); ctx.restore();
+      types.forEach(function (t, i) {
+        var cx = x0 + (i + 0.5) * cw;
+        if (inline) { cryBlock(t, cx - cw * 0.5 + ls * 0.7, g.legY, ls, 0, { sc: 1 }); G.txt(T.cryptLeg[i], cx - cw * 0.5 + ls * 1.4, g.legY, { size: fs, family: 'Manrope', weight: 800, fill: '#e9d9aa', align: 'left' }); }
+        else { cryBlock(t, cx, g.legY - g.legH * 0.15, ls, 0, { sc: 1 }); G.txt(T.cryptLeg[i], cx, g.legY + g.legH * 0.33, { size: fs, family: 'Manrope', weight: 800, fill: '#e9d9aa' }); }
+      });
+    }
+    S.draw = function () {
+      var w = G.w, bs = g.bs, c, i;
+      // colonnes : puits sombres + emplacements
+      for (c = 0; c < NC; c++) {
+        var x = colX(c), cl = cols[c], hot = hl.indexOf(c) >= 0 ? hlA : 0, sw = g.shaftW, y0 = g.shaftTop - 4, y1 = g.stackBot + 6;
+        ctx.save(); A.roundRect(ctx, x - sw / 2, y0, sw, y1 - y0, 12);
+        var sg = ctx.createLinearGradient(0, y0, 0, y1); sg.addColorStop(0, 'rgba(18,14,8,.78)'); sg.addColorStop(1, 'rgba(6,4,2,.82)'); ctx.fillStyle = sg; ctx.fill();
+        ctx.lineWidth = 2 + hot * 2 + cl.wave * 3; ctx.strokeStyle = cl.wave > 0 ? 'rgba(255,240,170,' + (0.5 + cl.wave * 0.5) + ')' : 'rgba(255,216,106,' + (0.35 + hot * 0.55) + ')'; ctx.stroke();
+        ctx.setLineDash([4, 5]); ctx.lineWidth = 1; ctx.strokeStyle = 'rgba(160,225,255,.28)';
+        for (i = 0; i < CAP; i++) { A.roundRect(ctx, x - g.fw / 2, slotY(i) - g.sh * 0.44, g.fw, g.sh * 0.88, 7); ctx.stroke(); }
+        ctx.setLineDash([]); ctx.restore();
+        if (hot > 0.02 && blk && blk.c >= 0) { var bgl = ctx.createLinearGradient(0, blk.y, 0, g.shaftTop); bgl.addColorStop(0, 'rgba(255,230,140,0)'); bgl.addColorStop(1, 'rgba(255,230,140,' + 0.3 * hot + ')'); ctx.fillStyle = bgl; ctx.fillRect(x - sw / 2, blk.y, sw, g.shaftTop - blk.y); }
+        // blocs fixes
+        cl.fx.forEach(function (f) { cryFixed(x, slotY(f.slot), g.fw, g.sh * 0.88, f.v, { sc: f.sc, sy: f.sy, a: f.a, glow: f.glow }); });
+        // plaque du haut
+        var py = g.plateCY, pw = g.fw, ph = g.plateH;
+        ctx.save(); ctx.translate(x, py + cl.pulse * -3);
+        A.roundRect(ctx, -pw / 2, -ph / 2, pw, ph, 10); var pg = ctx.createLinearGradient(0, -ph / 2, 0, ph / 2); pg.addColorStop(0, '#3a2c16'); pg.addColorStop(1, '#130d06');
+        ctx.shadowColor = 'rgba(0,0,0,.7)'; ctx.shadowBlur = 10; ctx.fillStyle = pg; ctx.fill(); ctx.shadowBlur = 0;
+        ctx.lineWidth = 2.5; ctx.strokeStyle = A.goldGrad(ctx, -pw / 2, -ph / 2, pw / 2, ph / 2); ctx.stroke();
+        if (cl.flash > 0) { A.roundRect(ctx, -pw / 2, -ph / 2, pw, ph, 10); ctx.fillStyle = cl.tint === 'ice' ? 'rgba(170,235,255,' + cl.flash * 0.7 + ')' : 'rgba(255,240,180,' + cl.flash * 0.7 + ')'; ctx.fill(); }
+        var tv = '×' + G.fmt(Math.round(cl.top)), fs = Math.min(ph * 0.62, pw * 0.92 / Math.max(2.2, tv.length * 0.6));
+        G.goldText(tv, 0, 2, fs * (1 + cl.pulse * 0.25), { blur: 8 });
+        ctx.restore();
+        // total de la colonne
+        var ct = '= ×' + G.fmt(Math.round(colSum(c))), cfs = clamp(bs * 0.26, 10, 17);
+        G.txt(ct, x, g.chipY, { size: Math.min(cfs, g.fw * 0.9 / Math.max(3, ct.length * 0.58)), family: 'Manrope', weight: 800, fill: '#fff1b8', stroke: 'rgba(0,0,0,.6)', sw: 3 });
+      }
+      // éclats
+      shards.forEach(function (p) { ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rot); ctx.globalAlpha = 1 - p.t / p.life; ctx.fillStyle = p.c; ctx.beginPath(); ctx.moveTo(-p.s, p.s * 0.6); ctx.lineTo(p.s, 0); ctx.lineTo(-p.s * 0.2, -p.s); ctx.closePath(); ctx.fill(); ctx.restore(); });
+      // bloc en chute
+      if (blk) {
+        var bob = blk.hover ? Math.sin(tt * 4) * bs * 0.04 : 0, shx = blk.shake ? (Math.random() - 0.5) * bs * 0.1 * blk.shake : 0;
+        cryBlock(blk.t, blk.x + shx, blk.y + bob, blk.t === 'epic' || blk.t === 'epicx' ? bs * 1.12 : bs, blk.v, { sc: blk.sc, a: blk.a, charge: blk.charge, jaw: blk.jaw, crack: blk.crack, sy: blk.sy, rot: blk.rot });
+      }
+      floats.forEach(function (f) { ctx.globalAlpha = 1 - clamp((f.t - 0.7) / 0.5, 0, 1); G.txt(f.text, f.x, f.y - f.t * 38, { size: f.size, weight: 900, fill: f.col, stroke: '#1a1006', sw: 4, shadow: 'rgba(0,0,0,.6)' }); }); ctx.globalAlpha = 1;
+      if (blk && !g.land) G.txt(T.cryptCount.replace('{n}', Math.min(idx + 1, steps.length)).replace('{m}', steps.length), G.cx - g.colW * 2.4, g.top + 4, { size: clamp(bs * 0.2, 9, 13), family: 'Manrope', weight: 800, fill: '#b9a780', align: 'left', spacing: 2 });
+      drawLegend();
+      var tfs = clamp(w * 0.03, 20, 36);
+      if (g.land) { ctx.save(); ctx.translate(w - 64 - G.cx, 62); totalBox(S, 40, T.cryptAvg); ctx.restore(); }
+      else totalBox(S, T0() + clamp(w * 0.034, 17, 34) * 1.9 + 52, T.cryptAvg);
+      chrome(S);
+    };
+    function addFloat(text, x, y, col, size) { floats.push({ text: text, x: x, y: y, t: 0, col: col || '#fff1b8', size: size || clamp(g.bs * 0.4, 16, 30) }); }
+    function burst(x, y, n, col) { FX.spark(x, y, n, col, 300); }
+    async function roll(c, to, dur) {
+      var cl = cols[c], from = cl.top, last = -1;
+      await G.tween(dur, function (u) { cl.top = lerp2(from, to, FX.ease.out3(u)); var q = Math.floor(u * 8); if (q !== last) { last = q; Sfx.countTick(u); } }, null);
+      cl.top = to;
+    }
+    function hit(c, tint) { var cl = cols[c]; cl.flash = 1; cl.tint = tint || ''; cl.wave = 1; cl.pulse = 1; }
+    function shatter(x, y, n) {
+      for (var i = 0; i < n; i++) { var a = Math.random() * TAU, v = 160 + Math.random() * 380; shards.push({ x: x, y: y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 220, rot: Math.random() * 6, vr: (Math.random() - 0.5) * 16, s: g.bs * (0.06 + Math.random() * 0.1), life: 0.8 + Math.random() * 0.5, t: 0, c: Math.random() < 0.5 ? '#e8fbff' : '#7fcdf0' }); }
+      FX.spark(x, y, 16, '#bfefff', 300);
+    }
+    async function dropStep(i) {
+      var st = steps[i], d = data.drops[i], all = d.c < 0, bs = g.bs, t = d.t, D = function (x) { return x * K(); }, x0 = all ? G.cx : colX(d.c);
+      var epic = t === 'epic' || t === 'epicx';
+      blk = { t: t, v: d.v, c: d.c, x: x0, y: g.dropY - bs * 1.2, sc: 0.3, a: 0, charge: 0, jaw: 1, shake: 0, hover: false };
+      hl = all ? [0, 1, 2, 3, 4] : [d.c]; rush = false;
+      Sfx.tick(0.5); FX.ring(x0, g.dropY, CRY_PAL[t].tag, bs * 1.6, 0.5);
+      await G.tween(D(0.3), function (u) { var e = FX.ease.outBack(u); blk.y = lerp2(g.dropY - bs * 1.2, g.dropY, e); blk.a = Math.min(1, u * 3); blk.sc = 0.4 + 0.6 * e; }, null);
+      blk.hover = true;
+      if (!quick()) { G.say(T.cryptHint[t]); await waitTap(S, 14); G.say(''); }
+      else await G.sleep(0.12);
+      blk.hover = false;
+      S.tap = function () { rush = true; };
+      if (!quick()) {
+        var last = 0;
+        await G.tween(D(0.34), function (u) { blk.charge = u; blk.shake = u; var q = Math.floor(u * 6); if (q !== last) { last = q; Sfx.tick(0.3 + u * 0.7); } }, null);
+        blk.shake = 0;
+      }
+      var Y0 = g.dropY, fallDur = D(0.7), hitDone = null;
+      if (t === 'skull' || t === 'epic' || t === 'anubis' || t === 'epicx') {
+        var yl = g.shaftTop - bs * (epic ? 0.5 : 0.42), P = [];
+        var effect = function () {
+          Sfx.thud && !epic ? Sfx.drum(0.22) : 0; FX.shake(epic ? 12 : 5, 0.3);
+          var order = all ? [2, 1, 3, 0, 4] : [d.c];
+          order.forEach(function (c, k) {
+            P.push(G.sleep(all ? Math.abs(c - 2) * 0.09 / Math.max(G.speed, 0.1) * K() : 0).then(function () {
+              hit(c, ''); burst(colX(c), g.plateCY, epic ? 22 : 12, epic ? '#ffe9a0' : t === 'anubis' ? '#9fb6ff' : '#9fe8f2');
+              FX.ring(colX(c), g.plateCY, epic ? '#ffd86a' : '#fff1b8', bs * 1.5, 0.6);
+              addFloat((t === 'skull' || t === 'epic' ? '+' : '×') + d.v, colX(c), g.plateCY - bs * 0.5, epic ? '#fff1b8' : t === 'anubis' ? '#c8d4ff' : '#bff4ff');
+              if (t === 'skull' || t === 'epic') { Sfx.coin(0.8 + k * 0.08); Sfx.chime(d.v * (epic ? 4 : 1)); } else { Sfx.reveal(); if (epic) Sfx.lightning(); else Sfx.chime(d.v * 2); }
+              return roll(c, st.tops[c], D(0.55));
+            }));
+          });
+          if (epic) { Sfx.sparkle(); FX.flash(0.35, '#ffe9a0'); }
+          bump(S, avgOf(st));
+        };
+        await G.tween(fallDur, function (u) {
+          blk.y = lerp2(Y0, yl, FX.ease.outBounce(u)); blk.rot = (1 - u) * 0.2 * (d.c % 2 ? 1 : -1);
+          if (!hitDone && u >= 0.364) { hitDone = true; effect(); }
+        }, null);
+        blk.rot = 0;
+        await G.tween(D(0.22), function (u) { blk.y = lerp2(yl, g.plateCY, u); blk.sc = 1 - u; blk.a = 1 - u * u; }, null);
+        blk = null; hl = [];
+        await Promise.all(P);
+      } else if (t === 'ice') {
+        var n0 = i ? steps[i - 1].fixed[d.c].length : 0, ty = st.full ? g.stackTop - bs * 0.1 : slotY(n0);
+        await G.tween(D(0.5), function (u) { blk.y = lerp2(Y0, ty, u * u); blk.rot = Math.sin(u * 9) * 0.1; }, null);
+        hl = [];
+        if (st.full) {
+          Sfx.shield(); addFloat(T.cryptFull, colX(d.c), g.stackTop + g.sh, '#bfefff');
+          await G.tween(D(0.6), function (u) { blk.sy = 1 - u * 0.9; blk.a = 1 - u; blk.y = ty + u * bs * 0.4; if (Math.random() < 0.3) FX.dust(colX(d.c), ty + bs * 0.4, 1, '#9fd8f0'); }, null);
+          blk = null;
+        } else {
+          shatter(colX(d.c), ty, 18); Sfx.shield(); Sfx.coin(1.3); FX.shake(6, 0.25); FX.ring(colX(d.c), ty, '#bfefff', bs * 1.6, 0.6);
+          blk = null;
+          var f = { v: st.froze, slot: n0, sc: 0, sy: 1, a: 1, glow: 1 }; cols[d.c].fx.push(f);
+          hit(d.c, 'ice'); addFloat('×' + st.froze, colX(d.c), ty - g.sh, '#bfefff'); bump(S, avgOf(st));
+          await Promise.all([G.tween(D(0.4), function (u) { f.sc = FX.ease.outBack(u); }, null), roll(d.c, st.tops[d.c], D(0.5))]);
+        }
+      } else if (t === 'crusher') {
+        var cl2 = cols[d.c], nf = cl2.fx.length, topY = slotY(Math.max(0, nf - 1)) - g.sh / 2 - bs * 0.5;
+        if (!nf) topY = g.stackBot - bs * 0.5;
+        await G.tween(fallDur, function (u) {
+          blk.y = lerp2(Y0, topY, FX.ease.outBounce(u));
+          if (!hitDone && u >= 0.364) { hitDone = true; FX.shake(5, 0.2); Sfx.drum(0.25); }
+        }, null);
+        hl = [];
+        if (st.crushed) {
+          Sfx.roll(4, 0.07); var fx0 = cl2.fx.map(function (f) { return f.slot; });
+          await G.tween(D(0.55), function (u) {
+            var e = FX.ease.inOut(u); blk.jaw = 1 - e; blk.y = topY + g.sh * nf * 0.7 * e;
+            cl2.fx.forEach(function (f, j) { f.slot = lerp2(fx0[j], 0, e); f.sy = 1 - e * 0.6; f.glow = e; });
+            if (Math.random() < 0.4) FX.dust(colX(d.c), blk.y + bs * 0.5, 1, '#c8b890');
+          }, null);
+          Sfx.thud(); FX.shake(12, 0.4); FX.ring(colX(d.c), slotY(0), '#ffd86a', bs * 1.8, 0.6); burst(colX(d.c), slotY(0), 22, '#ffd86a'); FX.dust(colX(d.c), slotY(0), 10);
+          var sum = st.fixed[d.c][0], mf = { v: sum, slot: 0, sc: 0, sy: 1, a: 1, glow: 1 };
+          cl2.fx = [mf]; hit(d.c, ''); addFloat('= ×' + sum, colX(d.c), slotY(0) - g.sh, '#ffe08a'); bump(S, avgOf(st));
+          await Promise.all([G.tween(D(0.4), function (u) { mf.sc = FX.ease.outBack(u); blk.a = 1 - u; blk.y = lerp2(blk.y, blk.y - bs * 0.8, u); }, null)]);
+        } else {
+          await G.tween(D(0.3), function (u) { blk.jaw = 1 - Math.sin(u * Math.PI); }, null);
+          await G.tween(D(0.3), function (u) { blk.a = 1 - u; }, null);
+        }
+        blk = null;
+      }
+      S.tap = null; hl = [];
+      await G.sleep(D(0.3));
+    }
+    S.run = function () {
+      return new Promise(function (resolve) {
+        var finished = false;
+        function key(e) {
+          if (!$('modal').hidden || (e.target && e.target.tagName === 'BUTTON')) return;
+          if (e.code === 'Space' || e.code === 'Enter') { e.preventDefault(); e.stopImmediatePropagation(); if (S.tap) S.tap(); }
+        }
+        window.addEventListener('keydown', key, true);
+        function done() { if (finished) return; finished = true; window.removeEventListener('keydown', key, true); resolve(); }
+        (async function () {
+          try {
+            G.say(T.cryptRule); await G.sleep(quick() ? 0.2 : 1.6);
+            for (idx = 0; idx < steps.length; idx++) await dropStep(idx);
+            idx = steps.length - 1; hl = [];
+            await G.sleep(quick() ? 0.2 : 0.5);
+            for (var c = 0; c < NC; c++) { cols[c].pulse = 1; cols[c].flash = 0.8; Sfx.coin(0.7 + c * 0.12); FX.spark(colX(c), g.chipY, 6, '#ffe9a0', 200); await G.sleep(quick() ? 0.03 : 0.14); }
+            bump(S, data.total); S.totalT = data.total;
+            var tier = data.total >= 100 ? 3 : data.total >= 30 ? 2 : data.total >= 12 ? 1 : 0;
+            if (tier > 0) { Sfx.fanfare(tier); FX.shake(8 + tier * 3, 0.5); FX.flash(0.3 + tier * 0.1, '#ffe9a0'); FX.coins(G.cx, G.cy, 10 + tier * 12, 900, 200); }
+            if (data.capped) { S.banner = { text: T.cryptCapped, t: 0 }; await G.sleep(1.2); S.banner = null; }
+            await settle(S, sp, bet);
+          } catch (e) { if (root.console) console.error(e); }
+          done();
+        })();
+        G.sleep(300).then(done);
+      });
+    };
+    return S;
+  }
+
   /* ---------------- choix du profil de risque (avant le bonus) ---------------- */
   // Trois tirages de même espérance sont déjà dans le script du tour ; la carte choisie révèle l'un d'eux.
   function chooseScene(sp) {
@@ -1353,15 +1642,15 @@
 
   /* ---------------- écran d'annonce : le bonus est gagné, c'est au joueur de le lancer ---------------- */
   function introScene(sp) {
-    var T = I18N.t(), kind = sp.upgraded ? 'hand' : sp.kind, S = newScene(T.bonusUnlocked), t = 0, btn = { x: 0, y: 0, w: 0, h: 0 }, hover = false, go = false, sparkT = 0, L = { ty: 0, ny: 0, size: 100, cy: 0 };
-    S.showTotal = false; S.dim = 0.78; S.bgImg = kind === 'scarab' ? 'abyss' : kind === 'weigh' ? 'judgment' : kind === 'vault' ? 'vault' : 'hand';
-    var ICN = { scarab: 'scarab', weigh: 'weigh', vault: 'vault', hand: 'hand' };
+    var T = I18N.t(), kind = sp.secret ? 'crypt' : sp.upgraded ? 'hand' : sp.kind, S = newScene(sp.secret ? T.secretWord : T.bonusUnlocked), t = 0, btn = { x: 0, y: 0, w: 0, h: 0 }, hover = false, go = false, sparkT = 0, L = { ty: 0, ny: 0, size: 100, cy: 0 };
+    S.showTotal = false; S.dim = 0.78; S.bgImg = kind === 'scarab' ? 'abyss' : kind === 'weigh' ? 'judgment' : kind === 'vault' ? 'vault' : kind === 'crypt' ? 'key' : 'hand';
+    var ICN = { scarab: 'scarab', weigh: 'weigh', vault: 'vault', hand: 'hand', crypt: 'skull' };
     S.layout = function () {
       var bw = clamp(G.w * 0.6, 220, 420), bh = clamp(G.h * 0.1, 52, 76);
       btn = { w: bw, h: bh, x: G.cx - bw / 2, y: G.h - hudH() - bh - (G.h < 520 ? 10 : G.h < 640 ? 26 : 50) };
-      var fs = clamp(Math.min(G.w * 0.085, G.h * 0.13), 22, 86), ns = clamp(Math.min(G.w * 0.034, G.h * 0.05), 13, 32);
+      var fs = clamp(Math.min(G.w * (sp.secret ? 0.07 : 0.085), G.h * (sp.secret ? 0.1 : 0.13)), sp.secret ? 18 : 22, 86), ns = clamp(Math.min(G.w * 0.034, G.h * 0.05), 13, 32);
       L.ty = T0() + fs * 0.9; L.ny = btn.y - 14 - ns * (sp.boost > 1 ? 2.2 : 1);
-      var top = L.ty + fs * 0.55, avail = L.ny - ns - top - 6;
+      var top = L.ty + fs * 0.55 + (sp.secret ? fs * 1.0 : 0), avail = L.ny - ns - top - 6;
       L.size = Math.max(36, Math.min(avail, G.w * 0.8, G.h * 0.62)); L.cy = top + 4 + L.size / 2;
     };
     S.update = function (dt) {
@@ -1378,16 +1667,20 @@
       ctx.save(); ctx.translate(G.cx, cy); ctx.scale(k * pulse, k * pulse);
       var gl = ctx.createRadialGradient(0, 0, R * 0.2, 0, 0, R * 1.1); gl.addColorStop(0, 'rgba(255,226,140,.55)'); gl.addColorStop(1, 'rgba(255,226,140,0)');
       ctx.fillStyle = gl; ctx.beginPath(); ctx.arc(0, 0, R * 1.1, 0, TAU); ctx.fill();
+      if (sp.secret) { var rg = ctx.createRadialGradient(0, 0, R * 0.3, 0, 0, R * 1.5); rg.addColorStop(0, 'rgba(255,50,30,' + (0.3 + 0.15 * Math.sin(t * 4)) + ')'); rg.addColorStop(1, 'rgba(255,50,30,0)'); ctx.fillStyle = rg; ctx.beginPath(); ctx.arc(0, 0, R * 1.5, 0, TAU); ctx.fill(); }
       ctx.rotate(Math.sin(t * 1.6) * 0.05);
       G.icon(ctx, ICN[kind], 0, 0, L.size);
       ctx.restore();
       var ks = G.ease.outBack(clamp((t - 0.25) / 0.45, 0, 1)) * (1 + Math.max(0, 0.6 - t) * 0.6), ty = L.ty;
       ctx.save(); ctx.translate(G.cx, ty); ctx.scale(ks, ks);
-      G.goldText(T.bonusWord, 0, 0, clamp(Math.min(w * 0.085, h * 0.13), 22, 86), { blur: 40, spacing: 8 });
+      if (sp.secret) {
+        var sfs = clamp(Math.min(w * 0.07, h * 0.1), 18, 86);
+        G.goldText(T.secretWord, 0, 0, sfs, { blur: 40, spacing: 5 }); G.goldText(T.secretUnlocked, 0, sfs * 1.05, sfs, { blur: 40, spacing: 5 });
+      } else G.goldText(T.bonusWord, 0, 0, clamp(Math.min(w * 0.085, h * 0.13), 22, 86), { blur: 40, spacing: 8 });
       ctx.restore();
       var na = clamp((t - 0.7) / 0.4, 0, 1), ns = clamp(Math.min(w * 0.034, h * 0.05), 13, 32);
       ctx.save(); ctx.globalAlpha = na;
-      G.txt(sp.upgraded ? T.kindsLong.hand : T.kindsLong[sp.kind], G.cx, L.ny + (1 - na) * 14, { size: ns, weight: 900, fill: '#ffe08a', stroke: '#2a1802', sw: 4, spacing: 3, shadow: 'rgba(255,200,80,.6)', blur: 18 });
+      G.txt(sp.secret ? T.kindsLong.crypt : sp.upgraded ? T.kindsLong.hand : T.kindsLong[sp.kind], G.cx, L.ny + (1 - na) * 14, { size: ns, weight: 900, fill: '#ffe08a', stroke: '#2a1802', sw: 4, spacing: 3, shadow: 'rgba(255,200,80,.6)', blur: 18 });
       if (sp.boost > 1) G.txt(T.boostApplied + ' ×' + sp.boost, G.cx, L.ny + ns * 1.4, { size: clamp(w * 0.02, 12, 18), family: 'Manrope', weight: 800, fill: '#fff1b8' });
       ctx.restore();
       if (t > 1.0) {
@@ -1405,8 +1698,8 @@
       }
     };
     S.run = function () {
-      Sfx.bonusReveal ? Sfx.bonusReveal() : Sfx.bonus(); FX.shake(10, 0.5); FX.flash(0.4, '#ffe9a0'); FX.ring(G.cx, G.cy, '#ffe9a0', G.R * 1.2, 1);
-      if (!quick()) G.say(T.launchHint);
+      Sfx.bonusReveal ? Sfx.bonusReveal() : Sfx.bonus(); if (sp.secret) { Sfx.fanfare(3); Sfx.sparkle(); FX.shake(16, 0.9); FX.coins(G.cx, G.cy, 24, 900, 260); } FX.shake(10, 0.5); FX.flash(0.4, '#ffe9a0'); FX.ring(G.cx, G.cy, '#ffe9a0', G.R * 1.2, 1);
+      if (!quick()) G.say(sp.secret ? T.secretHint : T.launchHint);
       return new Promise(function (res) {
         function fin() {
           if (go) return; go = true; S.pointer = function () {}; window.removeEventListener('keydown', key, true);
@@ -1425,7 +1718,7 @@
   }
 
   /* ---------------- orchestration ---------------- */
-  var FACT = { scarab: scarabScene, weigh: weighScene, vault: vaultScene, hand: handScene };
+  var FACT = { scarab: scarabScene, weigh: weighScene, vault: vaultScene, hand: handScene, crypt: cryptScene };
   G.runBonus = async function (sp, bet) {
     var speed0 = G.speed;
     if (G.turbo) G.speed = G.ultra ? 8 : 3.4;   // turbo / ultra : les bonus restent rapides aussi (la vitesse ne retombe plus à la normale)
@@ -1457,7 +1750,7 @@
       sp.bonus = sp.options[prof]; sp.profile = prof; sp.base = sp.bonus.total; sp.pay = sp.base * (sp.boost || 1);
       if (G.onBonusChoice) G.onBonusChoice();
     }
-    var scene = FACT[sp.upgraded ? 'hand' : sp.kind](sp, bet);
+    var scene = FACT[sp.secret ? 'crypt' : sp.upgraded ? 'hand' : sp.kind](sp, bet);
     G.setScene(scene);
     await G.setFade(0, 0.5);
     await scene.run();
@@ -1467,9 +1760,10 @@
     G.speed = speed0;
   };
 
-  // test manuel : G.testBonus('vault'|'scarab'|'weigh', boost, upgraded, forced) ; forced = indices de cases imposés à la Fureur (liste pour les 3 couleurs, ou {turq:[..], gold:[..], ruby:[..]})
+  // test manuel : G.testBonus('vault'|'scarab'|'weigh'|'crypt', boost, upgraded, forced) ; forced = indices de cases imposés à la Fureur (liste pour les 3 couleurs, ou {turq:[..], gold:[..], ruby:[..]})
   G.testBonus = function (kind, boost, upg, forced) {
     var rng = M.cryptoRng(), opts, b, bo = boost || 1, prof = 'std';
+    if (kind === 'crypt') { b = M._bonus.crypt(rng, forced); return G.runBonus({ kind: 'vault', secret: true, boost: bo, bonus: b, profile: 'crypt', base: b.total, pay: b.total * bo }, 100); }
     if (upg) {
       opts = M.handOptions(rng);
       if (forced) M.HAND_COLORS.forEach(function (c, i) { var f = Array.isArray(forced) ? forced : forced[c]; if (f) opts[c] = M._bonus.hand(rng, i, f); });
