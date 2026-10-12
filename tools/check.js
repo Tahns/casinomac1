@@ -45,6 +45,23 @@ Object.keys(M.BUY).forEach(function (k) {
 });
 ok(badBuy === 0, 'achats : un seul bonus, gain dans [0, plafond], coût = prix affiché');
 
+// 4b. Pesée du Cœur : plume ou cœur, le plus lourd gagne son multiplicateur, le plus léger n'a rien
+var rw = M.mulberry32(21), badW = 0, heavyCnt = [0, 0], winN = 0, sumP = [0, 0], nW = 300000;
+['safe', 'std', 'bold'].forEach(function (pf) {
+  var prof = M.WEIGH_PROFILES[pf];
+  for (var i = 0; i < nW; i++) {
+    var d = M._bonus.weigh(rw, pf);
+    if (!(d.heavy === 0 || d.heavy === 1) || d.mults.length !== 2) badW++;
+    if (!prof.some(function (e) { return e[0].slice().sort(function (a, b) { return a - b; }).join() === d.mults.slice().sort(function (a, b) { return a - b; }).join(); })) badW++;
+    if (d.total !== M.weighGain(d, 0) || d.pick !== 0) badW++;
+    [0, 1].forEach(function (pk) { var gn = M.weighGain(d, pk); if (pk === d.heavy ? gn !== d.mults[pk] : gn !== 0) badW++; sumP[pk] += gn; });
+    heavyCnt[d.heavy]++;
+  }
+});
+ok(badW === 0, 'Pesée : mults ∈ profil, gain = mult du plateau choisi s\'il est le plus lourd, sinon 0 (anomalies: ' + badW + ')');
+ok(Math.abs(heavyCnt[0] / (heavyCnt[0] + heavyCnt[1]) - 0.5) < 0.005, 'Pesée : plateau le plus lourd tiré 50/50 (' + (heavyCnt[0] / (3 * nW) * 100).toFixed(2) + ' % plume)');
+ok(Math.abs(sumP[0] / sumP[1] - 1) < 0.03, 'Pesée : espérance identique si le joueur choisit la plume ou le cœur (' + (sumP[0] / 3 / nW).toFixed(3) + ' vs ' + (sumP[1] / 3 / nW).toFixed(3) + ')');
+
 // 5. RTP grossier (tolérance large : 2 M de tours ≈ ±0,5 pt)
 function rtp(f, cost, n) { var s = 0; for (var i = 0; i < n; i++) s += f().total; return s / n / cost * 100; }
 var r1 = M.mulberry32(11), n = 2000000;

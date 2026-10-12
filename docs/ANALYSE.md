@@ -55,7 +55,7 @@ Décision : tout est **écrit en original**, sans dépendance ni asset externe. 
 | Bonus | Mécanique | EV isolée | Max |
 |---|---|---|---|
 | **Chute des Scarabées** | Plinko 8 rangées, 3 scarabées, chacun paie sa case (0,5× → 25×) | ≈ 5,1× | 75× |
-| **Pesée du Cœur** | Cœur vs plume ; valeurs cachées, le joueur choisit un plateau avant de savoir (le gain est celui du plateau choisi, déjà tiré), balance qui oscille | ≈ 5,8× | 150× |
+| **Pesée du Cœur** | Plume ou cœur : le joueur choisit un plateau, les multiplicateurs défilent puis se figent, la balance pèse ; le plus lourd (50/50) gagne son multiplicateur, le plus léger n’a rien | ≈ 5,8× | 300× |
 | **Chambre du Trésor** | Pick-me 12 chambres : valeurs, **Sceptre ×2**, **Ankh bouclier** (annule une malédiction), **Malédiction** (clôt le coffre), prime « coffre vidé » | ≈ 7,3× | 240× |
 | **Main d'Anubis** | **Chaque bonus a 8 % de chance d'être saisi** : roue géante à 24 cases, multiplicateurs ×2/×3/×4 qui **s'empilent** (jusqu'à 2 chaînes) | ≈ 24,6× | 1 600× (jusqu'à 5 000× avec un boost Oracle, plafond global) |
 
@@ -376,3 +376,9 @@ Rien de nouveau n'était réellement corrigeable par du code : seule la document
 
 - Turbo / Ultra : les bonus gardent maintenant une vitesse élevée (×3,4 en turbo, ×8 en ultra, puis retour à la vitesse du mode) ; en turbo un bonus passe de 9–13 s à 4–6 s, en ultra 2–3 s.
 - L'auto-play ne s'arrête plus après un bonus par défaut (« Stopper l'auto sur bonus » passe à Non ; l'ancien réglage sauvegardé est ignoré, option toujours disponible dans les Règles). Vérifié : un bonus tombé en plein auto, le compteur continue jusqu'à 0.
+
+## Itération 19 — Pesée du Cœur : plume ou cœur, le plus lourd gagne (2026-10-12)
+
+- Nouvelle règle : le joueur choisit la plume de Maât ou le cœur (cartes, touches 1/2), les multiplicateurs des deux plateaux défilent puis se figent (le plateau choisi en dernier), la balance pèse. Le plateau le plus lourd gagne SON multiplicateur, le plus léger n’a rien. Le joueur gagne donc 1 fois sur 2.
+- Maths : `weigh()` renvoie `{ pair, mults, heavy, pick, total }` ; `heavy` est tiré 50/50 indépendamment des valeurs, `mults` = paire ×2 attribuée au hasard aux deux plateaux. Gain = `mults[pick]` si `pick === heavy`, sinon 0 (`M.weighGain`). Espérance par profil inchangée (5,8256 / 5,8258 / 5,8224) puisque 0,5 × 2 × moyenne des anciennes paires ; maximum réel ×300 (au lieu de ×150).
+- Le script reste pré-tiré : `total` par défaut = choix « plume » ; la scène le recalcule au moment du choix et appelle `G.onBonusChoice()` pour mettre à jour le gain en attente sauvegardé.

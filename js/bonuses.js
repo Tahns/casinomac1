@@ -84,7 +84,7 @@
       ctx.fillStyle = 'rgba(4,3,2,' + 0.68 * a + ')'; ctx.fillRect(0, 0, w, h);
       A.rays(ctx, G.cx, G.cy, Math.max(w, h), 18, f.t * 0.4, '#ffd86a', 0.13 * a);
       ctx.save(); ctx.translate(G.cx, G.cy); ctx.scale(sc, sc);
-      G.goldText(T.bonusWin, 0, -u * 0.17, clamp(u * 0.055, 20, 44), { spacing: 5 });
+      G.goldText(S.finalLabel || T.bonusWin, 0, -u * 0.17, clamp(u * 0.055, 20, 44), { spacing: 5 });
       G.goldText('×' + G.fmt(Math.round(f.count * 100) / 100), 0, 0, clamp(u * 0.16, 54, 150), { blur: 44 });
       G.txt(G.fmt(Math.round(f.count * f.bet * 100) / 100), 0, u * 0.14, { size: clamp(u * 0.06, 22, 54), fill: '#fff1b8', stroke: '#2a1a02', shadow: 'rgba(255,200,60,.6)' });
       ctx.restore();
@@ -347,15 +347,31 @@
    * ====================================================================== */
   function weighScene(sp, bet) {
     var T = I18N.t(), data = sp.bonus, S = newScene(T.weighIntro), g = {}; S.bgImg = 'judgment';
-    var theta = 0, glowSide = -1, dimSide = -1, ph = 0, guess = -1, guessing = false, hoverSide = -1, revealed = false, vals = null, push = 0;
-    var ent = 0, tens = 0, motes = [], burst = 0, sprk = 0, flashW = 0;   // animation : entrée, tension, particules, éclat du verdict
+    var theta = 0, glowSide = -1, dimSide = -1, ph = 0, pick = -1, hoverCard = -1, sway = false, choosing = false, cardSel = -1, cardA = 0;
+    var ent = 0, tens = 0, motes = [], burst = 0, sprk = 0, flashW = 0, weighing = false;   // animation : entrée, tension, particules, éclat du verdict
+    var res = [null, null], verdict = null, cards = [{}, {}];
+    var reel = [{ cur: 0, prev: 0, k: 1, on: false, shown: false, pop: 0 }, { cur: 0, prev: 0, k: 1, on: false, shown: false, pop: 0 }];
+    var pool = [];   // valeurs plausibles du profil, pour le défilement des compteurs
+    (M.WEIGH_PROFILES[data.profile || 'std'] || M.WEIGH_PROFILES.std).forEach(function (q) { q[0].forEach(function (v) { if (pool.indexOf(v) < 0) pool.push(v); }); });
     for (var mi = 0; mi < 26; mi++) motes.push({ x: Math.random(), y: Math.random(), s: 0.3 + Math.random() * 0.7, p: Math.random() * 6 });
     S.layout = function () {
       var w = G.w, h = G.h;
       if (h < 520) { g.px = G.cx; g.py = h * 0.34; g.L = Math.min(w * 0.26, h * 0.27); g.chain = Math.min(h * 0.11, g.L * 0.55); g.pan = g.L * 0.38; }
-      else { g.px = G.cx; g.py = h * 0.42; g.L = Math.min(w * 0.28, h * 0.33); g.chain = Math.min(h * 0.14, g.L * 0.6); g.pan = g.L * 0.4; }
+      else { g.px = G.cx; g.py = h * 0.375; g.L = Math.min(w * 0.28, h * 0.33); g.chain = Math.min(h * 0.115, g.L * 0.5); g.pan = g.L * 0.4; }
+      // cartes de choix : de part et d'autre de la balance si la place le permet, sinon sous les plateaux
+      var hb = h - hudH(), edge = w / 2 - g.L - g.pan, cw, chh, y, x0;
+      if (edge >= 150) {
+        cw = clamp(edge - 30, 130, 300); chh = clamp(hb * 0.42, 140, 290);
+        y = clamp(g.py + g.chain * 0.9 + g.pan * 0.3 - chh / 2, T0() + 56, hb - chh - (h < 520 ? 8 : 58));
+        cards[0] = { x: edge / 2 - cw / 2, y: y, w: cw, h: chh }; cards[1] = { x: w - edge / 2 - cw / 2, y: y, w: cw, h: chh };
+      } else {
+        var bottom = hb - (h < 520 ? 6 : 60), top = g.py + g.chain + g.pan * 1.35 + 10;
+        cw = (w * 0.92 - 12) / 2; chh = clamp(bottom - top, 78, 200); y = Math.max(top, bottom - chh); x0 = w * 0.04;
+        cards[0] = { x: x0, y: y, w: cw, h: chh }; cards[1] = { x: x0 + cw + 12, y: y, w: cw, h: chh };
+      }
     };
     function endPt(side) { var a = theta, x = side * g.L; return { x: g.px + Math.cos(a) * x, y: g.py + Math.sin(a) * x }; }
+    function platePt(si) { var e = endPt(si ? 1 : -1); return { x: e.x, y: e.y + g.chain }; }
     function heart(x, y, s, col) {
       ctx.save(); ctx.translate(x, y); ctx.scale(s / 24, s / 24); ctx.beginPath();
       ctx.moveTo(0, 9); ctx.bezierCurveTo(-18, -4, -9, -16, 0, -7); ctx.bezierCurveTo(9, -16, 18, -4, 0, 9); ctx.closePath();
@@ -363,14 +379,49 @@
       ctx.lineWidth = 1.2; ctx.strokeStyle = '#5a0c06'; ctx.stroke(); ctx.restore();
     }
     S.update = function (dt) {
-      chromeUpdate(S, dt); ph += dt; push = Math.max(0, push - dt * 0.55); burst = Math.max(0, burst - dt * 0.8); flashW = Math.max(0, flashW - dt * 2.2);
+      chromeUpdate(S, dt); ph += dt; burst = Math.max(0, burst - dt * 0.8); flashW = Math.max(0, flashW - dt * 2.2);
+      if (verdict) verdict.t += dt;
+      if (sway) theta = 0.03 * Math.sin(ph * 1.3) * clamp(ent, 0, 1);
+      reel.forEach(function (r) { r.k = Math.min(1, r.k + dt * 13); r.pop = Math.max(0, r.pop - dt * 2.4); });
       for (var k = 0; k < motes.length; k++) { var m = motes[k]; m.y -= dt * 0.05 * m.s; m.x += Math.sin(ph * 0.8 + m.p) * dt * 0.01; if (m.y < -0.05) { m.y = 1.05; m.x = Math.random(); } }
       // étincelles qui crépitent autour du cœur et de la plume pendant la pesée
-      if (tens > 0 && !revealed && ent >= 1) {
+      if (tens > 0 && weighing && ent >= 1) {
         sprk += dt * (3 + tens * 14);
         while (sprk >= 1) { sprk -= 1; var sd = Math.random() < 0.5 ? -1 : 1, pe = endPt(sd); FX.spark(pe.x + (Math.random() - 0.5) * g.pan, pe.y + g.chain - g.pan * 0.3, 1, sd < 0 ? '#fff4c8' : '#ff9a8a', 90 + tens * 120, 0.5); }
       }
     };
+    function fitSize(txt, maxW, fs, fam) {
+      ctx.font = '900 ' + fs + 'px ' + fam; if (ctx.letterSpacing !== undefined) ctx.letterSpacing = '0px';
+      while (fs > 9 && ctx.measureText(txt).width > maxW) { fs -= 1; ctx.font = '900 ' + fs + 'px ' + fam; }
+      return fs;
+    }
+    function drawCard(i) {
+      var c = cards[i], sel = cardSel === i, hv = hoverCard === i || sel, other = cardSel >= 0 && !sel;
+      var a = clamp(cardA, 0, 1) * (other ? 0.35 : 1), k = G.ease.outBack(clamp(cardA, 0, 1)), lift = hv ? 6 : 0, y = c.y - lift + (1 - k) * 36;
+      if (a <= 0.01) return;
+      var compact = c.h < 125, pulse = 0.5 + 0.5 * Math.sin(G.t * 6);
+      ctx.save(); ctx.globalAlpha = a;
+      A.roundRect(ctx, c.x, y, c.w, c.h, 16);
+      var gg = ctx.createLinearGradient(0, y, 0, y + c.h); gg.addColorStop(0, hv ? '#3a2c16' : '#241a0d'); gg.addColorStop(1, '#0c0804');
+      ctx.fillStyle = gg; ctx.shadowColor = hv ? 'rgba(255,216,106,' + (0.55 + 0.2 * pulse) + ')' : 'rgba(0,0,0,.7)'; ctx.shadowBlur = hv ? 30 : 14; ctx.fill(); ctx.shadowBlur = 0;
+      ctx.lineWidth = hv ? 3 : 2; ctx.strokeStyle = hv ? '#fff1b8' : A.goldGrad(ctx, c.x, y, c.x + c.w, y + c.h); ctx.stroke();
+      var isz = compact ? c.h * 0.46 : Math.min(c.w * 0.3, c.h * 0.3), ix = compact ? c.x + c.h * 0.55 : c.x + c.w / 2, iy = compact ? y + c.h * 0.5 : y + c.h * 0.34;
+      var og = ctx.createRadialGradient(ix, iy, 0, ix, iy, isz * 1.7); og.addColorStop(0, i ? 'rgba(255,90,70,.28)' : 'rgba(255,244,200,.3)'); og.addColorStop(1, 'rgba(255,200,120,0)');
+      ctx.fillStyle = og; ctx.beginPath(); ctx.arc(ix, iy, isz * 1.7, 0, TAU); ctx.fill();
+      if (i === 0) A.feather(ctx, ix, iy, isz * 1.15, '#fff8e6', 'rgba(150,110,40,.8)'); else heart(ix, iy + isz * 0.08, isz * 1.35);
+      var tx = compact ? c.x + c.h * 1.05 : c.x + c.w / 2, al = compact ? 'left' : 'center', maxW = compact ? c.w - c.h * 1.05 - 38 : c.w * 0.88;
+      var name = i ? T.heart : T.feather, tag = i ? T.heartOf : T.featherOf;
+      var fs = fitSize(name, maxW, compact ? clamp(c.h * 0.3, 15, 26) : clamp(c.w * 0.13, 17, 30), 'Cinzel, serif');
+      var ty = compact ? y + c.h * 0.36 : y + c.h * 0.66;
+      G.txt(name, tx, ty, { size: fs, weight: 900, fill: '#ffe08a', stroke: '#2a1802', sw: 3, align: al, spacing: 2 });
+      var fs2 = fitSize(tag, maxW, Math.max(10, fs * 0.58), 'Manrope, sans-serif');
+      G.txt(tag, tx, ty + fs * 0.95, { size: fs2, family: 'Manrope', weight: 800, fill: '#cdb98a', align: al, spacing: 2 });
+      // touche de raccourci
+      var br = clamp(Math.min(c.w, c.h) * 0.09, 10, 14), bx = compact ? c.x + c.w - br - 12 : c.x + br + 12, by = y + br + 12;
+      ctx.beginPath(); ctx.arc(bx, by, br, 0, TAU); ctx.fillStyle = 'rgba(0,0,0,.45)'; ctx.fill(); ctx.lineWidth = 1.5; ctx.strokeStyle = '#d8c590'; ctx.stroke();
+      G.txt(String(i + 1), bx, by + 1, { size: br * 1.15, family: 'Manrope', weight: 900, fill: '#fff1b8' });
+      ctx.restore();
+    }
     S.draw = function () {
       var u = Math.min(G.w, G.h), i, eo = G.ease.outBack(clamp(ent, 0, 1));
       // lumière de Maât : faisceau doré, rayons lents et poussière d'or flottante
@@ -401,14 +452,13 @@
       ctx.beginPath(); ctx.arc(g.px, g.py, u * 0.026, 0, TAU); ctx.fillStyle = A.goldGrad(ctx, g.px - 20, g.py - 20, g.px + 20, g.py + 20); ctx.fill(); ctx.stroke();
       // plateaux
       [-1, 1].forEach(function (side, si) {
-        var e = endPt(side), cx = e.x, cy = e.y + g.chain, pr = g.pan, dim = dimSide === si ? 0.35 : 1;
+        var e = endPt(side), cx = e.x, cy = e.y + g.chain, pr = g.pan, dim = dimSide === si ? 0.42 : 1, rl = reel[si];
         ctx.save(); ctx.globalAlpha = dim;
         // chaînes
         ctx.strokeStyle = 'rgba(246,216,120,.85)'; ctx.lineWidth = 2;
         ctx.beginPath(); ctx.moveTo(e.x, e.y); ctx.lineTo(cx - pr, cy); ctx.moveTo(e.x, e.y); ctx.lineTo(cx + pr, cy); ctx.moveTo(e.x, e.y); ctx.lineTo(cx, cy - pr * 0.1); ctx.stroke();
-        if (guessing && (hoverSide === si)) { ctx.fillStyle = 'rgba(255,236,150,' + (0.16 + 0.1 * Math.sin(G.t * 7)) + ')'; ctx.beginPath(); ctx.arc(cx, cy, pr * 1.9, 0, TAU); ctx.fill(); }
-        if (guess === si && push > 0.05 && !revealed) { var pgl = ctx.createRadialGradient(cx, cy, 0, cx, cy, pr * 2.4); pgl.addColorStop(0, 'rgba(111,240,221,' + Math.min(0.6, push * 0.45) + ')'); pgl.addColorStop(1, 'rgba(111,240,221,0)'); ctx.fillStyle = pgl; ctx.beginPath(); ctx.arc(cx, cy, pr * 2.4, 0, TAU); ctx.fill(); }
-        if (guess === si) A.ankh(ctx, cx, cy - pr * 1.55, pr * 0.5, '#6ff0dd');
+        if (choosing && hoverCard === si) { ctx.fillStyle = 'rgba(255,236,150,' + (0.16 + 0.1 * Math.sin(G.t * 7)) + ')'; ctx.beginPath(); ctx.arc(cx, cy, pr * 1.9, 0, TAU); ctx.fill(); }
+        if (pick === si) A.ankh(ctx, cx, cy - pr * 1.55, pr * 0.5, '#6ff0dd');
         if (glowSide === si) {
           var gl = ctx.createRadialGradient(cx, cy, 0, cx, cy, pr * 2.3); gl.addColorStop(0, 'rgba(255,236,150,.7)'); gl.addColorStop(1, 'rgba(255,236,150,0)');
           ctx.fillStyle = gl; ctx.beginPath(); ctx.arc(cx, cy, pr * 2.3, 0, TAU); ctx.fill();
@@ -423,71 +473,154 @@
         ctx.beginPath(); ctx.ellipse(cx, cy, pr, pr * 0.2, 0, 0, Math.PI, false); ctx.quadraticCurveTo(cx + pr * 0.5, cy + pr * 0.55, cx, cy + pr * 0.58); ctx.quadraticCurveTo(cx - pr * 0.5, cy + pr * 0.55, cx - pr, cy);
         ctx.fillStyle = A.goldGrad(ctx, cx - pr, cy, cx + pr, cy + pr * 0.5); ctx.fill(); ctx.lineWidth = 1.4; ctx.strokeStyle = '#5b4311'; ctx.stroke();
         ctx.beginPath(); ctx.ellipse(cx, cy, pr, pr * 0.2, 0, 0, TAU); ctx.fillStyle = '#e6c25a'; ctx.fill(); ctx.stroke();
-        // cartouche
-        var cw = pr * 1.5, ch = pr * 0.62, cyy = cy + pr * 0.95;
+        // cartouche du multiplicateur : « ×? » puis compteur qui défile (rouleau) et se fige sur la vraie valeur
+        var cw = pr * 1.5, ch = pr * 0.62, cyy = cy + pr * 0.95, lit = glowSide === si || rl.on;
+        ctx.save(); ctx.translate(cx, cyy); ctx.scale(1 + 0.3 * rl.pop, 1 + 0.3 * rl.pop); ctx.translate(-cx, -cyy);
         A.roundRect(ctx, cx - cw / 2, cyy - ch / 2, cw, ch, ch * 0.5);
         var cg = ctx.createLinearGradient(0, cyy - ch / 2, 0, cyy + ch / 2); cg.addColorStop(0, '#2a1f10'); cg.addColorStop(1, '#0c0804');
-        ctx.fillStyle = cg; ctx.fill(); ctx.lineWidth = glowSide === si ? 3 : 1.6; ctx.strokeStyle = glowSide === si ? '#fff6c8' : A.goldGrad(ctx, cx - cw, cyy, cx + cw, cyy); ctx.stroke();
-        G.goldText(revealed ? '×' + vals[si] : '×?', cx, cyy + 1, ch * 0.62, { blur: glowSide === si ? 22 : 8 });
-        if (G.h >= 520) G.txt(si === 0 ? T.feather : T.heart, cx, cyy - ch * 0.78, { size: clamp(pr * 0.17, 10, 15), family: 'Manrope', weight: 800, fill: '#d8c590', spacing: 3 });
+        ctx.fillStyle = cg; ctx.fill(); ctx.lineWidth = lit ? 3 : 1.6; ctx.strokeStyle = lit ? '#fff6c8' : A.goldGrad(ctx, cx - cw, cyy, cx + cw, cyy); ctx.stroke();
+        ctx.save(); A.roundRect(ctx, cx - cw / 2 + 2, cyy - ch / 2 + 2, cw - 4, ch - 4, ch * 0.45); ctx.clip();
+        var fsn = ch * 0.62, tb = lit ? 22 : 8;
+        if (rl.k < 1) { G.goldText('×' + rl.prev, cx, cyy + 1 + rl.k * ch * 0.95, fsn, { blur: 6 }); G.goldText('×' + rl.cur, cx, cyy + 1 + (rl.k - 1) * ch * 0.95, fsn, { blur: 6 }); }
+        else G.goldText(rl.shown ? '×' + rl.cur : '×?', cx, cyy + 1, fsn, { blur: tb });
+        ctx.restore(); ctx.restore();
+        if (res[si] === 'lost') {   // multiplicateur barré
+          ctx.globalAlpha = 0.95; ctx.strokeStyle = 'rgba(255,84,62,.95)'; ctx.lineWidth = Math.max(2.5, ch * 0.11); ctx.lineCap = 'round';
+          ctx.beginPath(); ctx.moveTo(cx - cw * 0.4, cyy + ch * 0.12); ctx.lineTo(cx + cw * 0.4, cyy - ch * 0.12); ctx.stroke(); ctx.lineCap = 'butt';
+        }
+        if (G.h >= 520 && !res[si]) G.txt(si === 0 ? T.feather : T.heart, cx, cyy - ch * 0.78, { size: clamp(pr * 0.17, 10, 15), family: 'Manrope', weight: 800, fill: '#d8c590', spacing: 3 });
+        if (res[si]) {   // GAGNÉ / PERDU sous le cartouche
+          var ls = clamp(pr * 0.24, 12, 22), won = res[si] === 'won', pop = G.ease.outBack(clamp((verdict ? verdict.t : 1) / 0.4, 0, 1));
+          ctx.globalAlpha = won ? 1 : 0.95;
+          G.txt(won ? T.weighWon : T.weighLost, cx, cyy - ch * 0.5 - ls * 0.75, { size: ls * pop, family: 'Manrope', weight: 900, fill: won ? '#fff1b8' : '#ff8a7a', stroke: 'rgba(0,0,0,.6)', sw: 3, spacing: 3, shadow: won ? 'rgba(255,216,106,.9)' : 'rgba(0,0,0,.6)', blur: won ? 14 : 4 });
+        }
         ctx.restore();
       });
       ctx.restore();
+      // cartes de choix
+      if (cardA > 0) { drawCard(0); drawCard(1); }
       if (flashW > 0) { ctx.fillStyle = 'rgba(255,246,210,' + flashW * 0.55 + ')'; ctx.fillRect(0, 0, G.w, G.h); }
-      if (burst > 0) { var wc = endPt(glowSide ? 1 : -1); A.rays(ctx, wc.x, wc.y + g.chain, Math.max(G.w, G.h), 20, ph * 0.6, '#fff1b8', burst * 0.3); }
+      if (burst > 0 && glowSide >= 0) { var wc = platePt(glowSide); A.rays(ctx, wc.x, wc.y, Math.max(G.w, G.h), 20, ph * 0.6, '#fff1b8', burst * 0.3); }
+      // verdict du joueur : bandeau GAGNÉ / PERDU
+      if (verdict) {
+        var vk = G.ease.outBack(clamp(verdict.t / 0.4, 0, 1)), vfs = clamp(G.w * 0.075, 30, 76), vh = vfs * 1.7;
+        ctx.save(); ctx.globalAlpha = clamp(verdict.t / 0.2, 0, 1) * 0.82;
+        var vg = ctx.createLinearGradient(0, G.cy - vh / 2, 0, G.cy + vh / 2); vg.addColorStop(0, 'rgba(4,3,2,0)'); vg.addColorStop(0.3, 'rgba(4,3,2,.9)'); vg.addColorStop(0.7, 'rgba(4,3,2,.9)'); vg.addColorStop(1, 'rgba(4,3,2,0)');
+        ctx.fillStyle = vg; ctx.fillRect(0, G.cy - vh / 2, G.w, vh); ctx.restore();
+        ctx.save(); ctx.translate(G.cx, G.cy); ctx.scale(vk, vk);
+        if (verdict.win) G.goldText(T.guessRight, 0, 0, vfs, { blur: 34, spacing: 4 });
+        else G.txt(T.guessWrong, 0, 0, { size: vfs, weight: 900, fill: '#ff8a7a', stroke: '#2a0804', sw: vfs * 0.1, shadow: 'rgba(255,60,40,.55)', blur: 22, spacing: 4 });
+        ctx.restore();
+      }
       chrome(S);
     };
-    // pronostic : purement ludique, le résultat est déjà fixé
-    function waitGuess() {
-      return new Promise(function (res) {
+    // choix de la plume ou du coeur : deux cartes, touches 1 / 2, choix automatique au bout de 14 s
+    function choose() {
+      return new Promise(function (resolve) {
         var done = false;
-        function fin(si) { if (!done) { done = true; guessing = false; S.onPointer = null; res(si); } }
-        guessing = true; hoverSide = -1;
+        function fin(i) { if (done) return; done = true; S.onPointer = null; window.removeEventListener('keydown', key, true); resolve(i); }
+        function take(i) {
+          if (done || cardSel >= 0) return;
+          cardSel = i; hoverCard = i; Sfx.shield();
+          var c = cards[i]; FX.spark(c.x + c.w / 2, c.y + c.h / 2, 24, '#ffe9a0', 300); var pp = platePt(i); FX.ring(pp.x, pp.y, '#6ff0dd', g.pan * 1.6, 0.6);
+          G.sleep(0.4).then(function () { fin(i); });
+        }
+        function key(e) {
+          if (!$('modal').hidden) return;
+          var n = { Digit1: 0, Digit2: 1, Numpad1: 0, Numpad2: 1 }[e.code];
+          if (n != null) { e.preventDefault(); e.stopImmediatePropagation(); take(n); }
+        }
+        window.addEventListener('keydown', key, true);
         S.onPointer = function (x, y, type) {
-          var si = x < g.px ? 0 : 1; hoverSide = si;
-          if (type === 'down') { Sfx.chime(2); FX.ring(endPt(si ? 1 : -1).x, endPt(si ? 1 : -1).y + g.chain, '#6ff0dd', g.pan * 1.6, 0.6); fin(si); }
+          var h = -1, i;
+          for (i = 0; i < 2; i++) { var c = cards[i]; if (x >= c.x && x <= c.x + c.w && y >= c.y - 6 && y <= c.y + c.h) h = i; }
+          if (h < 0) for (i = 0; i < 2; i++) { var pp = platePt(i); if (Math.hypot(x - pp.x, y - pp.y) < g.pan * 1.6) h = i; }
+          if (cardSel < 0) hoverCard = h;
+          if (type === 'down' && h >= 0) take(h);
         };
-        G.sleep(7).then(function () { fin(Math.random() < 0.5 ? 0 : 1); });
+        choosing = true; G.say(T.guessHint);
+        G.tween(0.5, function (u) { cardA = u; }, null);
+        G.sleep(14).then(function () { take(Math.random() < 0.5 ? 0 : 1); });
+      });
+    }
+    // le choix fixe le gain : le plateau choisi gagne son multiplicateur s'il est le plus lourd, sinon rien ; le gain en attente est recalculé
+    function commit(p) {
+      data.pick = p; data.total = M.weighGain(data, p);
+      sp.base = data.total; sp.pay = sp.base * (sp.boost || 1);
+      if (G.onBonusChoice) G.onBonusChoice();
+    }
+    // compteur qui défile (valeurs au hasard, de plus en plus lentes) puis se fige sur le vrai multiplicateur
+    function rollPlate(si, dur, lastOne) {
+      var rl = reel[si], n = Math.round(10 + dur * 9), idx = -1;
+      rl.shown = true; rl.on = true;
+      return G.tween(dur, function (u) {
+        var p = 1 - Math.pow(1 - u, 3), k = Math.min(n - 1, Math.floor(p * n));
+        if (k !== idx) {
+          idx = k; var v, tries = 0; do { v = pool[Math.floor(Math.random() * pool.length)]; tries++; } while ((v === rl.cur || v === data.mults[si]) && tries < 8);
+          rl.prev = rl.cur; rl.cur = v; rl.k = 0; Sfx.tick(0.15 + 0.7 * k / n);
+          if (k % 3 === 0) { var pe = platePt(si); FX.spark(pe.x, pe.y + g.pan * 0.95, 2, '#ffe9a0', 130, 0.35); }
+        }
+      }, null).then(function () {
+        rl.prev = rl.cur; rl.cur = data.mults[si]; rl.k = 0; rl.on = false; rl.pop = 1;
+        var pe = platePt(si), cy = pe.y + g.pan * 0.95;
+        if (lastOne) { Sfx.thud(); FX.shake(8, 0.3); FX.flash(0.2, '#ffe9a0'); FX.ring(pe.x, cy, '#ffe9a0', g.pan * 2.2, 0.7); FX.spark(pe.x, cy, 26, '#ffe9a0', 360); }
+        else { Sfx.drum(0.3); FX.ring(pe.x, cy, '#ffd86a', g.pan * 1.6, 0.5); FX.spark(pe.x, cy, 14, '#ffd86a', 260); }
       });
     }
     S.run = async function () {
+      var q = quick();
       // entrée spectaculaire : flash doré, balance qui descend, onde de choc à l'atterrissage
       Sfx.oracle(); FX.flash(0.35, '#ffe9a0');
-      var e0 = G.tween(quick() ? 0.7 : 1.3, function (u) { ent = u; theta = 0.32 * (1 - u) * Math.sin(u * 14) * (1 - u); }, null);
-      await e0; ent = 1; theta = 0; Sfx.thud(); FX.shake(10, 0.4); FX.ring(g.px, g.py, '#ffe9a0', g.L * 1.6, 0.8); FX.dust(g.px, G.h - hudH() - 20, 14, '#ffd86a');
+      var e0 = G.tween(q ? 0.7 : 1.3, function (u) { ent = u; theta = 0.32 * (1 - u) * Math.sin(u * 14) * (1 - u); }, null);
+      await e0; ent = 1; theta = 0; sway = true; Sfx.thud(); FX.shake(10, 0.4); FX.ring(g.px, g.py, '#ffe9a0', g.L * 1.6, 0.8); FX.dust(g.px, G.h - hudH() - 20, 14, '#ffd86a');
       G.say(T.weighSub);
-      await G.sleep(quick() ? 0.8 : 1.5);
-      // choix avant de savoir : les valeurs sont cachées ; le gain (déjà tiré) est celui du plateau choisi
-      G.say(T.guessHint);
-      guess = quick() ? (Math.random() < 0.5 ? 0 : 1) : await waitGuess();
-      var other = data.pair[0] + data.pair[1] - data.total;
-      vals = [0, 0]; vals[guess] = data.total; vals[1 - guess] = other;
-      await G.sleep(0.4);
+      await G.sleep(q ? 0.5 : 1.6);
+      // 1. choix de la plume ou du coeur (les multiplicateurs sont cachés)
+      pick = q ? (Math.random() < 0.5 ? 0 : 1) : await choose();
+      choosing = false; commit(pick);
+      if (q) { Sfx.shield(); var pq = platePt(pick); FX.ring(pq.x, pq.y, '#6ff0dd', g.pan * 1.6, 0.6); }
+      G.tween(0.4, function (u) { cardA = 1 - u; }, null);
+      await G.sleep(q ? 0.25 : 0.5);
+      // 2. les multiplicateurs défilent puis se figent ; le plateau choisi se fige en dernier
+      G.say(T.weighRoll); Sfx.roll(6, 0.1);
+      await Promise.all([rollPlate(1 - pick, q ? 0.7 : 1.7, false), rollPlate(pick, q ? 1.1 : 2.9, true)]);
+      cardA = 0;
+      await G.sleep(q ? 0.3 : 0.9);
+      // 3. la balance pèse : le plateau le plus lourd descend et gagne son multiplicateur, le plus léger ne gagne rien
       G.say(T.weighing); Sfx.roll(10, 0.09); FX.ring(g.px, g.py, '#6ff0dd', g.L, 0.7);
-      var dir = vals[1] > vals[0] ? 1 : -1, final = dir * 0.30, dur = quick() ? 3.6 : 7, lastSign = 0, mine = guess ? 1 : -1;
-      // suspense : la balance hésite, penche vers votre plateau puis revient ; vos touchers lui donnent de l'élan, le verdict reste celui du tirage
-      if (!quick()) { G.say(T.pushHint); S.onPointer = function (x, y, type) { if (type === 'down') { push = Math.min(1.5, push + 0.45); Sfx.tick(0.5); FX.spark(G.cx + (mine > 0 ? 1 : -1) * g.L, g.py + g.chain, 4, '#6ff0dd', 140, 0.3); } }; }
+      sway = false; weighing = true;
+      var dir = data.heavy === 1 ? 1 : -1, final = dir * 0.30, dur = q ? 2.6 : 6.5, lastSign = 0, hbT = 0, lastU = 0, tkT = 0;
       await G.tween(dur, function (u) {
-        var env = Math.pow(1 - u, 1.5), lock = clamp((0.9 - u) / 0.25, 0, 1);
-        var fake = dir !== mine ? mine * 0.30 * Math.sin(Math.PI * clamp((u - 0.35) / 0.4, 0, 1)) : 0;
+        var env = Math.pow(1 - u, 1.5);
+        var fake = -dir * 0.5 * Math.sin(Math.PI * clamp((u - 0.35) / 0.4, 0, 1));   // faux espoir : la balance penche d'abord du mauvais côté
         tens = clamp(u * 1.25, 0, 1);
-        theta = final * G.ease.out3(Math.min(1, u * 1.1)) + 0.3 * env * Math.sin(u * 17 + 0.6) + fake * (1 - u * 0.4) + mine * push * 0.2 * env * lock;
+        theta = final * G.ease.out3(Math.min(1, u * 1.1)) + 0.3 * env * Math.sin(u * 17 + 0.6) + fake * (1 - u * 0.4);
         var s = Math.sign(Math.sin(u * 17 + 0.6));
-        if (s !== lastSign && u > 0.05) { lastSign = s; Sfx.drum(0.1 + env * 0.25); }
+        // crescendo sonore : battements de coeur de plus en plus rapides et forts, tambour à chaque oscillation, ticks ; puis silence juste avant le verdict
+        var hush = u > 0.9, dtu = (u - lastU) * dur; lastU = u; hbT -= dtu; tkT -= dtu;
+        if (!hush) {
+          if (s !== lastSign && u > 0.05) { lastSign = s; Sfx.drum(0.1 + env * 0.25 + u * 0.15); }
+          if (hbT <= 0) { hbT = 0.95 - 0.6 * u; if (Sfx.heartbeat) Sfx.heartbeat(0.25 + 0.75 * u); }
+          if (tkT <= 0 && u > 0.4) { tkT = 0.5 - 0.35 * u; Sfx.tick(u); }
+        }
       }, null);
-      S.onPointer = null; push = 0;
-      theta = final; tens = 0; Sfx.thud(); FX.shake(22, 0.7); burst = 1; flashW = 1; FX.flash(0.5, '#fff1b8');
-      revealed = true;
-      var wp = endPt(dir); FX.dust(wp.x, wp.y + g.chain + g.pan, 12, '#ffd86a');
-      glowSide = guess; dimSide = 1 - guess;
-      var cp = endPt(guess ? 1 : -1);
-      FX.ring(cp.x, cp.y + g.chain, '#ffe9a0', g.pan * 2.4, 0.9); FX.spark(cp.x, cp.y + g.chain, 70, '#ffe9a0', 520); FX.ring(cp.x, cp.y + g.chain, '#fff', g.pan * 3.4, 1.1); FX.coins(cp.x, cp.y + g.chain, 14, 700, 40);
-      bump(S, data.total); Sfx.chime(data.total); G.say('');
-      var ok = data.total > other;
-      S.banner = { text: ok ? T.guessRight : T.guessWrong, t: 0 }; if (ok) { Sfx.fanfare(1); FX.spark(G.cx, G.cy, 50, '#6ff0dd', 420); }
-      await G.sleep(1.3); S.banner = null;
-      await G.sleep(0.9);
-      await settle(S, sp, bet);
+      weighing = false; theta = final; tens = 0; Sfx.thud(); FX.shake(22, 0.7); burst = 1; flashW = 1; FX.flash(0.5, '#fff1b8');
+      var win = pick === data.heavy, hv = data.heavy, wp = platePt(hv);
+      res[hv] = 'won'; res[1 - hv] = 'lost'; glowSide = hv; dimSide = 1 - hv; verdict = { t: 0, win: win };
+      FX.dust(wp.x, wp.y + g.pan, 12, '#ffd86a');
+      FX.ring(wp.x, wp.y, '#ffe9a0', g.pan * 2.4, 0.9); FX.spark(wp.x, wp.y, win ? 70 : 30, '#ffe9a0', 520); FX.ring(wp.x, wp.y, '#fff', g.pan * 3.4, 1.1);
+      if (win) { FX.coins(wp.x, wp.y, 14, 700, 40); bump(S, data.total); Sfx.chime(data.total); Sfx.fanfare(1); FX.spark(G.cx, G.cy, 50, '#6ff0dd', 420); }
+      else { Sfx.curse(); }
+      G.say(win ? T.sayRight.replace('{m}', data.total) : T.sayWrong);
+      await G.sleep(q ? 0.7 : 1.6); verdict = null;
+      await G.sleep(q ? 0.3 : 0.9);
+      G.say('');
+      if (win) await settle(S, sp, bet);
+      else {
+        S.finalLabel = T.noWin; S.final = { mult: 0, bet: bet, count: 0, t: 0 };
+        await waitTap(S, q ? 1.2 : 2.6);
+        S.final = null;
+      }
     };
     return S;
   }
