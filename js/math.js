@@ -228,6 +228,67 @@
   }
   function handOptions(rng) { var o = {}; HAND_COLORS.forEach(function (c, i) { o[c] = hand(rng, i); }); return o; }
 
+  /* ---------- Bonus SECRET : la Crypte d'Anubis (colonnes de multiplicateurs) ---------- */
+  // Caché : ni sur la roue, ni à l'achat. Il remplace un bonus gagné (voir SECRET_UPGRADE dans playSpin), environ 1 tour sur 500.
+  // Règles (tout est tiré d'avance : la scène ne fait que rejouer) :
+  //  - 5 colonnes ; chacune a un multiplicateur « du haut » (départ ×1) et 4 emplacements pour des blocs FIXES ;
+  //  - 9 blocs tombent un par un, chacun dans une colonne tirée au hasard (les blocs épiques touchent toutes les colonnes) :
+  //      CRÂNE (+)            : ajoute sa valeur au haut de SA colonne        CRÂNE ÉPIQUE (+)     : ajoute sa valeur au haut de TOUTES les colonnes
+  //      CRÂNE D'ANUBIS (×)   : multiplie le haut de SA colonne                CRÂNE D'ANUBIS ÉPIQUE (×) : multiplie le haut de TOUTES les colonnes
+  //      GLACE                : se brise et fige la valeur courante du haut en bloc FIXE ; le haut repart à ×1 (colonne pleine : la glace fond, sans effet)
+  //      BROYEUR              : écrase les blocs fixes de la colonne en un seul (leur somme) et libère des emplacements (moins de 2 blocs : sans effet)
+  //  - un bloc fixe n'est jamais modifié par les blocs suivants ;
+  //  - gain = MOYENNE des 5 colonnes (colonne = haut + blocs fixes), plafonné à MAX_WIN. (Une simple somme aurait donné une espérance ≈ 5 fois trop forte
+  //    pour rester neutre sur le RTP : le secret remplace un bonus ordinaire, son espérance doit égaler la sienne.)
+  var CRYPT_COLS = 5, CRYPT_CAP = 4, CRYPT_BLOCKS = 9, CRYPT_START = 1;
+  var CRYPT_COL_CAP = MAX_WIN * CRYPT_COLS;   // plafond d'une colonne (la moyenne ne peut pas dépasser MAX_WIN)
+  var CRYPT_TYPES = [['skull', 22], ['epic', 3], ['anubis', 12], ['epicx', 3], ['ice', 10], ['crusher', 12]];
+  var CRYPT_VALUES = {
+    skull:  [[1, 58], [2, 28], [3, 9], [5, 4], [10, 1]],
+    epic:   [[1, 60], [2, 30], [3, 10]],
+    anubis: [[2, 64], [3, 22], [5, 9], [10, 4], [25, 1]],
+    epicx:  [[2, 68], [3, 20], [5, 8], [10, 3.6], [25, 0.4]]
+  };
+  var SECRET_UPGRADE = 0.03;   // chance qu'un bonus gagné soit remplacé par le secret (≈ 1 tour sur 490)
+  // rejoue un script de blocs [{t, c, v}] : renvoie les étapes (instantanés) et le résultat. Source unique des règles (scène et tests).
+  function cryptReplay(drops) {
+    var tops = [], fixed = [], steps = [], c, i, d;
+    for (c = 0; c < CRYPT_COLS; c++) { tops.push(CRYPT_START); fixed.push([]); }
+    drops.forEach(function (dr) {
+      var st = { t: dr.t, c: dr.c, v: dr.v, froze: null, full: false, crushed: null, effect: false, before: dr.c >= 0 ? tops[dr.c] : null };
+      if (dr.t === 'skull') { tops[dr.c] = Math.min(CRYPT_COL_CAP, tops[dr.c] + dr.v); st.effect = true; }
+      else if (dr.t === 'epic') { for (c = 0; c < CRYPT_COLS; c++) tops[c] = Math.min(CRYPT_COL_CAP, tops[c] + dr.v); st.effect = true; }
+      else if (dr.t === 'anubis') { tops[dr.c] = Math.min(CRYPT_COL_CAP, tops[dr.c] * dr.v); st.effect = true; }
+      else if (dr.t === 'epicx') { for (c = 0; c < CRYPT_COLS; c++) tops[c] = Math.min(CRYPT_COL_CAP, tops[c] * dr.v); st.effect = true; }
+      else if (dr.t === 'ice') {
+        if (fixed[dr.c].length < CRYPT_CAP) { st.froze = tops[dr.c]; fixed[dr.c].push(tops[dr.c]); tops[dr.c] = CRYPT_START; st.effect = true; }
+        else st.full = true;
+      } else if (dr.t === 'crusher') {
+        if (fixed[dr.c].length >= 2) {
+          var sum = 0; fixed[dr.c].forEach(function (x) { sum += x; });
+          st.crushed = fixed[dr.c].slice(); fixed[dr.c] = [Math.min(CRYPT_COL_CAP, sum)]; st.effect = true;
+        }
+      }
+      st.tops = tops.slice(); st.fixed = fixed.map(function (f) { return f.slice(); });
+      steps.push(st);
+    });
+    var cols = [], sumAll = 0;
+    for (c = 0; c < CRYPT_COLS; c++) { var cs = tops[c]; fixed[c].forEach(function (x) { cs += x; }); cols.push(cs); sumAll += cs; }
+    var avg = sumAll / CRYPT_COLS;
+    return { steps: steps, tops: tops, fixed: fixed, cols: cols, sum: sumAll, capped: avg > MAX_WIN, total: Math.min(avg, MAX_WIN) };
+  }
+  // forced : liste de blocs imposée (tests visuels), complétée au hasard
+  function crypt(rng, forced) {
+    var drops = [], i;
+    for (i = 0; i < CRYPT_BLOCKS; i++) {
+      if (forced && forced[i]) { var f = forced[i]; drops.push({ t: f.t, c: (f.t === 'epic' || f.t === 'epicx') ? -1 : f.c, v: f.v || 0 }); continue; }
+      var t = weighted(rng, CRYPT_TYPES), v = CRYPT_VALUES[t] ? weighted(rng, CRYPT_VALUES[t]) : 0;
+      drops.push({ t: t, c: (t === 'epic' || t === 'epicx') ? -1 : Math.floor(rng() * CRYPT_COLS), v: v });
+    }
+    var r = cryptReplay(drops);
+    return { drops: drops, steps: r.steps, tops: r.tops, fixed: r.fixed, cols: r.cols, sum: r.sum, capped: r.capped, total: r.total, profile: 'crypt' };
+  }
+
   /* ---------- Un tour complet ---------- */
   function rollOracle(rng, chance) {
     if (rng() >= chance) return null;
@@ -262,7 +323,8 @@
     var boost = (oracle && oracle.kind === kind) ? oracle.boost : 1;
     var s = { oracle: oracle, index: index, kind: kind, boost: boost, bonus: null, base: 0, pay: 0 };
     if (def.bonus) {
-      if (rng() < HAND_UPGRADE) { s.options = handOptions(rng); s.bonus = s.options.turq; s.profile = 'turq'; s.upgraded = true; }
+      if (rng() < SECRET_UPGRADE) { s.secret = true; s.bonus = crypt(rng); s.profile = 'crypt'; }   // bonus SECRET (prioritaire sur la Fureur) : aucun choix, script unique
+      else if (rng() < HAND_UPGRADE) { s.options = handOptions(rng); s.bonus = s.options.turq; s.profile = 'turq'; s.upgraded = true; }
       else { s.options = drawOptions(rng, kind); s.bonus = s.options.std; s.profile = 'std'; }
       s.base = s.bonus.total;
     } else if (!def.respin) {
@@ -310,9 +372,10 @@
     MAX_WIN: MAX_WIN, MODES: MODES, N: N, LAYOUT: LAYOUT, KINDS: KINDS,
     SCARAB_ROWS: SCARAB_ROWS, SCARAB_VALUES: SCARAB_VALUES, SCARAB_BALLS: SCARAB_BALLS,
     WEIGH_PAIRS: WEIGH_PAIRS, weighGain: weighGain, VAULT_TILES: VAULT_TILES, VAULT_MAX_PICKS: VAULT_MAX_PICKS,
+    CRYPT_COLS: CRYPT_COLS, CRYPT_CAP: CRYPT_CAP, CRYPT_BLOCKS: CRYPT_BLOCKS, CRYPT_START: CRYPT_START, CRYPT_TYPES: CRYPT_TYPES, CRYPT_VALUES: CRYPT_VALUES, SECRET_UPGRADE: SECRET_UPGRADE, cryptReplay: cryptReplay,
     HAND_SEGS: HAND_SEGS, HAND_COLORS: HAND_COLORS, HAND_MAX_CHAIN: HAND_MAX_CHAIN, HAND_MIN_N: HAND_MIN_N, handOptions: handOptions, handRecalc: handRecalc, HAND_UPGRADE: HAND_UPGRADE, ORACLE_CHANCE: ORACLE_CHANCE,
     mulberry32: mulberry32, cryptoRng: cryptoRng,
     playRound: playRound, playSpin: playSpin,
-    _bonus: { scarab: scarab, weigh: weigh, vault: vault, hand: hand }
+    _bonus: { scarab: scarab, weigh: weigh, vault: vault, hand: hand, crypt: crypt }
   };
 });

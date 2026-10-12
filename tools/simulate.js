@@ -25,7 +25,7 @@ for (var i = 0; i < n; i++) {
   if (r.total === 0) b = 0; else if (r.total < 1) b = 1;
   dist[b]++;
   r.spins.forEach(function (s) {
-    var kk = s.upgraded ? 'HAND' : s.kind; var k = byKind[kk] || (byKind[kk] = { n: 0, pay: 0 });
+    var kk = s.secret ? "SECRET" : s.upgraded ? "HAND" : s.kind; var k = byKind[kk] || (byKind[kk] = { n: 0, pay: 0 });
     k.n++; k.pay += s.pay;
     if (s.bonus) nBonus++;
     if (s.boost > 1) oracleExtra += s.pay - s.pay / s.boost;
