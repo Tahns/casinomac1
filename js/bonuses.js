@@ -773,6 +773,77 @@
     return S;
   }
 
+
+  /* ---------------- écran d'annonce : le bonus est gagné, c'est au joueur de le lancer ---------------- */
+  function introScene(sp) {
+    var T = I18N.t(), kind = sp.upgraded ? 'hand' : sp.kind, S = newScene(T.bonusUnlocked), t = 0, btn = { x: 0, y: 0, w: 0, h: 0 }, hover = false, go = false, sparkT = 0, L = { ty: 0, ny: 0, size: 100, cy: 0 };
+    S.showTotal = false; S.dim = 0.78; S.bgImg = kind === 'scarab' ? 'abyss' : kind === 'weigh' ? 'judgment' : kind === 'vault' ? 'vault' : 'hand';
+    var ICN = { scarab: 'scarab', weigh: 'weigh', vault: 'vault', hand: 'hand' };
+    S.layout = function () {
+      var bw = clamp(G.w * 0.6, 220, 420), bh = clamp(G.h * 0.1, 52, 76);
+      btn = { w: bw, h: bh, x: G.cx - bw / 2, y: G.h - hudH() - bh - (G.h < 520 ? 10 : G.h < 640 ? 26 : 50) };
+      var fs = clamp(G.w * 0.085, 34, 86), ns = clamp(G.w * 0.034, 17, 32);
+      L.ty = T0() + fs * 0.9; L.ny = btn.y - 14 - ns * (sp.boost > 1 ? 2.2 : 1);
+      var top = L.ty + fs * 0.55, avail = L.ny - ns - top - 6;
+      L.size = Math.max(60, Math.min(avail, G.w * 0.8, G.h * 0.62)); L.cy = top + 4 + L.size / 2;
+    };
+    S.update = function (dt) {
+      t += dt; sparkT -= dt;
+      if (sparkT <= 0 && t > 0.4) { sparkT = 0.09; var a = Math.random() * TAU, r = L.size * (0.3 + Math.random() * 0.4); FX.spark(G.cx + Math.cos(a) * r, L.cy + Math.sin(a) * r * 0.7, 2, Math.random() < 0.3 ? '#fff1b8' : '#ffd86a', 90); }
+    };
+    S.draw = function () {
+      var w = G.w, h = G.h, cy = L.cy, k = G.ease.outBack(clamp(t / 0.7, 0, 1)), R = L.size / 1.5 * 0.9;
+      ctx.save(); ctx.translate(G.cx, cy); ctx.globalCompositeOperation = 'lighter'; ctx.rotate(t * 0.25);
+      var ra = clamp(t / 0.8, 0, 1) * 0.16;
+      for (var i = 0; i < 14; i++) { ctx.rotate(TAU / 14); ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(-R * 0.22, -Math.max(w, h)); ctx.lineTo(R * 0.22, -Math.max(w, h)); ctx.closePath(); ctx.fillStyle = 'rgba(255,216,106,' + ra + ')'; ctx.fill(); }
+      ctx.restore();
+      var pulse = 1 + Math.sin(t * 3) * 0.04;
+      ctx.save(); ctx.translate(G.cx, cy); ctx.scale(k * pulse, k * pulse);
+      var gl = ctx.createRadialGradient(0, 0, R * 0.2, 0, 0, R * 1.1); gl.addColorStop(0, 'rgba(255,226,140,.55)'); gl.addColorStop(1, 'rgba(255,226,140,0)');
+      ctx.fillStyle = gl; ctx.beginPath(); ctx.arc(0, 0, R * 1.1, 0, TAU); ctx.fill();
+      ctx.rotate(Math.sin(t * 1.6) * 0.05);
+      G.icon(ctx, ICN[kind], 0, 0, L.size);
+      ctx.restore();
+      var ks = G.ease.outBack(clamp((t - 0.25) / 0.45, 0, 1)) * (1 + Math.max(0, 0.6 - t) * 0.6), ty = L.ty;
+      ctx.save(); ctx.translate(G.cx, ty); ctx.scale(ks, ks);
+      G.goldText(T.bonusWord, 0, 0, clamp(w * 0.085, 34, 86), { blur: 40, spacing: 8 });
+      ctx.restore();
+      var na = clamp((t - 0.7) / 0.4, 0, 1), ns = clamp(w * 0.034, 17, 32);
+      ctx.save(); ctx.globalAlpha = na;
+      G.txt(sp.upgraded ? T.kindsLong.hand : T.kindsLong[sp.kind], G.cx, L.ny + (1 - na) * 14, { size: ns, weight: 900, fill: '#ffe08a', stroke: '#2a1802', sw: 4, spacing: 3, shadow: 'rgba(255,200,80,.6)', blur: 18 });
+      if (sp.boost > 1) G.txt(T.boostApplied + ' ×' + sp.boost, G.cx, L.ny + ns * 1.4, { size: clamp(w * 0.02, 12, 18), family: 'Manrope', weight: 800, fill: '#fff1b8' });
+      ctx.restore();
+      if (t > 1.0) {
+        var ba = clamp((t - 1.0) / 0.4, 0, 1), bp = 1 + Math.sin(t * 5) * 0.035 + (hover ? 0.05 : 0), bx = btn.x + btn.w / 2, by = btn.y + btn.h / 2;
+        ctx.save(); ctx.globalAlpha = ba; ctx.translate(bx, by + (1 - ba) * 20); ctx.scale(bp, bp);
+        A.roundRect(ctx, -btn.w / 2, -btn.h / 2, btn.w, btn.h, btn.h / 2);
+        var bg = ctx.createLinearGradient(0, -btn.h / 2, 0, btn.h / 2); bg.addColorStop(0, '#ffe9a0'); bg.addColorStop(0.5, '#f0b73c'); bg.addColorStop(1, '#a36a12');
+        ctx.fillStyle = bg; ctx.shadowColor = 'rgba(255,216,106,' + (0.55 + Math.sin(t * 5) * 0.25) + ')'; ctx.shadowBlur = 34 + Math.sin(t * 5) * 12; ctx.fill(); ctx.shadowBlur = 0;
+        ctx.lineWidth = 3; ctx.strokeStyle = '#fff6d0'; ctx.stroke();
+        G.txt(T.launchBonus, 0, 1, { size: clamp(btn.h * 0.36, 16, 28), weight: 900, fill: '#3a2203', spacing: 3 });
+        ctx.restore();
+        if (G.h >= 640) { ctx.save(); ctx.globalAlpha = ba * 0.8; G.txt(T.launchHint, G.cx, btn.y + btn.h + 22, { size: 12, family: 'Manrope', weight: 700, fill: '#cdb98a', spacing: 1 }); ctx.restore(); }
+      }
+    };
+    S.run = function () {
+      Sfx.bonus(); FX.shake(10, 0.5); FX.flash(0.4, '#ffe9a0'); FX.ring(G.cx, G.cy, '#ffe9a0', G.R * 1.2, 1);
+      return new Promise(function (res) {
+        function fin() {
+          if (go) return; go = true; S.pointer = function () {}; window.removeEventListener('keydown', key, true);
+          Sfx.shield(); FX.flash(0.6, '#fff1b8'); FX.shake(12, 0.4); FX.spark(G.cx, btn.y + btn.h / 2, 40, '#ffe9a0', 400); FX.ring(G.cx, G.cy, '#fff1b8', G.R * 1.5, 0.7);
+          G.sleep(0.5).then(res);
+        }
+        function key(e) { if (e.code === 'Space' || e.code === 'Enter') { e.preventDefault(); e.stopImmediatePropagation(); if (t >= 1.1) fin(); } }
+        window.addEventListener('keydown', key, true);
+        function inBtn(x, y) { return t > 1.0 && x >= btn.x && x <= btn.x + btn.w && y >= btn.y - 8 && y <= btn.y + btn.h + 8; }
+        S.pointer = function (x, y, type) { hover = inBtn(x, y); if (type === 'down' && hover) fin(); };
+        if (quick()) G.sleep(1.6).then(fin);
+        else G.sleep(45).then(fin);
+      });
+    };
+    return S;
+  }
+
   /* ---------------- orchestration ---------------- */
   var FACT = { scarab: scarabScene, weigh: weighScene, vault: vaultScene, hand: handScene };
   G.runBonus = async function (sp, bet) {
@@ -780,7 +851,11 @@
     if (G.turbo) G.speed = G.ultra ? 8 : 3.4;   // turbo / ultra : les bonus restent rapides aussi (la vitesse ne retombe plus à la normale)
     $('oracle').hidden = true;
     Sfx.bonus(); G.wheel.flashLamps = 1.4; FX.shake(14, 0.6); FX.flash(0.5, '#ffe9a0'); FX.ring(G.cx, G.cy, '#ffe9a0', G.R * 1.3, 1);
-    await G.sleep(1.1);
+    await G.sleep(G.turbo ? 0.5 : 1.1);
+    await G.setFade(1, 0.35);
+    var is = introScene(sp);
+    G.setScene(is); await G.setFade(0, 0.4);
+    await is.run();
     await G.setFade(1, 0.35);
     if (sp.options && !sp.upgraded && !quick()) {
       var cs = chooseScene(sp);
