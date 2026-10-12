@@ -118,17 +118,26 @@
   }
 
   /* ---------- Bonus 2 : Pesée du Cœur ---------- */
-  // Trois profils de même espérance (≈ 5,83) : paires proches / d'origine / très écartées.
+  // Règle : le joueur choisit la plume ou le cœur ; les multiplicateurs des deux plateaux sont révélés ; le plateau le PLUS LOURD
+  // gagne SON multiplicateur, le plus léger ne gagne rien. Le plateau le plus lourd est tiré 50/50, indépendamment des valeurs :
+  // le joueur gagne donc 1 fois sur 2 et les valeurs affichées sont le DOUBLE des paires d'origine (même espérance ≈ 5,83).
+  // Trois profils de même espérance : paires proches / d'origine / très écartées. Chaque entrée : [[a, b], poids].
   var WEIGH_PROFILES = {
-    safe: [[[2, 3], 37], [[3, 5], 31], [[4, 6], 25], [[5, 8], 24], [[6, 10], 6], [[10, 16], 2], [[20, 30], 2], [[40, 60], 1], [[60, 100], 1]],
-    std:  [[[1, 3], 34], [[2, 5], 28], [[3, 8], 20], [[4, 12], 10], [[6, 25], 5], [[12, 60], 2], [[20, 150], 0.9]],
-    bold: [[[0.5, 2], 38], [[1, 5], 37], [[1, 10], 17], [[2, 20], 9], [[3, 40], 3], [[5, 80], 1], [[10, 150], 1], [[20, 150], 1]]
+    safe: [[[4, 6], 37], [[6, 10], 31], [[8, 12], 25], [[10, 16], 24], [[12, 20], 6], [[20, 32], 2], [[40, 60], 2], [[80, 120], 1], [[120, 200], 1]],
+    std:  [[[2, 6], 34], [[4, 10], 28], [[6, 16], 20], [[8, 24], 10], [[12, 50], 5], [[24, 120], 2], [[40, 300], 0.9]],
+    bold: [[[1, 4], 38], [[2, 10], 37], [[2, 20], 17], [[4, 40], 9], [[6, 80], 3], [[10, 160], 1], [[20, 300], 1], [[40, 300], 1]]
   };
   var WEIGH_PAIRS = WEIGH_PROFILES.std;
+  // gain d'un choix : le multiplicateur du plateau choisi s'il est le plus lourd, sinon rien (0 = plume/gauche, 1 = cœur/droite)
+  function weighGain(data, pick) { return pick === data.heavy ? data.mults[pick] : 0; }
   function weigh(rng, prof) {
     var pair = weighted(rng, WEIGH_PROFILES[prof || 'std']);
-    var heavy = rng() < 0.5 ? 0 : 1; // 0 = plume (gauche) 1 = cœur (droite) — celui qui descend
-    return { pair: pair, heavy: heavy, total: pair[heavy], profile: prof || 'std' };
+    var mults = rng() < 0.5 ? [pair[0], pair[1]] : [pair[1], pair[0]];   // valeurs attribuées au hasard à la plume (0) et au cœur (1)
+    var heavy = rng() < 0.5 ? 0 : 1;                                       // plateau le plus lourd, indépendant des valeurs
+    // total par défaut : choix « plume » (pick 0) ; la scène le recalcule dès que le joueur choisit (l'espérance est identique pour 0 ou 1)
+    var data = { pair: pair, mults: mults, heavy: heavy, pick: 0, total: 0, profile: prof || 'std' };
+    data.total = weighGain(data, 0);
+    return data;
   }
 
   /* ---------- Bonus 3 : Chambre du Trésor (pick-me, 12 tuiles) ---------- */
@@ -265,7 +274,7 @@
     SCARAB_PROFILES: SCARAB_PROFILES, WEIGH_PROFILES: WEIGH_PROFILES, VAULT_PROFILES: VAULT_PROFILES,
     MAX_WIN: MAX_WIN, MODES: MODES, N: N, LAYOUT: LAYOUT, KINDS: KINDS,
     SCARAB_ROWS: SCARAB_ROWS, SCARAB_VALUES: SCARAB_VALUES, SCARAB_BALLS: SCARAB_BALLS,
-    WEIGH_PAIRS: WEIGH_PAIRS, VAULT_TILES: VAULT_TILES, VAULT_MAX_PICKS: VAULT_MAX_PICKS,
+    WEIGH_PAIRS: WEIGH_PAIRS, weighGain: weighGain, VAULT_TILES: VAULT_TILES, VAULT_MAX_PICKS: VAULT_MAX_PICKS,
     HAND_SEGS: HAND_SEGS, HAND_UPGRADE: HAND_UPGRADE, ORACLE_CHANCE: ORACLE_CHANCE,
     mulberry32: mulberry32, cryptoRng: cryptoRng,
     playRound: playRound, playSpin: playSpin,
