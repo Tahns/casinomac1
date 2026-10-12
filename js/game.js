@@ -639,9 +639,14 @@
       if (u >= 1) { G.tweens.splice(i, 1); tw.res(); }
     }
     parUpdate(dt);
-    W.update(sdt);
-    if (G.scene && G.scene.update) G.scene.update(sdt);
-    FX.update(sdt);
+    // turbo / ultra : le temps de jeu avance jusqu'à 8× plus vite ; on le découpe en pas ≤ 1/60 s pour que le ressort du pointeur,
+    // la physique des scarabées et les particules restent stables (un gros pas fait diverger le ressort et traverser les chevilles)
+    var sub = Math.min(12, Math.max(1, Math.ceil(sdt * 60))), h = sdt / sub;
+    for (i = 0; i < sub; i++) {
+      W.update(h);
+      if (G.scene && G.scene.update) G.scene.update(h);
+      FX.update(h);
+    }
     updateWinOv(dt);
   }
   G.advance = async function (sec) { for (var n = Math.round(sec * 60), i = 0; i < n; i++) { tick(1 / 60); await null; } };
