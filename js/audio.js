@@ -116,6 +116,38 @@
       n.g.gain.cancelScheduledValues(ctx.currentTime); n.g.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.6);
       setTimeout(function () { n.nodes.forEach(function (o) { try { o.stop(); } catch (e) {} }); }, 700);
     },
+    // annonce « BONUS » : montée dramatique (souffle + arpège ascendant + accord final + coup grave)
+    bonusReveal: function () {
+      noise(1.6, 0.16, 0, 180, 'bandpass', 3800);
+      tone(55, 1.8, 'sine', 0.2, 0, 110, true);
+      [0, 2, 4, 5, 6, 4, 6].forEach(function (k, i) {
+        var f = SCALE[k] * (i > 3 ? 4 : 2), t = 0.15 + i * 0.17;
+        tone(f, 0.5, 'sawtooth', 0.045 + i * 0.004, t, null, true);
+        tone(f / 2, 0.6, 'sine', 0.1, t, null, true);
+      });
+      var tf = 1.45;
+      [0, 2, 4].forEach(function (k) { tone(SCALE[k] * 4, 1.4, 'sawtooth', 0.05, tf, null, true); tone(SCALE[k] * 2, 1.6, 'sine', 0.1, tf, null, true); });
+      tone(SCALE[0], 1.8, 'sine', 0.3, tf, null, true);
+      tone(70, 0.7, 'sine', 0.45, tf, 30); noise(0.5, 0.22, tf, 400);
+      for (var i = 0; i < 6; i++) tone(2000 + Math.random() * 2600, 0.14, 'sine', 0.035, tf + 0.05 + i * 0.05, null, true);
+    },
+    // bouton LANCER LE BONUS : impact + souffle
+    bonusLaunch: function () {
+      tone(120, 0.7, 'sine', 0.55, 0, 28);
+      tone(60, 0.9, 'sine', 0.4, 0, 30);
+      noise(0.12, 0.3, 0, 6000, 'highpass');
+      noise(1.3, 0.2, 0.04, 400, 'bandpass', 5200);
+      tone(440, 0.8, 'sawtooth', 0.06, 0.05, 1760, true);
+      [2, 4, 6].forEach(function (k, i) { tone(SCALE[k] * 4, 0.6, 'triangle', 0.07, 0.18 + i * 0.07, null, true); });
+    },
+    // pulsation douce (deux battements) pour le suspense ; s = intensité 0..1
+    heartbeat: function (s) {
+      s = s == null ? 0.5 : Math.max(0, Math.min(1, s));
+      var v = 0.16 + s * 0.2;
+      tone(58, 0.22, 'sine', v, 0, 38);
+      tone(48, 0.26, 'sine', v * 0.7, 0.2, 34);
+      noise(0.08, v * 0.2, 0, 220);
+    },
     setMuted: function (m) { muted = m; if (master) master.gain.value = m ? 0 : 0.85; },
     isMuted: function () { return muted; }
   };
