@@ -123,7 +123,7 @@
     var c = buyKind ? Math.round(b * priceMult * 100) / 100 : cost();
     if (S.limitHit) { openLimit(); return; }
     if (S.balance < c) { say(T.noFunds); Sfx.curse(); stopAuto(); return; }
-    Sfx.unlock(); Sfx.startAmbient();
+    Sfx.unlock(); Sfx.startAmbient(); Sfx.spinStart();
     S.busy = true; G.speed = spd();
     S.balance -= c; SESS.spins++; SESS.wag += c; updateHud(true); setWin(0, false); setSpinBtn();
     var round = buyKind ? M.playBuy(rng, buyKind) : M.playRound(rng, S.mode), hadBonus = false;

@@ -19,6 +19,7 @@
       }
     },
     coins: function (x, y, n, power, spreadX) {
+      if (root.Sfx && Sfx.coinShower && n >= 6) Sfx.coinShower(Math.min(14, Math.round(n / 3)));
       if (FX.lite) n = Math.ceil(n * 0.45);
       for (var i = 0; i < n; i++) {
         var a = -Math.PI / 2 + (Math.random() - 0.5) * 1.5, v = (0.55 + Math.random() * 0.7) * (power || 700);
