@@ -62,6 +62,42 @@ ok(badW === 0, 'Pesée : mults ∈ profil, gain = mult du plateau choisi s\'il e
 ok(Math.abs(heavyCnt[0] / (heavyCnt[0] + heavyCnt[1]) - 0.5) < 0.005, 'Pesée : plateau le plus lourd tiré 50/50 (' + (heavyCnt[0] / (3 * nW) * 100).toFixed(2) + ' % plume)');
 ok(Math.abs(sumP[0] / sumP[1] - 1) < 0.03, 'Pesée : espérance identique si le joueur choisit la plume ou le cœur (' + (sumP[0] / 3 / nW).toFixed(3) + ' vs ' + (sumP[1] / 3 / nW).toFixed(3) + ')');
 
+// 4c. Fureur d'Anubis : 3 couleurs, DOUBLE de sa couleur = palier ×2 et relance, autre couleur = arrêt, bande = bonus ×N × palier
+var HS = M.HAND_SEGS, dcount = [0, 0, 0], bands = 0, nums = 0;
+HS.forEach(function (s) { if (s.d != null) dcount[s.d]++; else if (s.b) bands++; else nums++; });
+ok(dcount[0] === dcount[1] && dcount[1] === dcount[2] && dcount[0] > 0 && bands >= 3 && HS.every(function (s, i) { return JSON.stringify(s) !== JSON.stringify(HS[(i + 1) % HS.length]); }), 'Fureur : même nombre de DOUBLE par couleur (' + dcount.join('/') + '), ' + bands + ' bandes, ' + nums + ' nombres, pas de voisines identiques');
+ok(HS.every(function (s) { return s.b == null || ['scarab', 'weigh', 'vault'].indexOf(s.b) >= 0; }), 'Fureur : aucune bande ne renvoie vers la Fureur (pas de boucle)');
+var rh = M.mulberry32(77), badH = 0, nH = 400000, evC = [0, 0, 0], upC = [0, 0, 0], wrongC = [0, 0, 0], bandC = [0, 0, 0], maxLvl = 0;
+for (var hi = 0; hi < nH; hi++) {
+  var ho = M.handOptions(rh);
+  M.HAND_COLORS.forEach(function (cn, ci) {
+    var h = ho[cn], sp = h.spins, last = sp[sp.length - 1], m = 1;
+    if (h.colour !== ci || !last.final) badH++;
+    sp.forEach(function (x, j) {
+      if (j < sp.length - 1) { var sg = HS[x.idx]; if (x.final || sg.d !== ci) badH++; m *= 2; if (x.mult !== m) badH++; }
+    });
+    if (last.mult !== m || h.mult !== m || m > Math.pow(2, M.HAND_MAX_CHAIN)) badH++;
+    maxLvl = Math.max(maxLvl, sp.length - 1);
+    var seg = HS[last.idx], exp;
+    if (seg.d != null) { if (seg.d === ci || last.kind !== 'wrong') badH++; exp = M.HAND_MIN_N * m; wrongC[ci]++; }
+    else if (seg.b) { if (last.kind !== 'band' || last.band !== seg.b || last.x !== seg.x || !last.bonus) badH++; exp = last.bonus.total * seg.x * m; bandC[ci]++; }
+    else { if (last.kind !== 'num') badH++; exp = seg.n * m; }
+    if (Math.abs(last.pay - exp) > 1e-9 || h.total !== Math.min(exp, M.MAX_WIN)) badH++;
+    sp.forEach(function (x, j) { if (j === sp.length - 1) return; upC[ci]++; });
+    evC[ci] += h.total;
+  });
+}
+ok(badH === 0, 'Fureur : invariants des scripts des 3 couleurs sur ' + 3 * nH + ' scripts (anomalies: ' + badH + ', palier max atteint: ×' + Math.pow(2, maxLvl) + ')');
+var evMean = (evC[0] + evC[1] + evC[2]) / 3 / nH;
+ok(evC.every(function (v) { return Math.abs(v / nH / evMean - 1) < 0.03; }), 'Fureur : espérance identique pour les 3 couleurs (' + evC.map(function (v) { return (v / nH).toFixed(2); }).join(' / ') + ')');
+ok(upC.every(function (v) { return Math.abs(v / upC[0] - 1) < 0.05; }) && wrongC.every(function (v) { return Math.abs(v / wrongC[0] - 1) < 0.03; }) && bandC.every(function (v) { return Math.abs(v / bandC[0] - 1) < 0.03; }), 'Fureur : doublements / mauvaise couleur / bandes aussi fréquents pour chaque couleur (' + upC.join('/') + ' · ' + wrongC.join('/') + ' · ' + bandC.join('/') + ')');
+ok(evMean > 23.2 && evMean < 26.2, 'Fureur : espérance du bonus ≈ ' + evMean.toFixed(2) + '× (attendu ≈ 24,7×)');
+// recalcul après le choix du joueur dans la Pesée imbriquée
+var rw2 = M.mulberry32(5), badR = 0;
+for (var wi = 0; wi < 20000; wi++) { var hh = M._bonus.hand(rw2, 0, [0]); if (hh.spins[0].kind !== 'band') { badR++; continue; } }
+var forcedW = M._bonus.hand(M.mulberry32(3), 1, [12]); var d0 = forcedW.spins[0].bonus; d0.pick = 1 - d0.heavy; d0.total = M.weighGain(d0, d0.pick); M.handRecalc(forcedW);
+ok(badR === 0 && forcedW.total === 0 && forcedW.spins[0].band === 'weigh', 'Fureur : le total se recalcule si le joueur change son choix dans la Pesée imbriquée');
+
 // 5. RTP grossier (tolérance large : 2 M de tours ≈ ±0,5 pt)
 function rtp(f, cost, n) { var s = 0; for (var i = 0; i < n; i++) s += f().total; return s / n / cost * 100; }
 var r1 = M.mulberry32(11), n = 2000000;

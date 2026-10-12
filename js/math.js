@@ -172,26 +172,61 @@
     return { picks: picks, ended: ended, bonusFinish: ended === 'cleared' ? 5 : 0, total: total, profile: prof || 'std' };
   }
 
-  /* ---------- Bonus 4 : Fureur d'Anubis (roue géante à multiplicateurs) ---------- */
+  /* ---------- Bonus 4 : Fureur d'Anubis (roue géante : choix d'une couleur, DOUBLE, bandes de bonus) ---------- */
+  // Le joueur choisit une des 3 couleurs. La roue a des cases « nombre », des cases DOUBLE (2 par couleur) et des bandes de bonus ×N.
+  // Lancer : nombre -> fin, gain = nombre × palier ; DOUBLE de SA couleur -> la roue est doublée (palier ×2) et on relance ;
+  // DOUBLE d'une AUTRE couleur -> la chaîne s'arrête et on encaisse le palier : le plus petit nombre de la roue × palier ;
+  // bande -> le bonus est joué (tiré d'avance, profil Équilibré), gain = gain du bonus × N × palier (une bande ne renvoie jamais vers la Fureur).
+  // Les trois couleurs sont strictement symétriques : un script indépendant et de même loi est tiré d'avance pour chacune (modèle « livres »).
+  var HAND_COLORS = ['turq', 'gold', 'ruby'];
   var HAND_SEGS = [
-    { n: 2 }, { n: 3 }, { n: 3 }, { x: 2 }, { n: 4 }, { n: 4 }, { n: 5 }, { n: 5 }, { n: 6 }, { x: 2 }, { n: 6 }, { n: 8 }, { n: 8 }, { n: 10 }, { n: 10 }, { x: 3 }, { n: 12 }, { n: 15 }, { n: 20 }, { n: 25 }, { n: 40 }, { x: 4 }, { n: 60 }, { n: 100 }
+    { b: 'vault', x: 3 }, { n: 15 }, { d: 0 }, { n: 5 }, { n: 30 }, { n: 8 }, { d: 1 }, { b: 'scarab', x: 10 },
+    { n: 15 }, { n: 6 }, { d: 2 }, { n: 50 }, { b: 'weigh', x: 5 }, { n: 10 }, { d: 0 }, { n: 100 },
+    { n: 20 }, { n: 5 }, { d: 1 }, { b: 'scarab', x: 2 }, { n: 60 }, { n: 8 }, { d: 2 }, { n: 30 }
   ];
-  var HAND_MAX_CHAIN = 2;
-  function hand(rng) {
-    var spins = [], mult = 1, total = 0;
-    for (var i = 0; i < 8; i++) {
-      var idx = Math.floor(rng() * HAND_SEGS.length);
-      var s = HAND_SEGS[idx];
-      if (s.x && i < HAND_MAX_CHAIN) { mult *= s.x; spins.push({ idx: idx, mult: mult, final: false }); continue; }
-      if (s.x) { // chaîne maximale atteinte : on force un nombre
-        do { idx = Math.floor(rng() * HAND_SEGS.length); s = HAND_SEGS[idx]; } while (!s.n);
+  var HAND_MAX_CHAIN = 4;   // nombre maximal de doublements (palier ×16) ; au palier maximal les cases DOUBLE ne comptent plus
+  var HAND_MIN_N = Math.min.apply(null, HAND_SEGS.filter(function (s) { return s.n; }).map(function (s) { return s.n; }));
+  function handBand(rng, seg) {
+    var data = BONUS_FN[seg.b](rng, 'std');
+    if (seg.b === 'weigh') { data.pick = rng() < 0.5 ? 0 : 1; data.total = weighGain(data, data.pick); }   // choix auto aléatoire (la scène laisse jouer le joueur et recalcule)
+    return data;
+  }
+  // gain d'un lancer final (nombre, mauvaise couleur, bande) — recalculable après le choix du joueur dans la Pesée imbriquée
+  function handSpinPay(sp) {
+    if (sp.kind === 'num') return sp.base * sp.mult;
+    if (sp.kind === 'wrong') return HAND_MIN_N * sp.mult;
+    if (sp.kind === 'band') return sp.bonus.total * sp.x * sp.mult;
+    return 0;
+  }
+  function handRecalc(h) {
+    var last = h.spins[h.spins.length - 1];
+    last.pay = handSpinPay(last);
+    h.total = Math.min(last.pay, MAX_WIN);
+    return h.total;
+  }
+  // forced : suite d'indices de cases imposée (tests visuels) ; sinon tirage uniforme
+  function hand(rng, colour, forced) {
+    colour = colour || 0;
+    var spins = [], mult = 1, level = 0, n = HAND_SEGS.length;
+    for (var i = 0; i < 12; i++) {
+      var idx, s;
+      if (forced && i < forced.length) { idx = forced[i]; s = HAND_SEGS[idx]; }
+      else {
+        do { idx = Math.floor(rng() * n); s = HAND_SEGS[idx]; } while (level >= HAND_MAX_CHAIN && s.d != null);   // palier maximal : on retire hors DOUBLE
       }
-      total = s.n * mult;
-      spins.push({ idx: idx, mult: mult, final: true, base: s.n });
+      if (s.d != null && s.d === colour && level < HAND_MAX_CHAIN) { level++; mult *= 2; spins.push({ idx: idx, kind: 'up', mult: mult, final: false }); continue; }
+      var rec = { idx: idx, mult: mult, final: true };
+      if (s.d != null) rec.kind = 'wrong';
+      else if (s.b) { rec.kind = 'band'; rec.band = s.b; rec.x = s.x; rec.bonus = handBand(rng, s); }
+      else { rec.kind = 'num'; rec.base = s.n; }
+      spins.push(rec);
       break;
     }
-    return { spins: spins, mult: mult, total: total };
+    var h = { spins: spins, mult: mult, total: 0, colour: colour };
+    handRecalc(h);
+    return h;
   }
+  function handOptions(rng) { var o = {}; HAND_COLORS.forEach(function (c, i) { o[c] = hand(rng, i); }); return o; }
 
   /* ---------- Un tour complet ---------- */
   function rollOracle(rng, chance) {
@@ -227,7 +262,7 @@
     var boost = (oracle && oracle.kind === kind) ? oracle.boost : 1;
     var s = { oracle: oracle, index: index, kind: kind, boost: boost, bonus: null, base: 0, pay: 0 };
     if (def.bonus) {
-      if (rng() < HAND_UPGRADE) { s.bonus = hand(rng); s.upgraded = true; }
+      if (rng() < HAND_UPGRADE) { s.options = handOptions(rng); s.bonus = s.options.turq; s.profile = 'turq'; s.upgraded = true; }
       else { s.options = drawOptions(rng, kind); s.bonus = s.options.std; s.profile = 'std'; }
       s.base = s.bonus.total;
     } else if (!def.respin) {
@@ -262,9 +297,9 @@
   function playBuy(rng, kind) {
     var b, upgraded = false;
     var opts = null;
-    if (kind === 'hand' || rng() < HAND_UPGRADE) { b = hand(rng); upgraded = true; }
+    if (kind === 'hand' || rng() < HAND_UPGRADE) { opts = handOptions(rng); b = opts.turq; upgraded = true; }
     else { opts = drawOptions(rng, kind); b = opts.std; }
-    var s = { oracle: null, index: -1, kind: kind, boost: 1, bonus: b, upgraded: upgraded, base: b.total, pay: b.total, options: opts, profile: opts ? 'std' : undefined };
+    var s = { oracle: null, index: -1, kind: kind, boost: 1, bonus: b, upgraded: upgraded, base: b.total, pay: b.total, options: opts, profile: opts ? (upgraded ? 'turq' : 'std') : undefined };
     var total = Math.min(s.pay, MAX_WIN);
     return { spins: [s], total: total, capped: s.pay > MAX_WIN, cost: BUY[kind].price, mode: 'buy' };
   }
@@ -275,7 +310,7 @@
     MAX_WIN: MAX_WIN, MODES: MODES, N: N, LAYOUT: LAYOUT, KINDS: KINDS,
     SCARAB_ROWS: SCARAB_ROWS, SCARAB_VALUES: SCARAB_VALUES, SCARAB_BALLS: SCARAB_BALLS,
     WEIGH_PAIRS: WEIGH_PAIRS, weighGain: weighGain, VAULT_TILES: VAULT_TILES, VAULT_MAX_PICKS: VAULT_MAX_PICKS,
-    HAND_SEGS: HAND_SEGS, HAND_UPGRADE: HAND_UPGRADE, ORACLE_CHANCE: ORACLE_CHANCE,
+    HAND_SEGS: HAND_SEGS, HAND_COLORS: HAND_COLORS, HAND_MAX_CHAIN: HAND_MAX_CHAIN, HAND_MIN_N: HAND_MIN_N, handOptions: handOptions, handRecalc: handRecalc, HAND_UPGRADE: HAND_UPGRADE, ORACLE_CHANCE: ORACLE_CHANCE,
     mulberry32: mulberry32, cryptoRng: cryptoRng,
     playRound: playRound, playSpin: playSpin,
     _bonus: { scarab: scarab, weigh: weigh, vault: vault, hand: hand }
