@@ -124,6 +124,15 @@
       swell(1.6, 0.12, 1.0, 120, 2400);
       boom(0.5, 1.95);
     },
+    // apparition d'Anubis propre à chaque bonus
+    emerge: function (kind) {
+      if (kind === 'hand') { A.anubisRise(); return; }
+      if (kind === 'scarab') { swell(1.4, 0.14, 0, 300, 5200); for (var i = 0; i < 18; i++) noise(0.05, 0.03 + (i % 3) * 0.01, 0.4 + i * 0.05, 4500 + Math.random() * 2500, 'bandpass', undefined, 3); pad([SCALE[0] / 2, SCALE[2] / 2], 2.0, 0.14, 0, 0.6); boom(0.3, 1.9); }
+      else if (kind === 'weigh') { pad([SCALE[0], SCALE[4], SCALE[0] * 2], 2.4, 0.16, 0, 0.7); [0, 0.6, 1.2].forEach(function (t, j) { A.heartbeat(0.4 + j * 0.25); setTimeout(function () { A.heartbeat(0.4 + j * 0.25); }, t * 1000); }); bell(SCALE[4] * 4, 1.6, 0.07, 1.3, true); boom(0.3, 1.9); }
+      else if (kind === 'vault') { tone(70, 1.6, 'sine', 0.3, 0, 40, true); noise(1.4, 0.16, 0.2, 200, 'lowpass', 1200); swell(1.0, 0.12, 0.8, 300, 4000); [0, 1, 2, 3, 4, 5].forEach(function (j) { A.coin(1 + j * 0.1); }); boom(0.34, 1.25); bell(SCALE[0] * 8, 1.4, 0.06, 1.3, true); }
+      else if (kind === 'crypt') { pad([SCALE[0] / 2, SCALE[1] / 2, SCALE[3] / 2], 2.6, 0.2, 0, 0.5); noise(2.2, 0.1, 0, 3000, 'bandpass', 700, 2); for (var j = 0; j < 8; j++) bell(1400 + Math.random() * 1800, 1.2, 0.03, 0.6 + j * 0.2, true, 2.7); A.curse(); boom(0.4, 1.9); }
+      else boom(0.3);
+    },
     // lancement d'un tour : rythme de darbouka (dum-tak-tak-dum), sistre qui frémit, souffle qui monte, cloche de départ
     spinStart: function () {
       var i;

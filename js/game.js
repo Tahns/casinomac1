@@ -449,7 +449,20 @@
     ctx.beginPath(); ctx.arc(cx, cy, r * 0.88, 0, TAU); ctx.clip();
     var pulse = 0.65 + 0.35 * Math.sin(G.t * 2.4) + (W.mode === 'spin' ? 0.2 : 0);
     if (ART.medal) {
-      ctx.drawImage(ART.medal, cx - r * 0.9, cy - r * 0.9, r * 1.8, r * 1.8);
+      // Anubis vivant : il respire, balance à peine la tête, ses yeux pulsent (plus vite pendant le tour), il cligne, un reflet balaie l'or
+      var spinN = W.mode === 'spin' ? 1 : 0, br = 1 + 0.016 * Math.sin(G.t * 1.3) + spinN * 0.012 * Math.sin(G.t * 9), sway = 0.012 * Math.sin(G.t * 0.7) + spinN * 0.01 * Math.sin(G.t * 5);
+      ctx.save(); ctx.translate(cx, cy + r * 0.012 * Math.sin(G.t * 1.3)); ctx.rotate(sway); ctx.scale(br, br);
+      ctx.drawImage(ART.medal, -r * 0.9, -r * 0.9, r * 1.8, r * 1.8);
+      var bl = (G.t % 6.1) > 5.96 ? 0.1 : 1, ei = (0.3 + 0.3 * Math.sin(G.t * (2.2 + spinN * 5)) + spinN * 0.3) * bl, sz = r * 1.8;
+      ctx.globalCompositeOperation = 'lighter';
+      [[-0.061, 0.18], [0.07, -0.18]].forEach(function (pe) {
+        var ex = pe[0] * sz, ey = -0.066 * sz, eg2 = ctx.createRadialGradient(ex, ey, 0, ex, ey, sz * 0.09);
+        eg2.addColorStop(0, 'rgba(120,255,235,' + ei + ')'); eg2.addColorStop(1, 'rgba(60,220,200,0)'); ctx.fillStyle = eg2; ctx.beginPath(); ctx.arc(ex, ey, sz * 0.09, 0, TAU); ctx.fill();
+      });
+      var sw0 = ((G.t % 4.5) / 4.5), sx = -r * 1.3 + sw0 * r * 2.6;                      // reflet doré qui balaie le médaillon
+      var sg = ctx.createLinearGradient(sx - r * 0.25, -r, sx + r * 0.25, r); sg.addColorStop(0, 'rgba(255,230,150,0)'); sg.addColorStop(0.5, 'rgba(255,236,170,' + (0.12 + spinN * 0.05) + ')'); sg.addColorStop(1, 'rgba(255,230,150,0)');
+      ctx.fillStyle = sg; ctx.fillRect(-r, -r, r * 2, r * 2);
+      ctx.restore();
       var eg = ctx.createRadialGradient(cx, cy - r * 0.08, 0, cx, cy - r * 0.08, r * 0.5);
       eg.addColorStop(0, 'rgba(111,240,221,' + 0.16 * clamp(pulse, 0, 1.2) + ')'); eg.addColorStop(1, 'rgba(111,240,221,0)');
       ctx.fillStyle = eg; ctx.fillRect(cx - r, cy - r, r * 2, r * 2);
@@ -581,65 +594,98 @@
     });
   };
 
-  /* ======== ANUBIS SURGIT DU CENTRE DE LA ROUE (gros bonus) : le médaillon grandit vers l'écran, yeux rouges ======== */
-  G.emerge = function () {
+  /* ======== ANUBIS SURGIT DU CENTRE DE LA ROUE : une apparition différente par bonus, liée à son thème ======== */
+  // eye : couleur des yeux ; glow : lueur ; dark : voile ; full : plein écran ou plus modeste
+  var EMERGE = {
+    hand:   { eye: [255, 60, 30],   glow: '255,40,20',  dark: '8,0,0',   full: true },
+    scarab: { eye: [70, 255, 190],  glow: '40,230,170', dark: '0,10,8',  full: false },
+    weigh:  { eye: [255, 246, 220], glow: '255,240,200', dark: '6,5,2',  full: false },
+    vault:  { eye: [255, 196, 70],  glow: '255,190,60', dark: '9,5,0',   full: false },
+    crypt:  { eye: [165, 120, 255], glow: '150,110,255', dark: '4,0,12', full: true }
+  };
+  G.emerge = function (kind, fast) {
     return new Promise(function (res) {
       if (!ART.medal || FX.reduced) { res(); return; }
-      G.eg = { t: 0, dur: 2.7, res: res, flashed: false, growled: false };
-      if (Sfx.anubisRise) Sfx.anubisRise();
+      var st = EMERGE[kind] || EMERGE.hand;
+      G.eg = { t: 0, dur: fast ? 1.5 : 2.7, res: res, st: st, kind: kind, parts: [], spawned: 0, step: 0, fast: !!fast };
+      if (Sfx.emerge) Sfx.emerge(kind);
       FX.shake(6, 0.6);
     });
   };
+  function spr(name, x, y, size, rot, alpha) {
+    ctx.save(); ctx.globalAlpha = alpha; ctx.translate(x, y); ctx.rotate(rot || 0);
+    if (!G.icon(ctx, name, 0, 0, size)) { ctx.fillStyle = '#ffd86a'; ctx.beginPath(); ctx.arc(0, 0, size * 0.2, 0, TAU); ctx.fill(); }
+    ctx.restore();
+  }
   function updateEmerge(sdt) {
     var e = G.eg; if (!e) return;
-    e.t += sdt; var u = e.t / e.dur;
-    if (u > 0.3 && !e.growled) { e.growled = true; FX.shake(14, 1.0); }
-    if (u > 0.72 && !e.flashed) { e.flashed = true; FX.flash(0.7, '#ff3a2a'); FX.shake(22, 0.7); FX.ring(G.cx, G.cy, '#ff5a3a', G.R * 1.4, 0.9); if (Sfx.thud) Sfx.thud(); }
+    e.t += sdt; var u = e.t / e.dur, k = e.kind, i;
+    // particules propres au thème, projetées depuis le centre (ou le haut/bas)
+    if (k === 'scarab' && u > 0.22 && u < 0.72) { var n = Math.floor((u - 0.22) / 0.5 * 36); while (e.spawned < n) { e.spawned++; var a = Math.random() * TAU, v = 260 + Math.random() * 520; e.parts.push({ x: G.cx, y: G.cy, vx: Math.cos(a) * v, vy: Math.sin(a) * v * 0.8 - 80, s: 26 + Math.random() * 30, r: a + Math.PI / 2, l: 0 }); } }
+    if (k === 'weigh' && u > 0.2 && u < 0.7) { n = Math.floor((u - 0.2) / 0.5 * 18); while (e.spawned < n) { e.spawned++; e.parts.push({ x: G.w * (0.2 + 0.6 * Math.random()), y: -40, vx: (Math.random() - 0.5) * 60, vy: 90 + Math.random() * 120, s: 22 + Math.random() * 26, r: Math.random() * 6, l: 0, sw: Math.random() * 6 }); } }
+    if (k === 'crypt' && u > 0.2 && u < 0.75) { n = Math.floor((u - 0.2) / 0.55 * 16); while (e.spawned < n) { e.spawned++; e.parts.push({ x: G.w * (0.1 + 0.8 * Math.random()), y: G.h + 30, vx: (Math.random() - 0.5) * 80, vy: -(140 + Math.random() * 220), s: 30 + Math.random() * 40, r: (Math.random() - 0.5) * 0.6, l: 0 }); } }
+    for (i = e.parts.length - 1; i >= 0; i--) { var q = e.parts[i]; q.l += sdt; q.x += q.vx * sdt; q.y += q.vy * sdt; if (k === 'weigh') q.x += Math.sin(q.l * 3 + q.sw) * 40 * sdt; if (q.l > 2.2 || q.y < -80 || q.y > G.h + 80) e.parts.splice(i, 1); }
+    if (k === 'vault' && u > 0.48 && !e.step) { e.step = 1; FX.coins(G.cx, G.h * 0.5, 46, 1000, 160); FX.flash(0.4, '#ffd86a'); FX.shake(12, 0.6); }
+    if (k === 'weigh' && !e.beat1 && u > 0.55) { e.beat1 = 1; FX.ring(G.cx, G.h * 0.55, '#fff4d0', G.R * 0.9, 0.8); FX.shake(8, 0.4); }
+    if (k === 'scarab' && !e.step && u > 0.3) { e.step = 1; FX.shake(10, 0.8); FX.dust && FX.dust(G.cx, G.cy + G.R * 0.4, 16, '#ffd86a'); }
+    if (k === 'crypt' && !e.step && u > 0.3) { e.step = 1; FX.shake(10, 0.9); FX.flash(0.3, '#9a7bff'); }
+    if (k === 'hand' && u > 0.3 && !e.step) { e.step = 1; FX.shake(14, 1.0); }
+    if (u > 0.72 && !e.flashed) {
+      e.flashed = true; var fc = { hand: '#ff3a2a', scarab: '#5cf0c0', weigh: '#fff4d0', vault: '#ffd86a', crypt: '#9a7bff' }[k] || '#fff';
+      FX.flash(0.7, fc); FX.shake(k === 'hand' || k === 'crypt' ? 22 : 14, 0.7); FX.ring(G.cx, G.cy, fc, G.R * 1.4, 0.9); if (Sfx.thud) Sfx.thud();
+    }
     if (e.t >= e.dur) { var r = e.res; G.eg = null; r(); }
   }
   function drawEmerge() {
     var e = G.eg; if (!e || !ART.medal) return;
-    var u = clamp(e.t / e.dur, 0, 1), W_ = G.w, H_ = G.h, cx = G.cx, cy = G.cy;
-    var grow = G.ease.inOut(clamp((u - 0.08) / 0.62, 0, 1)), s0 = G.R * 0.36, s1 = Math.min(W_ * 1.15, H_ * 1.05);
-    var size = s0 + (s1 - s0) * grow, py = cy + (H_ * 0.46 - cy) * grow * 0.0 + (G.h * 0.5 - cy) * grow;      // glisse vers le centre de l'écran
-    var fadeOut = clamp((u - 0.86) / 0.14, 0, 1), dark = clamp(u / 0.3, 0, 1) * 0.72 * (1 - fadeOut);
-    var jit = (u > 0.25 ? (Math.random() - 0.5) * (2 + 8 * grow) : 0);
-    // 1) pénombre rouge
-    ctx.save(); ctx.fillStyle = 'rgba(8,0,0,' + dark + ')'; ctx.fillRect(0, 0, W_, H_);
+    var st = e.st, k = e.kind, u = clamp(e.t / e.dur, 0, 1), W_ = G.w, H_ = G.h, cx = G.cx, cy = G.cy, i;
+    var grow = G.ease.inOut(clamp((u - 0.08) / 0.62, 0, 1)), s0 = G.R * 0.36, s1 = st.full ? Math.min(W_ * 1.15, H_ * 1.05) : Math.min(W_ * 0.82, H_ * 0.82);
+    var size = s0 + (s1 - s0) * grow, py = cy + (H_ * 0.5 - cy) * grow, fadeOut = clamp((u - 0.86) / 0.14, 0, 1);
+    var dark = clamp(u / 0.3, 0, 1) * 0.72 * (1 - fadeOut), jit = (u > 0.25 && (k === 'hand' || k === 'crypt') ? (Math.random() - 0.5) * (2 + 8 * grow) : 0);
+    var ec = st.eye, ers = ec[0] + ',' + ec[1] + ',' + ec[2];
+    // 1) voile + lueur de la couleur du thème
+    ctx.save(); ctx.fillStyle = 'rgba(' + st.dark + ',' + dark + ')'; ctx.fillRect(0, 0, W_, H_);
     var rg = ctx.createRadialGradient(cx, py, size * 0.05, cx, py, Math.max(W_, H_) * 0.7);
-    rg.addColorStop(0, 'rgba(255,40,20,' + (0.5 * grow * (1 - fadeOut)) + ')'); rg.addColorStop(1, 'rgba(120,0,0,0)'); ctx.fillStyle = rg; ctx.fillRect(0, 0, W_, H_); ctx.restore();
-    // 2) médaillon qui sort du centre (anneau sombre derrière pour le détacher de la roue)
-    ctx.save(); ctx.globalAlpha = (1 - fadeOut); ctx.translate(cx + jit, py + jit * 0.6); ctx.rotate(Math.sin(e.t * 9) * 0.006 * grow);
-    ctx.shadowColor = 'rgba(255,40,20,.85)'; ctx.shadowBlur = 30 + 50 * grow;
-    ctx.beginPath(); ctx.arc(0, 0, size * 0.49, 0, TAU); ctx.fillStyle = '#050102'; ctx.fill(); ctx.shadowBlur = 0;
-    ctx.save(); ctx.beginPath(); ctx.arc(0, 0, size * 0.49, 0, TAU); ctx.clip(); ctx.drawImage(ART.medal, -size / 2, -size / 2, size, size);
-    // 3) yeux rouges : on éteint le turquoise puis on allume deux braises
-    var eyes = [[-0.061, -0.066], [0.07, -0.066]], pw = clamp((u - 0.22) / 0.3, 0, 1), pulse = 0.75 + 0.25 * Math.sin(e.t * 14);
-    ctx.globalCompositeOperation = 'source-over';
-    eyes.forEach(function (p, i) {
-      var ex = p[0] * size, ey = p[1] * size, ew = size * 0.05, eh = size * 0.02;
-      ctx.save(); ctx.translate(ex, ey); ctx.rotate(i ? -0.18 : 0.18);
-      ctx.fillStyle = 'rgba(25,0,0,' + (0.85 * pw) + ')'; ctx.beginPath(); ctx.ellipse(0, 0, ew * 1.1, eh * 1.5, 0, 0, TAU); ctx.fill();
-      ctx.restore();
+    rg.addColorStop(0, 'rgba(' + st.glow + ',' + (0.5 * grow * (1 - fadeOut)) + ')'); rg.addColorStop(1, 'rgba(' + st.glow + ',0)'); ctx.fillStyle = rg; ctx.fillRect(0, 0, W_, H_); ctx.restore();
+    // colonne de lumière céleste (pesée) / flammes froides (crypte)
+    if (k === 'weigh') { ctx.save(); ctx.globalCompositeOperation = 'lighter'; var bw = size * 0.7 * grow, bg = ctx.createLinearGradient(0, 0, 0, H_); bg.addColorStop(0, 'rgba(255,248,225,' + 0.45 * grow * (1 - fadeOut) + ')'); bg.addColorStop(1, 'rgba(255,248,225,0)'); ctx.fillStyle = bg; ctx.fillRect(cx - bw / 2, 0, bw, H_); ctx.restore(); }
+    if (k === 'crypt') { ctx.save(); ctx.globalCompositeOperation = 'lighter'; for (i = 0; i < 9; i++) { var fx = W_ * (i + 0.5) / 9, fh = H_ * (0.25 + 0.15 * Math.sin(e.t * 3 + i * 1.7)) * grow, fg = ctx.createLinearGradient(0, H_, 0, H_ - fh); fg.addColorStop(0, 'rgba(120,90,255,' + 0.5 * (1 - fadeOut) + ')'); fg.addColorStop(1, 'rgba(120,90,255,0)'); ctx.fillStyle = fg; ctx.beginPath(); ctx.ellipse(fx, H_, W_ / 14, fh, 0, 0, TAU); ctx.fill(); } ctx.restore(); }
+    // 2) médaillon (coupé en deux pour le coffre)
+    var split = k === 'vault' ? clamp((u - 0.45) / 0.3, 0, 1) : 0;
+    if (split > 0) { ctx.save(); ctx.globalCompositeOperation = 'lighter'; var gl = ctx.createLinearGradient(cx - size * 0.12, 0, cx + size * 0.12, 0); gl.addColorStop(0, 'rgba(255,210,90,0)'); gl.addColorStop(0.5, 'rgba(255,225,130,' + 0.95 * (1 - fadeOut) + ')'); gl.addColorStop(1, 'rgba(255,210,90,0)'); ctx.fillStyle = gl; ctx.fillRect(cx - size * 0.35, 0, size * 0.7, H_); ctx.restore(); }
+    function medalHalf(sgn) {
+      ctx.save(); ctx.globalAlpha = 1 - fadeOut; ctx.translate(cx + jit + (sgn || 0) * split * size * 0.22, py + jit * 0.6); ctx.rotate(Math.sin(e.t * 9) * 0.006 * grow);
+      ctx.shadowColor = 'rgba(' + st.glow + ',.85)'; ctx.shadowBlur = 30 + 50 * grow;
+      if (sgn) { ctx.beginPath(); ctx.rect(sgn < 0 ? -size : 0, -size, size, size * 2); ctx.clip(); }
+      ctx.beginPath(); ctx.arc(0, 0, size * 0.49, 0, TAU); ctx.fillStyle = '#050102'; ctx.fill(); ctx.shadowBlur = 0;
+      ctx.save(); ctx.beginPath(); ctx.arc(0, 0, size * 0.49, 0, TAU); ctx.clip(); ctx.drawImage(ART.medal, -size / 2, -size / 2, size, size);
+      // 3) yeux : turquoise éteint, puis braises de la couleur du thème
+      var eyes = [[-0.061, -0.066], [0.07, -0.066]], pw = clamp((u - 0.22) / 0.3, 0, 1), pulse = 0.75 + 0.25 * Math.sin(e.t * 14);
+      eyes.forEach(function (p, j) { var ex = p[0] * size, ey = p[1] * size, ew = size * 0.05, eh = size * 0.02; ctx.save(); ctx.translate(ex, ey); ctx.rotate(j ? -0.18 : 0.18); ctx.fillStyle = 'rgba(20,0,5,' + (0.85 * pw) + ')'; ctx.beginPath(); ctx.ellipse(0, 0, ew * 1.1, eh * 1.5, 0, 0, TAU); ctx.fill(); ctx.restore(); });
+      ctx.globalCompositeOperation = 'lighter';
+      eyes.forEach(function (p, j) {
+        var ex = p[0] * size, ey = p[1] * size, ew = size * 0.05, eh = size * 0.02, rr = size * 0.2 * pw * pulse;
+        var hg = ctx.createRadialGradient(ex, ey, 0, ex, ey, Math.max(1, rr)); hg.addColorStop(0, 'rgba(' + ers + ',' + (0.75 * pw) + ')'); hg.addColorStop(0.35, 'rgba(' + ers + ',' + (0.3 * pw) + ')'); hg.addColorStop(1, 'rgba(' + ers + ',0)');
+        ctx.fillStyle = hg; ctx.beginPath(); ctx.arc(ex, ey, Math.max(1, rr), 0, TAU); ctx.fill();
+        ctx.save(); ctx.translate(ex, ey); ctx.rotate(j ? -0.18 : 0.18); ctx.fillStyle = 'rgba(' + ers + ',' + (0.95 * pw * pulse) + ')'; ctx.beginPath(); ctx.ellipse(0, 0, ew, eh, 0, 0, TAU); ctx.fill();
+        ctx.fillStyle = 'rgba(255,250,240,' + (0.9 * pw) + ')'; ctx.beginPath(); ctx.ellipse(0, 0, ew * 0.45, eh * 0.45, 0, 0, TAU); ctx.fill(); ctx.restore();
+      });
+      // cœur qui bat sur la poitrine (pesée)
+      if (k === 'weigh' && pw > 0.2) { var hb = Math.pow(Math.max(0, Math.sin(e.t * 7)), 3), hr = size * (0.12 + 0.05 * hb); var hgr = ctx.createRadialGradient(0, size * 0.2, 0, 0, size * 0.2, hr); hgr.addColorStop(0, 'rgba(255,70,60,' + (0.55 + 0.4 * hb) + ')'); hgr.addColorStop(1, 'rgba(255,0,0,0)'); ctx.fillStyle = hgr; ctx.beginPath(); ctx.arc(0, size * 0.2, hr, 0, TAU); ctx.fill(); }
+      ctx.restore(); ctx.restore();
+    }
+    if (split > 0) { medalHalf(-1); medalHalf(1); } else medalHalf(0);
+    // 4) rayons des yeux
+    var pw2 = clamp((u - 0.22) / 0.3, 0, 1);
+    if (pw2 > 0.3 && (k === 'hand' || k === 'crypt')) [[-0.061, -1], [0.07, 1]].forEach(function (p) {
+      var ex = cx + p[0] * size, ey = py - 0.066 * size, bl = Math.max(W_, H_), bg = ctx.createLinearGradient(ex, ey, ex + p[1] * bl * 0.5, ey - bl * 0.35);
+      bg.addColorStop(0, 'rgba(' + ers + ',' + (0.4 * pw2 * (1 - fadeOut)) + ')'); bg.addColorStop(1, 'rgba(' + ers + ',0)');
+      ctx.fillStyle = bg; ctx.beginPath(); ctx.moveTo(ex, ey - size * 0.02); ctx.lineTo(ex + p[1] * bl * 0.5, ey - bl * 0.5); ctx.lineTo(ex + p[1] * bl * 0.5, ey - bl * 0.1); ctx.lineTo(ex, ey + size * 0.02); ctx.closePath(); ctx.fill();
     });
-    ctx.globalCompositeOperation = 'lighter';
-    eyes.forEach(function (p, i) {
-      var ex = p[0] * size, ey = p[1] * size, ew = size * 0.05, eh = size * 0.02;
-      var hg = ctx.createRadialGradient(ex, ey, 0, ex, ey, size * 0.2 * pw * pulse); hg.addColorStop(0, 'rgba(255,60,30,' + (0.75 * pw) + ')'); hg.addColorStop(0.35, 'rgba(255,20,10,' + (0.3 * pw) + ')'); hg.addColorStop(1, 'rgba(255,0,0,0)');
-      ctx.fillStyle = hg; ctx.beginPath(); ctx.arc(ex, ey, size * 0.2 * pw * pulse, 0, TAU); ctx.fill();
-      ctx.save(); ctx.translate(ex, ey); ctx.rotate(i ? -0.18 : 0.18);
-      ctx.fillStyle = 'rgba(255,70,40,' + (0.95 * pw * pulse) + ')'; ctx.beginPath(); ctx.ellipse(0, 0, ew, eh, 0, 0, TAU); ctx.fill();
-      ctx.fillStyle = 'rgba(255,235,210,' + (0.9 * pw) + ')'; ctx.beginPath(); ctx.ellipse(0, 0, ew * 0.45, eh * 0.45, 0, 0, TAU); ctx.fill();
-      ctx.restore();
-    });
-    ctx.restore();   // fin clip
-    // 4) rayons rouges qui jaillissent des yeux
-    if (pw > 0.3) eyes.forEach(function (p, i) {
-      var ex = p[0] * size, ey = p[1] * size, bl = Math.max(W_, H_), bg = ctx.createLinearGradient(ex, ey, ex + (i ? 1 : -1) * bl * 0.5, ey - bl * 0.35);
-      bg.addColorStop(0, 'rgba(255,50,30,' + (0.4 * pw * pulse) + ')'); bg.addColorStop(1, 'rgba(255,0,0,0)');
-      ctx.fillStyle = bg; ctx.beginPath(); ctx.moveTo(ex, ey - size * 0.02); ctx.lineTo(ex + (i ? 1 : -1) * bl * 0.5, ey - bl * 0.5); ctx.lineTo(ex + (i ? 1 : -1) * bl * 0.5, ey - bl * 0.1); ctx.lineTo(ex, ey + size * 0.02); ctx.closePath(); ctx.fill();
-    });
-    ctx.restore();
+    // 5) particules du thème
+    var spName = { scarab: 'scarab', weigh: 'weigh', crypt: 'skull' }[k];
+    if (spName) for (i = 0; i < e.parts.length; i++) { var q = e.parts[i]; spr(spName, q.x, q.y, q.s, q.r + (k === 'scarab' ? Math.sin(q.l * 20) * 0.25 : Math.sin(q.l * 2 + (q.sw || 0)) * 0.4), clamp(1 - (q.l - 1.4) / 0.8, 0, 1) * (1 - fadeOut)); }
+    if (k === 'weigh') { var fy = -size * 0.4 + (H_ * 0.55 + size * 0.4) * G.ease.out3(clamp((u - 0.25) / 0.45, 0, 1)); spr('weigh', cx + Math.sin(e.t * 2.4) * size * 0.08, fy, size * 0.5, Math.sin(e.t * 2.4) * 0.3, clamp((u - 0.25) / 0.1, 0, 1) * (1 - fadeOut)); }
   }
 
   /* ============================ OVERLAY GROS GAIN ============================ */

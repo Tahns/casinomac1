@@ -1431,7 +1431,8 @@
     if (G.turbo) G.speed = G.ultra ? 8 : 3.4;   // turbo / ultra : les bonus restent rapides aussi (la vitesse ne retombe plus à la normale)
     $('oracle').hidden = true;
     Sfx.bonus(); G.wheel.flashLamps = 1.4; FX.shake(14, 0.6); FX.flash(0.5, '#ffe9a0'); FX.ring(G.cx, G.cy, '#ffe9a0', G.R * 1.3, 1);
-    if ((sp.upgraded || sp.secret) && G.emerge) await G.emerge();   // gros bonus : Anubis surgit du centre de la roue, yeux rouges
+    // Anubis surgit du centre de la roue : une apparition différente par bonus (scarabées, plume + cœur, coffre d'or, yeux rouges, crânes)
+    if (G.emerge) await G.emerge(sp.secret ? 'crypt' : sp.upgraded ? 'hand' : sp.kind, quick());
     else await G.sleep(G.turbo ? 0.5 : 1.1);
     await G.setFade(1, 0.35);
     var is = introScene(sp);
