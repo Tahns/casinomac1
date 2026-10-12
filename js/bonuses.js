@@ -782,10 +782,10 @@
     S.layout = function () {
       var bw = clamp(G.w * 0.6, 220, 420), bh = clamp(G.h * 0.1, 52, 76);
       btn = { w: bw, h: bh, x: G.cx - bw / 2, y: G.h - hudH() - bh - (G.h < 520 ? 10 : G.h < 640 ? 26 : 50) };
-      var fs = clamp(G.w * 0.085, 34, 86), ns = clamp(G.w * 0.034, 17, 32);
+      var fs = clamp(Math.min(G.w * 0.085, G.h * 0.13), 22, 86), ns = clamp(Math.min(G.w * 0.034, G.h * 0.05), 13, 32);
       L.ty = T0() + fs * 0.9; L.ny = btn.y - 14 - ns * (sp.boost > 1 ? 2.2 : 1);
       var top = L.ty + fs * 0.55, avail = L.ny - ns - top - 6;
-      L.size = Math.max(60, Math.min(avail, G.w * 0.8, G.h * 0.62)); L.cy = top + 4 + L.size / 2;
+      L.size = Math.max(36, Math.min(avail, G.w * 0.8, G.h * 0.62)); L.cy = top + 4 + L.size / 2;
     };
     S.update = function (dt) {
       t += dt; sparkT -= dt;
@@ -806,9 +806,9 @@
       ctx.restore();
       var ks = G.ease.outBack(clamp((t - 0.25) / 0.45, 0, 1)) * (1 + Math.max(0, 0.6 - t) * 0.6), ty = L.ty;
       ctx.save(); ctx.translate(G.cx, ty); ctx.scale(ks, ks);
-      G.goldText(T.bonusWord, 0, 0, clamp(w * 0.085, 34, 86), { blur: 40, spacing: 8 });
+      G.goldText(T.bonusWord, 0, 0, clamp(Math.min(w * 0.085, h * 0.13), 22, 86), { blur: 40, spacing: 8 });
       ctx.restore();
-      var na = clamp((t - 0.7) / 0.4, 0, 1), ns = clamp(w * 0.034, 17, 32);
+      var na = clamp((t - 0.7) / 0.4, 0, 1), ns = clamp(Math.min(w * 0.034, h * 0.05), 13, 32);
       ctx.save(); ctx.globalAlpha = na;
       G.txt(sp.upgraded ? T.kindsLong.hand : T.kindsLong[sp.kind], G.cx, L.ny + (1 - na) * 14, { size: ns, weight: 900, fill: '#ffe08a', stroke: '#2a1802', sw: 4, spacing: 3, shadow: 'rgba(255,200,80,.6)', blur: 18 });
       if (sp.boost > 1) G.txt(T.boostApplied + ' ×' + sp.boost, G.cx, L.ny + ns * 1.4, { size: clamp(w * 0.02, 12, 18), family: 'Manrope', weight: 800, fill: '#fff1b8' });
@@ -826,14 +826,15 @@
       }
     };
     S.run = function () {
-      Sfx.bonus(); FX.shake(10, 0.5); FX.flash(0.4, '#ffe9a0'); FX.ring(G.cx, G.cy, '#ffe9a0', G.R * 1.2, 1);
+      Sfx.bonusReveal ? Sfx.bonusReveal() : Sfx.bonus(); FX.shake(10, 0.5); FX.flash(0.4, '#ffe9a0'); FX.ring(G.cx, G.cy, '#ffe9a0', G.R * 1.2, 1);
+      if (!quick()) G.say(T.launchHint);
       return new Promise(function (res) {
         function fin() {
           if (go) return; go = true; S.pointer = function () {}; window.removeEventListener('keydown', key, true);
-          Sfx.shield(); FX.flash(0.6, '#fff1b8'); FX.shake(12, 0.4); FX.spark(G.cx, btn.y + btn.h / 2, 40, '#ffe9a0', 400); FX.ring(G.cx, G.cy, '#fff1b8', G.R * 1.5, 0.7);
+          (Sfx.bonusLaunch || Sfx.shield)(); FX.flash(0.6, '#fff1b8'); FX.shake(12, 0.4); FX.spark(G.cx, btn.y + btn.h / 2, 40, '#ffe9a0', 400); FX.ring(G.cx, G.cy, '#fff1b8', G.R * 1.5, 0.7);
           G.sleep(0.5).then(res);
         }
-        function key(e) { if (e.code === 'Space' || e.code === 'Enter') { e.preventDefault(); e.stopImmediatePropagation(); if (t >= 1.1) fin(); } }
+        function key(e) { if (!$('modal').hidden || (e.target && e.target.tagName === 'BUTTON')) return; if (e.code === 'Space' || e.code === 'Enter') { e.preventDefault(); e.stopImmediatePropagation(); if (t >= 1.1) fin(); } }
         window.addEventListener('keydown', key, true);
         function inBtn(x, y) { return t > 1.0 && x >= btn.x && x <= btn.x + btn.w && y >= btn.y - 8 && y <= btn.y + btn.h + 8; }
         S.pointer = function (x, y, type) { hover = inBtn(x, y); if (type === 'down' && hover) fin(); };
