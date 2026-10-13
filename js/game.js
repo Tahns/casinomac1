@@ -253,16 +253,16 @@
 
   /* ============================== LA ROUE ============================== */
   var VIS = {
-    m0:    { c: ['#2c241b', '#14100b'], tx: '#8d7c60', glyph: 'dust' },
-    m025:  { c: ['#7c6038', '#3d2c17'], tx: '#fff6e0' },
-    m05:   { c: ['#a67c3d', '#5f4220'], tx: '#fff1c8' },
-    m1:    { c: ['#3e74e8', '#183a8c'], tx: '#ffffff' },
-    m2:    { c: ['#22d3be', '#0b7c70'], tx: '#032b26' },
-    m3:    { c: ['#35d98c', '#106b42'], tx: '#032616' },
-    ankh:  { c: ['#ffe9a0', '#b4861f'], tx: '#3a2706', glyph: 'ankh' },
-    scarab:{ c: ['#f0604a', '#8a1b10'], tx: '#fff1d8', glyph: 'scarab' },
-    weigh: { c: ['#fffbe8', '#cfae62'], tx: '#4a3410', glyph: 'feather' },
-    vault: { c: ['#b36ae8', '#4b1d75'], tx: '#fff0ff', glyph: 'pyramid' }
+    m0:    { c: ['#52432f', '#2a2016'], tx: '#d8c49a', glyph: 'dust' },
+    m025:  { c: ['#d6a24a', '#9a6a22'], tx: '#2a1600' },
+    m05:   { c: ['#f0bc50', '#a8741e'], tx: '#2a1600' },
+    m1:    { c: ['#5a96ff', '#2358d8'], tx: '#ffffff' },
+    m2:    { c: ['#30f0d8', '#0fa896'], tx: '#032b26' },
+    m3:    { c: ['#4cf5a2', '#18ad66'], tx: '#032616' },
+    ankh:  { c: ['#fff0b0', '#d29a28'], tx: '#3a2706', glyph: 'ankh' },
+    scarab:{ c: ['#ff7058', '#c02c1c'], tx: '#fff6e6', glyph: 'scarab' },
+    weigh: { c: ['#ffffff', '#e8cf86'], tx: '#4a3410', glyph: 'feather' },
+    vault: { c: ['#cc84ff', '#7a30b8'], tx: '#fff6ff', glyph: 'pyramid' }
   };
   G.VIS = VIS;
   G.kindColor = function (k) { return VIS[k].c[0]; };
@@ -318,12 +318,12 @@
       // reflet
       f.save(); wedge(f, i, ri, ro); f.clip();
       var sh = f.createLinearGradient(Math.cos(am - step / 2) * ro, Math.sin(am - step / 2) * ro, Math.cos(am + step / 2) * ro, Math.sin(am + step / 2) * ro);
-      sh.addColorStop(0, 'rgba(255,255,255,.18)'); sh.addColorStop(0.5, 'rgba(255,255,255,0)'); sh.addColorStop(1, 'rgba(0,0,0,.25)');
+      sh.addColorStop(0, 'rgba(255,255,255,.22)'); sh.addColorStop(0.5, 'rgba(255,255,255,0)'); sh.addColorStop(1, 'rgba(0,0,0,.12)');
       f.fillStyle = sh; f.fillRect(-R, -R, 2 * R, 2 * R);
       f.restore();
       // creux : ombre intérieure + arête éclairée => les secteurs semblent gravés dans la roue
       f.save(); wedge(f, i, ri, ro); f.clip(); wedge(f, i, ri, ro);
-      f.lineWidth = R * 0.028; f.strokeStyle = 'rgba(0,0,0,.38)'; f.stroke();
+      f.lineWidth = R * 0.024; f.strokeStyle = 'rgba(0,0,0,.26)'; f.stroke();
       f.lineWidth = R * 0.007; f.strokeStyle = 'rgba(255,240,190,.28)'; f.translate(R * 0.004, R * 0.006); wedge(f, i, ri, ro); f.stroke();
       f.restore();
       // arêtes dorées
@@ -448,12 +448,14 @@
     ctx.beginPath(); ctx.arc(cx, cy, r * 1.02, 0, TAU); ctx.fillStyle = '#050304'; ctx.fill(); ctx.shadowBlur = 0;
     if (!lg) { ctx.restore(); A.jackal(ctx, cx, cy - r * 0.2, r * 0.44, { glow: clamp(0.65 + 0.35 * Math.sin(t * 2.4), 0, 1) }); return; }
     if (G.eg) { ctx.restore(); return; }        // pendant l'apparition plein écran, le socle reste vide
-    var size = r * 2.5, br = 1 + 0.02 * Math.sin(t * 1.3) + spinN * 0.025 * Math.sin(t * 11), sway = 0.018 * Math.sin(t * 0.8) + spinN * 0.03 * Math.sin(t * 6);
+    var size = r * 2.06, br = 1 + 0.016 * Math.sin(t * 1.3) + spinN * 0.025 * Math.sin(t * 11), sway = 0.018 * Math.sin(t * 0.8) + spinN * 0.03 * Math.sin(t * 6);
     var jx = spinN ? (Math.random() - 0.5) * r * 0.025 : 0, jy = spinN ? (Math.random() - 0.5) * r * 0.025 : 0;
     // aura rouge qui bat (plus vive et plus rapide pendant le tour)
     var ap = 0.5 + 0.5 * Math.sin(t * (2.2 + spinN * 6)), ag = ctx.createRadialGradient(cx, cy, r * 0.5, cx, cy, r * 1.6);
     ag.addColorStop(0, 'rgba(255,40,20,' + (0.22 + 0.18 * ap + spinN * 0.2) + ')'); ag.addColorStop(1, 'rgba(255,40,20,0)'); ctx.fillStyle = ag; ctx.fillRect(cx - r * 1.7, cy - r * 1.7, r * 3.4, r * 3.4);
-    ctx.translate(cx + jx, cy + jy + r * 0.014 * Math.sin(t * 1.3)); ctx.rotate(sway); ctx.scale(br, br);
+    ctx.lineWidth = R * 0.022; ctx.strokeStyle = A.goldGrad(ctx, cx - r, cy - r, cx + r, cy + r); ctx.beginPath(); ctx.arc(cx, cy, r, 0, TAU); ctx.stroke();       // anneau doré du moyeu
+    ctx.beginPath(); ctx.arc(cx, cy, r * 0.9, 0, TAU); ctx.clip();       // le logo est serti dans le moyeu : plus de chaînes qui débordent sur la roue
+    ctx.translate(cx + jx, cy + jy + r * 0.01 * Math.sin(t * 1.3)); ctx.rotate(sway); ctx.scale(br, br);
     // chaînes qui tintent : léger tremblement de la couronne
     ctx.save(); ctx.rotate(0.006 * Math.sin(t * 3.1 + 1)); ctx.drawImage(lg, -size / 2, -size / 2, size, size); ctx.restore();
     ctx.globalCompositeOperation = 'lighter';
@@ -471,6 +473,10 @@
     // éclats d'or de la chaîne brisée (en bas à droite) : petites étincelles qui jaillissent par intermittence
     var cyc = (t % 2.4) / 2.4;
     if (cyc < 0.6) for (var k = 0; k < 6; k++) { var u = cyc / 0.6, ang = -0.9 + k * 0.5, d = size * (0.04 + 0.12 * u) * (0.6 + k * 0.1), px = size * 0.26 + Math.cos(ang) * d, py = size * -0.01 + Math.sin(ang) * d + u * size * 0.05; ctx.fillStyle = 'rgba(255,215,110,' + (1 - u) * 0.9 + ')'; ctx.beginPath(); ctx.arc(px, py, size * 0.008 * (1 - u * 0.5), 0, TAU); ctx.fill(); }
+    // dôme de verre : reflet qui suit la lumière (même fini que l'ancien médaillon) ; coordonnées relatives au centre du moyeu
+    ctx.globalCompositeOperation = 'source-over';
+    var dl = ctx.createRadialGradient(-r * 0.35 - P.x * r * 0.12, -r * 0.45 - P.y * r * 0.1, 0, -r * 0.2, -r * 0.25, r * 1.1);
+    dl.addColorStop(0, 'rgba(255,255,255,.3)'); dl.addColorStop(0.35, 'rgba(255,255,255,.06)'); dl.addColorStop(1, 'rgba(0,0,0,.3)'); ctx.fillStyle = dl; ctx.fillRect(-r, -r, r * 2, r * 2);
     ctx.restore();
   }
 

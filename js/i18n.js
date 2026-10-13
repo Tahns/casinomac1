@@ -41,7 +41,6 @@
         'L\'Oracle (≈ 1 tour sur 3) désigne une case et lui offre un boost ×2 à ×25. Si la roue s\'y arrête, le boost s\'applique !',
         'ANKH : relance gratuite de la roue, sans remise.',
         'Pesée du Cœur : choisissez la plume de Maât ou le cœur, les multiplicateurs défilent et se révèlent, puis la balance tranche. Le plateau le plus lourd gagne son multiplicateur (jusqu\'à ×300), le plus léger n\'a rien : une chance sur deux.',
-        'Avant un bonus (Scarabées, Pesée, Trésor), choisissez un profil : Prudent, Équilibré ou Audacieux. Les trois ont le même RTP ; seule la volatilité change. Le tirage est fait à l\'avance pour chaque profil.',
         'Un bonus peut être saisi par la FUREUR D\'ANUBIS : choisissez une couleur (turquoise, or ou rubis) puis lancez la roue géante. Un nombre : gain = nombre × palier. DOUBLE de VOTRE couleur : les nombres de la roue sont doublés (palier ×2, jusqu\'à ×16) et vous relancez. DOUBLE d\'une AUTRE couleur : la chaîne s\'arrête et vous encaissez le plus petit nombre de la roue (5) × palier.',
         'Les bandes de la Fureur lancent un bonus (Scarabées ×2 ou ×10, Pesée ×5, Trésor ×3) : gain du bonus × le multiplicateur de la bande × palier, jusqu\'à ×5000. Une bande ne ramène jamais à la Fureur.',
         '??? Un bonus secret se cache parfois derrière un bonus gagné… extrêmement rare. À vous de le découvrir.'
@@ -52,7 +51,7 @@
       cryptLeg: ['+ COLONNE', '+ TOUTES', '× COLONNE', '× TOUTES', 'GLACE', 'BROYEUR'],
       cryptHint: { skull: 'CRÂNE : ajoute sa valeur au haut de sa colonne. Touchez pour lâcher', epic: 'CRÂNE ÉPIQUE : ajoute sa valeur au haut de TOUTES les colonnes', anubis: 'CRÂNE D\'ANUBIS : multiplie le haut de sa colonne', epicx: 'CRÂNE D\'ANUBIS ÉPIQUE : multiplie le haut de TOUTES les colonnes', ice: 'GLACE : fige le haut en bloc fixe, le haut repart à ×1', crusher: 'BROYEUR : écrase les blocs fixes de la colonne en un seul' },
       tableCols: ['Case', 'Sur la roue', 'Gain'], settings: 'RÉGLAGES', language: 'Langue', sound: 'Son', reducedFx: 'Effets réduits', stopBonus: 'Stopper l\'auto sur bonus',
-      volumeL: 'Volume', pitchShort: 'Hauteur', soundOn: 'Son : oui', soundOff: 'Son : non', musicShort: 'Ambiance', resetL: 'Réinitialiser', mixLabel: 'Réglages du son', pitchL: 'Hauteur des sons (demi-tons)', musicL: 'Ambiance musicale', autoOpts: 'Nombre de tours auto', off: 'Non', on: 'Oui', close: 'Fermer', noWin: 'Pas de gain', handLabel: 'FUREUR D\'ANUBIS'
+      volumeL: 'Volume', pitchShort: 'Hauteur', toneShort: 'Aigus', soundOn: 'Son : oui', soundOff: 'Son : non', musicShort: 'Ambiance', resetL: 'Réinitialiser', mixLabel: 'Réglages du son', pitchL: 'Hauteur des sons (demi-tons)', musicL: 'Ambiance musicale', autoOpts: 'Nombre de tours auto', off: 'Non', on: 'Oui', close: 'Fermer', noWin: 'Pas de gain', handLabel: 'FUREUR D\'ANUBIS'
     },
     en: {
       brandTop: 'ANUBIS', balance: 'BALANCE', bet: 'BET', win: 'WIN', turbo: 'TURBO', auto: 'AUTO',
@@ -93,7 +92,6 @@
         'The Oracle (≈ 1 spin in 3) picks a segment and grants it a ×2 to ×25 boost. If the wheel lands there, the boost applies!',
         'ANKH: free respin of the wheel, no extra stake.',
         'Weighing of the Heart: pick the feather of Ma\'at or the heart, the multipliers roll and are revealed, then the scales decide. The heavier pan wins its multiplier (up to ×300), the lighter one gets nothing: a 1-in-2 chance.',
-        'Before a bonus (Scarabs, Weighing, Vault) pick a profile: Cautious, Balanced or Daring. All three share the same RTP; only volatility differs. Each profile\'s draw is made in advance.',
         'Any bonus can be seized by the FURY OF ANUBIS: pick a colour (turquoise, gold or ruby), then spin the giant wheel. A number: win = number × tier. DOUBLE in YOUR colour: every number on the wheel is doubled (tier ×2, up to ×16) and you spin again. DOUBLE in ANOTHER colour: the chain stops and you cash the smallest number on the wheel (5) × tier.',
         'The Fury\'s bands launch a bonus (Scarabs ×2 or ×10, Weighing ×5, Vault ×3): bonus win × the band multiplier × tier, up to ×5000. A band never leads back to the Fury.',
         '??? A secret bonus sometimes hides behind a won bonus… extremely rare. Find it yourself.'
@@ -104,7 +102,7 @@
       cryptLeg: ['+ COLUMN', '+ ALL', '× COLUMN', '× ALL', 'ICE', 'CRUSHER'],
       cryptHint: { skull: 'SKULL: adds its value to the top of its column. Tap to drop', epic: 'EPIC SKULL: adds its value to the top of ALL columns', anubis: 'ANUBIS SKULL: multiplies the top of its column', epicx: 'EPIC ANUBIS SKULL: multiplies the top of ALL columns', ice: 'ICE: freezes the top as a fixed block, the top restarts at ×1', crusher: 'CRUSHER: crushes the column\'s fixed blocks into one' },
       tableCols: ['Segment', 'On wheel', 'Pays'], settings: 'SETTINGS', language: 'Language', sound: 'Sound', reducedFx: 'Reduced effects', stopBonus: 'Stop autoplay on bonus',
-      volumeL: 'Volume', pitchShort: 'Pitch', soundOn: 'Sound: on', soundOff: 'Sound: off', musicShort: 'Ambience', resetL: 'Reset', mixLabel: 'Sound settings', pitchL: 'Sound pitch (semitones)', musicL: 'Background ambience', autoOpts: 'Autoplay spins', off: 'Off', on: 'On', close: 'Close', noWin: 'No win', handLabel: 'FURY OF ANUBIS'
+      volumeL: 'Volume', pitchShort: 'Pitch', toneShort: 'Treble', soundOn: 'Sound: on', soundOff: 'Sound: off', musicShort: 'Ambience', resetL: 'Reset', mixLabel: 'Sound settings', pitchL: 'Sound pitch (semitones)', musicL: 'Background ambience', autoOpts: 'Autoplay spins', off: 'Off', on: 'On', close: 'Close', noWin: 'No win', handLabel: 'FURY OF ANUBIS'
     }
   };
   var lang = 'fr';

@@ -4,7 +4,8 @@
 (function (root) {
   'use strict';
   var ctx = null, master, sfxBus, musBus, verb, muted = false, ambNodes = null;
-  var pitchSemi = 0, PK = 1, vol = 1, musicOn = true;
+  var pitchSemi = 0, PK = 1, vol = 1, musicOn = true, toneV = 0.3, softA = null, softB = null;
+  function toneHz() { return 1200 * Math.pow(7.5, toneV); }     // 0 = très sourd (1,2 kHz) … 1 = brillant (9 kHz)
   // gamme phrygienne dominante (couleur « orientale ») : E F G# A B C D
   var SCALE = [164.81, 174.61, 207.65, 220, 246.94, 261.63, 293.66];
   // pentatonique douce (ré mineur) pour l'ambiance : D F G A C
@@ -19,9 +20,11 @@
     var comp = ctx.createDynamicsCompressor(); comp.threshold.value = -16; comp.ratio.value = 3.5; comp.attack.value = 0.004; comp.release.value = 0.25;
     master.connect(comp); comp.connect(ctx.destination);
     // adoucit les aigus durs de tous les effets
-    var soft = ctx.createBiquadFilter(); soft.type = 'lowpass'; soft.frequency.value = 9500; soft.Q.value = 0.5; soft.connect(master);
-    sfxBus = ctx.createGain(); sfxBus.gain.value = 0.9; sfxBus.connect(soft);
-    musBus = ctx.createGain(); musBus.gain.value = 0.5; musBus.connect(master);
+    // pas de sons aigus : deux filtres passe-bas en cascade (24 dB/oct), réglables avec « Aigus »
+    softB = ctx.createBiquadFilter(); softB.type = 'lowpass'; softB.frequency.value = toneHz(); softB.Q.value = 0.5; softB.connect(master);
+    softA = ctx.createBiquadFilter(); softA.type = 'lowpass'; softA.frequency.value = toneHz(); softA.Q.value = 0.5; softA.connect(softB);
+    sfxBus = ctx.createGain(); sfxBus.gain.value = 0.9; sfxBus.connect(softA);
+    musBus = ctx.createGain(); musBus.gain.value = 0.5; musBus.connect(softA);
     // réverbération : bruit décroissant, filtré pour rester chaud
     var len = ctx.sampleRate * 2.2, imp = ctx.createBuffer(2, len, ctx.sampleRate);
     for (var c = 0; c < 2; c++) { var d = imp.getChannelData(c), lp = 0; for (var i = 0; i < len; i++) { lp += ((Math.random() * 2 - 1) - lp) * 0.35; d[i] = lp * Math.pow(1 - i / len, 2.8); } }
@@ -46,7 +49,7 @@
     if (!ensure()) return;
     var t = ctx.currentTime + (delay || 0), c = ctx.createOscillator(), m = ctx.createOscillator(), mg = ctx.createGain(), g = ctx.createGain();
     c.type = 'sine'; m.type = 'sine'; c.frequency.value = f * PK; m.frequency.value = f * PK * (ratio || 3.51);
-    mg.gain.setValueAtTime(f * PK * 1.4, t); mg.gain.exponentialRampToValueAtTime(Math.max(1, f * PK * 0.02), t + dur * 0.6);
+    mg.gain.setValueAtTime(f * PK * 0.9, t); mg.gain.exponentialRampToValueAtTime(Math.max(1, f * PK * 0.02), t + dur * 0.6);
     m.connect(mg); mg.connect(c.frequency);
     g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol0 || 0.1, t + 0.006); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
     c.connect(g); g.connect(bus || sfxBus); if (wet !== false) g.connect(verb);
@@ -176,7 +179,7 @@
 
   var A = {
     unlock: ensure,
-    tick: function (speed) { tone(1700 + (speed || 0) * 900, 0.03, 'triangle', 0.035); tone(620, 0.04, 'sine', 0.045); },
+    tick: function (speed) { tone(950 + (speed || 0) * 350, 0.03, 'triangle', 0.035); tone(520, 0.04, 'sine', 0.05); },
     click: function () { bell(880, 0.25, 0.07, 0, false); },
     whoosh: function () { swell(0.9, 0.16, 0, 300, 3600); },
     // Anubis surgit : grondement qui monte, grognement filtré, battement sourd, puis coup rouge
@@ -216,9 +219,9 @@
     drum: function (v) { v = v || 0.34; tone(100, 0.38, 'sine', v, 0, 44); noise(0.16, v * 0.35, 0, 450, 'lowpass', 150); },
     thud: function () { boom(0.34); },
     roll: function (n, step) { step = step || 0.09; for (var i = 0; i < n; i++) { tone(105, 0.12, 'sine', 0.1 + i * 0.015, i * step, 62); noise(0.07, 0.035 + i * 0.008, i * step, 520); } },
-    coin: function (p) { var f = 1318 * (p || 1); bell(f, 0.35, 0.09, 0, true, 3.51); bell(f * 1.5, 0.45, 0.05, 0.05, true, 4.2); },
+    coin: function (p) { var f = 880 * (p || 1); bell(f, 0.4, 0.09, 0, true, 2.4); bell(f * 1.5, 0.5, 0.05, 0.05, true, 2.4); },
     reveal: function () { bell(660, 0.4, 0.08, 0, true); bell(990, 0.5, 0.06, 0.07, true); },
-    sparkle: function () { for (var i = 0; i < 6; i++) bell(2000 + Math.random() * 2400, 0.28, 0.025, i * 0.045, true, 3.1); },
+    sparkle: function () { for (var i = 0; i < 6; i++) bell(820 + Math.random() * 900, 0.35, 0.03, i * 0.05, true, 2.4); },
     oracle: function () { [0, 2, 4, 6].forEach(function (k, i) { bell(SCALE[k] * 4, 0.9, 0.07, i * 0.12, true); }); pad([SCALE[0], SCALE[4]], 1.4, 0.1, 0, 0.5); },
     // démarrage d'un bonus : souffle qui monte + nappe + cloches + impact
     bonus: function () {
@@ -229,7 +232,7 @@
     },
     curse: function () { tone(190, 1.1, 'triangle', 0.13, 0, 42, true); tone(143, 1.1, 'sine', 0.12, 0.04, 34, true); pad([SCALE[0] / 2, SCALE[1] / 2, SCALE[0]], 1.3, 0.14, 0, 0.1); noise(0.7, 0.1, 0, 800, 'lowpass', 110); },
     shield: function () { tone(520, 0.35, 'sine', 0.08, 0, 1040, true); bell(1046, 0.7, 0.08, 0.1, true); bell(1568, 0.8, 0.06, 0.22, true); },
-    lightning: function () { noise(0.28, 0.26, 0, 5200, 'highpass'); tone(2400, 0.16, 'triangle', 0.06, 0, 300); boom(0.3, 0.03); },
+    lightning: function () { noise(0.3, 0.22, 0, 1800, 'bandpass', 500, 0.8); tone(900, 0.2, 'triangle', 0.06, 0, 150); boom(0.3, 0.03); },
     // jingle de gain : plus le multiplicateur est grand, plus la phrase est longue, riche et brillante
     chime: function (mult) {
       mult = Math.max(0, +mult || 0);
@@ -272,7 +275,7 @@
     coinShower: function (n) {
       if (!ensure()) return; var now = ctx.currentTime; if (now - lastShower < 0.18) return; lastShower = now;
       n = Math.max(3, Math.min(14, n | 0));
-      for (var i = 0; i < n; i++) bell(1700 + Math.random() * 2300, 0.22 + Math.random() * 0.12, 0.022 + Math.random() * 0.015, i * (0.035 + Math.random() * 0.03), true, 3.6);
+      for (var i = 0; i < n; i++) bell(760 + Math.random() * 800, 0.26 + Math.random() * 0.12, 0.024 + Math.random() * 0.015, i * (0.04 + Math.random() * 0.03), true, 2.4);
     },
     // décompte du gain : petite mélodie de cloches qui monte avec le total (pentatonique, une note sur deux plus douce)
     countTick: function (p) {
@@ -387,6 +390,9 @@
     getPitch: function () { return pitchSemi; },
     setVolume: function (v) { vol = Math.max(0, Math.min(1, +v)); if (master && !muted) master.gain.value = 0.85 * vol; },
     getVolume: function () { return vol; },
+    // aigus : 0 (très doux) … 1 (brillant)
+    setTone: function (v) { toneV = Math.max(0, Math.min(1, +v)); if (softA) { softA.frequency.value = toneHz(); softB.frequency.value = toneHz(); } },
+    getTone: function () { return toneV; },
     setMusic: function (on) { musicOn = !!on; if (!musicOn) A.stopAmbient(); else if (ctx && !muted) A.startAmbient(); },
     isMusic: function () { return musicOn; }
   };

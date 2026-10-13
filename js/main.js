@@ -25,6 +25,7 @@
         if (d.muted) Sfx.setMuted(true);
         if (typeof d.pitch === 'number') Sfx.setPitch(d.pitch);
         if (typeof d.vol === 'number') Sfx.setVolume(d.vol);
+        if (typeof d.tone === 'number') Sfx.setTone(d.tone);
         if (d.music === false) Sfx.setMusic(false);
         if (d.turbo) { G.turbo = true; G.ultra = !!d.ultra; G.speed = spd(); }
         if (typeof d.sobV2 === 'boolean') S.stopOnBonus = d.sobV2;   // (l'ancienne clé valait « oui » par défaut : ignorée)
@@ -44,7 +45,7 @@
   }
   function save() {
     try {
-      localStorage.setItem(SAVE_KEY, JSON.stringify({ pending: S.pending, balance: S.balance, bi: S.bi, lang: I18N.lang(), muted: Sfx.isMuted(), pitch: Sfx.getPitch(), vol: Sfx.getVolume(), music: Sfx.isMusic(), turbo: G.turbo, ultra: !!G.ultra, sobV2: S.stopOnBonus, reduced: S.reduced, hist: S.hist, mode: S.mode, buyOn: S.buyOn, limit: S.limit, quality: S.quality }));
+      localStorage.setItem(SAVE_KEY, JSON.stringify({ pending: S.pending, balance: S.balance, bi: S.bi, lang: I18N.lang(), muted: Sfx.isMuted(), pitch: Sfx.getPitch(), vol: Sfx.getVolume(), tone: Sfx.getTone(), music: Sfx.isMusic(), turbo: G.turbo, ultra: !!G.ultra, sobV2: S.stopOnBonus, reduced: S.reduced, hist: S.hist, mode: S.mode, buyOn: S.buyOn, limit: S.limit, quality: S.quality }));
     } catch (e) {}
   }
 
@@ -219,6 +220,7 @@
     if (!$('mixer')) return;
     $('mxVolL').textContent = T.volumeL; $('mxPitchL').textContent = T.pitchShort;
     $('mxVol').value = Math.round(Sfx.getVolume() * 100); $('mxVolV').textContent = Math.round(Sfx.getVolume() * 100) + '%';
+    $('mxTone').value = Math.round(Sfx.getTone() * 100); $('mxToneV').textContent = Math.round(Sfx.getTone() * 100) + '%'; $('mxToneL').textContent = T.toneShort;
     $('mxPitch').value = Sfx.getPitch(); $('mxPitchV').textContent = (Sfx.getPitch() > 0 ? '+' : '') + Sfx.getPitch();
     $('mxMute').textContent = Sfx.isMuted() ? T.soundOff : T.soundOn; $('mxMute').classList.toggle('on', !Sfx.isMuted());
     $('mxMusic').textContent = T.musicShort; $('mxMusic').classList.toggle('on', Sfx.isMusic());
@@ -231,11 +233,13 @@
   document.addEventListener('keydown', function (e) { if (e.code === 'Escape' && !$('mixer').hidden) { toggleMixer(false); $('btnMix').focus(); } });
   $('mxVol').addEventListener('input', function () { Sfx.unlock(); Sfx.setVolume(this.value / 100); $('mxVolV').textContent = this.value + '%'; save(); });
   $('mxVol').addEventListener('change', function () { Sfx.coin(1); });
+  $('mxTone').addEventListener('input', function () { Sfx.unlock(); Sfx.setTone(this.value / 100); $('mxToneV').textContent = this.value + '%'; save(); });
+  $('mxTone').addEventListener('change', function () { Sfx.coin(1); Sfx.chime(4); });
   $('mxPitch').addEventListener('input', function () { Sfx.unlock(); Sfx.setPitch(+this.value); $('mxPitchV').textContent = (this.value > 0 ? '+' : '') + this.value; save(); });
   $('mxPitch').addEventListener('change', function () { Sfx.coin(1); Sfx.chime(4); });
   $('mxMute').addEventListener('click', function () { Sfx.unlock(); Sfx.setMuted(!Sfx.isMuted()); refreshSound(); save(); });
   $('mxMusic').addEventListener('click', function () { Sfx.unlock(); Sfx.setMusic(!Sfx.isMusic()); refreshMixer(); save(); });
-  $('mxReset').addEventListener('click', function () { Sfx.setPitch(0); Sfx.setVolume(1); Sfx.setMuted(false); Sfx.setMusic(true); refreshSound(); save(); Sfx.coin(1); });
+  $('mxReset').addEventListener('click', function () { Sfx.setTone(0.3); Sfx.setPitch(0); Sfx.setVolume(1); Sfx.setMuted(false); Sfx.setMusic(true); refreshSound(); save(); Sfx.coin(1); });
   $('btnSound').addEventListener('click', function () { Sfx.unlock(); Sfx.setMuted(!Sfx.isMuted()); refreshSound(); save(); });
   function applyLang() {
     $('btnLang').textContent = I18N.lang().toUpperCase() === 'FR' ? 'EN' : 'FR';

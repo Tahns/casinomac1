@@ -1742,12 +1742,9 @@
       }
       sp.bonus = sp.options[ck]; sp.profile = ck; sp.base = sp.bonus.total; sp.pay = sp.base * (sp.boost || 1);
       if (G.onBonusChoice) G.onBonusChoice();
-    } else if (sp.options && !quick()) {
-      var cs = chooseScene(sp);
-      G.setScene(cs); await G.setFade(0, 0.5);
-      var prof = await cs.run();
-      await G.setFade(1, 0.35);
-      sp.bonus = sp.options[prof]; sp.profile = prof; sp.base = sp.bonus.total; sp.pay = sp.base * (sp.boost || 1);
+    } else if (sp.options && sp.options.std && sp.profile !== 'std') {
+      // plus de choix de profil (Prudent / Équilibré / Audacieux) : le bonus se joue toujours en profil équilibré
+      sp.bonus = sp.options.std; sp.profile = 'std'; sp.base = sp.bonus.total; sp.pay = sp.base * (sp.boost || 1);
       if (G.onBonusChoice) G.onBonusChoice();
     }
     var scene = FACT[sp.secret ? 'crypt' : sp.upgraded ? 'hand' : sp.kind](sp, bet);
