@@ -75,7 +75,9 @@
   // affiche un montant ; data-l réduit la police quand le texte est long (gros soldes, plafond × plus grosse mise)
   function setMoney(el, v) {
     var t = G.money(v); el.textContent = t;
-    el.setAttribute('data-l', t.length >= 15 ? '3' : t.length >= 12 ? '2' : t.length >= 10 ? '1' : '0');
+    var n = t.length, l = n >= 15 ? 3 : n >= 12 ? 2 : n >= 10 ? 1 : 0;
+    if (el.id === 'bet') l = n >= 9 ? 3 : n >= 7 ? 1 : 0;   // la mise a moins de place (entre − et +)
+    el.setAttribute('data-l', String(l));
   }
   var shown = { bal: -1, win: -1 };
   function countTo(el, key, to, ms) {
@@ -421,7 +423,7 @@
   G.start();
   if (document.fonts && document.fonts.load) Promise.all(['700 20px Oswald', '600 20px Oswald', '900 20px Cinzel'].map(function (f) { return document.fonts.load(f); })).then(function () { G.wheel.build(); }, function () {});
   // utilitaires de test (?debug)
-  G.S = S; G.play = play;
+  G.S = S; G.play = play; G.updateHud = updateHud; G.setWin = setWin; G.BETS = BETS; G.setCurrency = setCurrency;
   if (/[?&]debug/.test(location.search)) { G.debug = true; }
 
   /* ---------- écran d'accueil : ambiance + déverrouillage de l'audio ---------- */
