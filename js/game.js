@@ -820,8 +820,8 @@
     }
     /* --- fond --- */
     ctx.fillStyle = 'rgba(4,3,2,' + W.dim * inn + ')'; ctx.fillRect(0, 0, w, h);
-    if (ART.bigwin) { ctx.save(); ctx.globalCompositeOperation = 'screen'; ctx.globalAlpha = a * (0.3 + 0.07 * t) * clamp(tt / 0.5, 0, 1); cover(ctx, ART.bigwin, w, h); ctx.restore(); }
-    var rot = tt * (R ? 0.1 : 0.3 + 0.08 * t);
+    if (ART.bigwin) { ctx.save(); ctx.globalCompositeOperation = 'screen'; ctx.globalAlpha = a * (0.14 + 0.05 * t) * clamp(tt / 0.5, 0, 1); cover(ctx, ART.bigwin, w, h); ctx.restore(); }
+    var rot = tt * (R ? 0.1 : 0.3 + 0.08 * t), vb = Math.min(h, (FX.floorY < 9000 ? FX.floorY + 10 : h));   // vb : bas de la zone visible (au-dessus du HUD)
     A.rays(ctx, cx, cy, Math.max(w, h), W.rays, rot, c[0], 0.09 + 0.03 * t);
     if (t >= 2) A.rays(ctx, cx, cy, Math.max(w, h), W.rays - 4, -rot * 1.3 + 0.2, c[1], 0.07 + 0.02 * t);
     var gr = u * (0.55 + 0.08 * t) * (1 + 0.04 * Math.sin(tt * 4)), gl = ctx.createRadialGradient(cx, cy, 0, cx, cy, gr);
@@ -829,8 +829,8 @@
     ctx.fillStyle = gl; ctx.fillRect(0, 0, w, h);
     /* --- MEGA / DIVIN : Anubis surgit derrière le titre --- */
     if (t >= 3 && ART.medal) {
-      var mr = G.ease.outBack(clamp((tt - 0.15) / 0.9, 0, 1)), ms = u * (t === 4 ? 1.05 : 0.92) * mr, my = cy - u * 0.02 + (1 - mr) * u * 0.3, ma = 0.55 * clamp((tt - 0.1) / 0.6, 0, 1) * (1 + 0.1 * Math.sin(tt * 3));
-      var ha = ctx.createRadialGradient(cx, my, ms * 0.2, cx, my, ms * 0.85); ha.addColorStop(0, A.rgba(t === 4 ? '#c28bff' : '#6ff0dd', 0.5 * ma)); ha.addColorStop(1, 'rgba(0,0,0,0)');
+      var mr = G.ease.outBack(clamp((tt - 0.15) / 0.9, 0, 1)), ms = Math.min(u * (t === 4 ? 1.05 : 0.92), vb * 0.9) * mr, my = cy - u * 0.02 + (1 - mr) * u * 0.3, ma = 0.36 * clamp((tt - 0.1) / 0.6, 0, 1) * (1 + 0.1 * Math.sin(tt * 3));
+      var ha = ctx.createRadialGradient(cx, my, ms * 0.2, cx, my, ms * 0.85); ha.addColorStop(0, A.rgba(t === 4 ? '#c28bff' : '#6ff0dd', 0.9 * ma)); ha.addColorStop(1, 'rgba(0,0,0,0)');
       ctx.fillStyle = ha; ctx.fillRect(0, 0, w, h);
       ctx.save(); ctx.translate(cx, my); ctx.globalAlpha = a * clamp(ma, 0, 1);
       ctx.shadowColor = c[2]; ctx.shadowBlur = 50; ctx.beginPath(); ctx.arc(0, 0, ms * 0.49, 0, TAU); ctx.fillStyle = '#000'; ctx.fill(); ctx.shadowBlur = 0;
@@ -841,7 +841,7 @@
     /* --- MEGA / DIVIN : vagues d'or qui montent --- */
     if (t >= 3 && !R) {
       for (j = 0; j < 3; j++) {
-        var base = h * (1.0 - (0.06 + 0.05 * p) * (1 + j * 0.7)) - (t === 4 ? 14 : 0), amp2 = (10 + 7 * j) * (0.5 + p);
+        var base = vb - h * (0.05 + 0.05 * p) * (1 + j * 0.7) - (t === 4 ? 14 : 0), amp2 = (10 + 7 * j) * (0.5 + p);
         ctx.beginPath(); ctx.moveTo(0, h);
         for (i = 0; i <= 24; i++) { var xx = w * i / 24; ctx.lineTo(xx, base + Math.sin(xx * 0.011 * (1 + j * 0.35) + tt * (1.5 + j * 0.6)) * amp2); }
         ctx.lineTo(w, h); ctx.closePath();
@@ -932,9 +932,11 @@
     if (!sc || sc.showsWheel) W.draw(sc && sc.wheelAlpha);
     if (sc && sc.draw) sc.draw(ctx);
     ctx.restore();
-    FX.draw(ctx);
+    var ovTop = G.winOv && G.winOv.tier > 0;      // gros gain : pièces et éclats passent AU-DESSUS de l'overlay assombri
+    if (!ovTop) FX.draw(ctx);
     ctx.restore();
     drawWinOv();
+    if (ovTop) { ctx.save(); ctx.translate(so[0], so[1]); FX.draw(ctx); ctx.restore(); }
     drawEmerge();
     FX.drawFlash(ctx, G.w, G.h);
     if (G.fade > 0.001) { ctx.fillStyle = 'rgba(4,3,2,' + G.fade + ')'; ctx.fillRect(0, 0, G.w, G.h); }
