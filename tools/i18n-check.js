@@ -56,5 +56,14 @@ var weighMax = Math.max.apply(null, [].concat.apply([], Object.keys(M.WEIGH_PROF
   ok(M.HAND_SEGS.every(function (sg) { return !sg.b || d.bandName[sg.b]; }) && ['turq', 'gold', 'ruby'].every(function (c) { return d.handColorName[c]; }), l + ' : noms de bandes et de couleurs présents');
 });
 var mainSrc = fs.readFileSync(path.join(root, 'js/main.js'), 'utf8');
+
+// seuils d'animation de gain : les règles (FR/EN) doivent citer les mêmes seuils que G.WIN_TIERS et les 4 noms demandés doivent exister
+var gameSrc = fs.readFileSync(path.join(root, 'js/game.js'), 'utf8'), wtm = /G\.WIN_TIERS\s*=\s*\[([^\]]+)\]/.exec(gameSrc);
+var wt = wtm ? wtm[1].split(',').map(Number) : [];
+['fr', 'en'].forEach(function (l) {
+  var d = D[l], rt = d.rules.join(' ');
+  ok(wt.length === 5 && d.tiers.length === 5 && ['WIN', 'BIG WIN', 'EXTRA WIN', 'MEGA WIN'].every(function (n, i) { return d.tiers[i] === n; }), l + ' : paliers WIN, BIG WIN, EXTRA WIN, MEGA WIN présents (+ palier ultime)');
+  ok(wt.length === 5 && d.tiers.every(function (n, i) { return new RegExp(n + ' (dès|from) ×' + wt[i] + '(?!\\d)').test(rt); }), l + ' : les règles citent les seuils de gain ×' + wt.join(', ×') + ' (G.WIN_TIERS)');
+});
 ok(!/jusqu.à 200×|up to 200×/.test(mainSrc), 'plus de description chiffrée en dur dans main.js');
 console.log(fails ? '\n' + fails + ' échec(s)' : '\ntout est bon'); process.exit(fails ? 1 : 0);
