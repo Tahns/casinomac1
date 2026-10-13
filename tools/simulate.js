@@ -1,7 +1,7 @@
-// node tools/simulate.js [nbTours=100000 (plafonné à 100000, HOA_BIG=1 pour lever)] [seed=1]
+// node tools/simulate.js [nbTours=1000 (plafonné à 1000, HOA_BIG=1 pour lever)] [seed=1]
 // Mesure RTP, taux de gain, volatilité et répartition par case. Sert à valider/tuner js/math.js.
 var M = require('../js/math.js');
-var n = require('./cap')(parseInt(process.argv[2] || '100000', 10));
+var n = require('./cap')(parseInt(process.argv[2] || '1000', 10));
 var seed = parseInt(process.argv[3] || '1', 10);
 var mode = process.argv[4] || 'std';
 var rng = M.mulberry32(seed);
