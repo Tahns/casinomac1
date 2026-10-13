@@ -20,7 +20,7 @@
       scarabSub: 'Trois scarabées traversent les ténèbres. Chacun rapporte la case où il tombe.', scarabIntro: 'CHUTE DES SCARABÉES',
       weighIntro: 'PESÉE DU CŒUR', weighSub: 'Plume de Maât ou cœur ? Le plateau le plus lourd gagne son multiplicateur, le plus léger n\'a rien.', feather: 'PLUME', featherOf: 'DE MAÂT', heart: 'CŒUR', heartOf: 'DE VOTRE ÂME', weighRoll: 'Les multiplicateurs se révèlent…', weighWon: 'GAGNÉ', weighLost: 'PERDU', sayRight: 'Votre plateau est le plus lourd : ×{m} !', sayWrong: 'L\'autre plateau est plus lourd : pas de gain', weighing: 'Les dieux pèsent votre âme…',
       vaultIntro: 'CHAMBRE DU TRÉSOR', vaultSub: 'Un toucher ouvre un coffre. Évitez la malédiction : elle clôt la chambre.', pick: 'Touchez un coffre', vaultCurse: 'MALÉDICTION !', vaultSaved: 'L\'ANKH VOUS PROTÈGE', vaultScepter: 'SCEPTRE ×2', vaultShield: 'BOUCLIER ANKH', vaultClear: 'CHAMBRES VIDÉES  +5×', total: 'TOTAL',
-      splashEnter: 'ENTRER', splashSub: 'Le jugement vous attend', splashDemo: 'Démo · crédits fictifs · Jouez avec modération',
+      splashEnter: 'ENTRER', splashSub: 'Le jugement vous attend', splashDemo: 'Démo · argent fictif · Jouez avec modération',
       steerHint: 'Touchez à gauche ou à droite pour guider le scarabée', fateResists: 'LE DESTIN RÉSISTE',
       pushHint: 'Touchez vite pour faire pencher votre plateau !',
       launchBonus: 'LANCER LE BONUS', bonusWord: 'BONUS', bonusUnlocked: 'BONUS DÉBLOQUÉ', launchHint: 'Touchez le bouton ou appuyez sur Espace', chooseTitle: 'CHOISISSEZ VOTRE DESTIN', chooseHint: 'Touchez une carte : même espérance de gain, risque différent', chooseRtp: 'Les trois choix ont le même RTP',
@@ -35,7 +35,7 @@
       handBandRes: '{b} × {x} × {m} = {t}', bandName: { scarab: 'SCARABÉES', weigh: 'PESÉE', vault: 'TRÉSOR' },
       boostApplied: 'BOOST ORACLE', tapSkip: 'Touchez pour passer', continueBtn: 'CONTINUER', bonusWin: 'GAIN DU BONUS',
       infoTitle: 'RÈGLES & TABLE DES GAINS', rtp: 'RTP', maxWin: 'Gain max', hitRate: 'Tours gagnants', bonusFreq: 'Bonus', volat: 'Volatilité',
-      volatV: 'Moyenne-haute', demo: 'Crédits fictifs — démo sans argent réel.',
+      volatV: 'Moyenne-haute', demo: 'Argent fictif — démo sans argent réel : les montants en € ou $ ne sont pas de vrais euros ni dollars.',
       rules: [
         'Une mise, un tour : la roue du jugement décide. Chaque case paie sa valeur × votre mise.',
         'L\'Oracle (≈ 1 tour sur 3) désigne une case et lui offre un boost ×2 à ×25. Si la roue s\'y arrête, le boost s\'applique !',
@@ -51,7 +51,7 @@
       cryptLeg: ['+ COLONNE', '+ TOUTES', '× COLONNE', '× TOUTES', 'GLACE', 'BROYEUR'],
       cryptHint: { skull: 'CRÂNE : ajoute sa valeur au haut de sa colonne. Touchez pour lâcher', epic: 'CRÂNE ÉPIQUE : ajoute sa valeur au haut de TOUTES les colonnes', anubis: 'CRÂNE D\'ANUBIS : multiplie le haut de sa colonne', epicx: 'CRÂNE D\'ANUBIS ÉPIQUE : multiplie le haut de TOUTES les colonnes', ice: 'GLACE : fige le haut en bloc fixe, le haut repart à ×1', crusher: 'BROYEUR : écrase les blocs fixes de la colonne en un seul' },
       tableCols: ['Case', 'Sur la roue', 'Gain'], settings: 'RÉGLAGES', language: 'Langue', sound: 'Son', reducedFx: 'Effets réduits', stopBonus: 'Stopper l\'auto sur bonus',
-      volumeL: 'Volume', pitchShort: 'Hauteur', gradeTitle: 'Couleurs', gradeNatural: 'Naturel', gradeVivid: 'Éclatant', gradeGold: 'Doré', gradeCine: 'Cinéma', toneShort: 'Aigus', soundOn: 'Son : oui', soundOff: 'Son : non', musicShort: 'Ambiance', resetL: 'Réinitialiser', mixLabel: 'Réglages du son', pitchL: 'Hauteur des sons (demi-tons)', musicL: 'Ambiance musicale', autoOpts: 'Nombre de tours auto', off: 'Non', on: 'Oui', close: 'Fermer', noWin: 'Pas de gain', handLabel: 'FUREUR D\'ANUBIS'
+      volumeL: 'Volume', pitchShort: 'Hauteur', gradeTitle: 'Couleurs', gradeNatural: 'Naturel', gradeVivid: 'Éclatant', gradeGold: 'Doré', gradeCine: 'Cinéma', toneShort: 'Aigus', soundOn: 'Son : oui', soundOff: 'Son : non', musicShort: 'Ambiance', resetL: 'Réinitialiser', mixLabel: 'Réglages du son', pitchL: 'Hauteur des sons (demi-tons)', musicL: 'Ambiance musicale', autoOpts: 'Nombre de tours auto', off: 'Non', on: 'Oui', close: 'Fermer', currencyL: 'Devise', resetBal: 'Réinitialiser le solde', noWin: 'Pas de gain', handLabel: 'FUREUR D\'ANUBIS'
     },
     en: {
       brandTop: 'ANUBIS', balance: 'BALANCE', bet: 'BET', win: 'WIN', turbo: 'TURBO', auto: 'AUTO',
@@ -86,7 +86,7 @@
       handBandRes: '{b} × {x} × {m} = {t}', bandName: { scarab: 'SCARABS', weigh: 'WEIGHING', vault: 'VAULT' },
       boostApplied: 'ORACLE BOOST', tapSkip: 'Tap to skip', continueBtn: 'CONTINUE', bonusWin: 'BONUS WIN',
       infoTitle: 'RULES & PAYTABLE', rtp: 'RTP', maxWin: 'Max win', hitRate: 'Hit rate', bonusFreq: 'Bonus', volat: 'Volatility',
-      volatV: 'Medium-high', demo: 'Play credits — demo, no real money.',
+      volatV: 'Medium-high', demo: 'Play money — demo, the € or $ amounts are not real money.',
       rules: [
         'One bet, one spin: the wheel of judgement decides. Each segment pays its value × your bet.',
         'The Oracle (≈ 1 spin in 3) picks a segment and grants it a ×2 to ×25 boost. If the wheel lands there, the boost applies!',
@@ -102,7 +102,7 @@
       cryptLeg: ['+ COLUMN', '+ ALL', '× COLUMN', '× ALL', 'ICE', 'CRUSHER'],
       cryptHint: { skull: 'SKULL: adds its value to the top of its column. Tap to drop', epic: 'EPIC SKULL: adds its value to the top of ALL columns', anubis: 'ANUBIS SKULL: multiplies the top of its column', epicx: 'EPIC ANUBIS SKULL: multiplies the top of ALL columns', ice: 'ICE: freezes the top as a fixed block, the top restarts at ×1', crusher: 'CRUSHER: crushes the column\'s fixed blocks into one' },
       tableCols: ['Segment', 'On wheel', 'Pays'], settings: 'SETTINGS', language: 'Language', sound: 'Sound', reducedFx: 'Reduced effects', stopBonus: 'Stop autoplay on bonus',
-      volumeL: 'Volume', pitchShort: 'Pitch', gradeTitle: 'Colors', gradeNatural: 'Natural', gradeVivid: 'Vivid', gradeGold: 'Golden', gradeCine: 'Cinema', toneShort: 'Treble', soundOn: 'Sound: on', soundOff: 'Sound: off', musicShort: 'Ambience', resetL: 'Reset', mixLabel: 'Sound settings', pitchL: 'Sound pitch (semitones)', musicL: 'Background ambience', autoOpts: 'Autoplay spins', off: 'Off', on: 'On', close: 'Close', noWin: 'No win', handLabel: 'FURY OF ANUBIS'
+      volumeL: 'Volume', pitchShort: 'Pitch', gradeTitle: 'Colors', gradeNatural: 'Natural', gradeVivid: 'Vivid', gradeGold: 'Golden', gradeCine: 'Cinema', toneShort: 'Treble', soundOn: 'Sound: on', soundOff: 'Sound: off', musicShort: 'Ambience', resetL: 'Reset', mixLabel: 'Sound settings', pitchL: 'Sound pitch (semitones)', musicL: 'Background ambience', autoOpts: 'Autoplay spins', off: 'Off', on: 'On', close: 'Close', currencyL: 'Currency', resetBal: 'Reset balance', noWin: 'No win', handLabel: 'FURY OF ANUBIS'
     }
   };
   var lang = 'fr';

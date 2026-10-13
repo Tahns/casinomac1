@@ -28,3 +28,5 @@ node tools/tune-profiles.js     # espérance des profils Prudent / Équilibré /
 | `docs/ANALYSE.md` | SWOT, benchmark GitHub, DA, mathématiques, chemin vers Stake |
 
 Commandes : `Espace` = tourner / accélérer, `↑ ↓` = mise. Ajouter `?debug` à l'URL expose `G.testBonus('vault'|'scarab'|'weigh', boost, upgraded)` pour tester un bonus.
+
+Argent (fictif) : au choix en € ou en $ (bouton de la barre du haut ou Réglages ; par défaut selon la langue : FR → €, EN → $). Mises : 0,20 · 0,50 · 1 · 2 · 5 · 10 · 20 · 50 · 100 · 200 · 500 · 1 000 (défaut 1), solde initial 1 000. Chaque montant est arrondi au centime à chaque opération (`G.r2`, jamais de flottant brut) ; le gain = `r2(multiplicateur × mise)`, le coût Oracle+ = `r2(mise × 1,1)`, le prix d'un bonus = `r2(mise × multiplicateur)`. Les maths (`js/math.js`) ne manipulent que des multiplicateurs. Une ancienne sauvegarde en « crédits » (sans champ `v`) est remise aux valeurs par défaut.

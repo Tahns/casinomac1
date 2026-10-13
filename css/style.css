@@ -260,3 +260,12 @@ label{font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--d
 @media (max-height:520px) and (orientation:landscape){#mixer{top:60px}}
 
 .mx-grade{grid-template-columns:70px 1fr}.mx-chips{display:grid;grid-template-columns:repeat(4,1fr);gap:4px}.mx-chips .chip{padding:7px 2px;font-size:10px}
+/* montants longs (gros soldes, gain max x plus grosse mise) : la police rétrécit pour rester dans la plaque */
+.stat b[data-l="1"],.betval b[data-l="1"]{zoom:.9}
+.stat b[data-l="2"],.betval b[data-l="2"]{zoom:.78}
+.stat b[data-l="3"],.betval b[data-l="3"]{zoom:.66}
+/* barre du haut : 5 boutons (langue, devise, son, mixeur, infos) sur téléphone */
+@media (max-width:760px){.top-right{gap:5px}.ibtn{width:33px;height:33px}#btnCur{font-size:15px}}
+@media (max-width:400px){.brand .b-big{font-size:19px}.top-right{gap:4px}.ibtn{width:31px;height:31px}}
+@media (max-width:400px){.betbox{padding-left:20px;padding-right:20px}}
+@media (min-width:761px) and (min-height:521px){.betbox{min-width:clamp(196px,19vw,240px)}}

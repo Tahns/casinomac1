@@ -92,6 +92,42 @@ var server = http.createServer(function (req, res) {
   await p.keyboard.press('Escape'); await p.waitForTimeout(100);
   await p.click('#btnLang'); await p.waitForTimeout(150);
 
+  // 7. argent : devise, format, arrondis au centime, migration de l'ancienne sauvegarde
+  await p.evaluate("localStorage.clear()"); await p.reload(); await p.waitForTimeout(500);
+  var fm = await p.evaluate(`({ s: G.money(0.1 + 0.2), big: G.money(1234.5), neg: G.money(-12.345, true), pos: G.money(7, true), sym: document.getElementById('btnCur').textContent, bet: document.getElementById('bet').textContent, bal: document.getElementById('bal').textContent, bets: G.BETS.slice(), bi: G.S.bi })`);
+  ok(fm.s === '0,30 €' && fm.big === '1 234,50 €' && fm.neg === '-12,35 €' && fm.pos === '+7,00 €', 'FR : montants « 0,30 € », « 1 234,50 € », signes (' + [fm.s, fm.big, fm.neg].join(' | ') + ')');
+  ok(fm.sym === '€' && fm.bet === '1,00 €' && fm.bal === '1 000,00 €', 'FR par défaut : devise €, mise 1,00 €, solde 1 000,00 €');
+  ok(fm.bets[0] === 0.2 && fm.bets.length <= 14, 'mise minimale 0,20 (' + fm.bets.join(', ') + ')');
+  await p.click('#btnLang'); await p.waitForTimeout(200);
+  var en2 = await p.evaluate(`({ s: G.money(0.1 + 0.2), big: G.money(1234.5), neg: G.money(-5, true), sym: document.getElementById('btnCur').textContent, bal: document.getElementById('bal').textContent })`);
+  ok(en2.s === '$0.30' && en2.big === '$1,234.50' && en2.neg === '-$5.00' && en2.sym === '$' && en2.bal === '$1,000.00', 'EN : devise $ suivie automatiquement, montants « $1,234.50 »');
+  await p.click('#btnCur'); await p.waitForTimeout(150);
+  ok(await p.evaluate("document.getElementById('bal').textContent") === '€1,000.00', 'EN + € : « €1,000.00 » (le choix de devise est indépendant de la langue)');
+  await p.reload(); await p.waitForTimeout(500);
+  ok(await p.evaluate("G.S.cur") === 'EUR' && await p.evaluate("document.getElementById('btnCur').textContent") === '€', 'la devise choisie est sauvegardée');
+  // aucune dérive : toutes les mises x modes x prix d'achat s'affichent avec 2 décimales exactes
+  var drift = await p.evaluate(`(function(){ var bad=[], re=I18N.lang()==='fr'?/,\\d{3}/:/\\.\\d{3}/; ['std','plus'].forEach(function(m){ G.S.mode=m; G.BETS.forEach(function(b,i){ G.S.bi=i; G.updateHud();
+      var t=document.getElementById('hud').innerText; if(re.test(t)||/\\d{9,}/.test(t)) bad.push(m+' '+b+' '+t.replace(/\\s+/g,' ')); var c=G.cost(); if (Math.abs(Math.round(c*100)-c*100)>1e-7) bad.push('coût '+c);
+      ['scarab','weigh','vault','hand'].forEach(function(k){ var pr=Math.round(b*AnubisMath.BUY[k].price*100)/100; if (G.money(pr).indexOf('0000000')>=0) bad.push('prix '+pr); }); }); }); return bad; })()`);
+  ok(drift.length === 0, 'aucun montant avec dérive flottante (0,30000000000000004…) sur toutes les mises/modes' + (drift.length ? ' : ' + drift[0] : ''));
+  await p.evaluate(`(async()=>{ G.S.mode='plus'; G.S.bi=0; G.turbo=true; G.speed=1.6; for(var r=0;r<25;r++){ G.play(); var g=0; while(G.S.busy&&g<3000){ await G.advance(0.25); g++; if(G.winOv) G.skipWinOv(); } } })()`);
+  var bal = await p.evaluate("G.S.balance");
+  ok(Math.abs(Math.round(bal * 100) - bal * 100) < 1e-6, '25 tours à 0,20 en Oracle+ (coût 0,22) : le solde reste au centime (' + bal + ')');
+  // migration : ancienne sauvegarde en « crédits » (sans version) -> valeurs par défaut propres, gain en attente non converti
+  await p.evaluate(`localStorage.setItem('hoa_save_v1', JSON.stringify({balance:12345, bi:7, limit:5000, pending:300, lang:'fr', mode:'plus'}))`);
+  await p.reload(); await p.waitForTimeout(500);
+  var mg = await p.evaluate("({bal:G.S.balance,bi:G.S.bi,limit:G.S.limit,res:G.S.resumed||0,txt:document.getElementById('bal').textContent,bet:document.getElementById('bet').textContent})");
+  ok(mg.bal === 1000 && mg.bi === 2 && mg.limit === 0 && !mg.res && mg.txt === '1 000,00 €', 'ancienne sauvegarde (crédits) : solde 1 000 €, mise 1,00 €, limite retirée (' + mg.txt + ' / ' + mg.bet + ')');
+  await p.evaluate("localStorage.setItem('hoa_save_v1','{pas du json')"); await p.reload(); await p.waitForTimeout(400);
+  ok(await p.evaluate("G.S.balance") === 1000, 'sauvegarde corrompue : valeurs par défaut sans erreur');
+  // bouton « réinitialiser le solde » et limite de perte dans la nouvelle échelle
+  await p.evaluate("G.S.balance=3.2"); await p.click('#btnInfo'); await p.waitForTimeout(200);
+  var lim = await p.evaluate("Array.from(document.querySelectorAll('#optLimit button')).map(function(b){return b.textContent})");
+  ok(lim.length >= 4 && lim[1] === '20,00 €', 'limites de perte en €: ' + lim.join(' / '));
+  await p.click('#optReset'); await p.waitForTimeout(150);
+  ok(await p.evaluate("G.S.balance") === 1000, 'réinitialiser le solde : retour à 1 000,00');
+  await p.keyboard.press('Escape'); await p.waitForTimeout(100);
+
   ok(errs.length === 0, 'aucune erreur console / page' + (errs.length ? ' : ' + errs.slice(0, 3).join(' | ') : ''));
   await b.close(); server.close();
   console.log(fails ? '\n' + fails + ' échec(s)' : '\ntout est bon'); process.exit(fails ? 1 : 0);

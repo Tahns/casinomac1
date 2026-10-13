@@ -22,7 +22,7 @@
   /* ---------- texte ---------- */
   // chiffres : police condensée à chiffres alignés (Cinzel a des chiffres elzéviriens, peu lisibles)
   G.NUM = "Oswald, 'Cinzel', serif";
-  var isNum = G.isNum = function (s) { return /^[+×x\d\s.,\u00a0\u202f]+$/.test(String(s)) && /\d/.test(String(s)); };
+  var isNum = G.isNum = function (s) { return /^[+×x\d\s.,\u00a0\u202f\u20ac$\-]+$/.test(String(s)) && /\d/.test(String(s)); };
   G.txt = function (s, x, y, o) {
     o = o || {};
     var num = !o.family && isNum(s);
@@ -45,6 +45,17 @@
   G.fmt = function (n) {
     var a = Math.abs(n);
     return n.toLocaleString(I18N.lang() === 'fr' ? 'fr-FR' : 'en-US', { minimumFractionDigits: a % 1 ? 2 : 0, maximumFractionDigits: 2 });
+  };
+
+  // argent : toujours 2 décimales, symbole de la devise choisie (FR : « 1 234,50 € », EN : « $1,234.50 »), jamais de flottant brut
+  G.currency = 'EUR';
+  G.sym = function () { return G.currency === 'USD' ? '$' : '\u20ac'; };
+  G.r2 = function (n) { return Math.round(n * 100 + (n < 0 ? -1e-9 : 1e-9)) / 100; };
+  G.money = function (n, signed) {
+    n = G.r2(n); var fr = I18N.lang() === 'fr', a = Math.abs(n);
+    var num = a.toLocaleString(fr ? 'fr-FR' : 'en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).replace(/\u202f/g, '\u00a0');
+    var sg = n < 0 ? '-' : (signed && n > 0 ? '+' : '');
+    return fr ? sg + num + '\u00a0' + G.sym() : sg + G.sym() + num;
   };
 
   /* ---------- mise en page ---------- */
@@ -761,7 +772,8 @@
     // montant
     var ns = 1 + (o.done ? 0.06 * Math.max(0, 1 - (o.t - o.doneAt) * 3) : 0.02 * Math.sin(o.t * 30));
     ctx.save(); ctx.translate(cx, cy + u * 0.06); ctx.scale(ns, ns);
-    G.goldText(G.fmt(Math.round(o.count * 100) / 100), 0, 0, Math.min(w * 0.14, u * 0.16), { blur: 40 });
+    var mtxt = G.money(o.count);
+    G.goldText(mtxt, 0, 0, Math.min(w * 0.14, u * 0.16, w * 0.88 / (Math.max(4, mtxt.length) * 0.58)), { blur: 40 });
     ctx.restore();
     G.txt('×' + G.fmt(o.mult), cx, cy + u * 0.2, { size: Math.min(w * 0.05, u * 0.06), fill: '#fff1b8', stroke: '#2a1a02', shadow: 'rgba(255,200,60,.6)' });
     if (o.done && !o.closing) G.txt(I18N.t().tapSkip, cx, cy + u * 0.3, { size: 13, family: 'Manrope', weight: 700, fill: 'rgba(255,241,184,' + (0.45 + 0.35 * Math.sin(o.t * 4)) + ')', spacing: 3 });
