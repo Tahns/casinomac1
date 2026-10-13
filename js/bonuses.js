@@ -76,8 +76,18 @@
     }
     if (S.banner) {
       var b = S.banner, k = G.ease.outBack(clamp(b.t / 0.4, 0, 1));
-      ctx.save(); ctx.translate(G.cx, G.cy); ctx.scale(k, k);
-      G.goldText(b.text, 0, 0, clamp(w * 0.055, 24, 56), { blur: 34, spacing: 3 });
+      ctx.save();
+      if (b.sub) {   // voile sombre sous la bannière d'intro : le sous-titre reste lisible sur un décor chargé
+        var vh2 = clamp(w * 0.055, 24, 56) * 3.2, vg2 = ctx.createLinearGradient(0, G.cy - vh2 / 2, 0, G.cy + vh2 / 2);
+        vg2.addColorStop(0, 'rgba(4,3,2,0)'); vg2.addColorStop(0.25, 'rgba(4,3,2,.78)'); vg2.addColorStop(0.75, 'rgba(4,3,2,.78)'); vg2.addColorStop(1, 'rgba(4,3,2,0)');
+        ctx.globalAlpha = clamp(b.t / 0.25, 0, 1); ctx.fillStyle = vg2; ctx.fillRect(0, G.cy - vh2 / 2, w, vh2); ctx.globalAlpha = 1;
+      }
+      ctx.translate(G.cx, G.cy); ctx.scale(k, k);
+      G.goldText(b.text, 0, b.sub ? -clamp(w * 0.02, 12, 20) * 1.2 : 0, clamp(w * 0.055, 24, 56), { blur: 34, spacing: 3 });
+      if (b.sub) {
+        var bsf = clamp(w * 0.02, 12, 20), bl = wrapLines(b.sub, w * 0.88, '800 ' + bsf + 'px ' + G.TEXT), by0 = clamp(w * 0.055, 24, 56) * 0.75;
+        bl.forEach(function (ln, q) { G.txt(ln, 0, by0 + q * (bsf + 4), { size: bsf, family: G.TEXT, weight: 800, fill: '#fff1b8', stroke: 'rgba(0,0,0,.8)', sw: 4 }); });
+      }
       ctx.restore();
     }
     if (S.final) {
@@ -100,18 +110,26 @@
   }
   function bump(S, to) { S.totalT = to; S.pop = 1; }
 
-  async function settle(S, sp, bet) {
+  // facteur de boost appliqué dès le début à tout ce que le joueur voit (Oracle ×N, ou ×2 de la Fureur) ; sp.pay reste le seul résultat
+  function bf(sp) { return sp && sp.boost > 1 ? sp.boost : 1; }
+  function r2(x) { return Math.round(x * 100) / 100; }
+  function fb(v, B) { return G.fmt(r2(v * B)); }
+  // bannière d'intro courte : toutes les valeurs affichées sont déjà multipliées
+  async function boostIntro(S, sp, sec) {
+    var B = bf(sp); if (B <= 1) return;
     var T = I18N.t();
+    S.banner = { text: T.boostIntro + ' ×' + G.fmt(B), sub: T.boostIntroSub, t: 0 };
+    Sfx.oracle(); FX.flash(0.4, '#ffe9a0'); FX.ring(G.cx, G.cy, '#ffe9a0', G.R, 1);
+    await G.sleep(sec == null ? (quick() ? 1.0 : 1.7) : sec);
+    S.banner = null;
+  }
+  // hook de test : ce que l'écran a affiché (total live, total final) face au gain réel sp.pay
+  function shown(S, sp, final) { G.lastBonusShown = { live: S.totalT, final: final, pay: sp.pay }; }
+
+  async function settle(S, sp, bet) {
     await G.sleep(0.5);
-    if (sp.boost > 1) {
-      S.banner = { text: T.boostApplied + ' ×' + sp.boost, t: 0 };
-      Sfx.oracle(); FX.flash(0.4, '#ffe9a0'); FX.ring(G.cx, G.cy, '#ffe9a0', G.R, 1);
-      await G.sleep(1.1);
-      bump(S, sp.bonus.total * sp.boost); Sfx.chime(20); FX.spark(G.cx, G.cy, 40, '#ffd86a', 420);
-      await G.sleep(1.1);
-      S.banner = null;
-    }
     S.final = { mult: sp.pay, bet: bet, count: 0, t: 0 };
+    shown(S, sp, S.final.mult);
     G.say('');
     Sfx.chime(sp.pay); FX.coins(G.cx, G.cy + G.h * 0.2, 28, 1000, 120); FX.flash(0.25, '#ffe9a0');
     await waitTap(S, 3.2);
@@ -131,7 +149,7 @@
    * 1. CHUTE DES SCARABÉES — Plinko 8 rangées × 3 scarabées
    * ====================================================================== */
   function scarabScene(sp, bet) {
-    var T = I18N.t(), data = sp.bonus, rows = M.SCARAB_ROWS, vals = data.values || M.SCARAB_VALUES;
+    var T = I18N.t(), data = sp.bonus, rows = M.SCARAB_ROWS, vals = data.values || M.SCARAB_VALUES, B = bf(sp);   // B : boost, appliqué à tout ce qui s'affiche
     var S = newScene(T.scarabIntro), g = {}; S.bgImg = 'scarabwall'; S.dim = 0.9; S.showTotal = false; var ball = null, pegFlash = {}, slotPulse = [], used = 0, floats = [], ent = 0, landed = [], beam = null, pegRings = [], sparkAcc = 0, lastPulse = 0;
     function slotColor(v) { return v >= 25 ? ['#ffe08a', '#b8861e'] : v >= 6 ? ['#c28bff', '#5a2a86'] : v >= 2.5 ? ['#ff7a5a', '#8a1b10'] : v >= 1 ? ['#5b8cff', '#1a3a8a'] : ['#6a5a40', '#2a2118']; }
     S.layout = function () {
@@ -229,7 +247,8 @@
           for (var lb = 0; lb < landed[i]; lb++) if (!G.icon(ctx, 'scarab', x + sw * (0.25 + lb * 0.25), y - g.slotH * 0.18, g.slotH * 0.55)) A.scarab(ctx, x + sw * (0.25 + lb * 0.25), y - g.slotH * 0.18, g.slotH * 0.28, '#ffd86a', 'rgba(60,30,0,.6)');
         }
         ctx.lineWidth = 1.5 + pl * 3; ctx.strokeStyle = pl > 0 ? '#fff6c8' : 'rgba(255,216,106,.6)'; ctx.stroke();
-        G.txt('×' + vals[i], cx, y + g.slotH / 2 + 1, { size: clamp(g.dx * 0.3, 11, 24), weight: 900, fill: i === 4 || vals[i] < 1.2 ? '#fff1d8' : '#fff', stroke: 'rgba(0,0,0,.55)', sw: 3 });
+        var vt = '×' + fb(vals[i], B);
+        G.txt(vt, cx, y + g.slotH / 2 + 1, { size: Math.min(clamp(g.dx * 0.3, 11, 24), sw * 0.92 / Math.max(2, vt.length * 0.62)), weight: 900, fill: i === 4 || vals[i] < 1.2 ? '#fff1d8' : '#fff', stroke: 'rgba(0,0,0,.55)', sw: 3 });
         ctx.globalAlpha = 1;
       }
       // faisceau de lumière sur la case d'arrivée
@@ -265,7 +284,8 @@
       ctx.globalAlpha = 1;
       for (i = 0; i < floats.length; i++) {
         var fl = floats[i]; ctx.globalAlpha = 1 - clamp((fl.t - 0.8) / 0.6, 0, 1);
-        G.txt('+×' + fl.v, fl.x, fl.y - fl.t * 50, { size: clamp(g.dx * 0.42, 18, 36), weight: 900, fill: '#fff1b8', stroke: '#2a1a02', shadow: 'rgba(255,200,60,.8)' });
+        var ft = '+×' + fb(fl.v, B);
+        G.txt(ft, fl.x, fl.y - fl.t * 50, { size: Math.min(clamp(g.dx * 0.42, 18, 36), g.dx * 2.2 / Math.max(3, ft.length * 0.62)), weight: 900, fill: '#fff1b8', stroke: '#2a1a02', shadow: 'rgba(255,200,60,.8)' });
       }
       ctx.globalAlpha = 1;
       // total en haut à droite du cadre
@@ -339,7 +359,7 @@
       var sx2 = G.cx + (d.slot - rows / 2) * g.dx, sy = g.slotTop;
       beam = { x: sx2, t: 0, life: 0.9 }; FX.ring(sx2, sy + g.slotH / 2, '#fff1b8', g.dx * 2.2, 0.8);
       floats.push({ v: v, x: sx2, y: sy - 8, t: 0 });
-      bump(S, S.totalT + v); Sfx.chime(v * 2); FX.spark(sx2, sy + g.slotH / 2, 20, '#ffd86a', 260);
+      bump(S, S.totalT + v * B); Sfx.chime(v * 2); FX.spark(sx2, sy + g.slotH / 2, 20, '#ffd86a', 260);
       if (v >= 6) { FX.coins(sx2, sy, 14 + v, 800, 30); FX.shake(8, 0.4); FX.flash(0.2, '#ffe9a0'); }
       await G.sleep(v >= 6 ? 0.9 : 0.5);
     }
@@ -348,6 +368,7 @@
       G.say(T.scarabSub);
       FX.flash(0.3, '#ffe9a0'); FX.ring(G.cx, g.top, '#ffd86a', G.R * 0.8, 1.1); FX.shake(5, 0.4); Sfx.oracle && Sfx.oracle();
       await G.sleep(quick() ? 1.2 : 2);
+      await boostIntro(S, sp);
       G.say('');
       for (var b = 0; b < data.balls.length; b++) { await drop(b); await G.sleep(quick() ? 0.1 : 0.4); }
       G.say('');
