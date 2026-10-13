@@ -1330,7 +1330,7 @@
   // bloc vectoriel centré en (x, y), taille s ; o : sc, sx, sy, a, glow, rot, charge, jaw, crack
   function cryBlock(t, x, y, s, v, o) {
     o = o || {};
-    var pal = CRY_PAL[t], h = s / 2, epic = t === 'epic' || t === 'epicx', lab = o.nolabel ? '' : (t === 'skull' || t === 'epic') ? '+' + G.fmt(v) : (t === 'anubis' || t === 'epicx') ? '×' + G.fmt(v) : '';
+    var pal = CRY_PAL[t], h = s / 2, epic = t === 'epic' || t === 'epicx', lab = o.nolabel ? '' : (t === 'skull' || t === 'epic') ? '+' + G.fmt(Math.round(v * (o.B || 1) * 100) / 100) : (t === 'anubis' || t === 'epicx') ? '×' + G.fmt(v) : '';
     ctx.save(); ctx.translate(x, y); if (o.rot) ctx.rotate(o.rot);
     var sc = o.sc == null ? 1 : o.sc; ctx.scale(sc * (o.sx || 1), sc * (o.sy || 1));
     if (o.a != null) ctx.globalAlpha *= o.a;
@@ -1389,7 +1389,7 @@
   }
 
   function cryptScene(sp, bet) {
-    var T = I18N.t(), data = sp.bonus, steps = data.steps, NC = M.CRYPT_COLS, CAP = M.CRYPT_CAP;
+    var T = I18N.t(), data = sp.bonus, steps = data.steps, NC = M.CRYPT_COLS, CAP = M.CRYPT_CAP, B = bf(sp);
     var S = newScene(T.cryptIntro), g = {}; S.bgImg = 'vault'; S.dim = 0.86; S.showTotal = false;
     var cols = [], blk = null, shards = [], tt = 0, hl = [], hlA = 0, idx = 0, rush = false, floats = [], legPulse = -1;
     for (var c0 = 0; c0 < NC; c0++) cols.push({ top: M.CRYPT_START, fx: [], flash: 0, tint: '#fff', wave: 0, pulse: 0 });
@@ -1441,7 +1441,7 @@
         ctx.setLineDash([]); ctx.restore();
         if (hot > 0.02 && blk && blk.c >= 0) { var bgl = ctx.createLinearGradient(0, blk.y, 0, g.shaftTop); bgl.addColorStop(0, 'rgba(255,230,140,0)'); bgl.addColorStop(1, 'rgba(255,230,140,' + 0.3 * hot + ')'); ctx.fillStyle = bgl; ctx.fillRect(x - sw / 2, blk.y, sw, g.shaftTop - blk.y); }
         // blocs fixes
-        cl.fx.forEach(function (f) { cryFixed(x, slotY(f.slot), g.fw, g.sh * 0.88, f.v, { sc: f.sc, sy: f.sy, a: f.a, glow: f.glow }); });
+        cl.fx.forEach(function (f) { cryFixed(x, slotY(f.slot), g.fw, g.sh * 0.88, r2(f.v * B), { sc: f.sc, sy: f.sy, a: f.a, glow: f.glow }); });
         // plaque du haut
         var py = g.plateCY, pw = g.fw, ph = g.plateH;
         ctx.save(); ctx.translate(x, py + cl.pulse * -3);
@@ -1449,11 +1449,11 @@
         ctx.shadowColor = 'rgba(0,0,0,.7)'; ctx.shadowBlur = 10; ctx.fillStyle = pg; ctx.fill(); ctx.shadowBlur = 0;
         ctx.lineWidth = 2.5; ctx.strokeStyle = A.goldGrad(ctx, -pw / 2, -ph / 2, pw / 2, ph / 2); ctx.stroke();
         if (cl.flash > 0) { A.roundRect(ctx, -pw / 2, -ph / 2, pw, ph, 10); ctx.fillStyle = cl.tint === 'ice' ? 'rgba(170,235,255,' + cl.flash * 0.7 + ')' : 'rgba(255,240,180,' + cl.flash * 0.7 + ')'; ctx.fill(); }
-        var tv = '×' + G.fmt(Math.round(cl.top)), fs = Math.min(ph * 0.62, pw * 0.92 / Math.max(2.2, tv.length * 0.6));
+        var tv = '×' + G.fmt(Math.round(cl.top * B)), fs = Math.min(ph * 0.62, pw * 0.92 / Math.max(2.2, tv.length * 0.6));
         G.goldText(tv, 0, 2, fs * (1 + cl.pulse * 0.25), { blur: 8 });
         ctx.restore();
         // total de la colonne
-        var ct = '= ×' + G.fmt(Math.round(colSum(c))), cfs = clamp(bs * 0.26, 10, 17);
+        var ct = '= ×' + G.fmt(Math.round(colSum(c) * B)), cfs = clamp(bs * 0.26, 10, 17);
         G.txt(ct, x, g.chipY, { size: Math.min(cfs, g.fw * 0.9 / Math.max(3, ct.length * 0.58)), family: G.TEXT, weight: 800, fill: '#fff1b8', stroke: 'rgba(0,0,0,.6)', sw: 3 });
       }
       // éclats
@@ -1461,7 +1461,7 @@
       // bloc en chute
       if (blk) {
         var bob = blk.hover ? Math.sin(tt * 4) * bs * 0.04 : 0, shx = blk.shake ? (Math.random() - 0.5) * bs * 0.1 * blk.shake : 0;
-        cryBlock(blk.t, blk.x + shx, blk.y + bob, blk.t === 'epic' || blk.t === 'epicx' ? bs * 1.12 : bs, blk.v, { sc: blk.sc, a: blk.a, charge: blk.charge, jaw: blk.jaw, crack: blk.crack, sy: blk.sy, rot: blk.rot });
+        cryBlock(blk.t, blk.x + shx, blk.y + bob, blk.t === 'epic' || blk.t === 'epicx' ? bs * 1.12 : bs, blk.v, { B: B, sc: blk.sc, a: blk.a, charge: blk.charge, jaw: blk.jaw, crack: blk.crack, sy: blk.sy, rot: blk.rot });
       }
       floats.forEach(function (f) { ctx.globalAlpha = 1 - clamp((f.t - 0.7) / 0.5, 0, 1); G.txt(f.text, f.x, f.y - f.t * 38, { size: f.size, weight: 900, fill: f.col, stroke: '#1a1006', sw: 4, shadow: 'rgba(0,0,0,.6)' }); }); ctx.globalAlpha = 1;
       if (blk && !g.land) G.txt(T.cryptCount.replace('{n}', Math.min(idx + 1, steps.length)).replace('{m}', steps.length), G.cx - g.colW * 2.4, g.top + 4, { size: clamp(bs * 0.2, 9, 13), family: G.TEXT, weight: 800, fill: '#b9a780', align: 'left', spacing: 2 });
@@ -1510,13 +1510,13 @@
             P.push(G.sleep(all ? Math.abs(c - 2) * 0.09 / Math.max(G.speed, 0.1) * K() : 0).then(function () {
               hit(c, ''); burst(colX(c), g.plateCY, epic ? 22 : 12, epic ? '#ffe9a0' : t === 'anubis' ? '#9fb6ff' : '#9fe8f2');
               FX.ring(colX(c), g.plateCY, epic ? '#ffd86a' : '#fff1b8', bs * 1.5, 0.6);
-              addFloat((t === 'skull' || t === 'epic' ? '+' : '×') + d.v, colX(c), g.plateCY - bs * 0.5, epic ? '#fff1b8' : t === 'anubis' ? '#c8d4ff' : '#bff4ff');
+              addFloat(t === 'skull' || t === 'epic' ? '+' + fb(d.v, B) : '×' + d.v, colX(c), g.plateCY - bs * 0.5, epic ? '#fff1b8' : t === 'anubis' ? '#c8d4ff' : '#bff4ff');
               if (t === 'skull' || t === 'epic') { Sfx.coin(0.8 + k * 0.08); Sfx.chime(d.v * (epic ? 4 : 1)); } else { Sfx.reveal(); if (epic) Sfx.lightning(); else Sfx.chime(d.v * 2); }
               return roll(c, st.tops[c], D(0.55));
             }));
           });
           if (epic) { Sfx.sparkle(); FX.flash(0.35, '#ffe9a0'); }
-          bump(S, avgOf(st));
+          bump(S, avgOf(st) * B);
         };
         await G.tween(fallDur, function (u) {
           blk.y = lerp2(Y0, yl, FX.ease.outBounce(u)); blk.rot = (1 - u) * 0.2 * (d.c % 2 ? 1 : -1);
@@ -1538,7 +1538,7 @@
           shatter(colX(d.c), ty, 18); Sfx.shield(); Sfx.coin(1.3); FX.shake(6, 0.25); FX.ring(colX(d.c), ty, '#bfefff', bs * 1.6, 0.6);
           blk = null;
           var f = { v: st.froze, slot: n0, sc: 0, sy: 1, a: 1, glow: 1 }; cols[d.c].fx.push(f);
-          hit(d.c, 'ice'); addFloat('×' + st.froze, colX(d.c), ty - g.sh, '#bfefff'); bump(S, avgOf(st));
+          hit(d.c, 'ice'); addFloat('×' + fb(st.froze, B), colX(d.c), ty - g.sh, '#bfefff'); bump(S, avgOf(st) * B);
           await Promise.all([G.tween(D(0.4), function (u) { f.sc = FX.ease.outBack(u); }, null), roll(d.c, st.tops[d.c], D(0.5))]);
         }
       } else if (t === 'crusher') {
@@ -1558,7 +1558,7 @@
           }, null);
           Sfx.thud(); FX.shake(12, 0.4); FX.ring(colX(d.c), slotY(0), '#ffd86a', bs * 1.8, 0.6); burst(colX(d.c), slotY(0), 22, '#ffd86a'); FX.dust(colX(d.c), slotY(0), 10);
           var sum = st.fixed[d.c][0], mf = { v: sum, slot: 0, sc: 0, sy: 1, a: 1, glow: 1 };
-          cl2.fx = [mf]; hit(d.c, ''); addFloat('= ×' + sum, colX(d.c), slotY(0) - g.sh, '#ffe08a'); bump(S, avgOf(st));
+          cl2.fx = [mf]; hit(d.c, ''); addFloat('= ×' + fb(sum, B), colX(d.c), slotY(0) - g.sh, '#ffe08a'); bump(S, avgOf(st) * B);
           await Promise.all([G.tween(D(0.4), function (u) { mf.sc = FX.ease.outBack(u); blk.a = 1 - u; blk.y = lerp2(blk.y, blk.y - bs * 0.8, u); }, null)]);
         } else {
           await G.tween(D(0.3), function (u) { blk.jaw = 1 - Math.sin(u * Math.PI); }, null);
@@ -1581,12 +1581,13 @@
         (async function () {
           try {
             G.say(T.cryptRule); await G.sleep(quick() ? 0.2 : 1.6);
+            await boostIntro(S, sp);
             for (idx = 0; idx < steps.length; idx++) await dropStep(idx);
             idx = steps.length - 1; hl = [];
             await G.sleep(quick() ? 0.2 : 0.5);
             for (var c = 0; c < NC; c++) { cols[c].pulse = 1; cols[c].flash = 0.8; Sfx.coin(0.7 + c * 0.12); FX.spark(colX(c), g.chipY, 6, '#ffe9a0', 200); await G.sleep(quick() ? 0.03 : 0.14); }
-            bump(S, data.total); S.totalT = data.total;
-            var tier = data.total >= 100 ? 3 : data.total >= 30 ? 2 : data.total >= 12 ? 1 : 0;
+            bump(S, data.total * B); S.totalT = data.total * B;
+            var dsp = data.total * B, tier = dsp >= 100 ? 3 : dsp >= 30 ? 2 : dsp >= 12 ? 1 : 0;
             if (tier > 0) { Sfx.fanfare(tier); FX.shake(8 + tier * 3, 0.5); FX.flash(0.3 + tier * 0.1, '#ffe9a0'); FX.coins(G.cx, G.cy, 10 + tier * 12, 900, 200); }
             if (data.capped) { S.banner = { text: T.cryptCapped, t: 0 }; await G.sleep(1.2); S.banner = null; }
             await settle(S, sp, bet);
