@@ -868,9 +868,13 @@
     }
     /* --- gardiens (grand écran) --- */
     var hs = u * 0.11 * G.ease.outBack(clamp(tt / 0.6, 0, 1));
-    if (w > 640 && t >= 2) [-1, 1].forEach(function (sd) {
-      if (ART.medal) { var ms2 = hs * 3.4; ctx.save(); ctx.translate(cx + sd * w * 0.3, cy - u * 0.02); ctx.rotate(sd * Math.sin(tt * 1.5) * 0.04); ctx.shadowColor = c[0]; ctx.shadowBlur = 40; ctx.beginPath(); ctx.arc(0, 0, ms2 * 0.49, 0, TAU); ctx.fillStyle = '#000'; ctx.fill(); ctx.shadowBlur = 0; ctx.clip(); ctx.drawImage(ART.medal, -ms2 / 2, -ms2 / 2, ms2, ms2); ctx.restore(); }
-      else A.jackal(ctx, cx + sd * w * 0.3, cy - u * 0.02, hs * 1.5, { glow: 1 });
+    // médaillons latéraux : repoussés vers les bords et rétrécis pour ne jamais masquer le titre ni le montant ; absents si la place manque
+    var gsz = winFit(amtMax, Math.min(w * 0.15, u * 0.17) * (1 + 0.05 * t), w * 0.9, true);
+    ctx.font = '700 ' + gsz * 1.14 + 'px ' + G.NUM; var gHalf = ctx.measureText(amtMax).width / 2 + 10;
+    var gms = Math.min(hs * 3.4, w / 2 - gHalf - 8), gx = w / 2 - gms / 2 - 6;
+    if (w > 640 && t >= 2 && gms > u * 0.2) [-1, 1].forEach(function (sd) {
+      if (ART.medal) { var ms2 = gms; ctx.save(); ctx.translate(cx + sd * gx, cy - u * 0.02); ctx.rotate(sd * Math.sin(tt * 1.5) * 0.04); ctx.shadowColor = c[0]; ctx.shadowBlur = 40; ctx.beginPath(); ctx.arc(0, 0, ms2 * 0.49, 0, TAU); ctx.fillStyle = '#000'; ctx.fill(); ctx.shadowBlur = 0; ctx.clip(); ctx.drawImage(ART.medal, -ms2 / 2, -ms2 / 2, ms2, ms2); ctx.restore(); }
+      else A.jackal(ctx, cx + sd * gx, cy - u * 0.02, hs * 1.5, { glow: 1 });
     });
     /* --- titre : choc d'arrivée (zoom arrière), puis respiration, puis pulsation à l'arrivée du total --- */
     var ty = cy - u * 0.2, lines = (w < 640 && o.title.indexOf(' ') > 0 && o.title.length > 10) ? o.title.split(' ') : [o.title];
@@ -888,7 +892,7 @@
     var ay = cy + u * 0.06 + (lines.length - 1) * tsz2 * 0.5;
     ctx.save(); ctx.translate(cx, ay); ctx.scale(ns, ns); G.goldText(amt, 0, 0, asz2, { blur: 40, shadow: c[2] }); ctx.restore();
     G.txt('×' + G.fmt(o.mult), cx, ay + u * 0.14, { size: Math.min(w * 0.05, u * 0.06), fill: '#fff1b8', stroke: '#2a1a02', shadow: 'rgba(255,200,60,.6)' });
-    if (o.done && !o.closing) G.txt(T.tapSkip, cx, ay + u * 0.24, { size: 13, family: G.TEXT, weight: 700, fill: 'rgba(255,241,184,' + (0.45 + 0.35 * Math.sin(tt * 4)) + ')', spacing: 3 });
+    if (o.done && !o.closing) G.txt(T.tapSkip, cx, Math.min(ay + u * 0.24, vb - 22), { size: 13, family: G.TEXT, weight: 700, fill: 'rgba(255,241,184,' + (0.45 + 0.35 * Math.sin(tt * 4)) + ')', spacing: 3 });
     /* --- vignette --- */
     var vg = ctx.createRadialGradient(cx, cy, u * 0.45, cx, cy, Math.max(w, h) * 0.75); vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(0,0,0,' + (0.35 + 0.05 * t) + ')');
     ctx.fillStyle = vg; ctx.fillRect(0, 0, w, h);
