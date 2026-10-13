@@ -34,6 +34,22 @@ var server = http.createServer(function (req, res) {
     for(var i=0;i<cs.length;i++){ var done=false; G.testBonus.apply(null,cs[i]).then(function(){done=true}); var g=0; while(!done&&g<3000){await G.advance(0.25);g++} if(!done) bad.push(cs[i].join('/')); } return bad; })()`);
   ok(bon.length === 0, '11 variantes de bonus (dont le secret) se terminent (' + (bon.join(',') || 'aucune bloquée') + ')');
 
+  // 2 bis. boost : à l'écran, le total live et le total final sont déjà multipliés et égaux au gain réel sp.pay (tolérance 1e-9)
+  var cases = [['scarab', false], ['weigh', false], ['vault', false], ['crypt', false], ['vault', true]], boostBad = [], boostN = 0;
+  for (var bi = 0; bi < 3; bi++) {
+    var bo = [2, 4, 25][bi];
+    for (var ci = 0; ci < cases.length; ci++) {
+      var cs = cases[ci];
+      var got = await p.evaluate(`(async()=>{ G.lastBonusShown=null; G.turbo=true; G.speed=1.6; var done=false; G.testBonus(${JSON.stringify(cs[0])},${bo},${cs[1]}).then(function(){done=true}); var g=0; while(!done&&g<4000){ await G.advance(0.25); g++; if(G.winOv) G.skipWinOv(); } return {done:done, s:G.lastBonusShown}; })()`);
+      var lab = cs[0] + (cs[1] ? '/fureur' : '') + ' ×' + bo, sh = got.s;
+      boostN++;
+      if (!got.done || !sh) { boostBad.push(lab + ' (non terminé ou hook absent)'); continue; }
+      var tol = 1e-9 * Math.max(1, Math.abs(sh.pay));
+      if (Math.abs(sh.live - sh.pay) > tol || Math.abs(sh.final - sh.pay) > tol) boostBad.push(lab + ' live=' + sh.live + ' final=' + sh.final + ' pay=' + sh.pay);
+    }
+  }
+  ok(boostBad.length === 0, boostN + ' bonus avec boost ×2/×4/×25 (scarabées, pesée, trésor, crypte, fureur) : total live et final = sp.pay' + (boostBad.length ? ' : ' + boostBad.join(' ; ') : ''));
+
   // 3. achats : prix débité, jamais bloqué, retour à la roue
   var buy = await p.evaluate(`(async()=>{ var bad=[]; for (var k of ['vault','scarab','weigh','hand']) { var b0=G.S.balance; G.play(k); var g=0; while(G.S.busy&&g<3000){await G.advance(0.25);g++;if(G.winOv)G.skipWinOv();}
       if(G.S.busy||G.scene) bad.push(k); } return bad; })()`);

@@ -181,7 +181,7 @@
         await G.runBonus(sp, b);
       } else if (sp.pay > 0) {
         var px = G.cx, py = G.cy - G.R * 0.55;
-        if (sp.boost > 1) { FX.float(T.boostApplied + ' ×' + sp.boost, px, py - 40, '#fff1b8', 26); Sfx.sparkle(); FX.ring(G.cx, G.cy, '#ffe9a0', G.R * 1.2, 0.8); }
+        if (sp.boost > 1) await G.wheel.applyBoost();   // le chiffre de la case est réécrit déjà multiplié
         FX.float('×' + G.fmt(sp.pay), px, py, '#ffe9a0', 36);
         FX.spark(px, py, 24, '#ffd86a', 320); Sfx.chime(sp.pay); G.wheel.flashLamps = 0.8;
         await G.sleep(0.8);
