@@ -1376,7 +1376,7 @@
     S.layout = function () {
       var w = G.w, h = G.h, land = h < 520, narrow = w < 640;
       var top = land ? T0() + 40 : T0() + clamp(w * 0.034, 17, 34) * 1.9 + 52 + clamp(w * 0.03, 20, 36) * 0.9 + 10;
-      var bot = h - hudH() - (land ? 6 : 34), legH = land ? 30 : 48, availH = bot - legH - top - 4;
+      var bot = h - hudH() - (land ? 6 : 46), legH = land ? 30 : 48, availH = bot - legH - top - 4;
       var colW = Math.min(w * 0.94 / NC, land ? 112 : 132), bs = Math.min(colW * 0.84, availH / 5.6);
       g.land = land; g.colW = Math.max(colW, bs * 1.1); g.bs = bs;
       g.dropY = top + bs * 0.52; g.shaftTop = top + bs * 1.7; g.plateH = bs * 0.82; g.plateCY = g.shaftTop + g.plateH / 2;
