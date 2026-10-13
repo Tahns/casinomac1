@@ -7,4 +7,4 @@ var M = require('../js/math.js'), rng = M.mulberry32(7), n = require('./cap')(pa
   var m = s / n; ev[k] = m; console.log(k.padEnd(7), 'EV', m.toFixed(2) + 'x', ' sd', Math.sqrt(s2 / n - m * m).toFixed(1), ' max', mx, k === 'crypt' ? ' plafonnés ' + big : '');
 });
 var rep = (1 - M.HAND_UPGRADE) * (ev.scarab + ev.weigh + ev.vault) / 3 + M.HAND_UPGRADE * ev.hand;
-console.log('bonus remplacé (moyenne roue + Fureur) :', rep.toFixed(3) + 'x   secret :', ev.crypt.toFixed(3) + 'x   écart :', (ev.crypt - rep).toFixed(3) + 'x  => ' + ((ev.crypt - rep) * M.SECRET_UPGRADE * 0.0682 * 100).toFixed(3) + ' pt de RTP environ');
+console.log('bonus remplacé (moyenne roue + Fureur) :', rep.toFixed(3) + 'x   secret :', ev.crypt.toFixed(3) + 'x   écart :', (ev.crypt - rep).toFixed(3) + 'x  => ' + ((ev.crypt - rep) * M.SECRET_UPGRADE * 0.05 * 100).toFixed(3) + ' pt de RTP environ');

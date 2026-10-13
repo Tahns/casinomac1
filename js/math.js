@@ -11,7 +11,7 @@
 })(typeof self !== 'undefined' ? self : this, function () {
   'use strict';
 
-  var MAX_WIN = 5000;      // plafond en x la mise
+  var MAX_WIN = 25000;     // plafond en x la mise (très haute volatilité)
   var MAX_CHAIN = 6;       // Ankh enchaînés max
 
   /* ---------- RNG ---------- */
@@ -37,15 +37,15 @@
     return table[table.length - 1][0];
   }
 
-  /* ---------- La roue (54 cases) ---------- */
+  /* ---------- La roue (64 cases, très haute volatilité) ---------- */
   // kind: identifiant ; mult: gain direct (cases « nombre ») ; count: nombre de cases sur la roue
   var KINDS = {
-    m0:    { id: 'm0',    mult: 0,   count: 17, tier: 0 },
-    m025:  { id: 'm025',  mult: 0.25,count: 6,  tier: 1 },
-    m05:   { id: 'm05',   mult: 0.5, count: 12, tier: 1 },
-    m1:    { id: 'm1',    mult: 1,   count: 4,  tier: 2 },
-    m2:    { id: 'm2',    mult: 2,   count: 1,  tier: 3 },
-    m3:    { id: 'm3',    mult: 3,   count: 1,  tier: 4 },
+    m0:    { id: 'm0',    mult: 0,   count: 34, tier: 0 },
+    m025:  { id: 'm025',  mult: 0.25,count: 5,  tier: 1 },
+    m05:   { id: 'm05',   mult: 0.5, count: 7,  tier: 1 },
+    m1:    { id: 'm1',    mult: 1,   count: 6,  tier: 2 },
+    m2:    { id: 'm2',    mult: 2,   count: 3,  tier: 3 },
+    m3:    { id: 'm3',    mult: 3,   count: 2,  tier: 4 },
     ankh:  { id: 'ankh',  mult: 0,   count: 4,  tier: 7, respin: true },
     scarab:{ id: 'scarab',count: 1,  tier: 8, bonus: true },
     weigh: { id: 'weigh', count: 1,  tier: 9, bonus: true },
@@ -54,7 +54,8 @@
   var KIND_ORDER = ['weigh', 'vault', 'scarab', 'm3', 'ankh', 'm2', 'm1', 'm05', 'm025', 'm0'];
   var HAND_UPGRADE = 0.08; // chance qu'un bonus soit saisi par la Fureur d'Anubis
 
-  // Disposition déterministe : les plus rares d'abord, répartis régulièrement, jamais deux cases identiques côte à côte.
+  // Disposition déterministe : les plus rares d'abord, répartis régulièrement, jamais deux cases identiques côte à côte
+  // (sauf la poussière « 0 », qui occupe plus de la moitié de la roue : elle remplit les places restantes).
   function buildLayout() {
     var N = 0, i, k;
     KIND_ORDER.forEach(function (id) { N += KINDS[id].count; });
@@ -63,6 +64,7 @@
     KIND_ORDER.forEach(function (id, ki) {
       var c = KINDS[id].count;
       for (i = 0; i < c; i++) {
+        if (id === 'm0') { slots[slots.indexOf(null)] = id; continue; }
         var p = Math.round((i + 0.5) * N / c + ki * 1.7) % N;
         var tries = 0;
         while ((!free(p) || slots[(p + 1) % N] === id || slots[(p - 1 + N) % N] === id) && tries < N) { p = (p + 1) % N; tries++; }
@@ -72,7 +74,7 @@
     });
     for (var pass = 0; pass < 4; pass++) {
       for (i = 0; i < N; i++) {
-        if (slots[i] !== slots[(i + 1) % N]) continue;
+        if (slots[i] !== slots[(i + 1) % N] || slots[i] === 'm0') continue;
         for (k = 0; k < N; k++) {
           var a = slots[k], b = slots[i];
           if (a === b || slots[(k + 1) % N] === b || slots[(k - 1 + N) % N] === b) continue;
@@ -92,18 +94,18 @@
   var ORACLE_CHANCE = MODES.std.oracle;
   var ORACLE_KIND_W = [['m05', 3], ['m1', 4], ['m2', 3], ['m3', 2], ['scarab', 3], ['weigh', 3], ['vault', 3]];
   var ORACLE_BOOST = {
-    num:   [[2, 58], [3, 28], [5, 10], [10, 3.2], [25, 0.8]],
-    bonus: [[2, 60], [3, 28], [5, 10], [10, 2]]
+    num:   [[2, 70], [3, 20], [5, 7], [10, 2.5], [25, 0.5]],
+    bonus: [[2, 66], [3, 21], [5, 8.5], [10, 3.4], [25, 0.8], [100, 0.06]]
   };
 
   /* ---------- Bonus 1 : Chute du Scarabée (Plinko 8 rangées, 3 scarabées) ---------- */
   var SCARAB_ROWS = 8;
   var SCARAB_BALLS = 3;
-  // Trois profils de même espérance (433/256 par bille) : le joueur choisit sa volatilité avant le bonus.
+  // Trois profils de même espérance : le joueur choisit sa volatilité avant le bonus.
   var SCARAB_PROFILES = {
-    safe: [13, 4, 2.5, 1.5, 0.5, 1.5, 2.5, 4, 13],
-    std:  [25, 6, 2.5, 1, 0.5, 1, 2.5, 6, 25],
-    bold: [75, 5, 2, 0.5, 0.5, 0.5, 2, 5, 75]
+    safe:  [22, 7, 3.5, 1.9, 0.9, 1.9, 3.5, 7, 22],
+    std:   [100, 10, 2.5, 0.65, 0.79, 0.65, 2.5, 10, 100],
+    bold:  [230, 3.5, 1, 0.25, 0.4, 0.25, 1, 3.5, 230]
   };
   var SCARAB_VALUES = SCARAB_PROFILES.std;
   function scarab(rng, prof) {
@@ -123,9 +125,9 @@
   // le joueur gagne donc 1 fois sur 2 et les valeurs affichées sont le DOUBLE des paires d'origine (même espérance ≈ 5,83).
   // Trois profils de même espérance : paires proches / d'origine / très écartées. Chaque entrée : [[a, b], poids].
   var WEIGH_PROFILES = {
-    safe: [[[4, 6], 37], [[6, 10], 31], [[8, 12], 25], [[10, 16], 24], [[12, 20], 6], [[20, 32], 2], [[40, 60], 2], [[80, 120], 1], [[120, 200], 1]],
-    std:  [[[2, 6], 34], [[4, 10], 28], [[6, 16], 20], [[8, 24], 10], [[12, 50], 5], [[24, 120], 2], [[40, 300], 0.9]],
-    bold: [[[1, 4], 38], [[2, 10], 37], [[2, 20], 17], [[4, 40], 9], [[6, 80], 3], [[10, 160], 1], [[20, 300], 1], [[40, 300], 1]]
+    safe:  [[[3, 7], 45], [[5, 11], 30], [[8, 18], 15], [[14, 30], 6], [[25, 70], 2.5], [[50, 200], 1], [[100, 800], 1.5]],
+    std:   [[[1, 5], 45], [[2, 10], 30], [[4, 20], 15], [[8, 40], 6], [[15, 100], 2.5], [[30, 300], 0.8], [[60, 1000], 1.5]],
+    bold:  [[[1, 3], 50], [[1, 6], 30], [[2, 12], 12], [[3, 30], 5], [[5, 80], 2.5], [[10, 300], 1], [[20, 3000], 0.72]]
   };
   var WEIGH_PAIRS = WEIGH_PROFILES.std;
   // gain d'un choix : le multiplicateur du plateau choisi s'il est le plus lourd, sinon rien (0 = plume/gauche, 1 = cœur/droite)
@@ -144,9 +146,9 @@
   var VAULT_TILES = 12;
   // Trois profils : la malédiction est plus rare (prudent) ou plus fréquente (audacieux), les gains suivent ; poids de la malédiction calés par simulation pour une même espérance.
   var VAULT_PROFILES = {
-    safe: { curse: 56.8, tokens: [[1, 48], [2, 26], [3, 10], [4, 5], [6, 2], [10, 0.6], [25, 0.15], ['scepter', 2], ['ankh', 3]] },
-    std:  { curse: 85, tokens: [[1, 40], [2, 25], [3, 12], [5, 6], [8, 2.5], [15, 1], [40, 0.25], ['scepter', 2], ['ankh', 3]] },
-    bold: { curse: 138.2, tokens: [[1, 60], [2, 15], [3, 6], [5, 3], [10, 2], [25, 1.5], [100, 0.6], ['scepter', 4], ['ankh', 1]] }
+    safe:  { curse: 39, tokens: [[1, 48], [2, 26], [3, 10], [5, 5], [10, 2], [25, 0.6], [100, 0.12], [500, 0.02], ['scepter', 2], ['ankh', 4]] },
+    std:   { curse: 72.7, tokens: [[1, 40], [2, 25], [3, 12], [5, 6], [10, 3], [25, 1.2], [80, 0.4], [500, 0.06], ['scepter', 2.5], ['ankh', 3]] },
+    bold:  { curse: 67, tokens: [[1, 60], [2, 15], [3, 6], [5, 3], [10, 2], [25, 1.5], [100, 0.4], [600, 0.08], ['scepter', 4], ['ankh', 1]] }
   };
   var VAULT_TOKENS = VAULT_PROFILES.std.tokens;
   var VAULT_MAX_PICKS = 7;
@@ -180,9 +182,9 @@
   // Les trois couleurs sont strictement symétriques : un script indépendant et de même loi est tiré d'avance pour chacune (modèle « livres »).
   var HAND_COLORS = ['turq', 'gold', 'ruby'];
   var HAND_SEGS = [
-    { b: 'vault', x: 3 }, { n: 15 }, { d: 0 }, { n: 5 }, { n: 30 }, { n: 8 }, { d: 1 }, { b: 'scarab', x: 10 },
-    { n: 15 }, { n: 6 }, { d: 2 }, { n: 50 }, { b: 'weigh', x: 5 }, { n: 10 }, { d: 0 }, { n: 100 },
-    { n: 20 }, { n: 5 }, { d: 1 }, { b: 'scarab', x: 2 }, { n: 60 }, { n: 8 }, { d: 2 }, { n: 30 }
+    { b: 'vault', x: 4 }, { n: 6 }, { d: 0 }, { n: 3 }, { n: 15 }, { n: 4 }, { d: 1 }, { b: 'scarab', x: 12 },
+    { n: 8 }, { n: 3 }, { d: 2 }, { n: 30 }, { b: 'weigh', x: 6 }, { n: 5 }, { d: 0 }, { n: 180 },
+    { n: 10 }, { n: 3 }, { d: 1 }, { b: 'scarab', x: 3 }, { n: 25 }, { n: 4 }, { d: 2 }, { n: 12 }
   ];
   var HAND_MAX_CHAIN = 4;   // nombre maximal de doublements (palier ×16) ; au palier maximal les cases DOUBLE ne comptent plus
   var HAND_MIN_N = Math.min.apply(null, HAND_SEGS.filter(function (s) { return s.n; }).map(function (s) { return s.n; }));
@@ -245,12 +247,12 @@
   var CRYPT_COL_CAP = MAX_WIN * CRYPT_COLS;   // plafond d'une colonne (la moyenne ne peut pas dépasser MAX_WIN)
   var CRYPT_TYPES = [['skull', 21.5], ['epic', 3], ['anubis', 10.25], ['epicx', 2.65], ['ice', 24], ['crusher', 20]];   // le broyeur est retiré au sort tant qu'aucune colonne n'a 2 blocs fixes
   var CRYPT_VALUES = {
-    skull:  [[1, 58], [2, 28], [3, 9], [5, 4], [10, 1]],
+    skull:  [[1, 56], [2, 28], [3, 10], [5, 4], [10, 1.6], [40, 0.4]],
     epic:   [[1, 60], [2, 30], [3, 10]],
-    anubis: [[2, 60], [3, 23], [5, 10], [10, 5.5], [25, 1.5]],
-    epicx:  [[2, 64], [3, 20], [5, 9], [10, 5], [25, 2]]
+    anubis: [[2, 56], [3, 23], [5, 11], [10, 7], [25, 2.5], [100, 0.5]],
+    epicx:  [[2, 62], [3, 20], [5, 10], [10, 5], [25, 2.4], [60, 0.6]]
   };
-  var SECRET_UPGRADE = 0.03;   // chance qu'un bonus gagné soit remplacé par le secret (≈ 1 tour sur 490)
+  var SECRET_UPGRADE = 0.04;   // chance qu'un bonus gagné soit remplacé par le secret (≈ 1 tour sur 500)
   // rejoue un script de blocs [{t, c, v}] : renvoie les étapes (instantanés) et le résultat. Source unique des règles (scène et tests).
   function cryptReplay(drops) {
     var tops = [], fixed = [], steps = [], c, i, d;
@@ -369,9 +371,9 @@
   }
 
   /* ---------- Achat de bonus ---------- */
-  // Prix en x la mise, calés par simulation pour un RTP ≈ 96 % (voir tools/simulate.js <n> <graine> buy-<bonus>).
+  // Prix en x la mise, calés par le calcul exact pour un RTP ≈ 96 % (tools/rtp-exact.js), recoupés par tools/simulate.js <n> <graine> buy-<bonus>.
   // La Fureur d'Anubis peut toujours saisir un bonus acheté (même probabilité que sur la roue), sans boost Oracle.
-  var BUY = { scarab: { price: 6.9 }, weigh: { price: 7.6 }, vault: { price: 9.1 }, hand: { price: 25.6 } };
+  var BUY = { scarab: { price: 9.24 }, weigh: { price: 10.31 }, vault: { price: 12.37 }, hand: { price: 27.28 } };
   function playBuy(rng, kind) {
     var b, upgraded = false;
     var opts = null;
@@ -385,7 +387,7 @@
   return {
     BUY: BUY, playBuy: playBuy, applyChoice: applyChoice, drawOptions: drawOptions, PROFILES: PROFILES,
     SCARAB_PROFILES: SCARAB_PROFILES, WEIGH_PROFILES: WEIGH_PROFILES, VAULT_PROFILES: VAULT_PROFILES,
-    MAX_WIN: MAX_WIN, MODES: MODES, N: N, LAYOUT: LAYOUT, KINDS: KINDS,
+    MAX_WIN: MAX_WIN, MODES: MODES, ORACLE_KIND_W: ORACLE_KIND_W, ORACLE_BOOST: ORACLE_BOOST, N: N, LAYOUT: LAYOUT, KINDS: KINDS,
     SCARAB_ROWS: SCARAB_ROWS, SCARAB_VALUES: SCARAB_VALUES, SCARAB_BALLS: SCARAB_BALLS,
     WEIGH_PAIRS: WEIGH_PAIRS, weighGain: weighGain, VAULT_TILES: VAULT_TILES, VAULT_MAX_PICKS: VAULT_MAX_PICKS,
     CRYPT_COLS: CRYPT_COLS, CRYPT_CAP: CRYPT_CAP, CRYPT_BLOCKS: CRYPT_BLOCKS, CRYPT_START: CRYPT_START, CRYPT_STACK: CRYPT_STACK, CRYPT_TYPES: CRYPT_TYPES, CRYPT_VALUES: CRYPT_VALUES, SECRET_UPGRADE: SECRET_UPGRADE, cryptReplay: cryptReplay,

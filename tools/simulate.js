@@ -10,7 +10,7 @@ var COST = BUYK ? M.BUY[BUYK].price : (M.MODES[mode] || M.MODES.std).cost;
 
 var sum = 0, sum2 = 0, hits = 0, maxWin = 0, capped = 0;
 var byKind = {}, oracleExtra = 0;
-var buckets = [[0, '0x'], [0.0001, '<1x'], [1, '1-2x'], [2, '2-5x'], [5, '5-10x'], [10, '10-50x'], [50, '50-200x'], [200, '200-1000x'], [1000, '>=1000x']];
+var buckets = [[0, '0x'], [0.0001, '<1x'], [1, '1-2x'], [2, '2-5x'], [5, '5-10x'], [10, '10-50x'], [50, '50-200x'], [200, '200-1000x'], [1000, '1000-5000x'], [5000, '5000-25000x'], [M.MAX_WIN, '=plafond']];
 var dist = buckets.map(function () { return 0; });
 var nBonus = 0;
 
@@ -19,7 +19,7 @@ for (var i = 0; i < n; i++) {
   sum += r.total; sum2 += r.total * r.total;
   if (r.total > 0) hits++;
   if (r.total > maxWin) maxWin = r.total;
-  if (r.capped) capped++;
+  if (r.capped || r.total >= M.MAX_WIN) capped++;   // le plafond peut déjà être appliqué dans le bonus (Fureur, Crypte)
   var b = 0;
   for (var j = buckets.length - 1; j >= 0; j--) { if (r.total >= buckets[j][0] && (j > 0 || r.total === 0)) { b = j; break; } }
   if (r.total === 0) b = 0; else if (r.total < 1) b = 1;
@@ -34,7 +34,7 @@ for (var i = 0; i < n; i++) {
 var mean = sum / n, sd = Math.sqrt(sum2 / n - mean * mean);
 console.log('Tours: ' + n + '  graine: ' + seed + '  mode: ' + mode + ' (coût ×' + COST + ')');
 mean = mean / COST;
-console.log('RTP: ' + (mean * 100).toFixed(2) + '%   écart-type: ' + sd.toFixed(2) + 'x   gain max observé: ' + maxWin + 'x   plafonnés: ' + capped);
+console.log('RTP: ' + (mean * 100).toFixed(2) + '% ±' + (1.96 * sd / Math.sqrt(n) / COST * 100).toFixed(2) + ' (IC 95 %)   écart-type: ' + sd.toFixed(2) + 'x   gain max observé: ' + maxWin + 'x   plafonnés: ' + capped);
 console.log('Taux de gain (>0): ' + (hits / n * 100).toFixed(1) + '%   bonus déclenchés: 1 / ' + (n / nBonus).toFixed(1) + ' tours');
 console.log('Part de RTP due aux boosts Oracle: ' + (oracleExtra / n * 100).toFixed(2) + ' pts');
 console.log('\nPar case (fréquence, contribution RTP, gain moyen par apparition):');

@@ -764,7 +764,7 @@
   /* ============================ ANIMATIONS DE GAIN ============================
      5 niveaux (index = tier) : 0 WIN · 1 BIG WIN · 2 EXTRA WIN · 3 MEGA WIN · 4 JUGEMENT DIVIN.
      Seuils = multiplicateur total du tour rapporté au coût du tour (voir main.js : tierOf, et les règles dans i18n.js). */
-  G.WIN_TIERS = [1, 10, 25, 75, 300];
+  G.WIN_TIERS = [1, 10, 40, 150, 1000];
   var WT = [
     { cd: 0.9, hold: 0.6, dim: 0.0, rays: 0, rain: 0, shake: 0, coins: 10 },
     { cd: 2.3, hold: 1.5, dim: 0.62, rays: 14, rain: 14, shake: 0, coins: 34 },
