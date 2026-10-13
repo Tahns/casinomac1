@@ -258,3 +258,5 @@ label{font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--d
 .chip{padding:8px 6px;border-radius:99px;border:1px solid var(--line);font:800 11px Manrope;color:var(--dim);background:#14100c;cursor:pointer}
 .chip.on{color:#2a1a02;background:var(--gold);border-color:var(--gold)}
 @media (max-height:520px) and (orientation:landscape){#mixer{top:60px}}
+
+.mx-grade{grid-template-columns:70px 1fr}.mx-chips{display:grid;grid-template-columns:repeat(4,1fr);gap:4px}.mx-chips .chip{padding:7px 2px;font-size:10px}
