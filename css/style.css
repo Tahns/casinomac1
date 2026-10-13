@@ -247,3 +247,14 @@ label{font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--d
 /* réglages sonores */
 .rng{display:flex;align-items:center;gap:10px}.rng b{min-width:42px;text-align:right;font:800 12px Manrope;color:var(--gold-hi)}
 .rng input[type=range]{width:min(190px,34vw);accent-color:#e6b94a;height:22px;cursor:pointer}
+
+/* mixeur de son rapide (bandeau du haut) */
+#mixer{position:absolute;top:calc(max(26px,env(safe-area-inset-top) + 22px) + 48px);right:14px;z-index:30;width:min(300px,calc(100vw - 28px));padding:12px 14px;border-radius:16px;background:linear-gradient(180deg,rgba(40,29,14,.97),rgba(12,8,4,.97));border:2px solid #b8861e;box-shadow:0 10px 30px #000c,0 0 0 2px #2a1c06;color:var(--txt);pointer-events:auto}
+#mixer[hidden]{display:none}
+.mx-row{display:grid;grid-template-columns:70px 1fr 46px;align-items:center;gap:8px;padding:6px 0;font:700 12px Manrope}
+.mx-row label{color:#cdb98a;letter-spacing:.06em}.mx-row b{text-align:right;color:var(--gold-hi)}
+.mx-row input[type=range]{width:100%;accent-color:#e6b94a;height:24px;cursor:pointer}
+.mx-btns{grid-template-columns:repeat(3,1fr);padding-top:8px}
+.chip{padding:8px 6px;border-radius:99px;border:1px solid var(--line);font:800 11px Manrope;color:var(--dim);background:#14100c;cursor:pointer}
+.chip.on{color:#2a1a02;background:var(--gold);border-color:var(--gold)}
+@media (max-height:520px) and (orientation:landscape){#mixer{top:60px}}

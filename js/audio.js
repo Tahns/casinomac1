@@ -104,6 +104,76 @@
   // impact grave : sinus qui plonge + claque filtrée
   function boom(vol0, delay) { tone(110, 0.8, 'sine', vol0, delay, 32); tone(55, 1.1, 'sine', vol0 * 0.8, delay, 28); noise(0.35, vol0 * 0.5, delay, 900, 'lowpass', 120); }
 
+  // ----- briques « épiques » : basse saturée, taïko, cuivres, voix -----
+  function shaperCurve(k) { var n = 1024, c = new Float32Array(n); for (var i = 0; i < n; i++) { var x = i * 2 / n - 1; c[i] = (1 + k) * x / (1 + k * Math.abs(x)); } return c; }
+  var SHAPER = null;
+  // basse grondante : dent de scie + sous-octave saturées, filtre grave
+  function growl(f, dur, vol0, delay) {
+    if (!ensure()) return; if (!SHAPER) SHAPER = shaperCurve(30);
+    var t = ctx.currentTime + (delay || 0), ws = ctx.createWaveShaper(), lp = ctx.createBiquadFilter(), g = ctx.createGain(); ws.curve = SHAPER; ws.oversample = '2x';
+    lp.type = 'lowpass'; lp.Q.value = 3; lp.frequency.setValueAtTime(900, t); lp.frequency.exponentialRampToValueAtTime(240, t + dur);
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol0, t + 0.02); g.gain.setValueAtTime(vol0, t + dur * 0.5); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    [['sawtooth', 1], ['sine', 0.5], ['sawtooth', 1.005]].forEach(function (p) { var o = ctx.createOscillator(); o.type = p[0]; o.frequency.value = f * PK * p[1]; o.connect(ws); o.start(t); o.stop(t + dur + 0.05); });
+    ws.connect(lp); lp.connect(g); g.connect(sfxBus);
+  }
+  // taïko : peau grave qui plonge + corps + claque de baguette ; deep = gros tambour de guerre
+  function taiko(vol0, delay, deep) {
+    tone(deep ? 72 : 98, deep ? 0.9 : 0.5, 'sine', vol0, delay, deep ? 30 : 46, true); tone(deep ? 150 : 200, 0.2, 'triangle', vol0 * 0.4, delay, 70);
+    noise(0.24, vol0 * 0.5, delay, deep ? 600 : 900, 'lowpass', 140); noise(0.05, vol0 * 0.3, delay, 3800, 'bandpass', undefined, 1.2);
+  }
+  function dumF(v, d) { tone(105, 0.3, 'sine', v, d, 48); noise(0.12, v * 0.35, d, 420, 'lowpass', 150); }
+  function takF(v, d) { noise(0.06, v, d, 2200, 'bandpass', 1500, 2.5); tone(780, 0.05, 'triangle', v * 0.5, d, 520); }
+  // montée de tambours qui s'accélère (suspense)
+  function drumRoll(n, dur, vol0, delay) { for (var i = 0; i < n; i++) { var u = i / n, tt = (delay || 0) + dur * (1 - Math.pow(1 - u, 1.8)); taiko(vol0 * (0.35 + 0.65 * u), tt, false); } }
+
+  // ----- thèmes sonores des bonus : boucles légères (pas de 1/8 de temps) qui jouent pendant tout le bonus -----
+  var theme = null, themeLevel = 0, ambWas = false;
+  var THEMES = {
+    // Scarabées : désert, darbouka + sistre + flûte de roseau
+    scarab: { bpm: 104, step: function (n) {
+      var s = n % 16; if (s === 0 || s === 6 || s === 10) dumF(0.2, 0); if (s === 4 || s === 8 || s === 12 || s === 14) takF(0.06, 0); noise(0.04, 0.01 + (s % 2 ? 0.006 : 0), 0, 6500, 'highpass');
+      if (s % 4 === 0) { var k = [0, 2, 3, 2, 0, 3, 4, 2][(n / 4 | 0) % 8]; tone(SCALE[k] * 2, 0.36, 'triangle', 0.045, 0, null, true); tone(SCALE[k] * 4.01, 0.3, 'sine', 0.012, 0, null, true); }
+      if (s === 0) pad([SCALE[0] / 2, SCALE[4] / 2], 4.2, 0.1, 0, 1.4);
+    } },
+    // Pesée : sacré, pouls lent, voix, cloche de temple
+    weigh: { bpm: 60, step: function (n) {
+      var s = n % 16; if (s === 0 || s === 8) A.heartbeat(0.35); if (s === 3 || s === 11) A.heartbeat(0.2);
+      if (s === 0) pad([SCALE[0], SCALE[4], SCALE[0] * 2, SCALE[2] * 2], 6.5, 0.14, 0, 2.2);
+      if (s === 8 && (n / 16 | 0) % 2) pad([SCALE[1], SCALE[3], SCALE[1] * 2], 6.0, 0.1, 0, 2);
+      if (s === 6 || s === 14) bell(SCALE[[4, 2, 6, 0][(n / 8 | 0) % 4]] * 4, 1.8, 0.04, 0, true, 2.9);
+    } },
+    // Trésor : arpège de cloches qui scintille, bourdon d'or, éclats de pièces
+    vault: { bpm: 108, step: function (n) {
+      var s = n % 16, k = [0, 2, 4, 2, 5, 4, 2, 0][s % 8]; bell(SCALE[k] * 4, 0.5, 0.034, 0, true, 3.51);
+      if (s === 0) pad([SCALE[0] / 2, SCALE[0], SCALE[4]], 4.2, 0.12, 0, 1);
+      if (s === 8 || s === 13) tone(SCALE[0] / 2, 0.4, 'sine', 0.12, 0, SCALE[0] / 2.2);
+      if (Math.random() < 0.18) bell(2400 + Math.random() * 2400, 0.3, 0.02, 0, true, 3.6);
+    } },
+    // Fureur d'Anubis : GUERRE — taïkos géants, basse saturée, cuivres, chœur ; monte avec chaque DOUBLE
+    hand: { bpm: 116, step: function (n, lv) {
+      var s = n % 16, bar = n / 16 | 0, vb = 1 + lv * 0.12;
+      if (s === 0) { taiko(0.55 * vb, 0, true); if (lv >= 1) noise(0.9, 0.05 + lv * 0.02, 0, 5000, 'highpass'); } if (s === 8) taiko(0.46 * vb, 0, true);
+      if (s === 4 || s === 12) taiko(0.3 * vb, 0, false); if (s === 6 || s === 14) taiko(0.18, 0, false); if (s === 15 && lv >= 2) taiko(0.2, 0, false);
+      if (s % 4 === 0) growl([82.41, 82.41, 87.31, 82.41][s / 4], 0.5, 0.17 + lv * 0.025, 0);
+      if (lv >= 1 && s % 2 === 1) noise(0.03, 0.025 + lv * 0.006, 0, 7000, 'highpass');
+      if (s === 0 && bar % 2 === 0) {            // motif de cuivres : mi - fa - sol# - mi
+        var m = [0, 1, 2, 0]; m.forEach(function (k, j) { horn(WIN[k] * 0.5, 0.42, 0.08 + lv * 0.01, j * 0.26, true); if (lv >= 2) horn(WIN[k], 0.42, 0.05, j * 0.26, true); });
+        pad([WIN[0] / 2, WIN[4] / 2, WIN[0], WIN[2]], 4.0, 0.2 + lv * 0.03, 0, 0.7);
+      }
+      if (s === 8 && bar % 4 === 3) { A.swell ? A.swell(1.9, 0.16, 0, 160, 5200) : 0; drumRoll(10, 1.9, 0.22, 0); }
+      if (lv >= 3 && s === 0) { noise(1.4, 0.1, 0, 3000, 'bandpass', 900, 0.8); bell(WIN[0] * 4, 2.4, 0.05, 0, true); }
+    } },
+    // Crypte : glacial et inquiétant — pouls sourd, cloches désaccordées, craquements de glace
+    crypt: { bpm: 70, step: function (n) {
+      var s = n % 16; if (s === 0 || s === 4) { tone(55, 0.5, 'sine', 0.2, 0, 36); noise(0.1, 0.05, 0, 200); }
+      if (s === 0) pad([SCALE[0] / 2, SCALE[1] / 2, SCALE[3] / 2], 6, 0.16, 0, 2);
+      if (s === 8) pad([SCALE[1], SCALE[3], SCALE[1] * 2.01], 5, 0.07, 0, 2);
+      if (Math.random() < 0.3) bell(1500 + Math.random() * 2000, 1.4, 0.02, 0, true, 2.7);
+      if (Math.random() < 0.12) noise(0.07, 0.05, 0, 5500 + Math.random() * 2500, 'highpass');
+    } }
+  };
+  function stopTheme() { if (theme) { clearInterval(theme.timer); theme.alive = false; theme = null; } }
+
   var A = {
     unlock: ensure,
     tick: function (speed) { tone(1700 + (speed || 0) * 900, 0.03, 'triangle', 0.035); tone(620, 0.04, 'sine', 0.045); },
@@ -271,6 +341,41 @@
       noise(0.08, v * 0.2, 0, 220);
     },
 
+
+    // ---- thèmes de bonus ----
+    bonusTheme: function (kind) {
+      if (!ensure()) return; var T = THEMES[kind]; if (!T) return;
+      stopTheme(); ambWas = !!ambNodes; A.stopAmbient(); themeLevel = 0;
+      var tm = theme = { kind: kind, step: 0, alive: true, timer: null }, ms = 60000 / T.bpm / 2;
+      tm.timer = setInterval(function () { if (!tm.alive || muted) return; try { T.step(tm.step++, themeLevel); } catch (e) {} }, ms);
+    },
+    stopBonusTheme: function () { stopTheme(); if (ambWas && musicOn && !muted) setTimeout(function () { if (!theme) A.startAmbient(); }, 900); },
+    bonusUp: function () { themeLevel = Math.min(4, themeLevel + 1); },
+    bonusLevel: function (n) { themeLevel = Math.max(0, Math.min(4, n | 0)); },
+    swell: function (dur, v, d, f0, f1) { swell(dur, v, d, f0, f1); },
+    // ---- Fureur d'Anubis : les temps forts ----
+    furySlam: function () {                      // la Main s'abat : impact colossal
+      taiko(0.7, 0, true); taiko(0.55, 0.12, true); growl(55, 1.6, 0.3, 0); boom(0.7, 0);
+      [0, 2, 4].forEach(function (k) { horn(WIN[k] * 0.5, 1.4, 0.1, 0.02, true); horn(WIN[k], 1.2, 0.07, 0.02, true); });
+      noise(1.6, 0.2, 0, 4000, 'lowpass', 120); swell(0.9, 0.14, 0, 5000, 300);
+    },
+    furyCharge: function () {                    // la roue est lancée : tambours qui s'accélèrent + souffle
+      swell(2.4, 0.18, 0, 150, 6000); drumRoll(16, 2.4, 0.26, 0); growl(41.2, 2.4, 0.2, 0);
+    },
+    furyHit: function () {                       // la roue s'arrête : coup de tonnerre
+      taiko(0.55, 0, true); boom(0.5, 0.02); horn(WIN[0], 0.9, 0.1, 0, true); horn(WIN[2], 0.9, 0.08, 0, true); noise(0.5, 0.18, 0, 5200, 'highpass');
+    },
+    furyDouble: function (lvl) {                 // DOUBLE de votre couleur : explosion de puissance, de plus en plus grosse
+      lvl = Math.max(1, Math.min(3, lvl || 1)); A.bonusUp();
+      boom(0.55 + lvl * 0.07, 0); taiko(0.6, 0, true); taiko(0.45, 0.14, true); growl(55, 1.4, 0.26, 0);
+      swell(0.7, 0.16, 0, 300, 6200);
+      for (var i = 0; i < 4 + lvl * 2; i++) horn(winNote(i, 0) * (i > 4 ? 2 : 1), 0.4, 0.08, 0.15 + i * 0.08, true);
+      pad([WIN[0] / 2, WIN[2] / 2, WIN[4] / 2, WIN[0], WIN[2], WIN[4]], 3.2, 0.26, 0.1, 0.3);
+      for (i = 0; i < 6 + lvl * 3; i++) bell(2000 + Math.random() * 3000, 0.6, 0.03, 0.3 + i * 0.05, true, 3.1);
+    },
+    furyFail: function () {                      // mauvaise couleur : tout retombe
+      tone(130, 1.5, 'sawtooth', 0.12, 0, 30, true); growl(41.2, 1.6, 0.22, 0); taiko(0.4, 0.2, true); noise(1.2, 0.12, 0, 900, 'lowpass', 90);
+    },
     // ---- réglages joueur ----
     setMuted: function (m) { muted = m; if (master) master.gain.value = m ? 0 : 0.85 * vol; },
     isMuted: function () { return muted; },

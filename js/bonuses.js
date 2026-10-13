@@ -1104,9 +1104,9 @@
     function spinTo(idx, pw) {
       pw = pw == null ? 0.5 : pw;
       var off = 0.2 + Math.random() * 0.6, target = -(idx + off) * st, rot0 = rot, delta = mod(target - rot0, TAU) + (G.turbo ? 3 : Math.round(3 + pw * 4)) * TAU, prev = rot, pT = G.t;
-      S.spinning = true; hl = -1; Sfx.whoosh();
+      S.spinning = true; hl = -1; Sfx.whoosh(); Sfx.furyCharge && Sfx.furyCharge();
       return G.tween(G.turbo ? 2.4 : 4.2 + pw * 2.6, function (u) { var e = 1 - Math.pow(1 - u, 4.8), nr = rot0 + delta * e; vel = (nr - prev) / Math.max(1 / 240, G.t - pT); prev = nr; pT = G.t; rot = nr; var tn = clamp((u - 0.72) / 0.28, 0, 1), bt = Math.floor(tn * 6); if (tn > 0.3 && bt !== lastBeat) { lastBeat = bt; Sfx.drum(0.15 + 0.3 * tn); } tense = tn; vig = Math.max(vig, tn * 0.8); }, null).then(function () {
-        tense = 0; lastBeat = -1; S.spinning = false; vel = 0; rot = mod(rot, TAU); ptrV -= 4; Sfx.drum(0.3); hl = idx;
+        tense = 0; lastBeat = -1; S.spinning = false; vel = 0; rot = mod(rot, TAU); ptrV -= 4; Sfx.drum(0.3); Sfx.furyHit && Sfx.furyHit(); hl = idx;
       });
     }
     function banner(text, sub, col) { hb = { text: text, sub: sub, col: col, t: 0 }; }
@@ -1136,7 +1136,7 @@
       await G.sleep(0.5);
       Sfx.whoosh();
       await G.tween(0.55, function (k) { handY = lerp(-s * 1.8, g.cy - tipOff - u * 0.04, k * k); beam = 1 + k * 0.6; vig = Math.max(vig, k * 0.7); if (Math.random() < 0.8) FX.spark(G.cx + (Math.random() - 0.5) * u * 0.25, handY + s * 0.8, 2, '#ffe9a0', 260); }, null);
-      Sfx.lightning(); Sfx.thud(); FX.shake(34, 1.1); FX.flash(1, '#ffffff'); bolts = 1; crush = 1; shock = 1; FX.ring(G.cx, g.cy, '#ffe9a0', u * 0.5, 1); FX.ring(G.cx, g.cy, '#9ab8ff', u * 0.8, 1.2); FX.spark(G.cx, g.cy, 90, '#ffd86a', 560); FX.dust(G.cx, g.cy + u * 0.1, 30, '#c9a46a');
+      Sfx.furySlam && Sfx.furySlam(); Sfx.lightning(); Sfx.thud(); FX.shake(34, 1.1); FX.flash(1, '#ffffff'); bolts = 1; crush = 1; shock = 1; FX.ring(G.cx, g.cy, '#ffe9a0', u * 0.5, 1); FX.ring(G.cx, g.cy, '#9ab8ff', u * 0.8, 1.2); FX.spark(G.cx, g.cy, 90, '#ffd86a', 560); FX.dust(G.cx, g.cy + u * 0.1, 30, '#c9a46a');
       await G.sleep(0.2); Sfx.thud(); FX.shake(14, 0.5); FX.ring(G.cx, g.cy, '#ffffff', u * 0.35, 0.7);
       await G.sleep(0.4);
       G.tween(0.8, function (k) { beam = 1.6 * (1 - k); }, null);
@@ -1160,7 +1160,7 @@
           // DOUBLE de VOTRE couleur : l'orbe file vers le palier, la roue est améliorée (tous les nombres doublent), on relance
           var cp = counterPos(), m0 = mult, lvl = clamp(sx.mult / 4, 1, 3);
           flyOrb = { x0: tp.x, y0: tp.y, x1: cp.x, y1: cp.y, t: 0, c: cc.a, v: 2 };
-          Sfx.lightning(); FX.flash(0.4, cc.a); FX.shake(12 + 4 * lvl, 0.5); FX.ring(tp.x, tp.y, cc.a, g.R * 0.55, 0.7); FX.ring(tp.x, tp.y, '#ffffff', g.R * 0.35, 0.6); FX.spark(tp.x, tp.y, 30 + 10 * lvl, cc.a, 320); bolts = 0.8; rays = 0.9; raysCol = cc.a;
+          Sfx.furyDouble && Sfx.furyDouble(Math.round(lvl)); Sfx.lightning(); FX.flash(0.4, cc.a); FX.shake(12 + 4 * lvl, 0.5); FX.ring(tp.x, tp.y, cc.a, g.R * 0.55, 0.7); FX.ring(tp.x, tp.y, '#ffffff', g.R * 0.35, 0.6); FX.spark(tp.x, tp.y, 30 + 10 * lvl, cc.a, 320); bolts = 0.8; rays = 0.9; raysCol = cc.a;
           banner(T.handUp, T.handUpSub, cc.a);
           await G.tween(0.7, function (k) { flyOrb.t = k; }, null);
           var ox2 = flyOrb.x1, oy2 = flyOrb.y1;
@@ -1175,7 +1175,7 @@
         } else if (sx.kind === 'wrong') {
           // DOUBLE d'une AUTRE couleur : la chaîne s'arrête, on encaisse le palier (plus petit nombre × palier)
           var wc = HCOL[segs[sx.idx].d];
-          Sfx.curse(); FX.flash(0.35, wc.a); FX.shake(14, 0.5); FX.ring(tp.x, tp.y, wc.a, g.R * 0.5, 0.7); FX.dust(tp.x, tp.y, 16, '#8a7a5a'); vig = Math.max(vig, 0.9);
+          Sfx.furyFail && Sfx.furyFail(); Sfx.curse(); FX.flash(0.35, wc.a); FX.shake(14, 0.5); FX.ring(tp.x, tp.y, wc.a, g.R * 0.5, 0.7); FX.dust(tp.x, tp.y, 16, '#8a7a5a'); vig = Math.max(vig, 0.9);
           banner(T.handWrong, T.handWrongSub, wc.a);
           await G.sleep(1.2);
           banner(M.HAND_MIN_N + ' × ' + sx.mult + ' = ' + sx.pay, T.handWrongSub, '#ffd86a');
@@ -1753,7 +1753,8 @@
     var scene = FACT[sp.secret ? 'crypt' : sp.upgraded ? 'hand' : sp.kind](sp, bet);
     G.setScene(scene);
     await G.setFade(0, 0.5);
-    await scene.run();
+    if (Sfx.bonusTheme) Sfx.bonusTheme(sp.secret ? 'crypt' : sp.upgraded ? 'hand' : sp.kind);   // musique propre à chaque bonus
+    try { await scene.run(); } finally { if (Sfx.stopBonusTheme) Sfx.stopBonusTheme(); }
     await G.setFade(1, 0.35);
     G.setScene(null); G.say('');
     await G.setFade(0, 0.5);

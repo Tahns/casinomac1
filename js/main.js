@@ -212,11 +212,34 @@
     if (S.auto > 0) { stopAuto(); return; }
     S.autoIdx = (S.autoIdx + 1) % AUTO_STEPS.length; Sfx.click(); setSpinBtn();
   });
-  function refreshSound() { $('btnSound').classList.toggle('off', Sfx.isMuted()); }
+  function refreshSound() { $('btnSound').classList.toggle('off', Sfx.isMuted()); refreshMixer(); }
+  /* ---------- mixeur rapide : volume, hauteur, ambiance, muet — sans ouvrir les réglages ---------- */
+  function refreshMixer() {
+    var T = I18N.t();
+    if (!$('mixer')) return;
+    $('mxVolL').textContent = T.volumeL; $('mxPitchL').textContent = T.pitchShort;
+    $('mxVol').value = Math.round(Sfx.getVolume() * 100); $('mxVolV').textContent = Math.round(Sfx.getVolume() * 100) + '%';
+    $('mxPitch').value = Sfx.getPitch(); $('mxPitchV').textContent = (Sfx.getPitch() > 0 ? '+' : '') + Sfx.getPitch();
+    $('mxMute').textContent = Sfx.isMuted() ? T.soundOff : T.soundOn; $('mxMute').classList.toggle('on', !Sfx.isMuted());
+    $('mxMusic').textContent = T.musicShort; $('mxMusic').classList.toggle('on', Sfx.isMusic());
+    $('mxReset').textContent = T.resetL;
+    $('btnMix').setAttribute('aria-label', T.mixLabel);
+  }
+  function toggleMixer(open) { var m = $('mixer'); open = open == null ? m.hidden : open; m.hidden = !open; $('btnMix').setAttribute('aria-expanded', open ? 'true' : 'false'); if (open) refreshMixer(); }
+  $('btnMix').addEventListener('click', function (e) { e.stopPropagation(); Sfx.unlock(); toggleMixer(); });
+  document.addEventListener('click', function (e) { if (!$('mixer').hidden && !$('mixer').contains(e.target) && e.target !== $('btnMix') && !$('btnMix').contains(e.target)) toggleMixer(false); });
+  document.addEventListener('keydown', function (e) { if (e.code === 'Escape' && !$('mixer').hidden) { toggleMixer(false); $('btnMix').focus(); } });
+  $('mxVol').addEventListener('input', function () { Sfx.unlock(); Sfx.setVolume(this.value / 100); $('mxVolV').textContent = this.value + '%'; save(); });
+  $('mxVol').addEventListener('change', function () { Sfx.coin(1); });
+  $('mxPitch').addEventListener('input', function () { Sfx.unlock(); Sfx.setPitch(+this.value); $('mxPitchV').textContent = (this.value > 0 ? '+' : '') + this.value; save(); });
+  $('mxPitch').addEventListener('change', function () { Sfx.coin(1); Sfx.chime(4); });
+  $('mxMute').addEventListener('click', function () { Sfx.unlock(); Sfx.setMuted(!Sfx.isMuted()); refreshSound(); save(); });
+  $('mxMusic').addEventListener('click', function () { Sfx.unlock(); Sfx.setMusic(!Sfx.isMusic()); refreshMixer(); save(); });
+  $('mxReset').addEventListener('click', function () { Sfx.setPitch(0); Sfx.setVolume(1); Sfx.setMuted(false); Sfx.setMusic(true); refreshSound(); save(); Sfx.coin(1); });
   $('btnSound').addEventListener('click', function () { Sfx.unlock(); Sfx.setMuted(!Sfx.isMuted()); refreshSound(); save(); });
   function applyLang() {
     $('btnLang').textContent = I18N.lang().toUpperCase() === 'FR' ? 'EN' : 'FR';
-    I18N.apply(); setSpinBtn(); say(S.busy ? '' : I18N.t().ready);
+    I18N.apply(); setSpinBtn(); refreshMixer(); say(S.busy ? '' : I18N.t().ready);
     if (G.wheel.build && G.w) G.wheel.build();
   }
   $('btnLang').addEventListener('click', function () { I18N.setLang(I18N.lang() === 'fr' ? 'en' : 'fr'); applyLang(); save(); });
