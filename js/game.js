@@ -20,13 +20,19 @@
   G.nextFrame = function () { return G.sleep(0); };
 
   /* ---------- texte ---------- */
-  // chiffres : police condensée à chiffres alignés (Cinzel a des chiffres elzéviriens, peu lisibles)
-  G.NUM = "Oswald, 'Cinzel', serif";
+  // familles de police : une seule source pour tout le canvas (miroir des variables CSS --f-title / --f-num / --f-text)
+  // titres et lettrage : capitales romaines gravées (Cinzel) ; chiffres : Philosopher gras, chiffres alignés et lisibles en petit
+  // (le « 1 » de Cinzel ressemble à un I) ; textes courants : Philosopher
+  G.TITLE = 'Cinzel, "Trajan Pro", Georgia, serif';
+  G.NUM = 'Philosopher, Cinzel, Georgia, serif';
+  G.TEXT = 'Philosopher, Georgia, serif';
+  G.NUM_K = 1.12; // Philosopher a une hauteur de chiffre plus faible qu’Oswald : compensation pour garder les chiffres lisibles en petit
+  G.FONT_LOADS = ['600 20px Cinzel', '700 20px Cinzel', '900 20px Cinzel', '400 20px Philosopher', '700 20px Philosopher'];
   var isNum = G.isNum = function (s) { return /^[+×x\d\s.,\u00a0\u202f\u20ac$\-]+$/.test(String(s)) && /\d/.test(String(s)); };
   G.txt = function (s, x, y, o) {
     o = o || {};
     var num = !o.family && isNum(s);
-    ctx.font = (num ? 700 : (o.weight || 800)) + ' ' + (o.size || 20) * (num ? 1.14 : 1) + 'px ' + (num ? G.NUM : (o.family || 'Cinzel, serif'));
+    ctx.font = (num ? 700 : (o.weight || 800)) + ' ' + (o.size || 20) * (num ? G.NUM_K : 1) + 'px ' + (num ? G.NUM : (o.family || G.TITLE));
     ctx.textAlign = o.align || 'center'; ctx.textBaseline = o.base || 'middle';
     if (o.spacing && ctx.letterSpacing !== undefined) ctx.letterSpacing = o.spacing + 'px';
     if (o.shadow) { ctx.shadowColor = o.shadow; ctx.shadowBlur = o.blur || 12; }
@@ -355,7 +361,7 @@
         var lab = k === 'm0' ? '0' : ({ m025: fr ? '0,25' : '0.25', m05: fr ? '0,5' : '0.5', m1: '1', m2: '2', m3: '3' })[k];
         var frac = k === 'm025' || k === 'm05';
         // fractions : écrites le long du rayon (assez de place pour « 0,25 »), entiers : debout comme les logos
-        var fs = R * (k === 'm0' ? 0.1 : frac ? 0.12 : 0.15);
+        var fs = R * (k === 'm0' ? 0.1 : frac ? 0.12 : 0.15) * G.NUM_K;
         f.font = '700 ' + fs + 'px ' + G.NUM;
         var tm = f.measureText(lab), tl = tm.actualBoundingBoxLeft, tr = tm.actualBoundingBoxRight, ta = tm.actualBoundingBoxAscent, td = tm.actualBoundingBoxDescent;
         var dh = f.measureText('0').actualBoundingBoxAscent, rc = RC + (k === 'm0' ? R * 0.045 : 0); // la poussière : « 0 » au-dessus du soleil éteint
@@ -370,8 +376,8 @@
       } else {
         // icône (debout) vers l'extérieur, nom le long du rayon vers le centre ; l'ensemble est centré dans la case
         var isz = Math.min(chord(RC + R * 0.12) * ({ scarab: 1.35, feather: 1.6, pyramid: 1.2, ankh: 1.2 })[v.glyph], R * 0.17), nm = T.kinds[k];
-        var nfs = R * 0.056; f.font = '900 ' + nfs + 'px Cinzel, serif';
-        var nlen = f.measureText(nm).width, nmax = R * 0.30; if (nlen > nmax) { nfs *= nmax / nlen; nlen = nmax; f.font = '900 ' + nfs + 'px Cinzel, serif'; }
+        var nfs = R * 0.056; f.font = '900 ' + nfs + 'px ' + G.TITLE;
+        var nlen = f.measureText(nm).width, nmax = R * 0.30; if (nlen > nmax) { nfs *= nmax / nlen; nlen = nmax; f.font = '900 ' + nfs + 'px ' + G.TITLE; }
         var gap = R * 0.025, tot = nlen + gap + isz, r1 = RC + tot / 2;      // r1 : bord extérieur de l'icône
         var iy = r1 - isz / 2, nEnd = r1 - isz - gap;                         // fin du nom (côté icône)
         f.save(); f.rotate(Math.PI / 2);
@@ -381,7 +387,7 @@
         else if (v.glyph === 'feather') A.feather(f, 0, -iy, isz * 0.9, '#4a3410', 'rgba(255,255,255,.7)');
         else if (v.glyph === 'pyramid') A.pyramid(f, 0, -iy, isz * 0.85, '#ffe9a0', 'rgba(0,0,0,.45)');
         f.restore();
-        f.font = '900 ' + nfs + 'px Cinzel, serif'; f.textAlign = 'right'; f.textBaseline = 'alphabetic'; f.fillStyle = v.tx;
+        f.font = '900 ' + nfs + 'px ' + G.TITLE; f.textAlign = 'right'; f.textBaseline = 'alphabetic'; f.fillStyle = v.tx;
         var nb = f.measureText(nm); f.shadowColor = 'rgba(0,0,0,.6)'; f.shadowBlur = 3;
         f.fillText(nm, nEnd, (nb.actualBoundingBoxAscent - nb.actualBoundingBoxDescent) / 2); f.shadowBlur = 0;
       }
@@ -776,7 +782,7 @@
     G.goldText(mtxt, 0, 0, Math.min(w * 0.14, u * 0.16, w * 0.88 / (Math.max(4, mtxt.length) * 0.58)), { blur: 40 });
     ctx.restore();
     G.txt('×' + G.fmt(o.mult), cx, cy + u * 0.2, { size: Math.min(w * 0.05, u * 0.06), fill: '#fff1b8', stroke: '#2a1a02', shadow: 'rgba(255,200,60,.6)' });
-    if (o.done && !o.closing) G.txt(I18N.t().tapSkip, cx, cy + u * 0.3, { size: 13, family: 'Manrope', weight: 700, fill: 'rgba(255,241,184,' + (0.45 + 0.35 * Math.sin(o.t * 4)) + ')', spacing: 3 });
+    if (o.done && !o.closing) G.txt(I18N.t().tapSkip, cx, cy + u * 0.3, { size: 13, family: G.TEXT, weight: 700, fill: 'rgba(255,241,184,' + (0.45 + 0.35 * Math.sin(o.t * 4)) + ')', spacing: 3 });
     ctx.restore();
   }
 
