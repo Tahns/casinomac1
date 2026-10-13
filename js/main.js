@@ -386,8 +386,13 @@
   load(); G.quality = S.quality; if (S.quality === 'low') FX.lite = true; I18N.apply(); refreshSound(); applyLang();
   updateHud(); setWin(0); setSpinBtn(); renderHistory();
   if (S.resumed) { say(I18N.t().resumed + ' +' + G.fmt(S.resumed)); save(); }
-  G.start();
-  if (document.fonts && document.fonts.load) Promise.all(['700 20px Oswald', '600 20px Oswald', '900 20px Cinzel'].map(function (f) { return document.fonts.load(f); })).then(function () { G.wheel.build(); }, function () {});
+  // les polices du canvas doivent être prêtes avant le premier rendu (sinon texte de secours visible, et roue/médaillons mesurés avec la mauvaise police)
+  var started = false;
+  function startGame() { if (started) return; started = true; G.start(); }
+  if (document.fonts && document.fonts.load) {
+    Promise.all(G.FONT_LOADS.map(function (f) { return document.fonts.load(f, 'ÉœéÀ0123456789×€$’'); })).then(startGame, startGame);
+    setTimeout(startGame, 3000); // filet de sécurité : ne jamais bloquer le jeu sur une police
+  } else startGame();
   // utilitaires de test (?debug)
   G.S = S; G.play = play;
   if (/[?&]debug/.test(location.search)) { G.debug = true; }

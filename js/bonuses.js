@@ -18,7 +18,7 @@
   function plate(cx, y, text, sub, alpha) {
     var w = G.w, fs = G.h < 520 ? 16 : clamp(w * 0.034, 17, 34), subS = clamp(w * 0.0125, 11, 15);
     ctx.save(); if (alpha != null) ctx.globalAlpha = alpha;
-    ctx.font = '900 ' + fs + 'px Cinzel, serif'; if (ctx.letterSpacing !== undefined) ctx.letterSpacing = '4px';
+    ctx.font = '900 ' + fs + 'px ' + G.TITLE; if (ctx.letterSpacing !== undefined) ctx.letterSpacing = '4px';
     var tw = Math.min(w * 0.94, ctx.measureText(text).width + fs * 3), th = fs * 1.9 + (sub ? subS * 1.6 : 0);
     var x = cx - tw / 2;
     A.roundRect(ctx, x, y, tw, th, 12);
@@ -27,7 +27,7 @@
     ctx.lineWidth = 2; ctx.strokeStyle = A.goldGrad(ctx, x, y, x + tw, y + th); ctx.stroke();
     if (ctx.letterSpacing !== undefined) ctx.letterSpacing = '0px';
     G.goldText(text, cx, y + fs * 1.05, fs, { spacing: 4, blur: 14 });
-    if (sub) G.txt(sub, cx, y + fs * 1.05 + fs * 0.9 + subS * 0.2, { size: subS, family: 'Manrope', weight: 600, fill: '#cdb98a' });
+    if (sub) G.txt(sub, cx, y + fs * 1.05 + fs * 0.9 + subS * 0.2, { size: subS, family: G.TEXT, weight: 600, fill: '#cdb98a' });
     ctx.restore();
   }
 
@@ -37,7 +37,7 @@
     ctx.save();
     var scale = 1 + (S.pop || 0) * 0.18;
     ctx.translate(G.cx, y); ctx.scale(scale, scale);
-    G.txt(label, 0, -fs * 0.95, { size: clamp(w * 0.011, 10, 13), family: 'Manrope', weight: 800, fill: '#b9a780', spacing: 4 });
+    G.txt(label, 0, -fs * 0.95, { size: clamp(w * 0.011, 10, 13), family: G.TEXT, weight: 800, fill: '#b9a780', spacing: 4 });
     G.goldText(txt, 0, 0, fs, { blur: 24 });
     ctx.restore();
   }
@@ -271,7 +271,7 @@
       // total en haut à droite du cadre
       ctx.save(); var tsc = 1 + (S.pop || 0) * 0.18, tfs = clamp(g.dy * 0.9, 17, 34); ctx.translate(g.px1 - 22, g.py0 + g.dy * 0.62); ctx.scale(tsc, tsc);
       var tval = '×' + G.fmt(Math.round(S.total * 100) / 100), tw = tval.length * tfs * 0.6;
-      G.txt(T.total, -tw - 10, 2, { size: clamp(tfs * 0.4, 9, 13), family: 'Manrope', weight: 800, fill: '#b9a780', spacing: 3, align: 'right' });
+      G.txt(T.total, -tw - 10, 2, { size: clamp(tfs * 0.4, 9, 13), family: G.TEXT, weight: 800, fill: '#b9a780', spacing: 3, align: 'right' });
       G.goldText(tval, 0, 0, tfs, { blur: 18, align: 'right' }); ctx.restore();
       chrome(S);
     };
@@ -429,15 +429,15 @@
       if (i === 0) A.feather(ctx, ix, iy, isz * 1.15, '#fff8e6', 'rgba(150,110,40,.8)'); else heart(ix, iy + isz * 0.08, isz * 1.35);
       var tx = compact ? c.x + c.h * 1.05 : c.x + c.w / 2, al = compact ? 'left' : 'center', maxW = compact ? c.w - c.h * 1.05 - 38 : c.w * 0.88;
       var name = i ? T.heart : T.feather, tag = i ? T.heartOf : T.featherOf;
-      var fs = fitSize(name, maxW, compact ? clamp(c.h * 0.3, 15, 26) : clamp(c.w * 0.13, 17, 30), 'Cinzel, serif');
+      var fs = fitSize(name, maxW, compact ? clamp(c.h * 0.3, 15, 26) : clamp(c.w * 0.13, 17, 30), G.TITLE);
       var ty = compact ? y + c.h * 0.36 : y + c.h * 0.66;
       G.txt(name, tx, ty, { size: fs, weight: 900, fill: '#ffe08a', stroke: '#2a1802', sw: 3, align: al, spacing: 2 });
-      var fs2 = fitSize(tag, maxW, Math.max(10, fs * 0.58), 'Manrope, sans-serif');
-      G.txt(tag, tx, ty + fs * 0.95, { size: fs2, family: 'Manrope', weight: 800, fill: '#cdb98a', align: al, spacing: 2 });
+      var fs2 = fitSize(tag, maxW, Math.max(10, fs * 0.58), G.TEXT);
+      G.txt(tag, tx, ty + fs * 0.95, { size: fs2, family: G.TEXT, weight: 800, fill: '#cdb98a', align: al, spacing: 2 });
       // touche de raccourci
       var br = clamp(Math.min(c.w, c.h) * 0.09, 10, 14), bx = compact ? c.x + c.w - br - 12 : c.x + br + 12, by = y + br + 12;
       ctx.beginPath(); ctx.arc(bx, by, br, 0, TAU); ctx.fillStyle = 'rgba(0,0,0,.45)'; ctx.fill(); ctx.lineWidth = 1.5; ctx.strokeStyle = '#d8c590'; ctx.stroke();
-      G.txt(String(i + 1), bx, by + 1, { size: br * 1.15, family: 'Manrope', weight: 900, fill: '#fff1b8' });
+      G.txt(String(i + 1), bx, by + 1, { size: br * 1.15, family: G.TEXT, weight: 900, fill: '#fff1b8' });
       ctx.restore();
     }
     S.draw = function () {
@@ -506,11 +506,11 @@
           ctx.globalAlpha = 0.95; ctx.strokeStyle = 'rgba(255,84,62,.95)'; ctx.lineWidth = Math.max(2.5, ch * 0.11); ctx.lineCap = 'round';
           ctx.beginPath(); ctx.moveTo(cx - cw * 0.4, cyy + ch * 0.12); ctx.lineTo(cx + cw * 0.4, cyy - ch * 0.12); ctx.stroke(); ctx.lineCap = 'butt';
         }
-        if (G.h >= 520 && !res[si]) G.txt(si === 0 ? T.feather : T.heart, cx, cyy - ch * 0.78, { size: clamp(pr * 0.17, 10, 15), family: 'Manrope', weight: 800, fill: '#d8c590', spacing: 3 });
+        if (G.h >= 520 && !res[si]) G.txt(si === 0 ? T.feather : T.heart, cx, cyy - ch * 0.78, { size: clamp(pr * 0.17, 10, 15), family: G.TEXT, weight: 800, fill: '#d8c590', spacing: 3 });
         if (res[si]) {   // GAGNÉ / PERDU sous le cartouche
           var ls = clamp(pr * 0.24, 12, 22), won = res[si] === 'won', pop = G.ease.outBack(clamp((verdict ? verdict.t : 1) / 0.4, 0, 1));
           ctx.globalAlpha = won ? 1 : 0.95;
-          G.txt(won ? T.weighWon : T.weighLost, cx, cyy - ch * 0.5 - ls * 0.75, { size: ls * pop, family: 'Manrope', weight: 900, fill: won ? '#fff1b8' : '#ff8a7a', stroke: 'rgba(0,0,0,.6)', sw: 3, spacing: 3, shadow: won ? 'rgba(255,216,106,.9)' : 'rgba(0,0,0,.6)', blur: won ? 14 : 4 });
+          G.txt(won ? T.weighWon : T.weighLost, cx, cyy - ch * 0.5 - ls * 0.75, { size: ls * pop, family: G.TEXT, weight: 900, fill: won ? '#fff1b8' : '#ff8a7a', stroke: 'rgba(0,0,0,.6)', sw: 3, spacing: 3, shadow: won ? 'rgba(255,216,106,.9)' : 'rgba(0,0,0,.6)', blur: won ? 14 : 4 });
         }
         ctx.restore();
       });
@@ -707,7 +707,7 @@
           if (kind === 'num') { G.icon(ctx, 'coin', cx, cy - r.s * 0.04, r.s * 0.92); G.txt('+' + t.token, cx, cy + r.s * 0.12, { size: r.s * (String(t.token).length > 1 ? 0.3 : 0.38), weight: 900, fill: '#fff8d8', stroke: '#3a2400', sw: r.s * 0.07, shadow: 'rgba(0,0,0,.6)', blur: 6 }); }
           else if (false) G.txt('+' + t.token, cx, cy + r.s * 0.01, { size: r.s * (String(t.token).length > 1 ? 0.4 : 0.5), weight: 900, fill: '#fff8d8', stroke: '#4a3208', shadow: 'rgba(255,255,255,.6)' });
           else if (kind === 'scepter' && G.icon(ctx, 'scepter', cx, cy - r.s * 0.02, r.s * 0.95)) { G.txt('×2', cx, cy + r.s * 0.34, { size: r.s * 0.3, weight: 900, fill: '#fff', stroke: '#0d2466', sw: r.s * 0.06 }); }
-          else if (kind === 'scepter') { G.txt('×2', cx, cy - r.s * 0.05, { size: r.s * 0.46, weight: 900, fill: '#fff', stroke: '#0d2466' }); G.txt('SCEPTRE', cx, cy + r.s * 0.3, { size: r.s * 0.11, weight: 800, fill: '#d8e4ff', family: 'Manrope', spacing: 2 }); }
+          else if (kind === 'scepter') { G.txt('×2', cx, cy - r.s * 0.05, { size: r.s * 0.46, weight: 900, fill: '#fff', stroke: '#0d2466' }); G.txt('SCEPTRE', cx, cy + r.s * 0.3, { size: r.s * 0.11, weight: 800, fill: '#d8e4ff', family: G.TEXT, spacing: 2 }); }
           else if (kind === 'ankh' && G.icon(ctx, 'amulet', cx, cy, r.s * 0.92)) { /* amulette */ }
           else if (kind === 'ankh') { A.ankh(ctx, cx, cy - r.s * 0.02, r.s * 0.55, '#fff', '#0b5a50'); }
           else if (!G.icon(ctx, 'skull', cx, cy, r.s * 0.95)) { A.skull(ctx, cx, cy, r.s * 0.66, '#fff1d8', '#5a0c06'); }
@@ -892,7 +892,7 @@
         wedgeH(i, ri, ro); ctx.lineWidth = Math.max(1, R * 0.006); ctx.strokeStyle = 'rgba(255,214,110,.8)'; ctx.stroke();
         ctx.rotate((i + 0.5) * st - Math.PI / 2); ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
         if (s.d != null) {
-          ctx.font = '900 ' + R * 0.072 + 'px Cinzel, serif'; if (ctx.letterSpacing !== undefined) ctx.letterSpacing = Math.max(0, R * 0.008) + 'px';
+          ctx.font = '900 ' + R * 0.072 + 'px ' + G.TITLE; if (ctx.letterSpacing !== undefined) ctx.letterSpacing = Math.max(0, R * 0.008) + 'px';
           ctx.fillStyle = col.ink; ctx.fillText(T.handDouble, R * 0.9, 0);
         } else if (s.b) {
           ctx.font = '700 ' + R * 0.125 + 'px ' + G.NUM; ctx.fillStyle = col[0]; ctx.shadowColor = col[0]; ctx.shadowBlur = 8; ctx.fillText('×' + s.x, R * 0.9, 0); ctx.shadowBlur = 0;
@@ -923,7 +923,7 @@
       });
       sv(function () {
         ctx.translate(p.x, p.y); ctx.scale(ms, ms);
-        G.txt(T.handTier, 0, -34, { size: 10, family: 'Manrope', weight: 800, fill: '#b9a780', spacing: 3 });
+        G.txt(T.handTier, 0, -34, { size: 10, family: G.TEXT, weight: 800, fill: '#b9a780', spacing: 3 });
         G.goldText('×' + multShown, 0, 8, Math.min(64, G.w * 0.08, 56), { blur: 28 });
       });
     }
@@ -935,7 +935,7 @@
         var bgc = ctx.createLinearGradient(0, p.y, 0, p.y + h); bgc.addColorStop(0, 'rgba(36,26,12,.92)'); bgc.addColorStop(1, 'rgba(10,7,4,.92)');
         ctx.fillStyle = bgc; ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = cc.a; ctx.stroke();
         gem(p.x + 22, p.y + h / 2, 13, ci);
-        G.txt(T.handYour, p.x + 44, p.y + 13, { size: 9, family: 'Manrope', weight: 800, fill: '#b9a780', spacing: 2, align: 'left' });
+        G.txt(T.handYour, p.x + 44, p.y + 13, { size: 9, family: G.TEXT, weight: 800, fill: '#b9a780', spacing: 2, align: 'left' });
         G.txt(name, p.x + 44, p.y + 29, { size: 16, weight: 900, fill: cc.a, stroke: '#1a1004', sw: 3, align: 'left', spacing: 2 });
       });
     }
@@ -946,12 +946,12 @@
         ctx.globalAlpha = panelA;
         if (g.narrow) {
           var y0 = g.cy + g.R * 1.08 + 20; if (y0 + 30 > g.bot + 24) return;
-          lines = wrapLines(T.handRule, G.w - 36, '700 ' + fs + 'px Manrope');
-          lines.forEach(function (ln, k) { G.txt(ln, G.cx, y0 + k * (fs + 4), { size: fs, family: 'Manrope', weight: 700, fill: '#e8d8a8', stroke: 'rgba(0,0,0,.8)', sw: 3 }); });
+          lines = wrapLines(T.handRule, G.w - 36, '700 ' + fs + 'px ' + G.TEXT);
+          lines.forEach(function (ln, k) { G.txt(ln, G.cx, y0 + k * (fs + 4), { size: fs, family: G.TEXT, weight: 700, fill: '#e8d8a8', stroke: 'rgba(0,0,0,.8)', sw: 3 }); });
         } else {
           var mw = Math.max(160, Math.min(250, G.cx - g.R * 1.15 - 24));
-          lines = wrapLines(T.handRule, mw, '700 ' + fs + 'px Manrope');
-          lines.forEach(function (ln, k) { G.txt(ln, p.x, p.y + 56 + k * (fs + 5), { size: fs, family: 'Manrope', weight: 700, fill: '#e8d8a8', stroke: 'rgba(0,0,0,.8)', sw: 3, align: 'left' }); });
+          lines = wrapLines(T.handRule, mw, '700 ' + fs + 'px ' + G.TEXT);
+          lines.forEach(function (ln, k) { G.txt(ln, p.x, p.y + 56 + k * (fs + 5), { size: fs, family: G.TEXT, weight: 700, fill: '#e8d8a8', stroke: 'rgba(0,0,0,.8)', sw: 3, align: 'left' }); });
         }
       });
     }
@@ -962,15 +962,15 @@
       var fs = clamp(G.w * 0.05, 20, 46), sfs = clamp(G.w * 0.017, 11, 17);
       sv(function () {
         ctx.globalAlpha = a; ctx.translate(G.cx, g.cy); ctx.scale(k, k);
-        ctx.font = '900 ' + fs + 'px Cinzel, serif'; if (ctx.letterSpacing !== undefined) ctx.letterSpacing = '3px';
+        ctx.font = '900 ' + fs + 'px ' + G.TITLE; if (ctx.letterSpacing !== undefined) ctx.letterSpacing = '3px';
         var tw0 = ctx.measureText(b.text).width + fs * 1.6; if (ctx.letterSpacing !== undefined) ctx.letterSpacing = '0px';
-        if (b.sub) { ctx.font = '700 ' + sfs + 'px Manrope'; tw0 = Math.max(tw0, ctx.measureText(b.sub).width + sfs * 2); }
+        if (b.sub) { ctx.font = '700 ' + sfs + 'px ' + G.TEXT; tw0 = Math.max(tw0, ctx.measureText(b.sub).width + sfs * 2); }
         var tw = Math.min(G.w * 0.94, tw0);
         var th = fs * 1.5 + (b.sub ? sfs * 2.2 : 0), y0 = -th / 2;
         A.roundRect(ctx, -tw / 2, y0, tw, th, 14);
         ctx.fillStyle = 'rgba(8,5,3,.82)'; ctx.fill(); ctx.lineWidth = 2.5; ctx.strokeStyle = b.col || '#ffd86a'; ctx.stroke();
         G.goldText(b.text, 0, y0 + fs * 0.85, fs, { blur: 22, spacing: 3 });
-        if (b.sub) G.txt(b.sub, 0, y0 + fs * 1.5 + sfs * 0.7, { size: sfs, family: 'Manrope', weight: 700, fill: '#fff1b8' });
+        if (b.sub) G.txt(b.sub, 0, y0 + fs * 1.5 + sfs * 0.7, { size: sfs, family: G.TEXT, weight: 700, fill: '#fff1b8' });
       });
     }
     S.draw = function () {
@@ -1248,15 +1248,15 @@
           var gx = c.x + c.h * 0.55, gy = y + c.h / 2; gem(gx, gy, c.h * 0.3 * pulse, i);
           var tx = c.x + c.h * 1.1;
           G.txt(name, tx, y + c.h * 0.36, { size: fs, weight: 900, fill: col.a, stroke: '#2a1802', sw: 3, align: 'left', spacing: 2 });
-          G.txt(T.handColorSub, tx, y + c.h * 0.36 + fs * 1.4, { size: Math.max(10, fs * 0.56), family: 'Manrope', weight: 700, fill: '#cdb98a', align: 'left' });
-          G.txt('[' + (i + 1) + ']', tx, y + c.h * 0.8, { size: Math.max(11, fs * 0.6), family: 'Manrope', weight: 800, fill: 'rgba(255,241,184,.7)', align: 'left' });
+          G.txt(T.handColorSub, tx, y + c.h * 0.36 + fs * 1.4, { size: Math.max(10, fs * 0.56), family: G.TEXT, weight: 700, fill: '#cdb98a', align: 'left' });
+          G.txt('[' + (i + 1) + ']', tx, y + c.h * 0.8, { size: Math.max(11, fs * 0.6), family: G.TEXT, weight: 800, fill: 'rgba(255,241,184,.7)', align: 'left' });
           ring(c.x + c.w - c.h * 0.5, y + c.h / 2, c.h * 0.36, i);
         } else {
           gem(c.x + c.w / 2, y + c.h * 0.2, c.w * 0.16 * pulse, i);
           G.txt(name, c.x + c.w / 2, y + c.h * 0.4, { size: fs, weight: 900, fill: col.a, stroke: '#2a1802', sw: 3, spacing: 2 });
-          G.txt(T.handColorSub, c.x + c.w / 2, y + c.h * 0.4 + fs * 1.5, { size: Math.max(10, fs * 0.58), family: 'Manrope', weight: 700, fill: '#cdb98a' });
+          G.txt(T.handColorSub, c.x + c.w / 2, y + c.h * 0.4 + fs * 1.5, { size: Math.max(10, fs * 0.58), family: G.TEXT, weight: 700, fill: '#cdb98a' });
           ring(c.x + c.w / 2, y + c.h * 0.71, Math.min(c.w * 0.2, c.h * 0.17), i);
-          G.txt('[' + (i + 1) + ']', c.x + c.w / 2, y + c.h * 0.93, { size: Math.max(11, fs * 0.6), family: 'Manrope', weight: 800, fill: 'rgba(255,241,184,.7)' });
+          G.txt('[' + (i + 1) + ']', c.x + c.w / 2, y + c.h * 0.93, { size: Math.max(11, fs * 0.6), family: G.TEXT, weight: 800, fill: 'rgba(255,241,184,.7)' });
         }
       });
     }
@@ -1265,8 +1265,8 @@
       cards.forEach(drawCard);
       if (cards.length && G.h >= 520) {
         var by = cards[2].y + cards[2].h + 12, narrow = cards[0].row, fs = narrow ? 11 : 12;
-        var lines = wrapLines(T.handColorRule, Math.min(G.w - 28, 760), '700 ' + fs + 'px Manrope');
-        sv(function () { lines.forEach(function (ln, k) { G.txt(ln, G.cx, by + k * (fs + 4), { size: fs, family: 'Manrope', weight: 700, fill: 'rgba(232,216,168,.95)', stroke: 'rgba(0,0,0,.8)', sw: 3 }); }); });
+        var lines = wrapLines(T.handColorRule, Math.min(G.w - 28, 760), '700 ' + fs + 'px ' + G.TEXT);
+        sv(function () { lines.forEach(function (ln, k) { G.txt(ln, G.cx, by + k * (fs + 4), { size: fs, family: G.TEXT, weight: 700, fill: 'rgba(232,216,168,.95)', stroke: 'rgba(0,0,0,.8)', sw: 3 }); }); });
       }
       chrome(S);
     };
@@ -1401,8 +1401,8 @@
       ctx.save(); A.roundRect(ctx, x0, g.legY - g.legH / 2, w, g.legH, 10); ctx.fillStyle = 'rgba(8,6,3,.62)'; ctx.fill(); ctx.lineWidth = 1.2; ctx.strokeStyle = 'rgba(255,216,106,.45)'; ctx.stroke(); ctx.restore();
       types.forEach(function (t, i) {
         var cx = x0 + (i + 0.5) * cw;
-        if (inline) { cryBlock(t, cx - cw * 0.5 + ls * 0.7, g.legY, ls, 0, { nolabel: true }); G.txt(T.cryptLeg[i], cx - cw * 0.5 + ls * 1.4, g.legY, { size: fs, family: 'Manrope', weight: 800, fill: '#e9d9aa', align: 'left' }); }
-        else { cryBlock(t, cx, g.legY - g.legH * 0.15, ls, 0, { nolabel: true }); G.txt(T.cryptLeg[i], cx, g.legY + g.legH * 0.33, { size: fs, family: 'Manrope', weight: 800, fill: '#e9d9aa' }); }
+        if (inline) { cryBlock(t, cx - cw * 0.5 + ls * 0.7, g.legY, ls, 0, { nolabel: true }); G.txt(T.cryptLeg[i], cx - cw * 0.5 + ls * 1.4, g.legY, { size: fs, family: G.TEXT, weight: 800, fill: '#e9d9aa', align: 'left' }); }
+        else { cryBlock(t, cx, g.legY - g.legH * 0.15, ls, 0, { nolabel: true }); G.txt(T.cryptLeg[i], cx, g.legY + g.legH * 0.33, { size: fs, family: G.TEXT, weight: 800, fill: '#e9d9aa' }); }
       });
     }
     S.draw = function () {
@@ -1431,7 +1431,7 @@
         ctx.restore();
         // total de la colonne
         var ct = '= ×' + G.fmt(Math.round(colSum(c))), cfs = clamp(bs * 0.26, 10, 17);
-        G.txt(ct, x, g.chipY, { size: Math.min(cfs, g.fw * 0.9 / Math.max(3, ct.length * 0.58)), family: 'Manrope', weight: 800, fill: '#fff1b8', stroke: 'rgba(0,0,0,.6)', sw: 3 });
+        G.txt(ct, x, g.chipY, { size: Math.min(cfs, g.fw * 0.9 / Math.max(3, ct.length * 0.58)), family: G.TEXT, weight: 800, fill: '#fff1b8', stroke: 'rgba(0,0,0,.6)', sw: 3 });
       }
       // éclats
       shards.forEach(function (p) { ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rot); ctx.globalAlpha = 1 - p.t / p.life; ctx.fillStyle = p.c; ctx.beginPath(); ctx.moveTo(-p.s, p.s * 0.6); ctx.lineTo(p.s, 0); ctx.lineTo(-p.s * 0.2, -p.s); ctx.closePath(); ctx.fill(); ctx.restore(); });
@@ -1441,7 +1441,7 @@
         cryBlock(blk.t, blk.x + shx, blk.y + bob, blk.t === 'epic' || blk.t === 'epicx' ? bs * 1.12 : bs, blk.v, { sc: blk.sc, a: blk.a, charge: blk.charge, jaw: blk.jaw, crack: blk.crack, sy: blk.sy, rot: blk.rot });
       }
       floats.forEach(function (f) { ctx.globalAlpha = 1 - clamp((f.t - 0.7) / 0.5, 0, 1); G.txt(f.text, f.x, f.y - f.t * 38, { size: f.size, weight: 900, fill: f.col, stroke: '#1a1006', sw: 4, shadow: 'rgba(0,0,0,.6)' }); }); ctx.globalAlpha = 1;
-      if (blk && !g.land) G.txt(T.cryptCount.replace('{n}', Math.min(idx + 1, steps.length)).replace('{m}', steps.length), G.cx - g.colW * 2.4, g.top + 4, { size: clamp(bs * 0.2, 9, 13), family: 'Manrope', weight: 800, fill: '#b9a780', align: 'left', spacing: 2 });
+      if (blk && !g.land) G.txt(T.cryptCount.replace('{n}', Math.min(idx + 1, steps.length)).replace('{m}', steps.length), G.cx - g.colW * 2.4, g.top + 4, { size: clamp(bs * 0.2, 9, 13), family: G.TEXT, weight: 800, fill: '#b9a780', align: 'left', spacing: 2 });
       drawLegend();
       var tfs = clamp(w * 0.03, 20, 36);
       if (g.land) { ctx.save(); ctx.translate(w - 64 - G.cx, 62); totalBox(S, 40, T.cryptAvg); ctx.restore(); }
@@ -1608,8 +1608,8 @@
       G.icon(ctx, ICON[p], ix, iy, isz);
       var tx = c.row ? c.x + c.h * 1.05 : c.x + c.w / 2, al = c.row ? 'left' : 'center', ty = c.row ? y + c.h * 0.26 : y + c.h * 0.5, fs = c.row ? clamp(c.h * 0.2, 13, 20) : clamp(c.w * 0.08, 15, 22);
       G.txt(T.profName[p], tx, ty, { size: fs, weight: 900, fill: '#ffe08a', stroke: '#2a1802', sw: 3, align: al, spacing: 2 });
-      G.txt(T.profDesc[p], tx, ty + fs * 1.5, { size: Math.max(10, fs * 0.58), family: 'Manrope', weight: 700, fill: '#cdb98a', align: al });
-      G.txt(line(p), tx, ty + fs * 2.7, { size: Math.max(11, fs * 0.66), family: 'Manrope', weight: 800, fill: '#fff1b8', align: al });
+      G.txt(T.profDesc[p], tx, ty + fs * 1.5, { size: Math.max(10, fs * 0.58), family: G.TEXT, weight: 700, fill: '#cdb98a', align: al });
+      G.txt(line(p), tx, ty + fs * 2.7, { size: Math.max(11, fs * 0.66), family: G.TEXT, weight: 800, fill: '#fff1b8', align: al });
       // volatilité : 1 à 3 gemmes
       var vy = c.row ? y + c.h * 0.84 : y + c.h * 0.9;
       for (var k = 0; k < 3; k++) { ctx.beginPath(); ctx.arc((c.row ? tx + 7 : c.x + c.w / 2 - 22) + k * 22, vy, 6, 0, TAU); ctx.fillStyle = k <= i ? (i === 2 ? '#ff7a5a' : i === 1 ? '#ffd86a' : '#6ff0dd') : 'rgba(255,255,255,.12)'; ctx.fill(); }
@@ -1618,7 +1618,7 @@
     S.draw = function () {
       cards.forEach(drawCard);
       var bw = G.w, by = cards.length ? cards[2].y + cards[2].h + 14 : 0;
-      if (G.h >= 520 && by < G.h - hudH() - 20) G.txt(T.chooseRtp, G.cx, by, { size: 12, family: 'Manrope', weight: 700, fill: 'rgba(205,185,138,.9)', spacing: 1 });
+      if (G.h >= 520 && by < G.h - hudH() - 20) G.txt(T.chooseRtp, G.cx, by, { size: 12, family: G.TEXT, weight: 700, fill: 'rgba(205,185,138,.9)', spacing: 1 });
       chrome(S);
     };
     S.run = function () {
@@ -1681,7 +1681,7 @@
       var na = clamp((t - 0.7) / 0.4, 0, 1), ns = clamp(Math.min(w * 0.034, h * 0.05), 13, 32);
       ctx.save(); ctx.globalAlpha = na;
       G.txt(sp.secret ? T.kindsLong.crypt : sp.upgraded ? T.kindsLong.hand : T.kindsLong[sp.kind], G.cx, L.ny + (1 - na) * 14, { size: ns, weight: 900, fill: '#ffe08a', stroke: '#2a1802', sw: 4, spacing: 3, shadow: 'rgba(255,200,80,.6)', blur: 18 });
-      if (sp.boost > 1) G.txt(T.boostApplied + ' ×' + sp.boost, G.cx, L.ny + ns * 1.4, { size: clamp(w * 0.02, 12, 18), family: 'Manrope', weight: 800, fill: '#fff1b8' });
+      if (sp.boost > 1) G.txt(T.boostApplied + ' ×' + sp.boost, G.cx, L.ny + ns * 1.4, { size: clamp(w * 0.02, 12, 18), family: G.TEXT, weight: 800, fill: '#fff1b8' });
       ctx.restore();
       if (t > 1.0) {
         var ba = clamp((t - 1.0) / 0.4, 0, 1), bp = 1 + Math.sin(t * 5) * 0.035 + (hover ? 0.05 : 0), bx = btn.x + btn.w / 2, by = btn.y + btn.h / 2;
@@ -1690,8 +1690,8 @@
         var bg = ctx.createLinearGradient(0, -btn.h / 2, 0, btn.h / 2); bg.addColorStop(0, '#ffe9a0'); bg.addColorStop(0.5, '#f0b73c'); bg.addColorStop(1, '#a36a12');
         ctx.fillStyle = bg; ctx.shadowColor = 'rgba(255,216,106,' + (0.55 + Math.sin(t * 5) * 0.25) + ')'; ctx.shadowBlur = 34 + Math.sin(t * 5) * 12; ctx.fill(); ctx.shadowBlur = 0;
         ctx.lineWidth = 3; ctx.strokeStyle = '#fff6d0'; ctx.stroke();
-        var lfs = clamp(btn.h * 0.36, 14, 28); ctx.font = '900 ' + lfs + 'px Cinzel, serif'; if (ctx.letterSpacing !== undefined) ctx.letterSpacing = '3px';
-        while (lfs > 11 && ctx.measureText(T.launchBonus).width > btn.w * 0.82) { lfs -= 1; ctx.font = '900 ' + lfs + 'px Cinzel, serif'; }
+        var lfs = clamp(btn.h * 0.36, 14, 28); ctx.font = '900 ' + lfs + 'px ' + G.TITLE; if (ctx.letterSpacing !== undefined) ctx.letterSpacing = '3px';
+        while (lfs > 11 && ctx.measureText(T.launchBonus).width > btn.w * 0.82) { lfs -= 1; ctx.font = '900 ' + lfs + 'px ' + G.TITLE; }
         if (ctx.letterSpacing !== undefined) ctx.letterSpacing = '0px';
         G.txt(T.launchBonus, 0, 1, { size: lfs, weight: 900, fill: '#3a2203', spacing: 3 });
         ctx.restore();

@@ -93,7 +93,7 @@
       for (i = 0; i < floaters.length; i++) {
         var f = floaters[i], q = f.t / f.life;
         ctx.globalAlpha = q < 0.7 ? 1 : 1 - (q - 0.7) / 0.3;
-        ctx.font = '800 ' + f.size + 'px Cinzel, serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.font = '800 ' + f.size + 'px ' + G.TITLE; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
         ctx.lineWidth = 5; ctx.strokeStyle = 'rgba(0,0,0,.7)'; ctx.strokeText(f.text, f.x, f.y - q * 60);
         ctx.fillStyle = f.color; ctx.fillText(f.text, f.x, f.y - q * 60);
       }
