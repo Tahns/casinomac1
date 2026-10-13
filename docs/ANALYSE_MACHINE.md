@@ -13,7 +13,19 @@ Les RTP des concurrents ne sont **pas** vérifiés (voir `docs/CONCURRENTS.md`) 
 
 ---
 
+## 0. Note de méthode (règle du joueur sur les simulations)
+
+Règle reçue : **aucune simulation au-dessus de 100 000 tours, puis au-dessus de 1 000 tours**. Les chiffres de ce document se classent donc ainsi :
+
+1. **Référence officielle (1 milliard de tours, mesurée avant cette règle, fournie par le coordinateur)** : RTP Standard **96,22 % ±0,034**, Oracle+ **96,00 % ±0,039** ; taux de gain **60,3 %** ; un bonus tous les **14,7 tours** ; écart-type **5,46** (Standard) et **6,37** (Oracle+) ; gain max observé **5 000×** (plafond), atteint 10 fois en Standard et 19 fois en Oracle+ sur 1 milliard de tours. **Ces valeurs remplacent toute valeur de RTP, de taux de gain, d'écart-type et de gain max citée plus bas.**
+2. **Mesures complémentaires de mon travail, faites avant les deux règles** (100 000 tours, graine 7 ; achats 100 000 tours, graine 5 ; `tune.js` 100 000 tirages). Les sections 1.3 à 1.10 citent aussi des échantillons plus gros (4 M et 12 M tours) lancés **avant** la règle ; **je n'ai lancé aucune simulation supplémentaire depuis**. Les intervalles de confiance à 95 % sont larges pour les petits échantillons : RTP mesuré sur 100 000 tours ≈ ±3 pts (1,96 × 5 / √100 000 ≈ 0,031 × la mise), fréquence d'un événement rare (JUGEMENT DIVIN, Crypte) : un facteur 2 d'incertitude.
+3. **Sur 100 000 tours (graine 7)** : RTP Standard 95,89 % (±3 pts, donc compatible avec 96,22 %), Oracle+ 97,12 % (même remarque) ; taux de gain 60,1 % ; ≥ mise 20,6 % ; bonus 1/14,65 ; BIG 1/70, EXTRA 1/265, MEGA 1/1 639 (±40 %), DIVIN 4 événements : non fiable ; série perdante p95 = 13 (Standard) et 23 (Oracle+) ; tours avant bonus p50 9, p90 32. Ces valeurs confirment, à la précision près, celles des plus gros échantillons. Achats à 100 000 tours : RTP 96,33 / 95,78 / 96,63 / 96,82 % (Scarabées / Pesée / Trésor / Fureur), incertitude ±0,6 à ±0,5 pt ; part d'achats à zéro de la Pesée 46,1 %.
+4. **Fusion de `claude/laughing-davinci-33zu96`** : la fusion a été refusée par le système de permissions, mais elle est sans objet : le commit de pointe de cette branche (374960b) est **l'ancêtre exact de ma branche** (aucune différence de code). Le code lu est donc à jour.
+5. **Le test de durée et le temps pour doubler / perdre** (1.8, 1.9) sont des **modèles** (code + marches aléatoires faites avec 4 000 séances avant la règle) ; pour les perdre 100 mises, l'ordre de grandeur se retrouve sans simulation : perte moyenne = (1 − 0,9622) = 3,8 % de la mise par tour, soit ≈ 2 600 tours (≈ 9 h à 13 s par tour) ; la médiane est plus basse à cause de l'asymétrie de la distribution.
+
 ## 1. Fiche technique mesurée
+
+> Les chiffres de RTP, de taux de gain, d'écart-type et de gain max de cette section sont à remplacer par la référence à 1 milliard de tours de la section 0 (RTP 96,22 % / 96,00 %, écart-type 5,46 / 6,37). Les autres lignes sont des mesures secondaires.
 
 ### 1.1 Commandes lancées
 
@@ -32,7 +44,8 @@ Les durées d'un tour sont **[estimé]** : le script d'analyse applique à chaqu
 
 | Indicateur | Standard | Oracle+ (coût ×1,1) | Source |
 |---|---|---|---|
-| **RTP** | **96,07 %** | **95,88 %** | [mesuré] 12 M tours, graine 21 (marge ≈ ±0,2 pt) |
+| **RTP** | **96,22 % ±0,034** | **96,00 % ±0,039** | [mesuré] référence 1 milliard de tours (section 0). Écart-type : 5,46 / 6,37. Gain max 5 000× atteint 10 fois (Std) et 19 fois (Oracle+) |
+| RTP (échantillon antérieur) | 96,07 % | 95,88 % | [mesuré] 12 M tours, graine 21, lancé avant la règle |
 | RTP (second échantillon) | 96,06 % | 95,33 % | [mesuré] 4 M tours, graine 99 (le tirage Oracle+ est plus dispersé, voir 1.8) |
 | Taux de gain (tour qui paie > 0) | **60,3 %** | 60,3 % | [mesuré] |
 | dont tours qui rendent **au moins la mise** | **20,6 %** (1 tour sur 5) | 12,7 % (1 sur 8) | [mesuré] 4 M, graine 99 |
@@ -135,7 +148,7 @@ Lecture : le zéro pur est court (jamais 6 d'affilée en pratique), ce qui donne
 | Perdre 100 mises nettes depuis un capital illimité (premier passage) | atteint dans 97,5 % des cas en 20 000 tours ; médiane **738 tours** (p10 : 297, p90 : 4 539) | 97,6 % ; médiane 627 tours (p10 : 248, p90 : 3 669) |
 | Résultat net après 200 tours (en mises) | p5 −79,8 · p25 −51,6 · **médiane −24,8** · p75 +18,5 · p95 +120 ; **33,9 % de séances positives** | médiane −27,5 ; 33,5 % positives |
 
-Le mode Oracle+ a le **même profil de risque de ruine** que le Standard mais plus de dispersion (RTP 95,33 à 95,88 % selon l'échantillon, écart-type plus fort). Le RTP du mode Oracle+ affiché dans le jeu est `96.0` (`STATS.rtpPlus`, `js/main.js:8`) alors que la mesure principale donne 95,88 % : à corriger en `95.9` (voir 7).
+Le mode Oracle+ a le **même profil de risque de ruine** que le Standard mais plus de dispersion (écart-type 6,37 contre 5,46, référence 1 milliard de tours). Les RTP affichés dans le jeu (`STATS.rtp = '96.1'`, `STATS.rtpPlus = '96.0'`, `js/main.js:8`) : Oracle+ est correct ; le Standard devrait afficher `96.2` (96,22 %).
 
 ### 1.9 Durée d'un tour à vitesse normale [estimé d'après le code]
 
@@ -248,7 +261,7 @@ Source : `docs/CONCURRENTS.md` (recherche web du 2026-10-12, sources faibles). C
 | Critère | Anubis Unchained | Crazy Time / Monopoly Live (Evolution) | Wheel of Fortune Megaways (IGT) | Book of Dead, Legacy of Dead (Play'n GO) | Gates of Olympus, Sweet Bonanza (Pragmatic) | Plinko (Stake / BGaming) |
 |---|---|---|---|---|---|---|
 | Format | Roue 48 cases, un tour par mise, hors ligne | Roue de 54 segments, animateur live, paris multiples | Slot + roue bonus | Slot 5×3, free spins avec symbole expansif | Slot scatter pays, tumbles | Bille, niveaux de risque |
-| RTP | 96,07 % (95,88 % Oracle+), mesuré | 96,08 % / 96,23 % cités, non vérifiés | 96,46 % cité | 96,21 % / 96,58 % cités | 96,5 % cités | 99 % cité |
+| RTP | 96,22 % (96,00 % Oracle+), mesuré sur 1 milliard de tours | 96,08 % / 96,23 % cités, non vérifiés | 96,46 % cité | 96,21 % / 96,58 % cités | 96,5 % cités | 99 % cité |
 | Gain max | 5 000× | 10 000× à 50 000× cités, contradictoires | 82 700× cité | 5 000× cité | 5 000× / ≈ 21 100× cités | jusqu'à 1 000× cité |
 | Fréquence de bonus | 1/14,65 (mesuré) | 1/18 à 1/22 cités pour Monopoly Live | non trouvée | non trouvée | non trouvée | pas de bonus |
 | Interaction dans le bonus | Moyenne : décisions dans le Trésor, choix cosmétiques ailleurs | Faible : bonus de spectateur | Faible | Aucune | Aucune | Choix de risque avant la partie |
@@ -270,7 +283,7 @@ Source : `docs/CONCURRENTS.md` (recherche web du 2026-10-12, sources faibles). C
 
 | # | Force | Preuve |
 |---|---|---|
-| F1 | **RTP stable et symétrique** : 96,07 % Standard, 95,9 % Oracle+, 95,8 à 96,5 % à l'achat ; les profils anciens sont à ±0,15 % | [mesuré] 12 M + 3 M par bonus |
+| F1 | **RTP stable et symétrique** : 96,22 % Standard, 96,00 % Oracle+ (1 milliard de tours), 95,8 à 96,5 % à l'achat ; les profils anciens sont à ±0,15 % | [mesuré] 12 M + 3 M par bonus |
 | F2 | **Rythme de bonus généreux** : 1 tour sur 14,65 ; 9 tours médians avant un bonus | [mesuré] |
 | F3 | **Zéro pur court** : p99 de la série à zéro = 5 tours ; la roue ne « gèle » pas | [mesuré] |
 | F4 | **Mise en scène d'Anubis** : apparition propre à chaque bonus, rareté lisible (Fureur, Crypte en plein écran), 5 paliers d'animation de gain | [code] |
@@ -294,7 +307,7 @@ Source : `docs/CONCURRENTS.md` (recherche web du 2026-10-12, sources faibles). C
 | W7 | **Pas de progression ni de mémoire** : rien ne se débloque, aucun objectif, aucune statistique visible en jeu | [code] |
 | W8 | **Pas de partage ni moment de fierté** | [code] |
 | W9 | **Aucune validation extérieure** : RNG navigateur, pas d'audit, son jamais écouté par un humain, mobile d'entrée de gamme non testé | `docs/ANALYSE.md` §7 |
-| W10 | **Documents périmés** (voir 1.11) et RTP Oracle+ affiché 96,0 au lieu de 95,9 | [code] |
+| W10 | **Documents périmés** (voir 1.11) et RTP Standard affiché 96,1 au lieu de 96,2 (1 milliard de tours) | [code] |
 | W11 | **Une série perdante p95 = 13 tours en Standard (22 en Oracle+)** : la lisibilité de la perte est bonne, mais l'absence de gros gain dans ces séries est ressentie | [mesuré] |
 
 ### Opportunités
@@ -542,7 +555,7 @@ Chaque fiche est écrite pour qu'un autre agent la code sans interprétation. No
 
 ## 7. Corrections de cohérence à faire à part (< 1 h, sans design)
 
-1. `js/main.js:8` : `STATS.rtpPlus` de `'96.0'` à `'95.9'` (mesure : 95,88 %) ; ajouter un champ `STATS.hitNet = '20.6'` et l'afficher dans `Infos` à côté du taux de gain (« dont rend au moins la mise : 20,6 % »).
+1. `js/main.js:8` : `STATS.rtp` de `'96.1'` à `'96.2'` (référence 1 milliard de tours : 96,22 %) ; ajouter un champ `STATS.hitNet = '20.6'` et l'afficher dans `Infos` à côté du taux de gain (« dont rend au moins la mise : 20,6 % »).
 2. `js/bonuses.js` : retirer le commentaire périmé de `G.runBonus` sur le turbo (ou supprimer le code mort `chooseScene`).
 3. `js/math.js` : « La roue (54 cases) » → « 48 cases ».
 4. `docs/ANALYSE.md` : §5 (61,3 % → 60,3 % ; 3 600× → 3 285×), §8 (limites 20 à 500), SWOT (retirer « choix Prudent / Équilibré / Audacieux »), itération 18 (turbo coupé aux bonus).
