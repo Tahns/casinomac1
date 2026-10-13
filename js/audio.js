@@ -262,7 +262,7 @@
       [0, 2, 4].forEach(function (k, j) { horn(winNote(k, 0), 1.2 + tier * 0.3, 0.06, tEnd, true); bell(winNote(k, 2), 1.4, 0.05, tEnd + j * 0.05, true); });
       boom(0.36 + tier * 0.03, tEnd);
       for (i = 0; i < tier * 2 + 2; i++) { tone(95, 0.18, 'sine', 0.2, 0.02 + i * 0.065, 48); noise(0.07, 0.06, 0.02 + i * 0.065, 500); }          // roulement de timbale
-      if (tier >= 3) for (i = 0; i < 12; i++) bell(1800 + Math.random() * 2600, 0.5, 0.03, tEnd + 0.1 + i * 0.07, true, 3.1);
+      if (tier >= 3) for (i = 0; i < 12; i++) bell(900 + Math.random() * 600, 0.5, 0.03, tEnd + 0.1 + i * 0.07, true, 3.1);
     },
     // le total se pose : accord résolu + petit éclat (fin du décompte)
     winLand: function (tier) {
@@ -271,11 +271,20 @@
       bell(winNote(0, 2), 1.8, 0.06, 0.12, true); pad([winNote(0, 0), winNote(4, 0)], 1.4, 0.1, 0, 0.1);
       if (tier >= 2) A.sparkle();
     },
+    // montée en puissance pendant le décompte (EXTRA, MEGA, DIVIN) : souffle grave qui s'ouvre, nappe qui monte, roulement de timbales qui s'accélère. Doux, sans aigu.
+    rise: function (tier, dur) {
+      tier = Math.max(2, Math.min(4, tier || 2)); dur = Math.max(0.8, dur || 3);
+      swell(dur, 0.1 + tier * 0.025, 0.1, 160, 1100);
+      pad([winNote(0, -1), winNote(4, -1)], dur + 0.4, 0.1, 0.1, dur * 0.8);
+      if (tier >= 3) pad([winNote(0, 0), winNote(2, 0), winNote(4, 0)], dur * 0.6, 0.09, dur * 0.45, dur * 0.4);
+      var n = tier * 5;
+      for (var i = 0; i < n; i++) { var u = i / n, at = 0.2 + dur * (1 - Math.pow(1 - u, 1.6)) * 0.95; tone(92 + u * 20, 0.16, 'sine', 0.06 + u * 0.1, at, 52); noise(0.06, 0.02 + u * 0.04, at, 480); }
+    },
     // pluie de pièces : tintements rapprochés (limitée pour ne pas saturer)
     coinShower: function (n) {
       if (!ensure()) return; var now = ctx.currentTime; if (now - lastShower < 0.18) return; lastShower = now;
       n = Math.max(3, Math.min(14, n | 0));
-      for (var i = 0; i < n; i++) bell(760 + Math.random() * 800, 0.26 + Math.random() * 0.12, 0.024 + Math.random() * 0.015, i * (0.04 + Math.random() * 0.03), true, 2.4);
+      for (var i = 0; i < n; i++) bell(700 + Math.random() * 700, 0.26 + Math.random() * 0.12, 0.024 + Math.random() * 0.015, i * (0.04 + Math.random() * 0.03), true, 2.4);
     },
     // décompte du gain : petite mélodie de cloches qui monte avec le total (pentatonique, une note sur deux plus douce)
     countTick: function (p) {

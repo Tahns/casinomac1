@@ -704,67 +704,177 @@
     if (k === 'weigh') { var fy = -size * 0.4 + (H_ * 0.55 + size * 0.4) * G.ease.out3(clamp((u - 0.25) / 0.45, 0, 1)); spr('weigh', cx + Math.sin(e.t * 2.4) * size * 0.08, fy, size * 0.5, Math.sin(e.t * 2.4) * 0.3, clamp((u - 0.25) / 0.1, 0, 1) * (1 - fadeOut)); }
   }
 
-  /* ============================ OVERLAY GROS GAIN ============================ */
+  /* ============================ ANIMATIONS DE GAIN ============================
+     5 niveaux (index = tier) : 0 WIN · 1 BIG WIN · 2 EXTRA WIN · 3 MEGA WIN · 4 JUGEMENT DIVIN.
+     Seuils = multiplicateur total du tour rapporté au coût du tour (voir main.js : tierOf, et les règles dans i18n.js). */
+  G.WIN_TIERS = [1, 10, 25, 75, 300];
+  var WT = [
+    { cd: 0.9, hold: 0.6, dim: 0.0, rays: 0, rain: 0, shake: 0, coins: 10 },
+    { cd: 2.3, hold: 1.5, dim: 0.62, rays: 14, rain: 14, shake: 0, coins: 34 },
+    { cd: 3.1, hold: 1.7, dim: 0.7, rays: 18, rain: 28, shake: 1.6, coins: 60 },
+    { cd: 4.4, hold: 2.1, dim: 0.78, rays: 22, rain: 50, shake: 3.2, coins: 95 },
+    { cd: 5.8, hold: 2.6, dim: 0.86, rays: 26, rain: 84, shake: 5, coins: 140 }
+  ];
+  var WC = [   // couleurs : [rayons 1, rayons 2, lueur du titre]
+    ['#ffd86a', '#fff1b8', 'rgba(230,185,74,.6)'], ['#ffd86a', '#fff1b8', 'rgba(255,216,106,.75)'],
+    ['#6ff0dd', '#ffd86a', 'rgba(111,240,221,.8)'], ['#ffd86a', '#6ff0dd', 'rgba(255,216,106,.9)'], ['#fff1b8', '#c28bff', 'rgba(194,139,255,.9)']
+  ];
+  function winFit(str, size, maxW, num) {   // réduit la taille pour que le texte tienne dans maxW
+    ctx.font = num ? '700 ' + size * 1.14 + 'px ' + G.NUM : '900 ' + size + 'px Cinzel, serif';
+    var m = ctx.measureText(str).width; return m > maxW ? size * maxW / m : size;
+  }
   G.showBigWin = function (mult, amount, tier) {
+    tier = clamp(tier | 0, 0, 4);
     return new Promise(function (res) {
-      var T = I18N.t();
-      G.winOv = { t: 0, mult: mult, amount: amount, tier: tier, count: 0, done: false, closing: 0, res: res, title: T.tiers[tier] };
-      Sfx.fanfare(tier);
-      FX.flash(0.7, '#ffe9a0'); FX.shake(10 + tier * 4, 0.7);
-      FX.rain(G.w, 30 + tier * 40);
-      FX.coins(G.cx, G.cy + G.R * 0.4, 30 + tier * 20, 1100, 80);
+      var T = I18N.t(), k = G.ultra ? 3.5 : G.turbo ? 1.8 : 1;
+      G.winOv = { t: 0, k: k, mult: mult, amount: amount, tier: tier, W: WT[tier], count: 0, p: 0, done: false, closing: 0, res: res, title: T.tiers[tier], ev: { rings: 0 }, acc: 0, t0: tier ? 0.6 : 0.25, nextWave: 0.9, nextSp: 0.5, nextFl: 1.2, ringN: 0 };
+      if (tier === 0) {
+        Sfx.chime(mult); if (G.wheel) G.wheel.flashLamps = 1;
+        FX.ring(G.cx, G.cy, '#ffe9a0', G.R * 1.15, 0.9); FX.spark(G.cx, G.cy, 22, '#ffd86a', 360);
+        FX.coins(G.cx, G.cy + G.R * 0.35, 8, 800, 60);
+      } else {
+        Sfx.fanfare(tier);
+        if (tier >= 2 && Sfx.rise) Sfx.rise(tier, WT[tier].cd / k);
+        FX.flash(0.3 + tier * 0.1, '#ffe9a0'); FX.shake(6 + tier * 3, 0.5);
+        FX.coins(G.cx, G.cy + G.R * 0.4, 18 + tier * 8, 1100, 80);
+      }
     });
   };
+  function winLand(o) {
+    o.done = true; o.doneAt = o.t; o.count = o.amount; o.p = 1;
+    var t = o.tier, W = o.W;
+    FX.ring(G.cx, G.cy, '#ffe9a0', G.R * (t ? 1.3 : 1.1), 0.9);
+    if (t > 0) {
+      Sfx.thud(); Sfx.winLand && Sfx.winLand(t);
+      FX.shake(6 + t * 3, 0.45); FX.flash(0.2 + t * 0.07, WC[t][0]);
+      FX.coins(G.cx, G.cy + G.R * 0.4, W.coins, 1150, 100);
+      FX.spark(G.cx, G.cy - Math.min(G.w, G.h) * 0.2, 14 + t * 8, WC[t][0], 420);
+    } else { FX.spark(G.cx, G.cy, 16, '#ffe9a0', 300); FX.coins(G.cx, G.cy + G.R * 0.3, W.coins, 900, 60); }
+  }
   function updateWinOv(dt) {
     var o = G.winOv; if (!o) return;
-    o.t += dt * Math.min(G.speed, 1.6);
-    var cd = (1.6 + o.tier * 1.1) / (G.turbo ? 2 : 1);
-    var prev = o.count;
-    o.count = o.done ? o.amount : clamp((o.t - 0.45) / cd, 0, 1) * o.amount;
-    if (!o.done && o.count >= o.amount) { o.done = true; o.doneAt = o.t; FX.ring(G.cx, G.cy, '#ffe9a0', G.R, 0.9); Sfx.thud(); Sfx.winLand && Sfx.winLand(o.tier); FX.shake(8, 0.4); }
-    if (!o.done && Math.floor(prev / o.amount * 40) !== Math.floor(o.count / o.amount * 40)) Sfx.countTick(o.count / o.amount);
-    if (o.t % 0.22 < dt * G.speed && o.t < 3 + o.tier * 1.5) FX.coins(G.cx + (Math.random() - 0.5) * G.w * 0.5, G.cy + G.R * 0.6, 4, 950, 60);
-    if (o.done && !o.closing && o.t - o.doneAt > (G.turbo ? 0.9 : 2.0)) o.closing = 0.0001;
-    if (o.closing) { o.closing += dt * 2.5; if (o.closing >= 1) { var r = o.res; G.winOv = null; r(); } }
+    var t = o.tier, W = o.W, R = FX.reduced, w = G.w, u = Math.min(w, G.h), sdt = dt * o.k, prev = o.count;
+    o.t += sdt;
+    if (!o.done) {
+      var q = clamp((o.t - o.t0) / W.cd, 0, 1);
+      o.p = 1 - Math.pow(1 - q, 3.2);                           // décompte : rapide au début, très lent à la fin
+      o.count = q >= 1 ? o.amount : o.p * o.amount;
+      if (q >= 1) winLand(o);
+      else {
+        var nt = t ? 40 : 12;
+        if (Math.floor(prev / o.amount * nt) !== Math.floor(o.count / o.amount * nt)) Sfx.countTick(o.p);
+      }
+    }
+    var cx = G.cx, ty = G.cy - u * 0.2, c = WC[t];
+    if (t > 0) {
+      if (!o.ev.slam && o.t > 0.34) { o.ev.slam = 1; FX.ring(cx, ty, c[0], u * 0.9, 0.8); FX.shake(8 + t * 3, 0.5); FX.spark(cx, ty, 18 + t * 6, c[0], 420); }
+      if (!o.done) {
+        var amp = 0.35 + 0.65 * o.p;
+        if (t >= 2 && o.t > 0.4) FX.shake(W.shake * amp, 0.12);                  // la tension monte avec le compteur
+        o.acc += sdt * W.rain * amp * (R ? 0.4 : 1) * (FX.lite ? 0.6 : 1);
+        while (o.acc >= 1) { o.acc -= 1; FX.rain(G.w, 1); }
+        if (o.t > o.nextSp) { o.nextSp += 0.14; FX.spark(cx + (Math.random() - 0.5) * w * 0.6, ty + (Math.random() - 0.5) * u * 0.1, 2 + t, c[Math.random() < 0.5 ? 0 : 1], 240, 0.7); }
+        if (t >= 2 && o.t > o.nextWave) { o.nextWave += t >= 3 ? 1.0 : 1.5; FX.ring(cx, G.cy, c[o.ringN++ % 2], Math.max(w, G.h) * 0.6, 1.1); if (t >= 3) FX.coins(cx, G.cy + G.R * 0.5, 14, 1000, w * 0.4); }
+        if (t === 4 && o.t > o.nextFl) { o.nextFl += 1.3; FX.flash(0.22, '#e8d8ff'); }
+      } else if (t >= 3 && o.ev.rings < 3 && o.t - o.doneAt > 0.3 * (o.ev.rings + 1)) { o.ev.rings++; FX.ring(cx, G.cy, c[o.ev.rings % 2], Math.max(w, G.h) * (0.5 + 0.15 * o.ev.rings), 1.0); }
+    }
+    if (o.done && !o.closing && o.t - o.doneAt > W.hold) o.closing = 0.0001;
+    if (!o.closing && o.t > W.cd + W.hold + 14) { if (!o.done) winLand(o); o.closing = 0.0001; }   // sécurité : jamais de blocage
+    if (o.closing) { o.closing += sdt * 2.5; if (o.closing >= 1) { var r = o.res; G.winOv = null; r(); } }
   }
   G.skipWinOv = function () {
     var o = G.winOv; if (!o) return false;
-    if (!o.done) { o.done = true; o.doneAt = o.t; o.count = o.amount; }
+    if (!o.done) winLand(o);
     else if (!o.closing) o.closing = 0.0001;
     return true;
   };
   function drawWinOv() {
     var o = G.winOv; if (!o) return;
-    var a = o.closing ? 1 - o.closing : 1, w = G.w, h = G.h, cx = G.cx, cy = G.cy;
+    var t = o.tier, W = o.W, c = WC[t], R = FX.reduced, tt = o.t, w = G.w, h = G.h, cx = G.cx, cy = G.cy, u = Math.min(w, h), p = o.p;
+    var a = o.closing ? 1 - o.closing : 1, inn = clamp(tt / 0.3, 0, 1), d = o.done ? tt - o.doneAt : -1, i, j;
+    var T = I18N.t(), amt = G.fmt(Math.round(o.count * 100) / 100), amtMax = G.fmt(o.amount);
     ctx.save(); ctx.globalAlpha = a;
-    ctx.fillStyle = 'rgba(4,3,2,' + 0.72 * clamp(o.t / 0.25, 0, 1) + ')'; ctx.fillRect(0, 0, w, h);
-    if (ART.bigwin) { ctx.save(); ctx.globalCompositeOperation = 'screen'; ctx.globalAlpha = a * 0.55 * clamp(o.t / 0.5, 0, 1); cover(ctx, ART.bigwin, w, h); ctx.restore(); }
-    var col = ['#ffd86a', '#ffd86a', '#6ff0dd', '#ff7a5a', '#c28bff'][o.tier] || '#ffd86a';
-    A.rays(ctx, cx, cy, Math.max(w, h), 20, o.t * 0.35, col, 0.14);
-    var gl = ctx.createRadialGradient(cx, cy, 0, cx, cy, Math.min(w, h) * 0.6); gl.addColorStop(0, A.rgba('#ffd86a', 0.35)); gl.addColorStop(1, 'rgba(255,216,106,0)');
-    ctx.fillStyle = gl; ctx.fillRect(0, 0, w, h);
-    var u = Math.min(w, h);
-    // gardiens
-    var sc = G.ease.outBack(clamp(o.t / 0.6, 0, 1));
-    var hs = u * 0.11 * sc;
-    if (w > 640) {
-      [-1, 1].forEach(function (sd) {
-        if (ART.medal) { var ms = hs * 3.4; ctx.save(); ctx.translate(cx + sd * w * 0.3, cy - u * 0.02); ctx.rotate(sd * Math.sin(o.t * 1.5) * 0.04); ctx.shadowColor = '#ffd86a'; ctx.shadowBlur = 40; ctx.beginPath(); ctx.arc(0, 0, ms * 0.49, 0, TAU); ctx.fillStyle = '#000'; ctx.fill(); ctx.shadowBlur = 0; ctx.clip(); ctx.drawImage(ART.medal, -ms / 2, -ms / 2, ms, ms); ctx.restore(); }
-        else A.jackal(ctx, cx + sd * w * 0.3, cy - u * 0.02, hs * 1.5, { glow: 1 });
+    /* --- WIN : bandeau élégant sur la roue, sans assombrir tout l'écran --- */
+    if (t === 0) {
+      var bh = u * 0.25, sl = G.ease.out3(clamp(tt / 0.3, 0, 1)), pul = 0.75 + 0.25 * Math.sin(tt * 6);
+      var gl0 = ctx.createRadialGradient(cx, cy, 0, cx, cy, G.R * 1.2); gl0.addColorStop(0, A.rgba('#ffd86a', 0.32 * pul * sl)); gl0.addColorStop(1, 'rgba(255,216,106,0)');
+      ctx.fillStyle = gl0; ctx.fillRect(0, 0, w, h);
+      ctx.save(); ctx.translate(cx, cy); ctx.scale(1, sl);
+      var bg = ctx.createLinearGradient(-w / 2, 0, w / 2, 0);
+      bg.addColorStop(0, 'rgba(6,5,3,0)'); bg.addColorStop(0.16, 'rgba(6,5,3,.86)'); bg.addColorStop(0.84, 'rgba(6,5,3,.86)'); bg.addColorStop(1, 'rgba(6,5,3,0)');
+      ctx.fillStyle = bg; ctx.fillRect(-w / 2, -bh / 2, w, bh);
+      var ln = ctx.createLinearGradient(-w / 2, 0, w / 2, 0);
+      ln.addColorStop(0, 'rgba(255,216,106,0)'); ln.addColorStop(0.2, '#ffd86a'); ln.addColorStop(0.5, '#fff1b8'); ln.addColorStop(0.8, '#ffd86a'); ln.addColorStop(1, 'rgba(255,216,106,0)');
+      ctx.fillStyle = ln; ctx.fillRect(-w / 2, -bh / 2, w, 2); ctx.fillRect(-w / 2, bh / 2 - 2, w, 2);
+      [-1, 1].forEach(function (sd) {   // losanges turquoise aux extrémités
+        var dx = sd * (w * 0.5 - u * 0.12 - 6 * Math.sin(tt * 3)); ctx.save(); ctx.translate(dx, 0); ctx.rotate(Math.PI / 4); ctx.fillStyle = '#6ff0dd'; ctx.globalAlpha = a * 0.8; ctx.fillRect(-5, -5, 10, 10); ctx.restore();
       });
+      if (!R) { ctx.globalCompositeOperation = 'lighter'; var sx = (tt * 1.4 % 2 - 0.5) * w, sg = ctx.createLinearGradient(sx - 60, 0, sx + 60, 0); sg.addColorStop(0, 'rgba(255,241,184,0)'); sg.addColorStop(0.5, 'rgba(255,241,184,.22)'); sg.addColorStop(1, 'rgba(255,241,184,0)'); ctx.fillStyle = sg; ctx.fillRect(-w / 2, -bh / 2, w, bh); }
+      ctx.restore();
+      var ws = 1 + (d >= 0 ? 0.14 * Math.exp(-d * 6) * Math.cos(d * 16) : 0.02 * Math.sin(tt * 20));
+      var tsz = Math.min(u * 0.075, 46);
+      ctx.save(); ctx.translate(cx, cy - bh * 0.2); ctx.scale(sl, sl); G.goldText(o.title, 0, 0, tsz, { spacing: 6, blur: 22, shadow: c[2] }); ctx.restore();
+      var asz = winFit(amtMax, Math.min(u * 0.11, 64), w * 0.8, true);
+      ctx.save(); ctx.translate(cx, cy + bh * 0.2); ctx.scale(ws * sl, ws * sl); G.goldText(amt, 0, 0, asz, { blur: 26 }); ctx.restore();
+      ctx.restore(); return;
     }
-    // titre
-    var ts = G.ease.outBack(clamp((o.t - 0.1) / 0.5, 0, 1));
-    ctx.save(); ctx.translate(cx, cy - u * 0.2); ctx.scale(ts, ts);
-    G.goldText(o.title, 0, 0, Math.min(w * 0.095, u * 0.095), { spacing: 3, blur: 30 });
+    /* --- fond --- */
+    ctx.fillStyle = 'rgba(4,3,2,' + W.dim * inn + ')'; ctx.fillRect(0, 0, w, h);
+    if (ART.bigwin) { ctx.save(); ctx.globalCompositeOperation = 'screen'; ctx.globalAlpha = a * (0.3 + 0.07 * t) * clamp(tt / 0.5, 0, 1); cover(ctx, ART.bigwin, w, h); ctx.restore(); }
+    var rot = tt * (R ? 0.1 : 0.3 + 0.08 * t);
+    A.rays(ctx, cx, cy, Math.max(w, h), W.rays, rot, c[0], 0.09 + 0.03 * t);
+    if (t >= 2) A.rays(ctx, cx, cy, Math.max(w, h), W.rays - 4, -rot * 1.3 + 0.2, c[1], 0.07 + 0.02 * t);
+    var gr = u * (0.55 + 0.08 * t) * (1 + 0.04 * Math.sin(tt * 4)), gl = ctx.createRadialGradient(cx, cy, 0, cx, cy, gr);
+    gl.addColorStop(0, A.rgba(t === 2 ? '#6ff0dd' : t === 4 ? '#c28bff' : '#ffd86a', 0.3 + 0.04 * t)); gl.addColorStop(1, 'rgba(255,216,106,0)');
+    ctx.fillStyle = gl; ctx.fillRect(0, 0, w, h);
+    /* --- MEGA / DIVIN : Anubis surgit derrière le titre --- */
+    if (t >= 3 && ART.medal) {
+      var mr = G.ease.outBack(clamp((tt - 0.15) / 0.9, 0, 1)), ms = u * (t === 4 ? 1.05 : 0.92) * mr, my = cy - u * 0.02 + (1 - mr) * u * 0.3, ma = 0.55 * clamp((tt - 0.1) / 0.6, 0, 1) * (1 + 0.1 * Math.sin(tt * 3));
+      var ha = ctx.createRadialGradient(cx, my, ms * 0.2, cx, my, ms * 0.85); ha.addColorStop(0, A.rgba(t === 4 ? '#c28bff' : '#6ff0dd', 0.5 * ma)); ha.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = ha; ctx.fillRect(0, 0, w, h);
+      ctx.save(); ctx.translate(cx, my); ctx.globalAlpha = a * clamp(ma, 0, 1);
+      ctx.shadowColor = c[2]; ctx.shadowBlur = 50; ctx.beginPath(); ctx.arc(0, 0, ms * 0.49, 0, TAU); ctx.fillStyle = '#000'; ctx.fill(); ctx.shadowBlur = 0;
+      ctx.save(); ctx.clip(); ctx.drawImage(ART.medal, -ms / 2, -ms / 2, ms, ms); ctx.restore();
+      ctx.lineWidth = 3; ctx.strokeStyle = '#ffd86a'; ctx.setLineDash([ms * 0.03, ms * 0.02]); ctx.lineDashOffset = -tt * 20; ctx.beginPath(); ctx.arc(0, 0, ms * 0.5, 0, TAU); ctx.stroke(); ctx.setLineDash([]);
+      ctx.restore();
+    }
+    /* --- MEGA / DIVIN : vagues d'or qui montent --- */
+    if (t >= 3 && !R) {
+      for (j = 0; j < 3; j++) {
+        var base = h * (1.0 - (0.06 + 0.05 * p) * (1 + j * 0.7)) - (t === 4 ? 14 : 0), amp2 = (10 + 7 * j) * (0.5 + p);
+        ctx.beginPath(); ctx.moveTo(0, h);
+        for (i = 0; i <= 24; i++) { var xx = w * i / 24; ctx.lineTo(xx, base + Math.sin(xx * 0.011 * (1 + j * 0.35) + tt * (1.5 + j * 0.6)) * amp2); }
+        ctx.lineTo(w, h); ctx.closePath();
+        var wg = ctx.createLinearGradient(0, base - amp2, 0, h); wg.addColorStop(0, 'rgba(255,216,106,' + (0.42 - 0.1 * j) * inn + ')'); wg.addColorStop(1, 'rgba(184,134,30,.05)');
+        ctx.fillStyle = wg; ctx.fill();
+      }
+    }
+    /* --- gardiens (grand écran) --- */
+    var hs = u * 0.11 * G.ease.outBack(clamp(tt / 0.6, 0, 1));
+    if (w > 640 && t >= 2) [-1, 1].forEach(function (sd) {
+      if (ART.medal) { var ms2 = hs * 3.4; ctx.save(); ctx.translate(cx + sd * w * 0.3, cy - u * 0.02); ctx.rotate(sd * Math.sin(tt * 1.5) * 0.04); ctx.shadowColor = c[0]; ctx.shadowBlur = 40; ctx.beginPath(); ctx.arc(0, 0, ms2 * 0.49, 0, TAU); ctx.fillStyle = '#000'; ctx.fill(); ctx.shadowBlur = 0; ctx.clip(); ctx.drawImage(ART.medal, -ms2 / 2, -ms2 / 2, ms2, ms2); ctx.restore(); }
+      else A.jackal(ctx, cx + sd * w * 0.3, cy - u * 0.02, hs * 1.5, { glow: 1 });
+    });
+    /* --- titre : choc d'arrivée (zoom arrière), puis respiration, puis pulsation à l'arrivée du total --- */
+    var ty = cy - u * 0.2, lines = (w < 640 && o.title.indexOf(' ') > 0 && o.title.length > 10) ? o.title.split(' ') : [o.title];
+    var bsz = u * (0.105 + 0.006 * t), tsz2 = bsz;
+    lines.forEach(function (s) { tsz2 = Math.min(tsz2, winFit(s, bsz, w * 0.88, false)); });
+    var slam = R ? 1 : 1 + 1.9 * (1 - G.ease.out5(clamp((tt - 0.05) / 0.32, 0, 1)));
+    var tpul = 1 + (R ? 0 : 0.014 * Math.sin(tt * 3.2)) + (d >= 0 && !R ? 0.1 * Math.exp(-d * 4) * Math.cos(d * 12) : 0);
+    var tal = clamp((tt - 0.05) / 0.12, 0, 1);
+    ctx.save(); ctx.globalAlpha = a * tal; ctx.translate(cx, ty); ctx.scale(slam * tpul, slam * tpul);
+    lines.forEach(function (s, li) { G.goldText(s, 0, (li - (lines.length - 1) / 2) * tsz2 * 1.05, tsz2, { spacing: 2, blur: 26 + t * 6, shadow: c[2] }); });
     ctx.restore();
-    // montant
-    var ns = 1 + (o.done ? 0.06 * Math.max(0, 1 - (o.t - o.doneAt) * 3) : 0.02 * Math.sin(o.t * 30));
-    ctx.save(); ctx.translate(cx, cy + u * 0.06); ctx.scale(ns, ns);
-    G.goldText(G.fmt(Math.round(o.count * 100) / 100), 0, 0, Math.min(w * 0.14, u * 0.16), { blur: 40 });
-    ctx.restore();
-    G.txt('×' + G.fmt(o.mult), cx, cy + u * 0.2, { size: Math.min(w * 0.05, u * 0.06), fill: '#fff1b8', stroke: '#2a1a02', shadow: 'rgba(255,200,60,.6)' });
-    if (o.done && !o.closing) G.txt(I18N.t().tapSkip, cx, cy + u * 0.3, { size: 13, family: 'Manrope', weight: 700, fill: 'rgba(255,241,184,' + (0.45 + 0.35 * Math.sin(o.t * 4)) + ')', spacing: 3 });
+    /* --- montant : défile, ralentit, puis rebondit à l'arrivée --- */
+    var asz2 = winFit(amtMax, Math.min(w * 0.15, u * 0.17) * (1 + 0.05 * t), w * 0.9, true);
+    var ns = d >= 0 ? 1 + 0.24 * Math.exp(-d * 4.5) * Math.cos(d * 13) : 1 + 0.018 * Math.sin(tt * 30);
+    var ay = cy + u * 0.06 + (lines.length - 1) * tsz2 * 0.5;
+    ctx.save(); ctx.translate(cx, ay); ctx.scale(ns, ns); G.goldText(amt, 0, 0, asz2, { blur: 40, shadow: c[2] }); ctx.restore();
+    G.txt('×' + G.fmt(o.mult), cx, ay + u * 0.14, { size: Math.min(w * 0.05, u * 0.06), fill: '#fff1b8', stroke: '#2a1a02', shadow: 'rgba(255,200,60,.6)' });
+    if (o.done && !o.closing) G.txt(T.tapSkip, cx, ay + u * 0.24, { size: 13, family: 'Manrope', weight: 700, fill: 'rgba(255,241,184,' + (0.45 + 0.35 * Math.sin(tt * 4)) + ')', spacing: 3 });
+    /* --- vignette --- */
+    var vg = ctx.createRadialGradient(cx, cy, u * 0.45, cx, cy, Math.max(w, h) * 0.75); vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(0,0,0,' + (0.35 + 0.05 * t) + ')');
+    ctx.fillStyle = vg; ctx.fillRect(0, 0, w, h);
     ctx.restore();
   }
 

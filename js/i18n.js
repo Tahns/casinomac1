@@ -16,7 +16,7 @@
       dust: 'La poussière retourne à la poussière…', winLine: 'Gain', respinLabel: 'RELANCE',
       kinds: { m0: 'POUSSIÈRE', m025: '0,25×', m05: '0,5×', m1: '1×', m2: '2×', m3: '3×', ankh: 'ANKH', scarab: 'SCARABÉES', weigh: 'PESÉE', vault: 'TRÉSOR' },
       kindsLong: { scarab: 'Chute des Scarabées', weigh: 'Pesée du Cœur', vault: 'Chambre du Trésor', hand: 'Fureur d\'Anubis', crypt: 'Crypte d\'Anubis' },
-      tiers: ['', 'GRAND GAIN', 'MÉGA GAIN', 'ÉPIQUE', 'JUGEMENT DIVIN'],
+      tiers: ['WIN', 'BIG WIN', 'EXTRA WIN', 'MEGA WIN', 'JUGEMENT DIVIN'],
       scarabSub: 'Trois scarabées traversent les ténèbres. Chacun rapporte la case où il tombe.', scarabIntro: 'CHUTE DES SCARABÉES',
       weighIntro: 'PESÉE DU CŒUR', weighSub: 'Plume de Maât ou cœur ? Le plateau le plus lourd gagne son multiplicateur, le plus léger n\'a rien.', feather: 'PLUME', featherOf: 'DE MAÂT', heart: 'CŒUR', heartOf: 'DE VOTRE ÂME', weighRoll: 'Les multiplicateurs se révèlent…', weighWon: 'GAGNÉ', weighLost: 'PERDU', sayRight: 'Votre plateau est le plus lourd : ×{m} !', sayWrong: 'L\'autre plateau est plus lourd : pas de gain', weighing: 'Les dieux pèsent votre âme…',
       vaultIntro: 'CHAMBRE DU TRÉSOR', vaultSub: 'Un toucher ouvre un coffre. Évitez la malédiction : elle clôt la chambre.', pick: 'Touchez un coffre', vaultCurse: 'MALÉDICTION !', vaultSaved: 'L\'ANKH VOUS PROTÈGE', vaultScepter: 'SCEPTRE ×2', vaultShield: 'BOUCLIER ANKH', vaultClear: 'CHAMBRES VIDÉES  +5×', total: 'TOTAL',
@@ -43,6 +43,7 @@
         'Pesée du Cœur : choisissez la plume de Maât ou le cœur, les multiplicateurs défilent et se révèlent, puis la balance tranche. Le plateau le plus lourd gagne son multiplicateur (jusqu\'à ×300), le plus léger n\'a rien : une chance sur deux.',
         'Un bonus peut être saisi par la FUREUR D\'ANUBIS : choisissez une couleur (turquoise, or ou rubis) puis lancez la roue géante. Un nombre : gain = nombre × palier. DOUBLE de VOTRE couleur : les nombres de la roue sont doublés (palier ×2, jusqu\'à ×16) et vous relancez. DOUBLE d\'une AUTRE couleur : la chaîne s\'arrête et vous encaissez le plus petit nombre de la roue (5) × palier.',
         'Les bandes de la Fureur lancent un bonus (Scarabées ×2 ou ×10, Pesée ×5, Trésor ×3) : gain du bonus × le multiplicateur de la bande × palier, jusqu\'à ×5000. Une bande ne ramène jamais à la Fureur.',
+        'Animations de gain, selon le multiplicateur total du tour (gain ÷ coût du tour) : WIN dès ×1, BIG WIN dès ×10, EXTRA WIN dès ×25, MEGA WIN dès ×75, JUGEMENT DIVIN dès ×300.',
         '??? Un bonus secret se cache parfois derrière un bonus gagné… extrêmement rare. À vous de le découvrir.'
       ],
       secretWord: 'BONUS SECRET', secretUnlocked: 'DÉBLOQUÉ !', secretHint: 'Un bonus caché vient de s\'ouvrir… Touchez le bouton ou appuyez sur Espace',
@@ -67,7 +68,7 @@
       dust: 'Dust returns to dust…', winLine: 'Win', respinLabel: 'RESPIN',
       kinds: { m0: 'DUST', m025: '0.25×', m05: '0.5×', m1: '1×', m2: '2×', m3: '3×', ankh: 'ANKH', scarab: 'SCARABS', weigh: 'WEIGHING', vault: 'VAULT' },
       kindsLong: { scarab: 'Scarab Drop', weigh: 'Weighing of the Heart', vault: 'Treasure Vault', hand: 'Fury of Anubis', crypt: 'Anubis\' Crypt' },
-      tiers: ['', 'BIG WIN', 'MEGA WIN', 'EPIC WIN', 'DIVINE JUDGEMENT'],
+      tiers: ['WIN', 'BIG WIN', 'EXTRA WIN', 'MEGA WIN', 'DIVINE JUDGEMENT'],
       scarabSub: 'Three scarabs plunge through the dark. Each pays the slot it lands in.', scarabIntro: 'SCARAB DROP',
       weighIntro: 'WEIGHING OF THE HEART', weighSub: 'Feather of Ma\'at or heart? The heavier pan wins its multiplier, the lighter one gets nothing.', feather: 'FEATHER', featherOf: 'OF MA\'AT', heart: 'HEART', heartOf: 'OF YOUR SOUL', weighRoll: 'The multipliers are revealed…', weighWon: 'WON', weighLost: 'LOST', sayRight: 'Your pan is the heavier one: ×{m}!', sayWrong: 'The other pan is heavier: no win', weighing: 'The gods weigh your soul…',
       vaultIntro: 'TREASURE VAULT', vaultSub: 'One tap opens a chest. Avoid the curse — it seals the vault.', pick: 'Tap a chest', vaultCurse: 'CURSE!', vaultSaved: 'THE ANKH PROTECTS YOU', vaultScepter: 'SCEPTER ×2', vaultShield: 'ANKH SHIELD', vaultClear: 'VAULT CLEARED  +5×', total: 'TOTAL',
@@ -94,6 +95,7 @@
         'Weighing of the Heart: pick the feather of Ma\'at or the heart, the multipliers roll and are revealed, then the scales decide. The heavier pan wins its multiplier (up to ×300), the lighter one gets nothing: a 1-in-2 chance.',
         'Any bonus can be seized by the FURY OF ANUBIS: pick a colour (turquoise, gold or ruby), then spin the giant wheel. A number: win = number × tier. DOUBLE in YOUR colour: every number on the wheel is doubled (tier ×2, up to ×16) and you spin again. DOUBLE in ANOTHER colour: the chain stops and you cash the smallest number on the wheel (5) × tier.',
         'The Fury\'s bands launch a bonus (Scarabs ×2 or ×10, Weighing ×5, Vault ×3): bonus win × the band multiplier × tier, up to ×5000. A band never leads back to the Fury.',
+        'Win animations, by the round\'s total multiplier (win ÷ round cost): WIN from ×1, BIG WIN from ×10, EXTRA WIN from ×25, MEGA WIN from ×75, DIVINE JUDGEMENT from ×300.',
         '??? A secret bonus sometimes hides behind a won bonus… extremely rare. Find it yourself.'
       ],
       secretWord: 'SECRET BONUS', secretUnlocked: 'UNLOCKED!', secretHint: 'A hidden bonus has opened… Tap the button or press Space',

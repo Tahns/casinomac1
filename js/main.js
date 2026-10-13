@@ -115,7 +115,8 @@
 
   /* ---------- un tour ---------- */
   // m = gain rapporté au coût du tour
-  function tierOf(m) { return m >= 200 ? 4 : m >= 50 ? 3 : m >= 15 ? 2 : m >= 5 ? 1 : 0; }
+  // -1 : pas d'animation de gain (< ×1 le coût du tour) · 0 WIN · 1 BIG WIN · 2 EXTRA WIN · 3 MEGA WIN · 4 JUGEMENT DIVIN (seuils : G.WIN_TIERS)
+  function tierOf(m) { var t = -1; G.WIN_TIERS.forEach(function (x, i) { if (m >= x) t = i; }); return t; }
 
   async function play(buyKind) {
     if (S.busy) return;
@@ -174,7 +175,7 @@
     G.wheel.clearOracle(); $('oracle').hidden = true;
     if (amount > 0) {
       var tier = tierOf(total / priceMult);
-      if (tier > 0) await G.showBigWin(total, amount, tier);
+      if (tier >= 0) await G.showBigWin(total, amount, tier);
       S.balance += amount; S.lastWin = amount; SESS.won += amount;
       setWin(amount, true); updateHud(true);
       say(T.winLine + ' ×' + G.fmt(total) + '  ·  +' + G.fmt(amount));
