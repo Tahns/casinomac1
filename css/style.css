@@ -258,3 +258,8 @@ label{font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--d
 .chip{padding:8px 6px;border-radius:99px;border:1px solid var(--line);font:800 11px Manrope;color:var(--dim);background:#14100c;cursor:pointer}
 .chip.on{color:#2a1a02;background:var(--gold);border-color:var(--gold)}
 @media (max-height:520px) and (orientation:landscape){#mixer{top:60px}}
+
+/* montants longs (gros soldes, gain max x plus grosse mise) : la police rétrécit pour rester dans la plaque */
+.stat b[data-l="1"],.betval b[data-l="1"]{zoom:.9}
+.stat b[data-l="2"],.betval b[data-l="2"]{zoom:.78}
+.stat b[data-l="3"],.betval b[data-l="3"]{zoom:.66}
