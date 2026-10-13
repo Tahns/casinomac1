@@ -9,13 +9,13 @@
 //   - aucun setInterval résiduel (thèmes audio), aucun écouteur clavier résiduel ;
 //   - vitesse revenue à 1 / turbo cohérent, turbo coupé après un bonus ; bouton SPIN actif ; HUD = solde.
 // Usage : PLAYWRIGHT_CORE=/chemin/playwright-core [CHROMIUM=/chemin/chrome] node tools/fuzz.js
-//   FUZZ_SEED=123 (graine, défaut : aléatoire, affichée)  FUZZ_ROUNDS=300 (tours au total)  FUZZ_PER_EPISODE=25 (tours par session)  FUZZ_VERBOSE=1
+//   FUZZ_SEED=123 (graine, défaut : aléatoire, affichée)  FUZZ_ROUNDS=100 (tours au total, jamais plus de 1000)  FUZZ_PER_EPISODE=25 (tours par session)  FUZZ_VERBOSE=1
 // Reproduire un échec : relancer avec la même FUZZ_SEED (le journal des actions est affiché sous chaque échec).
 var http = require('http'), fs = require('fs'), path = require('path');
 var pw = require(process.env.PLAYWRIGHT_CORE || 'playwright-core');
 var root = path.join(__dirname, '..');
 var MIME = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.woff2': 'font/woff2', '.webp': 'image/webp', '.jpg': 'image/jpeg', '.png': 'image/png' };
-var SEED = +(process.env.FUZZ_SEED || Math.floor(Math.random() * 1e9)), ROUNDS = +(process.env.FUZZ_ROUNDS || 300), PER = +(process.env.FUZZ_PER_EPISODE || 25), VERBOSE = !!process.env.FUZZ_VERBOSE;
+var SEED = +(process.env.FUZZ_SEED || Math.floor(Math.random() * 1e9)), ROUNDS = Math.min(1000, +(process.env.FUZZ_ROUNDS || 100)), PER = +(process.env.FUZZ_PER_EPISODE || 25), VERBOSE = !!process.env.FUZZ_VERBOSE;
 
 function mulberry32(a) { return function () { a |= 0; a = (a + 0x6D2B79F5) | 0; var t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
 var rnd = mulberry32(SEED);

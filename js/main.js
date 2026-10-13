@@ -12,7 +12,7 @@
   var START_BAL = 1000;
   var SAVE_VER = 2;           // v1 = ancien jeu en « crédits » (mises 10 à 5000, solde 10 000)
   var r2 = G.r2;
-  var AUTO_STEPS = [0, 10, 25, 50, 100];
+  var AUTO_STEPS = [0, 10, 25, 50, 100, Infinity];
   var SAVE_KEY = 'hoa_save_v1';
 
   var S = { pending: 0, balance: START_BAL, bi: BET_DEFAULT, cur: '', curSet: false, lastWin: 0, autoIdx: 0, auto: 0, stopOnBonus: false, busy: false, hist: [], reduced: false, mode: 'std', buyOn: true, limit: 0, quality: 'auto', limitHit: false };
@@ -79,12 +79,13 @@
     if (el.id === 'bet') l = n >= 10 ? 4 : n >= 9 ? 3 : n >= 7 ? 1 : 0;   // la mise a moins de place (entre − et +)
     el.setAttribute('data-l', String(l));
   }
-  var shown = { bal: -1, win: -1 };
+  var shown = { bal: -1, win: -1 }, cnt = { bal: 0, win: 0 };
   function countTo(el, key, to, ms) {
-    var from = shown[key] < 0 ? to : shown[key];
+    var from = shown[key] < 0 ? to : shown[key], me = ++cnt[key];   // me : une animation plus récente annule l'ancienne
     if (from === to || ms <= 0) { setMoney(el, to); shown[key] = to; return; }
     var t0 = performance.now();
     (function step(n) {
+      if (me !== cnt[key]) return;
       var u = Math.min(1, (n - t0) / ms), v = from + (to - from) * (1 - Math.pow(1 - u, 3));
       setMoney(el, r2(v)); shown[key] = v;
       if (u < 1) requestAnimationFrame(step); else shown[key] = to;
@@ -114,7 +115,7 @@
     $('spinText').textContent = S.auto > 0 ? T.stop : T.spin;
     var at = $('autoText');
     if (S.auto > 0) { if (at.getAttribute('data-n') !== rem) { at.setAttribute('data-n', rem); at.textContent = T.auto + ' '; var nb = document.createElement('b'); nb.className = 'autoCount'; nb.textContent = rem; at.appendChild(nb); } }
-    else { at.removeAttribute('data-n'); at.textContent = AUTO_STEPS[S.autoIdx] ? T.auto + ' ' + AUTO_STEPS[S.autoIdx] : T.auto; }
+    else { at.removeAttribute('data-n'); at.textContent = AUTO_STEPS[S.autoIdx] ? T.auto + ' ' + (isFinite(AUTO_STEPS[S.autoIdx]) ? AUTO_STEPS[S.autoIdx] : '∞') : T.auto; }
     $('btnAuto').classList.toggle('on', S.autoIdx > 0);
     $('btnTurbo').classList.toggle('on', G.turbo); $('btnTurbo').classList.toggle('ultra', !!G.ultra); $('btnTurbo').querySelector('span').textContent = G.ultra ? 'ULTRA' : T.turbo;
     $('btnPlus').classList.toggle('on', S.mode === 'plus'); $('plusText').textContent = T.oraclePlus + (S.mode === 'plus' ? ' · ' + G.money(cost()) : '');
@@ -156,7 +157,7 @@
     var total = 0;
     // si le joueur choisit un autre profil de bonus, le gain en attente est recalculé et sauvegardé tout de suite
     G.onBonusChoice = function () { var t = 0; round.spins.forEach(function (x) { t += x.pay; }); S.pending = r2(Math.min(t, M.MAX_WIN) * b); save(); };
-    for (var i = 0; i < round.spins.length; i++) {
+    try { for (var i = 0; i < round.spins.length; i++) {
       var sp = round.spins[i];
       if (!buyKind && sp.oracle) {
         $('oracleText').textContent = T.oracleOn + ' ×' + sp.oracle.boost + ' → ' + T.kinds[sp.oracle.kind].replace('\n', ' ');
@@ -189,6 +190,9 @@
       }
       total += sp.pay;
       $('oracle').hidden = true;
+    } } catch (err) {   // une scène en erreur ne doit jamais bloquer le jeu ni perdre le gain déjà décidé
+      if (root.console) console.error(err);
+      total = 0; round.spins.forEach(function (x) { total += x.pay; }); G.scene = null; G.eg = null; G.winOv = null; G.fade = 0; G.setScene(null);
     }
     total = Math.min(total, M.MAX_WIN);
     var amount = r2(total * b);
@@ -378,7 +382,7 @@
       '<div class="opt"><span>' + T.reducedFx + '</span><div class="chips"><button id="optRed" class="' + (S.reduced ? 'on' : '') + '" type="button">' + (S.reduced ? T.on : T.off) + '</button></div></div>' +
       '<div class="opt"><span>' + T.resetBal + '</span><div class="chips"><button id="optReset" type="button">' + G.money(START_BAL) + '</button></div></div>';
     var ao = $('optAuto');
-    AUTO_STEPS.concat([Infinity]).forEach(function (n) {
+    AUTO_STEPS.forEach(function (n) {
       var bt = document.createElement('button'); bt.type = 'button'; bt.textContent = n === 0 ? T.off : isFinite(n) ? n : '∞';
       bt.className = (AUTO_STEPS[S.autoIdx] === n) ? 'on' : '';
       bt.onclick = function () { if (S.busy) return; var ix = AUTO_STEPS.indexOf(n); S.autoIdx = ix < 0 ? 0 : ix; setSpinBtn(); openInfo(); };

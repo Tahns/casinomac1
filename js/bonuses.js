@@ -107,11 +107,11 @@
       S.banner = { text: T.boostApplied + ' ×' + sp.boost, t: 0 };
       Sfx.oracle(); FX.flash(0.4, '#ffe9a0'); FX.ring(G.cx, G.cy, '#ffe9a0', G.R, 1);
       await G.sleep(1.1);
-      bump(S, sp.bonus.total * sp.boost); Sfx.chime(20); FX.spark(G.cx, G.cy, 40, '#ffd86a', 420);
+      bump(S, Math.min(sp.bonus.total * sp.boost, M.MAX_WIN)); Sfx.chime(20); FX.spark(G.cx, G.cy, 40, '#ffd86a', 420);
       await G.sleep(1.1);
       S.banner = null;
     }
-    S.final = { mult: sp.pay, bet: bet, count: 0, t: 0 };
+    S.final = { mult: Math.min(sp.pay, M.MAX_WIN), bet: bet, count: 0, t: 0 };
     G.say('');
     Sfx.chime(sp.pay); FX.coins(G.cx, G.cy + G.h * 0.2, 28, 1000, 120); FX.flash(0.25, '#ffe9a0');
     await waitTap(S, 3.2);
@@ -1751,7 +1751,7 @@
     G.setScene(scene);
     await G.setFade(0, 0.5);
     if (Sfx.bonusTheme) Sfx.bonusTheme(sp.secret ? 'crypt' : sp.upgraded ? 'hand' : sp.kind);   // musique propre à chaque bonus
-    try { await scene.run(); } finally { if (Sfx.stopBonusTheme) Sfx.stopBonusTheme(); }
+    try { await scene.run(); } finally { if (Sfx.stopBonusTheme) Sfx.stopBonusTheme(); G.speed = speed0; }
     await G.setFade(1, 0.35);
     G.setScene(null); G.say('');
     await G.setFade(0, 0.5);
