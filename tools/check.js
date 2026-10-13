@@ -16,7 +16,8 @@ function sig(seed, mode) { var r = M.mulberry32(seed), out = []; for (var i = 0;
 ok(sig(5, 'std') === sig(5, 'std') && sig(5, 'plus') === sig(5, 'plus'), 'même graine => mêmes tours (std et plus)');
 
 // 3. structure des tours
-var rng = M.mulberry32(99), bad = 0, maxChain = 0, capped = 0, N = 300000;
+var cap = require('./cap');
+var rng = M.mulberry32(99), bad = 0, maxChain = 0, capped = 0, N = cap(300000);
 ['std', 'plus'].forEach(function (mode) {
   for (var i = 0; i < N; i++) {
     var r = M.playRound(rng, mode), sp = r.spins, last = sp[sp.length - 1], sum = 0;
@@ -46,7 +47,7 @@ Object.keys(M.BUY).forEach(function (k) {
 ok(badBuy === 0, 'achats : un seul bonus, gain dans [0, plafond], coût = prix affiché');
 
 // 4b. Pesée du Cœur : plume ou cœur, le plus lourd gagne son multiplicateur, le plus léger n'a rien
-var rw = M.mulberry32(21), badW = 0, heavyCnt = [0, 0], winN = 0, sumP = [0, 0], nW = 300000;
+var rw = M.mulberry32(21), badW = 0, heavyCnt = [0, 0], winN = 0, sumP = [0, 0], nW = cap(300000);
 ['safe', 'std', 'bold'].forEach(function (pf) {
   var prof = M.WEIGH_PROFILES[pf];
   for (var i = 0; i < nW; i++) {
@@ -99,7 +100,7 @@ var forcedW = M._bonus.hand(M.mulberry32(3), 1, [12]); var d0 = forcedW.spins[0]
 ok(badR === 0 && forcedW.total === 0 && forcedW.spins[0].band === 'weigh', 'Fureur : le total se recalcule si le joueur change son choix dans la Pesée imbriquée');
 
 // 4d. Bonus SECRET « Crypte d'Anubis » : colonnes de multiplicateurs, tirées d'avance, remplace un bonus gagné
-var CR = M._bonus.crypt, COLS = M.CRYPT_COLS, rc = M.mulberry32(404), badC = 0, nC = 300000, colCnt = [0, 0, 0, 0, 0], typeCnt = {}, iceFull = 0, crushNoop = 0, crushReal = 0, sumTot = 0;
+var CR = M._bonus.crypt, COLS = M.CRYPT_COLS, rc = M.mulberry32(404), badC = 0, nC = cap(300000), colCnt = [0, 0, 0, 0, 0], typeCnt = {}, iceFull = 0, crushNoop = 0, crushReal = 0, sumTot = 0;
 // implémentation de référence, écrite à part des maths : le total rejoué doit être celui du script
 function refCrypt(drops) {
   var top = [], fx = [], c; for (c = 0; c < 5; c++) { top.push(1); fx.push([]); }
@@ -145,7 +146,7 @@ var mini = CR(M.mulberry32(1), [{ t: 'skull', c: 0, v: 3 }, { t: 'ice', c: 0 }, 
 // colonne 0 : haut 1+3=4 -> glace (fixe 4, haut 1) -> ×5 -> +1 = 6 -> glace (4, 6) -> glace (4, 6, 1) -> broyeur (11) -> ×2 : haut 2 + 11 = 13 ; colonne 1 : 2+2=4 puis ×2 = 8 ; colonnes 2-4 : 2 puis ×2 = 4
 ok(mini.cols[0] === 13 && mini.fixed[0].length === 1 && mini.fixed[0][0] === 11 && mini.cols[1] === 8 && mini.total === 33 / 5, 'Crypte : script écrit à la main rejoué correctement (colonnes ' + mini.cols.join(', ') + ')');
 // fréquence et espérance du secret dans les vrais tours
-var rs = M.mulberry32(2024), nS = 2000000, secrets = 0, bonuses = 0, badS = 0;
+var rs = M.mulberry32(2024), nS = cap(2000000), secrets = 0, bonuses = 0, badS = 0;
 ['std', 'plus'].forEach(function (mode) {
   for (var si = 0; si < nS; si++) {
     var rr = M.playRound(rs, mode);
@@ -161,7 +162,7 @@ ok(Math.abs(secrets / bonuses - M.SECRET_UPGRADE) < 0.004, 'Secret : ' + (secret
 var rbuy = M.mulberry32(8), secBuy = 0; ['scarab', 'weigh', 'vault', 'hand'].forEach(function (k) { for (var i = 0; i < 50000; i++) if (M.playBuy(rbuy, k).spins[0].secret) secBuy++; });
 ok(secBuy === 0, 'Secret : jamais proposé à l\'achat');
 // espérance du secret = espérance moyenne du bonus qu'il remplace (RTP global inchangé)
-var rE = M.mulberry32(31), nE = 2000000, eS = 0, eR = { scarab: 0, weigh: 0, vault: 0, hand: 0 };
+var rE = M.mulberry32(31), nE = cap(2000000), eS = 0, eR = { scarab: 0, weigh: 0, vault: 0, hand: 0 };
 for (var ei2 = 0; ei2 < nE; ei2++) {
   eS += Math.min(CR(rE).total, M.MAX_WIN);
   ['scarab', 'weigh', 'vault', 'hand'].forEach(function (k) { eR[k] += Math.min(M._bonus[k](rE, k === 'hand' ? 0 : 'std').total, M.MAX_WIN); });
@@ -169,16 +170,17 @@ for (var ei2 = 0; ei2 < nE; ei2++) {
 var replaced = (1 - M.HAND_UPGRADE) * (eR.scarab + eR.weigh + eR.vault) / 3 / nE + M.HAND_UPGRADE * eR.hand / nE;
 ok(Math.abs(eS / nE - replaced) < 0.35, 'Secret : espérance ≈ ' + (eS / nE).toFixed(2) + '× pour ' + replaced.toFixed(2) + '× de bonus remplacé (écart ' + ((eS / nE - replaced) * M.SECRET_UPGRADE * 0.0682 * 100).toFixed(3) + ' pt de RTP)');
 
-// 5. RTP grossier (tolérance large : 2 M de tours ≈ ±0,5 pt)
+// 5. RTP grossier, test de fumée : les tests sont plafonnés à 100 000 tours (tolérance = 4 écarts-types d'échantillonnage). La valeur précise est mesurée à grande échelle hors test (1 milliard de tours : 96,22 % std ± 0,034, 96,00 % Oracle+ ± 0,039).
+function tol(sd, n) { return 4 * sd / Math.sqrt(n) * 100; }
 function rtp(f, cost, n) { var s = 0; for (var i = 0; i < n; i++) s += f().total; return s / n / cost * 100; }
-var r1 = M.mulberry32(11), n = 2000000;
+var r1 = M.mulberry32(11), n = cap(2000000);
 var std = rtp(function () { return M.playRound(r1, 'std'); }, 1, n);
 var plus = rtp(function () { return M.playRound(r1, 'plus'); }, M.MODES.plus.cost, n);
-ok(std > 94.5 && std < 97.5, 'RTP Standard ≈ ' + std.toFixed(2) + ' % (attendu 96,2)');
-ok(plus > 94.5 && plus < 97.5, 'RTP Oracle+ ≈ ' + plus.toFixed(2) + ' % (attendu 95,9)');
+ok(Math.abs(std - 96.2) < tol(5.5, n), 'RTP Standard ≈ ' + std.toFixed(2) + ' % (attendu 96,2 ± ' + tol(5.5, n).toFixed(1) + ', ' + n + ' tours)');
+ok(Math.abs(plus - 96.0) < tol(6.4, n), 'RTP Oracle+ ≈ ' + plus.toFixed(2) + ' % (attendu 96,0 ± ' + tol(6.4, n).toFixed(1) + ', ' + n + ' tours)');
 Object.keys(M.BUY).forEach(function (k) {
-  var v = rtp(function () { return M.playBuy(r1, k); }, M.BUY[k].price, 1000000);
-  ok(v > 93.5 && v < 98.5, 'RTP achat ' + k + ' ≈ ' + v.toFixed(2) + ' % (tolérance large, 1 M de tirages)');
+  var v = rtp(function () { return M.playBuy(r1, k); }, M.BUY[k].price, cap(1000000));
+  ok(Math.abs(v - 96.2) < tol(14, cap(1000000)), 'RTP achat ' + k + ' ≈ ' + v.toFixed(2) + ' % (test de fumée, tolérance ± ' + tol(14, cap(1000000)).toFixed(1) + ')');
 });
 console.log(fails ? '\n' + fails + ' échec(s)' : '\ntout est bon');
 process.exit(fails ? 1 : 0);
