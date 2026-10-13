@@ -522,6 +522,27 @@
     ctx.restore();
   }
 
+  // chiffre multiplié (ex. 2 -> 8) écrit dans la case : fondu simple si FX.reduced, sinon apparition dorée qui « claque »
+  function wheelBoostLabel(i, am, o, R, RC) {
+    var p = o.ap, lab = G.fmt(M.KINDS[o.kind].mult * o.boost), red = FX.reduced;
+    var la = red ? p : clamp((p - 0.25) / 0.45, 0, 1), k = red ? 1 : 1 + 0.5 * Math.sin(Math.PI * clamp((p - 0.25) / 0.75, 0, 1));
+    if (la <= 0) return;
+    var fs = R * 0.15 * G.NUM_K, chord = RC * step * 0.86, along = lab.length >= 3, wdt;   // 3 caractères ou plus : écrit le long du rayon (plus de place)
+    ctx.save(); ctx.rotate(am);
+    if (along) { fs = R * 0.12 * G.NUM_K; ctx.translate(RC + R * 0.04, 0); } else { ctx.rotate(Math.PI / 2); ctx.translate(0, -RC); }
+    ctx.scale(k, k);
+    ctx.font = '700 ' + fs + 'px ' + G.NUM;
+    wdt = ctx.measureText(lab).width;
+    var lim = along ? Math.min(R * 0.27 / wdt, chord * 0.8 / (fs * 0.72)) : chord / wdt;
+    if (lim < 1) { fs *= lim; ctx.font = '700 ' + fs + 'px ' + G.NUM; }
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.globalAlpha = la;
+    var gg = ctx.createLinearGradient(0, -fs * 0.5, 0, fs * 0.5); gg.addColorStop(0, '#fffbe0'); gg.addColorStop(0.5, '#ffd86a'); gg.addColorStop(1, '#d99a1e');
+    if (!red) { ctx.shadowColor = 'rgba(255,200,60,' + (0.95 - 0.35 * p) + ')'; ctx.shadowBlur = 16 * (1.2 - 0.5 * p); }
+    ctx.lineJoin = 'round'; ctx.lineWidth = Math.max(2, fs * 0.14); ctx.strokeStyle = '#3a2000'; ctx.strokeText(lab, 0, 0);
+    ctx.fillStyle = gg; ctx.fillText(lab, 0, 0);
+    ctx.restore();
+  }
+
   W.draw = function (alpha) {
     var R = G.R, cx = G.cx, cy = G.cy;
     ctx.save();
@@ -556,6 +577,13 @@
       var o = W.oracle, pulse = 0.5 + 0.5 * Math.sin(o.t * 6), pop = G.ease.outBack(clamp(o.t / 0.5, 0, 1));
       for (i = 0; i < M.N; i++) {
         if (M.LAYOUT[i] !== o.kind) continue;
+        // case numérique boostée : l'ancien chiffre s'efface sous une plaque de la couleur de la case, le chiffre multiplié apparaît plus bas
+        if (o.num && o.ap > 0) {
+          var vz = VIS[o.kind], pa = FX.reduced ? o.ap : clamp(o.ap * 3, 0, 1), ins = R * 0.013;
+          ctx.save(); wedge(ctx, i, ri + ins, ro - ins); ctx.clip();
+          var pg = ctx.createRadialGradient(0, 0, ri, 0, 0, ro); pg.addColorStop(0, vz.c[1]); pg.addColorStop(0.55, A.mix(vz.c[1], vz.c[0], 0.5)); pg.addColorStop(1, vz.c[0]);
+          ctx.globalAlpha = pa; ctx.fillStyle = pg; ctx.fillRect(-R, -R, R * 2, R * 2); ctx.restore();
+        }
         wedge(ctx, i, ri, ro);
         ctx.fillStyle = 'rgba(255,236,150,' + (0.22 + pulse * 0.28) * Math.min(1, o.t * 2) + ')'; ctx.fill();
         ctx.lineWidth = R * 0.014; ctx.strokeStyle = 'rgba(255,241,184,' + (0.7 + pulse * 0.3) + ')'; ctx.stroke();
@@ -569,6 +597,7 @@
         ctx.lineWidth = 1.5; ctx.strokeStyle = '#5b4311'; ctx.stroke();
         G.txt('×' + o.boost, 0, br * 0.06, { size: br * 0.95, weight: 900, fill: '#3a2000' });
         ctx.restore();
+        if (o.num && o.ap > 0) wheelBoostLabel(i, am, o, R, (ri + ro) / 2);
       }
     }
     if (W.hl) {
@@ -595,11 +624,18 @@
 
   /* ---- actions de la roue (promesses) ---- */
   W.showOracle = function (o) {
-    W.oracle = { kind: o.kind, boost: o.boost, t: 0 };
+    var kd = M.KINDS[o.kind];
+    W.oracle = { kind: o.kind, boost: o.boost, t: 0, ap: 0, num: !kd.bonus && !kd.respin && kd.mult > 0 && o.boost > 1 };
     Sfx.oracle(); FX.ring(G.cx, G.cy, '#ffe9a0', G.R * 1.1, 0.9); FX.flash(0.25, '#ffe9a0');
     return G.sleep(G.turbo ? 0.5 : 1.5);
   };
   W.clearOracle = function () { W.oracle = null; };
+  // la roue s'est arrêtée sur la case boostée : son chiffre est réécrit avec la valeur déjà multipliée (durée : turbo plus court, FX.reduced : fondu)
+  W.applyBoost = function () {
+    var o = W.oracle; if (!o || !o.num) return Promise.resolve();
+    if (!FX.reduced) { Sfx.sparkle && Sfx.sparkle(); FX.ring(G.cx, G.cy, '#ffe9a0', G.R * 1.2, 0.8); }
+    return G.tween(G.turbo ? 0.35 : FX.reduced ? 0.4 : 0.9, function (u) { o.ap = u; }, null).then(function () { o.ap = 1; });
+  };
   W.clearHighlight = function () { W.hl = null; };
 
   W.spinTo = function (spin) {
