@@ -122,6 +122,7 @@
     } catch (e) { c = null; }
     return (cut[k] = c);
   }
+  G.cutout = function (k) { return ART['ic_' + k] ? cutout(k) : null; };
   G.icon = function (c, kind, x, y, s) {
     var im = ART['ic_' + kind]; if (!im) return false;
     var ct = cutout(kind);
@@ -437,40 +438,39 @@
     ctx.beginPath(); ctx.arc(cx, cy, R * 0.99, 0, TAU); ctx.stroke();
   }
 
+  // Anubis Unchained (logo) au centre de la roue : jamais immobile — respire, balance la tête, yeux rouges qui pulsent et clignent,
+  // chaînes qui tintent, éclats d'or de la chaîne brisée, reflet qui balaie l'anneau ; tout s'emballe pendant le tour.
+  var LOGO_EYES = [[-0.072, -0.104], [0.073, -0.103]];
   function drawHub(R) {
-    var cx = G.cx, cy = G.cy, r = R * 0.285;
+    var cx = G.cx, cy = G.cy, r = R * 0.285, t = G.t, spinN = W.mode === 'spin' ? 1 : 0, lg = G.cutout('logo');
     ctx.save();
     ctx.shadowColor = 'rgba(0,0,0,.7)'; ctx.shadowBlur = R * 0.05;
-    ctx.beginPath(); ctx.arc(cx, cy, r, 0, TAU);
-    var g = ctx.createRadialGradient(cx - r * 0.3, cy - r * 0.4, 0, cx, cy, r);
-    g.addColorStop(0, '#2a2118'); g.addColorStop(1, '#070504'); ctx.fillStyle = g; ctx.fill();
-    ctx.shadowBlur = 0;
-    ctx.lineWidth = R * 0.022; ctx.strokeStyle = A.goldGrad(ctx, cx - r, cy - r, cx + r, cy + r); ctx.stroke();
-    ctx.beginPath(); ctx.arc(cx, cy, r * 0.88, 0, TAU); ctx.clip();
-    var pulse = 0.65 + 0.35 * Math.sin(G.t * 2.4) + (W.mode === 'spin' ? 0.2 : 0);
-    if (ART.medal) {
-      // Anubis vivant : il respire, balance à peine la tête, ses yeux pulsent (plus vite pendant le tour), il cligne, un reflet balaie l'or
-      var spinN = W.mode === 'spin' ? 1 : 0, br = 1 + 0.016 * Math.sin(G.t * 1.3) + spinN * 0.012 * Math.sin(G.t * 9), sway = 0.012 * Math.sin(G.t * 0.7) + spinN * 0.01 * Math.sin(G.t * 5);
-      ctx.save(); ctx.translate(cx, cy + r * 0.012 * Math.sin(G.t * 1.3)); ctx.rotate(sway); ctx.scale(br, br);
-      ctx.drawImage(ART.medal, -r * 0.9, -r * 0.9, r * 1.8, r * 1.8);
-      var bl = (G.t % 6.1) > 5.96 ? 0.1 : 1, ei = (0.3 + 0.3 * Math.sin(G.t * (2.2 + spinN * 5)) + spinN * 0.3) * bl, sz = r * 1.8;
-      ctx.globalCompositeOperation = 'lighter';
-      [[-0.061, 0.18], [0.07, -0.18]].forEach(function (pe) {
-        var ex = pe[0] * sz, ey = -0.066 * sz, eg2 = ctx.createRadialGradient(ex, ey, 0, ex, ey, sz * 0.09);
-        eg2.addColorStop(0, 'rgba(120,255,235,' + ei + ')'); eg2.addColorStop(1, 'rgba(60,220,200,0)'); ctx.fillStyle = eg2; ctx.beginPath(); ctx.arc(ex, ey, sz * 0.09, 0, TAU); ctx.fill();
-      });
-      var sw0 = ((G.t % 4.5) / 4.5), sx = -r * 1.3 + sw0 * r * 2.6;                      // reflet doré qui balaie le médaillon
-      var sg = ctx.createLinearGradient(sx - r * 0.25, -r, sx + r * 0.25, r); sg.addColorStop(0, 'rgba(255,230,150,0)'); sg.addColorStop(0.5, 'rgba(255,236,170,' + (0.12 + spinN * 0.05) + ')'); sg.addColorStop(1, 'rgba(255,230,150,0)');
-      ctx.fillStyle = sg; ctx.fillRect(-r, -r, r * 2, r * 2);
-      ctx.restore();
-      var eg = ctx.createRadialGradient(cx, cy - r * 0.08, 0, cx, cy - r * 0.08, r * 0.5);
-      eg.addColorStop(0, 'rgba(111,240,221,' + 0.16 * clamp(pulse, 0, 1.2) + ')'); eg.addColorStop(1, 'rgba(111,240,221,0)');
-      ctx.fillStyle = eg; ctx.fillRect(cx - r, cy - r, r * 2, r * 2);
-    } else A.jackal(ctx, cx, cy - r * 0.2, r * 0.44, { glow: clamp(pulse, 0, 1) });
-    // dôme de verre : reflet qui suit la lumière
-    var dl = ctx.createRadialGradient(cx - r * 0.35 - P.x * r * 0.12, cy - r * 0.45 - P.y * r * 0.1, 0, cx - r * 0.2, cy - r * 0.25, r * 1.1);
-    dl.addColorStop(0, 'rgba(255,255,255,.34)'); dl.addColorStop(0.35, 'rgba(255,255,255,.07)'); dl.addColorStop(1, 'rgba(0,0,0,.28)');
-    ctx.fillStyle = dl; ctx.fillRect(cx - r, cy - r, r * 2, r * 2);
+    ctx.beginPath(); ctx.arc(cx, cy, r * 1.02, 0, TAU); ctx.fillStyle = '#050304'; ctx.fill(); ctx.shadowBlur = 0;
+    if (!lg) { ctx.restore(); A.jackal(ctx, cx, cy - r * 0.2, r * 0.44, { glow: clamp(0.65 + 0.35 * Math.sin(t * 2.4), 0, 1) }); return; }
+    if (G.eg) { ctx.restore(); return; }        // pendant l'apparition plein écran, le socle reste vide
+    var size = r * 2.5, br = 1 + 0.02 * Math.sin(t * 1.3) + spinN * 0.025 * Math.sin(t * 11), sway = 0.018 * Math.sin(t * 0.8) + spinN * 0.03 * Math.sin(t * 6);
+    var jx = spinN ? (Math.random() - 0.5) * r * 0.025 : 0, jy = spinN ? (Math.random() - 0.5) * r * 0.025 : 0;
+    // aura rouge qui bat (plus vive et plus rapide pendant le tour)
+    var ap = 0.5 + 0.5 * Math.sin(t * (2.2 + spinN * 6)), ag = ctx.createRadialGradient(cx, cy, r * 0.5, cx, cy, r * 1.6);
+    ag.addColorStop(0, 'rgba(255,40,20,' + (0.22 + 0.18 * ap + spinN * 0.2) + ')'); ag.addColorStop(1, 'rgba(255,40,20,0)'); ctx.fillStyle = ag; ctx.fillRect(cx - r * 1.7, cy - r * 1.7, r * 3.4, r * 3.4);
+    ctx.translate(cx + jx, cy + jy + r * 0.014 * Math.sin(t * 1.3)); ctx.rotate(sway); ctx.scale(br, br);
+    // chaînes qui tintent : léger tremblement de la couronne
+    ctx.save(); ctx.rotate(0.006 * Math.sin(t * 3.1 + 1)); ctx.drawImage(lg, -size / 2, -size / 2, size, size); ctx.restore();
+    ctx.globalCompositeOperation = 'lighter';
+    // yeux rouges : braise qui pulse, clignement toutes les ~6 s, flash quand la roue démarre
+    var blink = (t % 6.3) > 6.17 ? 0.05 : 1, ei = (0.45 + 0.35 * Math.sin(t * (2.6 + spinN * 6)) + spinN * 0.45) * blink;
+    LOGO_EYES.forEach(function (pe, j) {
+      var ex = pe[0] * size, ey = pe[1] * size, rr = size * (0.085 + 0.03 * ei), eg = ctx.createRadialGradient(ex, ey, 0, ex, ey, rr);
+      eg.addColorStop(0, 'rgba(255,90,50,' + ei + ')'); eg.addColorStop(1, 'rgba(255,20,10,0)'); ctx.fillStyle = eg; ctx.beginPath(); ctx.arc(ex, ey, rr, 0, TAU); ctx.fill();
+    });
+    // reflet doré qui balaie le médaillon (clip circulaire)
+    ctx.save(); ctx.beginPath(); ctx.arc(0, 0, size * 0.46, 0, TAU); ctx.clip();
+    var sw0 = (t % 4.2) / 4.2, sx = -size * 0.7 + sw0 * size * 1.4, sg = ctx.createLinearGradient(sx - size * 0.12, -size * 0.5, sx + size * 0.12, size * 0.5);
+    sg.addColorStop(0, 'rgba(255,230,150,0)'); sg.addColorStop(0.5, 'rgba(255,238,175,' + (0.2 + spinN * 0.1) + ')'); sg.addColorStop(1, 'rgba(255,230,150,0)'); ctx.fillStyle = sg; ctx.fillRect(-size / 2, -size / 2, size, size);
+    ctx.restore();
+    // éclats d'or de la chaîne brisée (en bas à droite) : petites étincelles qui jaillissent par intermittence
+    var cyc = (t % 2.4) / 2.4;
+    if (cyc < 0.6) for (var k = 0; k < 6; k++) { var u = cyc / 0.6, ang = -0.9 + k * 0.5, d = size * (0.04 + 0.12 * u) * (0.6 + k * 0.1), px = size * 0.26 + Math.cos(ang) * d, py = size * -0.01 + Math.sin(ang) * d + u * size * 0.05; ctx.fillStyle = 'rgba(255,215,110,' + (1 - u) * 0.9 + ')'; ctx.beginPath(); ctx.arc(px, py, size * 0.008 * (1 - u * 0.5), 0, TAU); ctx.fill(); }
     ctx.restore();
   }
 
@@ -605,7 +605,7 @@
   };
   G.emerge = function (kind, fast) {
     return new Promise(function (res) {
-      if (!ART.medal || FX.reduced) { res(); return; }
+      if (!ART.ic_logo || FX.reduced) { res(); return; }
       var st = EMERGE[kind] || EMERGE.hand;
       G.eg = { t: 0, dur: fast ? 1.5 : 2.7, res: res, st: st, kind: kind, parts: [], spawned: 0, step: 0, fast: !!fast };
       if (Sfx.emerge) Sfx.emerge(kind);
@@ -632,12 +632,12 @@
     if (k === 'hand' && u > 0.3 && !e.step) { e.step = 1; FX.shake(14, 1.0); }
     if (u > 0.72 && !e.flashed) {
       e.flashed = true; var fc = { hand: '#ff3a2a', scarab: '#5cf0c0', weigh: '#fff4d0', vault: '#ffd86a', crypt: '#9a7bff' }[k] || '#fff';
-      FX.flash(0.7, fc); FX.shake(k === 'hand' || k === 'crypt' ? 22 : 14, 0.7); FX.ring(G.cx, G.cy, fc, G.R * 1.4, 0.9); if (Sfx.thud) Sfx.thud();
+      FX.flash(0.7, fc); FX.shake(k === 'hand' || k === 'crypt' ? 22 : 14, 0.7); if (k === 'hand') { FX.spark(G.cx, G.cy, 110, '#ffd86a', 700); FX.spark(G.cx, G.cy, 50, '#ff4a2a', 520); } FX.ring(G.cx, G.cy, fc, G.R * 1.4, 0.9); if (Sfx.thud) Sfx.thud();
     }
     if (e.t >= e.dur) { var r = e.res; G.eg = null; r(); }
   }
   function drawEmerge() {
-    var e = G.eg; if (!e || !ART.medal) return;
+    var e = G.eg; if (!e || !ART.ic_logo) return; var logo = G.cutout('logo');
     var st = e.st, k = e.kind, u = clamp(e.t / e.dur, 0, 1), W_ = G.w, H_ = G.h, cx = G.cx, cy = G.cy, i;
     var grow = G.ease.inOut(clamp((u - 0.08) / 0.62, 0, 1)), s0 = G.R * 0.36, s1 = st.full ? Math.min(W_ * 1.15, H_ * 1.05) : Math.min(W_ * 0.82, H_ * 0.82);
     var size = s0 + (s1 - s0) * grow, py = cy + (H_ * 0.5 - cy) * grow, fadeOut = clamp((u - 0.86) / 0.14, 0, 1);
@@ -654,20 +654,21 @@
     var split = k === 'vault' ? clamp((u - 0.45) / 0.3, 0, 1) : 0;
     if (split > 0) { ctx.save(); ctx.globalCompositeOperation = 'lighter'; var gl = ctx.createLinearGradient(cx - size * 0.12, 0, cx + size * 0.12, 0); gl.addColorStop(0, 'rgba(255,210,90,0)'); gl.addColorStop(0.5, 'rgba(255,225,130,' + 0.95 * (1 - fadeOut) + ')'); gl.addColorStop(1, 'rgba(255,210,90,0)'); ctx.fillStyle = gl; ctx.fillRect(cx - size * 0.35, 0, size * 0.7, H_); ctx.restore(); }
     function medalHalf(sgn) {
-      ctx.save(); ctx.globalAlpha = 1 - fadeOut; ctx.translate(cx + jit + (sgn || 0) * split * size * 0.22, py + jit * 0.6); ctx.rotate(Math.sin(e.t * 9) * 0.006 * grow);
+      var kx = k === 'scarab' ? Math.sin(e.t * 38) * size * 0.006 * grow : 0, ky = k === 'weigh' ? Math.sin(e.t * 2.2) * size * 0.015 * grow : 0;
+      ctx.save(); ctx.globalAlpha = 1 - fadeOut; ctx.translate(cx + jit + kx + (sgn || 0) * split * size * 0.22, py + jit * 0.6 + ky); ctx.rotate(Math.sin(e.t * 9) * 0.006 * grow + (k === 'crypt' ? Math.sin(e.t * 25) * 0.004 : 0));
       ctx.shadowColor = 'rgba(' + st.glow + ',.85)'; ctx.shadowBlur = 30 + 50 * grow;
       if (sgn) { ctx.beginPath(); ctx.rect(sgn < 0 ? -size : 0, -size, size, size * 2); ctx.clip(); }
-      ctx.beginPath(); ctx.arc(0, 0, size * 0.49, 0, TAU); ctx.fillStyle = '#050102'; ctx.fill(); ctx.shadowBlur = 0;
-      ctx.save(); ctx.beginPath(); ctx.arc(0, 0, size * 0.49, 0, TAU); ctx.clip(); ctx.drawImage(ART.medal, -size / 2, -size / 2, size, size);
+      ctx.beginPath(); ctx.arc(0, 0, size * 0.43, 0, TAU); ctx.fillStyle = '#050102'; ctx.fill(); ctx.shadowBlur = 0;
+      ctx.save(); ctx.drawImage(logo, -size / 2, -size / 2, size, size);
       // 3) yeux : turquoise éteint, puis braises de la couleur du thème
-      var eyes = [[-0.061, -0.066], [0.07, -0.066]], pw = clamp((u - 0.22) / 0.3, 0, 1), pulse = 0.75 + 0.25 * Math.sin(e.t * 14);
-      eyes.forEach(function (p, j) { var ex = p[0] * size, ey = p[1] * size, ew = size * 0.05, eh = size * 0.02; ctx.save(); ctx.translate(ex, ey); ctx.rotate(j ? -0.18 : 0.18); ctx.fillStyle = 'rgba(20,0,5,' + (0.85 * pw) + ')'; ctx.beginPath(); ctx.ellipse(0, 0, ew * 1.1, eh * 1.5, 0, 0, TAU); ctx.fill(); ctx.restore(); });
+      var eyes = [[-0.072, -0.104], [0.073, -0.103]], pw = clamp((u - 0.22) / 0.3, 0, 1), pulse = 0.75 + 0.25 * Math.sin(e.t * 14);
+      eyes.forEach(function (p, j) { var ex = p[0] * size, ey = p[1] * size, ew = size * 0.04, eh = size * 0.018; ctx.save(); ctx.translate(ex, ey); ctx.rotate(j ? -0.25 : 0.25); ctx.fillStyle = 'rgba(20,0,5,' + (0.85 * pw) + ')'; ctx.beginPath(); ctx.ellipse(0, 0, ew * 1.1, eh * 1.5, 0, 0, TAU); ctx.fill(); ctx.restore(); });
       ctx.globalCompositeOperation = 'lighter';
       eyes.forEach(function (p, j) {
-        var ex = p[0] * size, ey = p[1] * size, ew = size * 0.05, eh = size * 0.02, rr = size * 0.2 * pw * pulse;
+        var ex = p[0] * size, ey = p[1] * size, ew = size * 0.04, eh = size * 0.018, rr = size * 0.2 * pw * pulse;
         var hg = ctx.createRadialGradient(ex, ey, 0, ex, ey, Math.max(1, rr)); hg.addColorStop(0, 'rgba(' + ers + ',' + (0.75 * pw) + ')'); hg.addColorStop(0.35, 'rgba(' + ers + ',' + (0.3 * pw) + ')'); hg.addColorStop(1, 'rgba(' + ers + ',0)');
         ctx.fillStyle = hg; ctx.beginPath(); ctx.arc(ex, ey, Math.max(1, rr), 0, TAU); ctx.fill();
-        ctx.save(); ctx.translate(ex, ey); ctx.rotate(j ? -0.18 : 0.18); ctx.fillStyle = 'rgba(' + ers + ',' + (0.95 * pw * pulse) + ')'; ctx.beginPath(); ctx.ellipse(0, 0, ew, eh, 0, 0, TAU); ctx.fill();
+        ctx.save(); ctx.translate(ex, ey); ctx.rotate(j ? -0.25 : 0.25); ctx.fillStyle = 'rgba(' + ers + ',' + (0.95 * pw * pulse) + ')'; ctx.beginPath(); ctx.ellipse(0, 0, ew, eh, 0, 0, TAU); ctx.fill();
         ctx.fillStyle = 'rgba(255,250,240,' + (0.9 * pw) + ')'; ctx.beginPath(); ctx.ellipse(0, 0, ew * 0.45, eh * 0.45, 0, 0, TAU); ctx.fill(); ctx.restore();
       });
       // cœur qui bat sur la poitrine (pesée)
@@ -677,8 +678,8 @@
     if (split > 0) { medalHalf(-1); medalHalf(1); } else medalHalf(0);
     // 4) rayons des yeux
     var pw2 = clamp((u - 0.22) / 0.3, 0, 1);
-    if (pw2 > 0.3 && (k === 'hand' || k === 'crypt')) [[-0.061, -1], [0.07, 1]].forEach(function (p) {
-      var ex = cx + p[0] * size, ey = py - 0.066 * size, bl = Math.max(W_, H_), bg = ctx.createLinearGradient(ex, ey, ex + p[1] * bl * 0.5, ey - bl * 0.35);
+    if (pw2 > 0.3 && (k === 'hand' || k === 'crypt')) [[-0.072, -1], [0.073, 1]].forEach(function (p) {
+      var ex = cx + p[0] * size, ey = py - 0.104 * size, bl = Math.max(W_, H_), bg = ctx.createLinearGradient(ex, ey, ex + p[1] * bl * 0.5, ey - bl * 0.35);
       bg.addColorStop(0, 'rgba(' + ers + ',' + (0.4 * pw2 * (1 - fadeOut)) + ')'); bg.addColorStop(1, 'rgba(' + ers + ',0)');
       ctx.fillStyle = bg; ctx.beginPath(); ctx.moveTo(ex, ey - size * 0.02); ctx.lineTo(ex + p[1] * bl * 0.5, ey - bl * 0.5); ctx.lineTo(ex + p[1] * bl * 0.5, ey - bl * 0.1); ctx.lineTo(ex, ey + size * 0.02); ctx.closePath(); ctx.fill();
     });
