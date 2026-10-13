@@ -27,6 +27,7 @@ node tools/tune-profiles.js     # espérance des profils Prudent / Équilibré /
 | `tools/build-single.py` | Construit le fichier HTML unique (CSS, polices, JS, images en data: URI) : `python3 -I tools/build-single.py sortie.html` |
 | `fonts/` | Cinzel (lettrage) et Philosopher (chiffres, textes), OFL 1.1, sous-ensemble latin ≈ 90 Ko — détail dans `docs/ANALYSE.md` |
 | `docs/ANALYSE.md` | SWOT, benchmark GitHub, DA, mathématiques, chemin vers Stake |
+| `docs/STAKE_ENGINE_CONFORMITE.md` | Checklist de conformité Stake Engine, risques brevets/marques/droits, plan d'action (pas un avis juridique) |
 
 Commandes : `Espace` = tourner / accélérer, `↑ ↓` = mise. Ajouter `?debug` à l'URL expose `G.testBonus('vault'|'scarab'|'weigh', boost, upgraded)` pour tester un bonus.
 
