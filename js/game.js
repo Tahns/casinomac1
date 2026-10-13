@@ -81,6 +81,10 @@
     G.compact = G.h < 520;                       // paysage de téléphone : tout est resserré
     var land = G.compact && G.w > G.h;
     var topH = land ? 38 : G.w < 760 ? 52 : 62;
+    var mixEl = document.getElementById('mixer');
+    var docked = !!mixEl && !land && !mixEl.hidden;     // bande de réglages du son sous la barre haute
+    if (mixEl) mixEl.classList.toggle('docked', !land);
+    G.mixBand = docked && G.w < 1000 ? 46 : 0; topH += G.mixBand;
     var availH = G.h - hudH - topH - (land ? 12 : 38);
     var R = Math.min(G.w * 0.455, availH * 0.5) / 1.1;
     if (G.w < 760 && !land) R = Math.min(G.w * 0.46 / 1.08, availH * 0.5 / 1.08);
@@ -1003,6 +1007,7 @@
 
   G.setFade = function (to, dur) { var from = G.fade; return G.tween(dur, function (u) { G.fade = from + (to - from) * u; }, null); };
   G.setScene = function (s) { G.scene = s; if (s && s.layout) s.layout(); };
+  G.layout = layout;
   G.start = function () { layout(); root.addEventListener('resize', layout); root.requestAnimationFrame(frame); };
   G.relayout = layout;
 

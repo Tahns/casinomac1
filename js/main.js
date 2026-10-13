@@ -252,10 +252,11 @@
     $('mxReset').textContent = T.resetL;
     $('btnMix').setAttribute('aria-label', T.mixLabel);
   }
-  function toggleMixer(open) { var m = $('mixer'); open = open == null ? m.hidden : open; m.hidden = !open; $('btnMix').setAttribute('aria-expanded', open ? 'true' : 'false'); if (open) refreshMixer(); }
+  function toggleMixer(open) { var m = $('mixer'); open = open == null ? m.hidden : open; m.hidden = !open; try { localStorage.setItem('au_mix', open ? '1' : '0'); } catch (e) {} G.layout && G.layout(); $('btnMix').setAttribute('aria-expanded', open ? 'true' : 'false'); if (open) refreshMixer(); }
   $('btnMix').addEventListener('click', function (e) { e.stopPropagation(); Sfx.unlock(); toggleMixer(); });
-  document.addEventListener('click', function (e) { if (!$('mixer').hidden && !$('mixer').contains(e.target) && e.target !== $('btnMix') && !$('btnMix').contains(e.target)) toggleMixer(false); });
-  document.addEventListener('keydown', function (e) { if (e.code === 'Escape' && !$('mixer').hidden) { toggleMixer(false); $('btnMix').focus(); } });
+  document.addEventListener('click', function (e) { if (!$('mixer').hidden && !$('mixer').classList.contains('docked') && !$('mixer').contains(e.target) && e.target !== $('btnMix') && !$('btnMix').contains(e.target)) toggleMixer(false); });
+  document.addEventListener('keydown', function (e) { if (e.code === 'Escape' && !$('mixer').hidden && !$('mixer').classList.contains('docked')) { toggleMixer(false); $('btnMix').focus(); } });
+  (function () { var on = true; try { on = localStorage.getItem('au_mix') !== '0'; } catch (e) {} if (on && !(innerHeight < 520 && innerWidth > innerHeight)) { $('mixer').hidden = false; $('btnMix').setAttribute('aria-expanded', 'true'); refreshMixer(); } })();
   $('mxVol').addEventListener('input', function () { Sfx.unlock(); Sfx.setVolume(this.value / 100); $('mxVolV').textContent = this.value + '%'; save(); });
   $('mxVol').addEventListener('change', function () { Sfx.coin(1); });
   $('mxTone').addEventListener('input', function () { Sfx.unlock(); Sfx.setTone(this.value / 100); $('mxToneV').textContent = this.value + '%'; save(); });
