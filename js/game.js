@@ -936,6 +936,7 @@
   }
   G.setQuality = function (q) { G.quality = q; G.autoLow = false; perf.stage = 0; FX.lite = (q === 'low'); layout(); };
   function frame(ts) {
+    root.requestAnimationFrame(frame);   // replanifié d'abord : une exception dans un dessin ne fige plus le jeu
     var rawDt = (ts - last) / 1000 || 0.016;
     var dt = Math.min(0.05, rawDt); last = ts; adaptQuality(rawDt);
     tick(dt);
@@ -962,7 +963,6 @@
     FX.drawFlash(ctx, G.w, G.h);
     if (G.fade > 0.001) { ctx.fillStyle = 'rgba(4,3,2,' + G.fade + ')'; ctx.fillRect(0, 0, G.w, G.h); }
     for (i = 0; i < G.onFrame.length; i++) G.onFrame[i](dt);
-    root.requestAnimationFrame(frame);
   }
 
   G.setFade = function (to, dur) { var from = G.fade; return G.tween(dur, function (u) { G.fade = from + (to - from) * u; }, null); };

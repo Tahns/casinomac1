@@ -12,6 +12,7 @@ node tools/i18n-check.js         # FR/EN complets, pas de français en dur, chif
 PLAYWRIGHT_CORE=... node tools/layout.js # mises en page sur 10 tailles d'écran (portrait, paysage, grand écran)
 PLAYWRIGHT_CORE=/chemin/node_modules/playwright-core node tools/e2e.js   # tests de bout en bout dans Chromium
 PLAYWRIGHT_CORE=... node tools/gestures.js  # joue au hasard les gestes de chaque bonus et profil : jamais de blocage ni d'erreur
+PLAYWRIGHT_CORE=... node tools/fuzz.js   # fuzzer de flux (<= 1000 tours) : tours, bonus forcés, perturbations, invariants (solde au centime, pas de blocage, pas de setInterval résiduel) ; FUZZ_SEED/FUZZ_ROUNDS
 node tools/tune-profiles.js     # espérance des profils Prudent / Équilibré / Audacieux (doit rester égale)
 ```
 

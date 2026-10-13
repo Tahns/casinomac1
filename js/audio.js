@@ -308,10 +308,11 @@
       });
       f.connect(g); g.connect(musBus); verb && g.connect(verb); lfo.start(); br.start(); nodes.push(lfo, br);
       ambNodes = { nodes: nodes, g: g, alive: true };
+      var me = ambNodes;
       (function next() {
-        if (!ambNodes || !ambNodes.alive) return;
+        if (ambNodes !== me || !me.alive) return;
         setTimeout(function () {
-          if (!ambNodes || !ambNodes.alive) return;
+          if (ambNodes !== me || !me.alive) return;
           if (!muted) { var fq = PENTA[Math.floor(Math.random() * PENTA.length)]; bell(fq * 2, 3.2, 0.016, 0, true, 3.0, musBus); }
           next();
         }, 7000 + Math.random() * 9000);
@@ -359,7 +360,7 @@
       if (!ensure()) return; var T = THEMES[kind]; if (!T) return;
       stopTheme(); ambWas = !!ambNodes; A.stopAmbient(); themeLevel = 0;
       var tm = theme = { kind: kind, step: 0, alive: true, timer: null }, ms = 60000 / T.bpm / 2;
-      tm.timer = setInterval(function () { if (!tm.alive || muted) return; try { T.step(tm.step++, themeLevel); } catch (e) {} }, ms);
+      tm.timer = setInterval(function () { if (!tm.alive || muted || document.hidden) return; try { T.step(tm.step++, themeLevel); } catch (e) {} }, ms);
     },
     stopBonusTheme: function () { stopTheme(); if (ambWas && musicOn && !muted) setTimeout(function () { if (!theme) A.startAmbient(); }, 900); },
     bonusUp: function () { themeLevel = Math.min(4, themeLevel + 1); },
