@@ -440,43 +440,48 @@
 
   // Anubis Unchained (logo) au centre de la roue : jamais immobile — respire, balance la tête, yeux rouges qui pulsent et clignent,
   // chaînes qui tintent, éclats d'or de la chaîne brisée, reflet qui balaie l'anneau ; tout s'emballe pendant le tour.
-  var LOGO_EYES = [[-0.072, -0.104], [0.073, -0.103]];
+  // tête d'Anubis du moyeu et des apparitions : deux sources possibles (chacune avec ses yeux et son cadrage)
+  var HEADS = {
+    medal: { eyes: [[-0.061, -0.066], [0.07, -0.066]], hubSize: 1.8, hubDy: 0, hubClip: 0.88, emSize: 1, emClip: 0.49, ew: 0.032, eh: 0.014 },
+    logo:  { eyes: [[-0.072, -0.104], [0.073, -0.103]], hubSize: 3.3, hubDy: 0.03, hubClip: 0.9, emSize: 1.67, emClip: 0.45, ew: 0.04, eh: 0.018 }
+  };
+  var HEAD = HEADS.medal;      // passer à HEADS.logo quand une tête d'Anubis propre (oreilles entières, sans texte) est fournie
+  function headImg() { return HEAD === HEADS.medal ? ART.medal : G.cutout('logo'); }
+  var LOGO_EYES = HEAD.eyes;
   function drawHub(R) {
-    var cx = G.cx, cy = G.cy, r = R * 0.285, t = G.t, spinN = W.mode === 'spin' ? 1 : 0, lg = G.cutout('logo');
+    var cx = G.cx, cy = G.cy, r = R * 0.285, t = G.t, spinN = W.mode === 'spin' ? 1 : 0, lg = headImg();
     ctx.save();
     ctx.shadowColor = 'rgba(0,0,0,.7)'; ctx.shadowBlur = R * 0.05;
     ctx.beginPath(); ctx.arc(cx, cy, r * 1.02, 0, TAU); ctx.fillStyle = '#050304'; ctx.fill(); ctx.shadowBlur = 0;
     if (!lg) { ctx.restore(); A.jackal(ctx, cx, cy - r * 0.2, r * 0.44, { glow: clamp(0.65 + 0.35 * Math.sin(t * 2.4), 0, 1) }); return; }
     if (G.eg) { ctx.restore(); return; }        // pendant l'apparition plein écran, le socle reste vide
-    var size = r * 2.06, br = 1 + 0.005 * Math.sin(t * 1.1) + spinN * 0.004 * Math.sin(t * 7), sway = 0.004 * Math.sin(t * 0.6) + spinN * 0.004 * Math.sin(t * 4);
+    var size = r * HEAD.hubSize, br = 1 + 0.005 * Math.sin(t * 1.1) + spinN * 0.004 * Math.sin(t * 7), sway = 0.004 * Math.sin(t * 0.6) + spinN * 0.004 * Math.sin(t * 4);
     var jx = 0, jy = 0;
     // aura rouge qui bat (plus vive et plus rapide pendant le tour)
     var ap = 0.5 + 0.5 * Math.sin(t * (1.4 + spinN * 1.6)), ag = ctx.createRadialGradient(cx, cy, r * 0.6, cx, cy, r * 1.5);
     ag.addColorStop(0, 'rgba(255,205,100,' + (0.1 + 0.06 * ap + spinN * 0.05) + ')'); ag.addColorStop(1, 'rgba(255,205,100,0)'); ctx.fillStyle = ag; ctx.fillRect(cx - r * 1.7, cy - r * 1.7, r * 3.4, r * 3.4);
     ctx.lineWidth = R * 0.022; ctx.strokeStyle = A.goldGrad(ctx, cx - r, cy - r, cx + r, cy + r); ctx.beginPath(); ctx.arc(cx, cy, r, 0, TAU); ctx.stroke();       // anneau doré du moyeu
-    ctx.beginPath(); ctx.arc(cx, cy, r * 0.9, 0, TAU); ctx.clip();       // le logo est serti dans le moyeu : plus de chaînes qui débordent sur la roue
+    ctx.beginPath(); ctx.arc(cx, cy, r * HEAD.hubClip, 0, TAU); ctx.clip();       // la tête est sertie dans le moyeu : plus de chaînes qui débordent sur la roue
     ctx.translate(cx + jx, cy + jy + r * 0.004 * Math.sin(t * 1.1)); ctx.rotate(sway); ctx.scale(br, br);
-    // chaînes qui tintent : léger tremblement de la couronne
+    // on ne garde que la tête d'Anubis (sans texte ni chaînes), recentrée dans l'anneau du moyeu
+    ctx.translate(0, size * HEAD.hubDy);
     ctx.drawImage(lg, -size / 2, -size / 2, size, size);
     ctx.globalCompositeOperation = 'lighter';
     // yeux : le rouge du logo est masqué, braise turquoise discrète (le rouge est réservé au bonus Fureur d'Anubis)
     ctx.globalCompositeOperation = 'source-over';
-    LOGO_EYES.forEach(function (pe, j) { ctx.save(); ctx.translate(pe[0] * size, pe[1] * size); ctx.rotate(j ? -0.25 : 0.25); ctx.fillStyle = 'rgba(8,10,12,.96)'; ctx.beginPath(); ctx.ellipse(0, 0, size * 0.05, size * 0.026, 0, 0, TAU); ctx.fill(); ctx.restore(); });
+    LOGO_EYES.forEach(function (pe, j) { ctx.save(); ctx.translate(pe[0] * size, pe[1] * size); ctx.rotate(j ? -0.25 : 0.25); ctx.fillStyle = 'rgba(8,10,12,.96)'; ctx.beginPath(); ctx.ellipse(0, 0, size * HEAD.ew * 1.3, size * HEAD.eh * 1.7, 0, 0, TAU); ctx.fill(); ctx.restore(); });
     ctx.globalCompositeOperation = 'lighter';
     var blink = (t % 7.5) > 7.38 ? 0.1 : 1, ei = (0.62 + 0.12 * Math.sin(t * 1.6 + spinN * 1.5) + spinN * 0.15) * blink;
     LOGO_EYES.forEach(function (pe, j) {
-      var ex = pe[0] * size, ey = pe[1] * size, rr = size * (0.06 + 0.01 * ei), eg = ctx.createRadialGradient(ex, ey, 0, ex, ey, rr);
+      var ex = pe[0] * size, ey = pe[1] * size, rr = size * (0.045 + 0.008 * ei), eg = ctx.createRadialGradient(ex, ey, 0, ex, ey, rr);
       eg.addColorStop(0, 'rgba(120,255,235,' + ei + ')'); eg.addColorStop(1, 'rgba(60,220,200,0)'); ctx.fillStyle = eg; ctx.beginPath(); ctx.arc(ex, ey, rr, 0, TAU); ctx.fill();
-      ctx.save(); ctx.translate(ex, ey); ctx.rotate(j ? -0.25 : 0.25); ctx.fillStyle = 'rgba(190,255,248,' + (0.75 * ei) + ')'; ctx.beginPath(); ctx.ellipse(0, 0, size * 0.032, size * 0.013, 0, 0, TAU); ctx.fill(); ctx.restore();
+      ctx.save(); ctx.translate(ex, ey); ctx.rotate(j ? -0.25 : 0.25); ctx.fillStyle = 'rgba(190,255,248,' + (0.75 * ei) + ')'; ctx.beginPath(); ctx.ellipse(0, 0, size * HEAD.ew * 0.8, size * HEAD.eh * 0.7, 0, 0, TAU); ctx.fill(); ctx.restore();
     });
     // reflet doré qui balaie le médaillon (clip circulaire)
     ctx.save(); ctx.beginPath(); ctx.arc(0, 0, size * 0.46, 0, TAU); ctx.clip();
     var sw0 = (t % 7) / 7, sx = -size * 0.7 + sw0 * size * 1.4, sg = ctx.createLinearGradient(sx - size * 0.12, -size * 0.5, sx + size * 0.12, size * 0.5);
     sg.addColorStop(0, 'rgba(255,230,150,0)'); sg.addColorStop(0.5, 'rgba(255,238,175,' + (0.1 + spinN * 0.03) + ')'); sg.addColorStop(1, 'rgba(255,230,150,0)'); ctx.fillStyle = sg; ctx.fillRect(-size / 2, -size / 2, size, size);
     ctx.restore();
-    // éclats d'or de la chaîne brisée (en bas à droite) : petites étincelles qui jaillissent par intermittence
-    var cyc = (t % 6) / 6;
-    if (cyc < 0.25) for (var k = 0; k < 5; k++) { var u = cyc / 0.25, ang = -0.9 + k * 0.5, d = size * (0.04 + 0.12 * u) * (0.6 + k * 0.1), px = size * 0.26 + Math.cos(ang) * d, py = size * -0.01 + Math.sin(ang) * d + u * size * 0.05; ctx.fillStyle = 'rgba(255,215,110,' + (1 - u) * 0.9 + ')'; ctx.beginPath(); ctx.arc(px, py, size * 0.008 * (1 - u * 0.5), 0, TAU); ctx.fill(); }
     // dôme de verre : reflet qui suit la lumière (même fini que l'ancien médaillon) ; coordonnées relatives au centre du moyeu
     ctx.globalCompositeOperation = 'source-over';
     var dl = ctx.createRadialGradient(-r * 0.35 - P.x * r * 0.12, -r * 0.45 - P.y * r * 0.1, 0, -r * 0.2, -r * 0.25, r * 1.1);
@@ -615,7 +620,7 @@
   };
   G.emerge = function (kind, fast) {
     return new Promise(function (res) {
-      if (!ART.ic_logo || FX.reduced) { res(); return; }
+      if (!headImg() || FX.reduced) { res(); return; }
       var st = EMERGE[kind] || EMERGE.hand;
       G.eg = { t: 0, dur: fast ? 1.5 : 2.7, res: res, st: st, kind: kind, parts: [], spawned: 0, step: 0, fast: !!fast };
       if (Sfx.emerge) Sfx.emerge(kind);
@@ -647,7 +652,7 @@
     if (e.t >= e.dur) { var r = e.res; G.eg = null; r(); }
   }
   function drawEmerge() {
-    var e = G.eg; if (!e || !ART.ic_logo) return; var logo = G.cutout('logo');
+    var e = G.eg; if (!e || !headImg()) return; var logo = headImg();
     var st = e.st, k = e.kind, u = clamp(e.t / e.dur, 0, 1), W_ = G.w, H_ = G.h, cx = G.cx, cy = G.cy, i;
     var grow = G.ease.inOut(clamp((u - 0.08) / 0.62, 0, 1)), s0 = G.R * 0.36, s1 = st.full ? Math.min(W_ * 1.15, H_ * 1.05) : Math.min(W_ * 0.82, H_ * 0.82);
     var size = s0 + (s1 - s0) * grow, py = cy + (H_ * 0.5 - cy) * grow, fadeOut = clamp((u - 0.86) / 0.14, 0, 1);
@@ -669,13 +674,13 @@
       ctx.shadowColor = 'rgba(' + st.glow + ',.85)'; ctx.shadowBlur = 30 + 50 * grow;
       if (sgn) { ctx.beginPath(); ctx.rect(sgn < 0 ? -size : 0, -size, size, size * 2); ctx.clip(); }
       ctx.beginPath(); ctx.arc(0, 0, size * 0.43, 0, TAU); ctx.fillStyle = '#050102'; ctx.fill(); ctx.shadowBlur = 0;
-      ctx.save(); ctx.drawImage(logo, -size / 2, -size / 2, size, size);
+      ctx.save(); var isz = size * HEAD.emSize; ctx.beginPath(); ctx.arc(0, 0, size * HEAD.emClip, 0, TAU); ctx.clip(); ctx.translate(0, isz * HEAD.hubDy); ctx.drawImage(logo, -isz / 2, -isz / 2, isz, isz);       // tête d'Anubis seule, sans texte ni chaînes
       // 3) yeux : turquoise éteint, puis braises de la couleur du thème
-      var eyes = [[-0.072, -0.104], [0.073, -0.103]], pw = clamp((u - 0.22) / 0.3, 0, 1), pulse = 0.75 + 0.25 * Math.sin(e.t * 14);
-      eyes.forEach(function (p, j) { var ex = p[0] * size, ey = p[1] * size, ew = size * 0.04, eh = size * 0.018; ctx.save(); ctx.translate(ex, ey); ctx.rotate(j ? -0.25 : 0.25); ctx.fillStyle = 'rgba(20,0,5,' + (0.85 * pw) + ')'; ctx.beginPath(); ctx.ellipse(0, 0, ew * 1.1, eh * 1.5, 0, 0, TAU); ctx.fill(); ctx.restore(); });
+      var eyes = HEAD.eyes, pw = clamp((u - 0.22) / 0.3, 0, 1), pulse = 0.75 + 0.25 * Math.sin(e.t * 14);
+      eyes.forEach(function (p, j) { var ex = p[0] * isz, ey = p[1] * isz, ew = isz * HEAD.ew, eh = isz * HEAD.eh; ctx.save(); ctx.translate(ex, ey); ctx.rotate(j ? -0.25 : 0.25); ctx.fillStyle = 'rgba(20,0,5,' + (0.85 * pw) + ')'; ctx.beginPath(); ctx.ellipse(0, 0, ew * 1.1, eh * 1.5, 0, 0, TAU); ctx.fill(); ctx.restore(); });
       ctx.globalCompositeOperation = 'lighter';
       eyes.forEach(function (p, j) {
-        var ex = p[0] * size, ey = p[1] * size, ew = size * 0.04, eh = size * 0.018, rr = size * 0.2 * pw * pulse;
+        var ex = p[0] * isz, ey = p[1] * isz, ew = isz * HEAD.ew, eh = isz * HEAD.eh, rr = isz * 0.09 * pw * pulse;
         var hg = ctx.createRadialGradient(ex, ey, 0, ex, ey, Math.max(1, rr)); hg.addColorStop(0, 'rgba(' + ers + ',' + (0.75 * pw) + ')'); hg.addColorStop(0.35, 'rgba(' + ers + ',' + (0.3 * pw) + ')'); hg.addColorStop(1, 'rgba(' + ers + ',0)');
         ctx.fillStyle = hg; ctx.beginPath(); ctx.arc(ex, ey, Math.max(1, rr), 0, TAU); ctx.fill();
         ctx.save(); ctx.translate(ex, ey); ctx.rotate(j ? -0.25 : 0.25); ctx.fillStyle = 'rgba(' + ers + ',' + (0.95 * pw * pulse) + ')'; ctx.beginPath(); ctx.ellipse(0, 0, ew, eh, 0, 0, TAU); ctx.fill();
@@ -688,8 +693,8 @@
     if (split > 0) { medalHalf(-1); medalHalf(1); } else medalHalf(0);
     // 4) rayons des yeux
     var pw2 = clamp((u - 0.22) / 0.3, 0, 1);
-    if (pw2 > 0.3 && (k === 'hand' || k === 'crypt')) [[-0.072, -1], [0.073, 1]].forEach(function (p) {
-      var ex = cx + p[0] * size, ey = py - 0.104 * size, bl = Math.max(W_, H_), bg = ctx.createLinearGradient(ex, ey, ex + p[1] * bl * 0.5, ey - bl * 0.35);
+    if (pw2 > 0.3 && (k === 'hand' || k === 'crypt')) [[HEAD.eyes[0][0], -1], [HEAD.eyes[1][0], 1]].forEach(function (p) {
+      var ex = cx + p[0] * size * HEAD.emSize, ey = py + HEAD.eyes[0][1] * size * HEAD.emSize, bl = Math.max(W_, H_), bg = ctx.createLinearGradient(ex, ey, ex + p[1] * bl * 0.5, ey - bl * 0.35);
       bg.addColorStop(0, 'rgba(' + ers + ',' + (0.4 * pw2 * (1 - fadeOut)) + ')'); bg.addColorStop(1, 'rgba(' + ers + ',0)');
       ctx.fillStyle = bg; ctx.beginPath(); ctx.moveTo(ex, ey - size * 0.02); ctx.lineTo(ex + p[1] * bl * 0.5, ey - bl * 0.5); ctx.lineTo(ex + p[1] * bl * 0.5, ey - bl * 0.1); ctx.lineTo(ex, ey + size * 0.02); ctx.closePath(); ctx.fill();
     });
