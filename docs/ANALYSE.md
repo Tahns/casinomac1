@@ -28,7 +28,7 @@ Constat honnête : **aucun dépôt libre de « Crazy Time » propre et réutilis
 | [spin-wheel (CrazyTim)](https://crazytim.github.io/spin-wheel/) | Physique de roue (momentum, amorti), recommande de calculer le gagnant côté serveur | non vérifiée par moi | Inspiration conceptuelle (résultat décidé avant, animation ensuite). Code **réécrit**. |
 | pixi-slot-machine, ZombieLand, open-games… | Slots Pixi/GSAP | licences non confirmées, **assets non libres** | Écartés : mauvais genre, art non réutilisable. |
 
-Décision : tout est **écrit en original**, sans dépendance ni asset externe. Seules les polices Cinzel et Manrope (licence OFL) sont embarquées localement.
+Décision : tout est **écrit en original**, sans dépendance ni asset externe. Seules les polices Cinzel et Philosopher (licence OFL, voir « Polices et licences ») sont embarquées localement.
 
 ## 3. Choix structurants (et pourquoi)
 
@@ -450,3 +450,16 @@ Compare Anubis Unchained aux jeux de [CONCURRENTS.md](CONCURRENTS.md) (Crazy Tim
 - **Espérance et RTP** : `node tools/tune.js 24000000` → secret 7,588× contre 7,566× pour le bonus remplacé (écart +0,02× ≈ +0,005 pt de RTP). Simulation 12 M de tours (graine 11) : standard 96,13 % → 96,33 %, Oracle+ 95,98 % → 96,17 % ; l'écart observé (≈ 0,2 pt) est du bruit d'échantillonnage (±0,16 pt par run à 12 M), l'écart calculé est 0,005 pt.
 - **Scène** (`cryptScene`) : colonnes, plaques du haut, blocs fixes, un appui (ou Espace/Entrée) pour lâcher chaque bloc, auto-enchaînement en turbo/auto, légende des 6 blocs en bas, total = moyenne qui monte. Annonce « BONUS SECRET DÉBLOQUÉ ! » (icône crâne, fanfare renforcée). Test : `G.testBonus('crypt', 1, false, forced)` avec une liste de blocs `{t, c, v}` imposée.
 - **Tests** (`tools/check.js`) : script de 9 blocs, valeurs/colonnes valides, glace/broyeur/colonne pleine, blocs fixes intouchés, total rejoué = total du script (implémentation de référence indépendante), plafond, fréquence, uniquement à la place d'un bonus de la roue, jamais à l'achat, espérance égale à celle du bonus remplacé.
+
+## Polices et licences (2026-10-13)
+
+Thème « Anubis, or poli, obsidienne, lettrage gravé » : le lettrage reste en capitales romaines gravées, les chiffres et textes passent à une seule famille humaniste à chiffres alignés. Toutes les polices sont sous licence **SIL Open Font License 1.1** (fichiers `woff2` sous-ensemble « latin » issus des paquets npm `@fontsource/*`, avec les accents français, ×, €, $, ’, œ, É : glyphes vérifiés).
+
+| Rôle | Police | Graisses | Fichiers (`fonts/`) | Poids |
+|---|---|---|---|---|
+| Titres, lettrage, boutons, noms de cases | Cinzel (Natanael Gama, OFL) | 600, 700, 900 | `cinzel-latin-*-normal.woff2` | 45 Ko |
+| Chiffres (gains, solde, mise, roue) et textes de lecture | Philosopher (Alexei Vanyashin, OFL) | 400, 700 | `philosopher-latin-*-normal.woff2` | 44 Ko |
+
+Remplacées : Oswald (chiffres, trop condensée, jurait avec les capitales gravées) et Manrope (sans-serif géométrique, étrangère au thème). Écartées après essai : Marcellus (une seule graisse, « 0 » confondu avec « O »), Cinzel pour les chiffres (le « 1 » ressemble à un I), Cinzel Decorative (fioritures illisibles en petit), Forum (trop fine).
+
+Source unique : variables CSS `--f-title`, `--f-num`, `--f-text` (`css/style.css`) et `G.TITLE`, `G.NUM`, `G.TEXT` (`js/game.js`) pour le canvas ; `G.NUM_K` compense la hauteur de chiffre plus faible de Philosopher. Le jeu ne démarre (`G.start`) qu'une fois les cinq graisses chargées (`document.fonts.load`, filet de sécurité à 3 s), pour qu'aucun texte de secours ne s'affiche. `tools/build-single.py` inline toujours les polices telles quelles (aucune adaptation nécessaire).
