@@ -153,6 +153,8 @@
       }
       if (def.bonus) {
         hadBonus = true; say(sp.upgraded ? T.kindsLong.hand : T.kindsLong[sp.kind]);
+        // on tombe sur un bonus : le turbo/ultra se coupe tout de suite pour jouer le bonus et ses animations à vitesse normale
+        if (G.turbo) { G.turbo = false; G.ultra = false; G.speed = 1; setSpinBtn(); save(); }
         await G.runBonus(sp, b);
       } else if (sp.pay > 0) {
         var px = G.cx, py = G.cy - G.R * 0.55;
