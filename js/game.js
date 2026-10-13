@@ -448,31 +448,35 @@
     ctx.beginPath(); ctx.arc(cx, cy, r * 1.02, 0, TAU); ctx.fillStyle = '#050304'; ctx.fill(); ctx.shadowBlur = 0;
     if (!lg) { ctx.restore(); A.jackal(ctx, cx, cy - r * 0.2, r * 0.44, { glow: clamp(0.65 + 0.35 * Math.sin(t * 2.4), 0, 1) }); return; }
     if (G.eg) { ctx.restore(); return; }        // pendant l'apparition plein écran, le socle reste vide
-    var size = r * 2.06, br = 1 + 0.016 * Math.sin(t * 1.3) + spinN * 0.025 * Math.sin(t * 11), sway = 0.018 * Math.sin(t * 0.8) + spinN * 0.03 * Math.sin(t * 6);
-    var jx = spinN ? (Math.random() - 0.5) * r * 0.025 : 0, jy = spinN ? (Math.random() - 0.5) * r * 0.025 : 0;
+    var size = r * 2.06, br = 1 + 0.005 * Math.sin(t * 1.1) + spinN * 0.004 * Math.sin(t * 7), sway = 0.004 * Math.sin(t * 0.6) + spinN * 0.004 * Math.sin(t * 4);
+    var jx = 0, jy = 0;
     // aura rouge qui bat (plus vive et plus rapide pendant le tour)
-    var ap = 0.5 + 0.5 * Math.sin(t * (2.2 + spinN * 6)), ag = ctx.createRadialGradient(cx, cy, r * 0.5, cx, cy, r * 1.6);
-    ag.addColorStop(0, 'rgba(255,40,20,' + (0.22 + 0.18 * ap + spinN * 0.2) + ')'); ag.addColorStop(1, 'rgba(255,40,20,0)'); ctx.fillStyle = ag; ctx.fillRect(cx - r * 1.7, cy - r * 1.7, r * 3.4, r * 3.4);
+    var ap = 0.5 + 0.5 * Math.sin(t * (1.4 + spinN * 1.6)), ag = ctx.createRadialGradient(cx, cy, r * 0.6, cx, cy, r * 1.5);
+    ag.addColorStop(0, 'rgba(255,205,100,' + (0.1 + 0.06 * ap + spinN * 0.05) + ')'); ag.addColorStop(1, 'rgba(255,205,100,0)'); ctx.fillStyle = ag; ctx.fillRect(cx - r * 1.7, cy - r * 1.7, r * 3.4, r * 3.4);
     ctx.lineWidth = R * 0.022; ctx.strokeStyle = A.goldGrad(ctx, cx - r, cy - r, cx + r, cy + r); ctx.beginPath(); ctx.arc(cx, cy, r, 0, TAU); ctx.stroke();       // anneau doré du moyeu
     ctx.beginPath(); ctx.arc(cx, cy, r * 0.9, 0, TAU); ctx.clip();       // le logo est serti dans le moyeu : plus de chaînes qui débordent sur la roue
-    ctx.translate(cx + jx, cy + jy + r * 0.01 * Math.sin(t * 1.3)); ctx.rotate(sway); ctx.scale(br, br);
+    ctx.translate(cx + jx, cy + jy + r * 0.004 * Math.sin(t * 1.1)); ctx.rotate(sway); ctx.scale(br, br);
     // chaînes qui tintent : léger tremblement de la couronne
-    ctx.save(); ctx.rotate(0.006 * Math.sin(t * 3.1 + 1)); ctx.drawImage(lg, -size / 2, -size / 2, size, size); ctx.restore();
+    ctx.drawImage(lg, -size / 2, -size / 2, size, size);
     ctx.globalCompositeOperation = 'lighter';
-    // yeux rouges : braise qui pulse, clignement toutes les ~6 s, flash quand la roue démarre
-    var blink = (t % 6.3) > 6.17 ? 0.05 : 1, ei = (0.45 + 0.35 * Math.sin(t * (2.6 + spinN * 6)) + spinN * 0.45) * blink;
+    // yeux : le rouge du logo est masqué, braise turquoise discrète (le rouge est réservé au bonus Fureur d'Anubis)
+    ctx.globalCompositeOperation = 'source-over';
+    LOGO_EYES.forEach(function (pe, j) { ctx.save(); ctx.translate(pe[0] * size, pe[1] * size); ctx.rotate(j ? -0.25 : 0.25); ctx.fillStyle = 'rgba(8,10,12,.96)'; ctx.beginPath(); ctx.ellipse(0, 0, size * 0.05, size * 0.026, 0, 0, TAU); ctx.fill(); ctx.restore(); });
+    ctx.globalCompositeOperation = 'lighter';
+    var blink = (t % 7.5) > 7.38 ? 0.1 : 1, ei = (0.62 + 0.12 * Math.sin(t * 1.6 + spinN * 1.5) + spinN * 0.15) * blink;
     LOGO_EYES.forEach(function (pe, j) {
-      var ex = pe[0] * size, ey = pe[1] * size, rr = size * (0.085 + 0.03 * ei), eg = ctx.createRadialGradient(ex, ey, 0, ex, ey, rr);
-      eg.addColorStop(0, 'rgba(255,90,50,' + ei + ')'); eg.addColorStop(1, 'rgba(255,20,10,0)'); ctx.fillStyle = eg; ctx.beginPath(); ctx.arc(ex, ey, rr, 0, TAU); ctx.fill();
+      var ex = pe[0] * size, ey = pe[1] * size, rr = size * (0.06 + 0.01 * ei), eg = ctx.createRadialGradient(ex, ey, 0, ex, ey, rr);
+      eg.addColorStop(0, 'rgba(120,255,235,' + ei + ')'); eg.addColorStop(1, 'rgba(60,220,200,0)'); ctx.fillStyle = eg; ctx.beginPath(); ctx.arc(ex, ey, rr, 0, TAU); ctx.fill();
+      ctx.save(); ctx.translate(ex, ey); ctx.rotate(j ? -0.25 : 0.25); ctx.fillStyle = 'rgba(190,255,248,' + (0.75 * ei) + ')'; ctx.beginPath(); ctx.ellipse(0, 0, size * 0.032, size * 0.013, 0, 0, TAU); ctx.fill(); ctx.restore();
     });
     // reflet doré qui balaie le médaillon (clip circulaire)
     ctx.save(); ctx.beginPath(); ctx.arc(0, 0, size * 0.46, 0, TAU); ctx.clip();
-    var sw0 = (t % 4.2) / 4.2, sx = -size * 0.7 + sw0 * size * 1.4, sg = ctx.createLinearGradient(sx - size * 0.12, -size * 0.5, sx + size * 0.12, size * 0.5);
-    sg.addColorStop(0, 'rgba(255,230,150,0)'); sg.addColorStop(0.5, 'rgba(255,238,175,' + (0.2 + spinN * 0.1) + ')'); sg.addColorStop(1, 'rgba(255,230,150,0)'); ctx.fillStyle = sg; ctx.fillRect(-size / 2, -size / 2, size, size);
+    var sw0 = (t % 7) / 7, sx = -size * 0.7 + sw0 * size * 1.4, sg = ctx.createLinearGradient(sx - size * 0.12, -size * 0.5, sx + size * 0.12, size * 0.5);
+    sg.addColorStop(0, 'rgba(255,230,150,0)'); sg.addColorStop(0.5, 'rgba(255,238,175,' + (0.1 + spinN * 0.03) + ')'); sg.addColorStop(1, 'rgba(255,230,150,0)'); ctx.fillStyle = sg; ctx.fillRect(-size / 2, -size / 2, size, size);
     ctx.restore();
     // éclats d'or de la chaîne brisée (en bas à droite) : petites étincelles qui jaillissent par intermittence
-    var cyc = (t % 2.4) / 2.4;
-    if (cyc < 0.6) for (var k = 0; k < 6; k++) { var u = cyc / 0.6, ang = -0.9 + k * 0.5, d = size * (0.04 + 0.12 * u) * (0.6 + k * 0.1), px = size * 0.26 + Math.cos(ang) * d, py = size * -0.01 + Math.sin(ang) * d + u * size * 0.05; ctx.fillStyle = 'rgba(255,215,110,' + (1 - u) * 0.9 + ')'; ctx.beginPath(); ctx.arc(px, py, size * 0.008 * (1 - u * 0.5), 0, TAU); ctx.fill(); }
+    var cyc = (t % 6) / 6;
+    if (cyc < 0.25) for (var k = 0; k < 5; k++) { var u = cyc / 0.25, ang = -0.9 + k * 0.5, d = size * (0.04 + 0.12 * u) * (0.6 + k * 0.1), px = size * 0.26 + Math.cos(ang) * d, py = size * -0.01 + Math.sin(ang) * d + u * size * 0.05; ctx.fillStyle = 'rgba(255,215,110,' + (1 - u) * 0.9 + ')'; ctx.beginPath(); ctx.arc(px, py, size * 0.008 * (1 - u * 0.5), 0, TAU); ctx.fill(); }
     // dôme de verre : reflet qui suit la lumière (même fini que l'ancien médaillon) ; coordonnées relatives au centre du moyeu
     ctx.globalCompositeOperation = 'source-over';
     var dl = ctx.createRadialGradient(-r * 0.35 - P.x * r * 0.12, -r * 0.45 - P.y * r * 0.1, 0, -r * 0.2, -r * 0.25, r * 1.1);
