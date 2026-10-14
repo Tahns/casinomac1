@@ -1,7 +1,9 @@
 // node tools/mock-rgs.js [port=8787] — faux RGS local (CORS ouvert) pour tester le client js/rgs.js. NE PAS utiliser en production.
 // Routes : POST /wallet/authenticate | /wallet/balance | /wallet/play | /wallet/end-round | /bet/event, GET /bet/replay/:jeu/:version/:mode/:event.
-// Les books viennent de AnubisMath + tools/stake-export.js (bookEvents) : 100 books par mode, 6 modes = 600 books au total (jamais plus de 1000).
-// Réglage en cours de test (module) : mock.set({ balance, betLevels, defaultBetLevel, active, next }) ; next = 'win' | 'zero' | null.
+// Les books (FORMAT v2, voir l'en-tête de tools/stake-export.js) viennent de AnubisMath : 100 books par mode, 6 modes = 600 books au total (jamais plus de 1000).
+// Réglage en cours de test (module) : mock.set({ balance, betLevels, defaultBetLevel, active, next, social, currency }) ; next = 'win' | 'zero' | null ;
+// mock.queueBook(mode, book) : le prochain /wallet/play de ce mode rend ce book (book = { id, events, payoutMultiplier }, ex. tools/stake-export.makeBook) ;
+// mock.set({ fail: { '/wallet/authenticate': 'ERR_IS' } }) : cette route répond ce code d'erreur (400) tant que fail la contient.
 var http = require('http');
 var M = require('../js/math.js');
 var cap = require('./cap');
@@ -39,15 +41,17 @@ function create(opts) {
     betLevels: opts.betLevels || [0.2, 0.5, 1, 2, 5, 10, 20, 50, 100, 200, 500, 1000].map(function (x) { return Math.round(x * MICRO); }),
     defaultBetLevel: opts.defaultBetLevel || 1 * MICRO,
     active: opts.active || null,      // round ouvert (non encaissé)
+    social: !!opts.social, fail: {}, queue: [],
     next: null,                       // 'win' | 'zero' | null (tirage libre)
     log: [], nBets: 0
   };
   function config() {
     var l = st.betLevels;
-    return { minBet: l[0], maxBet: l[l.length - 1], stepBet: l.length > 1 ? l[1] - l[0] : l[0], defaultBetLevel: st.defaultBetLevel, betLevels: l, jurisdiction: { socialCasino: false } };
+    return { minBet: l[0], maxBet: l[l.length - 1], stepBet: l.length > 1 ? l[1] - l[0] : l[0], defaultBetLevel: st.defaultBetLevel, betLevels: l, jurisdiction: { socialCasino: !!st.social } };
   }
   function bal() { return { amount: st.balance, currency: st.currency }; }
   function pickBook(mode) {
+    for (var q = 0; q < st.queue.length; q++) if (st.queue[q].mode === mode) return st.queue.splice(q, 1)[0].book;
     var list = pool[mode];
     if (st.next) { var want = st.next === 'win'; var f = list.filter(function (b) { return (b.payoutMultiplier > 0) === want; }); if (f.length) { st.next = null; return f[Math.floor(pickRng() * f.length)]; } }
     return list[Math.floor(pickRng() * list.length)];
@@ -72,6 +76,7 @@ function create(opts) {
         return send(res, 200, { payoutMultiplier: book.payoutMultiplier / M.SCALE, costMultiplier: mode.cost, state: book.events });
       }
       if (req.method !== 'POST') return err(res, 405, 'ERR_VAL', 'méthode');
+      if (st.fail[url]) return err(res, 400, st.fail[url], st.fail[url]);
       if (body.sessionID !== st.sessionID) return err(res, 400, 'ERR_VAL', 'session inconnue');
       if (url === '/wallet/authenticate') {
         var out = { balance: bal(), config: config() };
@@ -83,6 +88,7 @@ function create(opts) {
       if (url === '/wallet/play') {
         var md = MODES.filter(function (x) { return x.name === body.mode; })[0];
         if (!md || !(body.amount > 0) || st.betLevels.indexOf(body.amount) < 0) return err(res, 400, 'ERR_VAL', 'mise ou mode invalide');
+        if (st.gle) return err(res, 400, 'ERR_GLE', 'limite de jeu atteinte');   // st.gle = true : plafond de jeu du serveur
         if (st.active) return err(res, 400, 'ERR_VAL', 'un round est déjà ouvert');
         var cost = Math.round(body.amount * md.cost);
         if (st.balance < cost) return err(res, 400, 'ERR_IPB', 'solde insuffisant');
@@ -103,6 +109,7 @@ function create(opts) {
   return {
     state: st, server: server, pool: pool,
     set: function (o) { Object.keys(o).forEach(function (k) { st[k] = o[k]; }); },
+    queueBook: function (mode, book) { st.queue.push({ mode: mode, book: book }); },
     // un round gagnant ouvert, pris dans le mode demandé (pour tester la reprise)
     openWinning: function (mode, amount) {
       var bk = pool[mode || 'std'].filter(function (b) { return b.payoutMultiplier > 0; })[0], pm = bk.payoutMultiplier / M.SCALE;

@@ -6,9 +6,11 @@
  * (classe .replay sur <html>) et les touches du clavier sont neutralisées. Le tour est rejoué avec les mêmes scènes que le jeu
  * (roue, Oracle, bonus, animations de gain) puis le résultat reste à l'écran ; « Rejouer » relance exactement le même événement.
  *
- * Format de `state` : le « livre » du tour, tel que le produit AnubisMath.playRound / playBuy ({ spins: [...] }, voir math.js).
- * Il peut être livré tel quel, dans { round }, ou dans une liste d'evenements (objet avec type round, ou avec data.spins).
- * Les montants de l'URL sont en micro-unités (1 000 000 = 1,00) ; coût réel = amount × costMultiplier.
+ * Format de `state` : le book v2 (liste d'événements, contrat documenté en tête de tools/stake-export.js), lu par RGS.bookToRound (js/rgs.js) —
+ * le même adaptateur que le jeu. Le gain affiché est payoutMultiplier du RGS ; si les événements ne concordent pas, un message d'erreur est
+ * affiché et le montant du RGS reste celui du résultat. Les choix (couleur de la Fureur, plume ou cœur de la Pesée) sont de vrais choix du
+ * spectateur, pré-résolus dans le book : tous les choix paient le même total. Les montants de l'URL sont en micro-unités (1 000 000 = 1,00) ;
+ * coût réel = amount × costMultiplier.
  */
 (function (root) {
   'use strict';
@@ -63,19 +65,7 @@
   function showMsg(t, err) { ui.msg.textContent = t || ''; ui.msg.hidden = !t; ui.msg.className = err ? 'err' : ''; }
 
   /* ---------- données ---------- */
-  var data = null;   // { payout, cost, round }
-  function parseRound(st) {
-    if (typeof st === 'string') { try { st = JSON.parse(st); } catch (e) { return null; } }
-    if (!st) return null;
-    if (Array.isArray(st)) {
-      for (var i = 0; i < st.length; i++) { var r = parseRound(st[i]); if (r) return r; }
-      return null;
-    }
-    if (typeof st !== 'object') return null;
-    if (Array.isArray(st.spins)) return st;
-    var c = st.round || st.data || st.book || st.state || st.event || st.events;
-    return c ? parseRound(c) : null;
-  }
+  var data = null;   // { payout, cost, events, round, mismatch }
   function modeKind(round) {
     var s0 = round.spins[0] || {};
     if (round.mode === 'buy' || (s0.index === -1)) return 'bonus';
@@ -90,20 +80,21 @@
     catch (e) { throw new Error(T.errNet); } finally { clearTimeout(to); }
     try { j = await res.json(); } catch (e) { j = null; }
     if (!res.ok) throw new Error(T.errLoad + ' (' + (res.status) + (j && (j.error || j.message) ? ' · ' + (j.error || j.message) : '') + ')');
-    var round = j && parseRound(j.state);
+    var events = j && (Array.isArray(j.state) ? j.state : (j.state && Array.isArray(j.state.events) ? j.state.events : null)), round = null;
+    try { round = events && root.RGS.bookToRound(events, root.AnubisMath); } catch (e) { round = null; }
     if (!round || !round.spins.length) throw new Error(T.errFormat);
-    var M = root.AnubisMath, sum = 0;
-    round.spins.forEach(function (s) { sum += s.pay || 0; });
-    var payout = j && isFinite(+j.payoutMultiplier) && j.payoutMultiplier !== null ? +j.payoutMultiplier : Math.min(sum, M.MAX_WIN);
+    var payout = j && j.payoutMultiplier != null && isFinite(+j.payoutMultiplier) ? +j.payoutMultiplier : round.total;
     var cost = j && isFinite(+j.costMultiplier) && +j.costMultiplier > 0 ? +j.costMultiplier : (round.cost || 1);
-    return { payout: payout, cost: cost, round: round };
+    // cohérence : somme des événements, finalWin et payoutMultiplier ; sinon erreur affichée, montant du RGS conservé
+    var mismatch = round.issues.length > 0 || Math.abs(round.sum - payout) > 1e-6 || Math.abs(round.total - payout) > 1e-6;
+    return { payout: payout, cost: cost, events: events, round: round, mismatch: mismatch };
   }
 
   /* ---------- affichage de la mise ---------- */
   function units(micro) { return micro / 1e6; }
   function costMultTxt(c) { return '×' + (root.G && G.fmt ? G.fmt(Math.round(c * 1000) / 1000) : c); }
   function showBet() {
-    var T = tx(), G = root.G, base = units(P.amount), c = data.cost, real = G.r2(base * c), kind = modeKind(data.round);
+    var T = tx(), G = root.G, base = units(P.amount), c = data.cost, real = G.r6(base * c), kind = modeKind(data.round);
     var label = c > 1 || kind !== 'std' ? (kind === 'plus' ? T.modePlus : T.modeBonus) : (R.social ? T.betSocial : T.bet);
     ui.bet.textContent = '';
     function span(t, cls) { var e = doc.createElement('span'); e.textContent = t; if (cls) e.className = cls; ui.bet.appendChild(e); }
@@ -128,22 +119,10 @@
   /* ---------- lecture du tour ---------- */
   var state = 'loading', busy = false;
   function tierOf(m) { var t = -1; root.G.WIN_TIERS.forEach(function (x, i) { if (m >= x) t = i; }); return t; }
-  // bonus joués exactement comme dans le livre : pas de choix du joueur (profil et couleur enregistrés), Pesée avec le choix enregistré
-  function freeze(b) {
-    if (!b || typeof b !== 'object') return;
-    if (b.mults && b.heavy != null) b.fixedPick = b.pick ? 1 : 0;
-    if (Array.isArray(b.spins)) b.spins.forEach(function (s) { if (s && s.bonus) freeze(s.bonus); });
-  }
-  function prepare(round) {
-    var r = JSON.parse(JSON.stringify(round));
-    r.spins.forEach(function (s) {
-      if (s.options) { var o = s.options[s.profile] || s.options.std || s.bonus; if (o) s.bonus = o; s.options = null; }
-      freeze(s.bonus);
-    });
-    return r;
-  }
+  // le tour est relu à chaque lecture depuis les événements (les choix de couleur et de plume / cœur modifient l'objet de scène)
+  function prepare() { return root.RGS.bookToRound(data.events, root.AnubisMath); }
   function showResult() {
-    var G = root.G, T = tx(), amount = G.r2(data.payout * units(P.amount));
+    var G = root.G, T = tx(), amount = G.r6(data.payout * units(P.amount));
     ui.resV.textContent = data.payout > 0 ? G.money(amount) : T.noWin;
     ui.res.classList.toggle('win', data.payout > 0); ui.res.classList.add('on');
     return amount;
@@ -156,7 +135,7 @@
     showMsg('');
     try { Sfx.unlock(); Sfx.startAmbient(); Sfx.spinStart(); } catch (e) {}
     G.replay = true; G.turbo = false; G.ultra = false; G.speed = 1; G.onBonusChoice = null;
-    var round = prepare(data.round), b = units(P.amount), total = 0;
+    var round = prepare(), b = units(P.amount), total = 0;
     G.wheel.clearHighlight(); G.wheel.clearOracle(); $('oracle').hidden = true;
     G.say(L.spinning);
     try {
@@ -202,6 +181,7 @@
       G.say(L.winLine + ' ×' + G.fmt(data.payout) + '  ·  ' + G.money(amount, true));
     } else G.say(L.dust);
     G.wheel.clearHighlight(); G.replay = false;
+    if (data.mismatch) showMsg(T.errSum, true);
     state = 'done'; busy = false; ui.go.disabled = false; ui.go.textContent = T.again; ui.go.focus();
   }
 
@@ -209,14 +189,15 @@
   function start() {
     build();
     var G = root.G;
-    if (P.currency && G.setCurrency) { try { G.setCurrency(P.currency, true); } catch (e) {} }
+    if (R.social && root.SOCIAL && !root.SOCIAL.active) root.SOCIAL.set(true);
+    if (P.currency && G.setCurrency) { try { G.setCurrency(P.currency, true); if (G.lockCurrency) G.lockCurrency(true); } catch (e) {} }
     refreshTexts();
     root.dispatchEvent(new Event('resize'));   // la barre replay change la hauteur du bas : la roue est recadrée
     ui.go.addEventListener('click', function () { if (state === 'ready' || state === 'done') play(); });
     showMsg(tx().loading);
     ui.bet.textContent = (R.social ? tx().betSocial : tx().bet) + ' : ' + G.money(units(P.amount));
     load().then(function (d) {
-      data = d; state = 'ready'; showMsg(''); showBet(); root.dispatchEvent(new Event('resize')); ui.go.disabled = false; ui.go.textContent = tx().start; ui.go.focus();
+      data = d; state = 'ready'; showMsg(d.mismatch ? tx().errSum : '', d.mismatch); showBet(); root.dispatchEvent(new Event('resize')); ui.go.disabled = false; ui.go.textContent = tx().start; ui.go.focus();
       R.data = d;
     }, function (e) {
       state = 'error'; showMsg((e && e.message) || tx().errLoad, true); ui.go.hidden = true;

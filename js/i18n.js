@@ -823,17 +823,28 @@
      Chaque bloc a une entrée par langue ; une clé absente d'une langue retombe sur l'anglais (I18N.block). Ajouter une langue = ajouter une entrée ici.
      Marqueurs {x} remplacés par js/rules.js ; les chiffres viennent de math.js (aucun nombre de jeu écrit à la main dans ces textes). */
   var B = {
+    // libellés d'accessibilité (lecteurs d'écran) et message « jeu ouvert dans un autre onglet » (mode RGS)
+    ui: {
+      en: {
+        stage: 'Anubis Unchained, the wheel of judgement', history: 'Recent rounds', oracle: 'Oracle boost', close: 'Close', amountDn: 'Decrease amount', amountUp: 'Increase amount',
+        tabTitle: 'GAME OPEN IN ANOTHER TAB', tabMsg: 'Anubis Unchained is already open in another tab or window. Only one tab can play at a time, so that the balance stays consistent.', tabHere: 'Play here'
+      },
+      fr: {
+        stage: 'Anubis Unchained, la roue du jugement', history: 'Derniers tours', oracle: 'Boost de l\'Oracle', close: 'Fermer', amountDn: 'Diminuer le montant', amountUp: 'Augmenter le montant',
+        tabTitle: 'JEU OUVERT DANS UN AUTRE ONGLET', tabMsg: 'Anubis Unchained est déjà ouvert dans un autre onglet ou une autre fenêtre. Un seul onglet peut jouer à la fois, pour que le solde reste cohérent.', tabHere: 'Jouer ici'
+      }
+    },
     replay: {
       en: {
         badge: 'REPLAY', start: 'PLAY', again: 'PLAY AGAIN', playing: 'PLAYING…', loading: 'Loading the replay…',
         errLoad: 'Could not load this replay.', errParams: 'Missing replay parameters (game, version, mode, event, rgs_url).', errFormat: 'This replay has an unknown format.',
-        errNet: 'Network error: check the connection and reload.', bet: 'BET', betSocial: 'PLAY AMOUNT', realCost: 'REAL COST', costMult: 'Cost', result: 'WIN', noWin: 'No win',
+        errNet: 'Network error: check the connection and reload.', errSum: 'The replay events do not match the amount announced by the server: the server amount is shown.', bet: 'BET', betSocial: 'PLAY AMOUNT', realCost: 'REAL COST', costMult: 'Cost', result: 'WIN', noWin: 'No win',
         modeStd: 'STANDARD', modePlus: 'ORACLE+', modeBonus: 'BONUS'
       },
       fr: {
         badge: 'REPLAY', start: 'LECTURE', again: 'REJOUER', playing: 'EN COURS…', loading: 'Chargement du replay…',
         errLoad: 'Impossible de charger ce replay.', errParams: 'Paramètres du replay manquants (game, version, mode, event, rgs_url).', errFormat: 'Ce replay a un format inconnu.',
-        errNet: 'Erreur réseau : vérifiez la connexion et rechargez.', bet: 'MISE', betSocial: 'MONTANT JOUÉ', realCost: 'COÛT RÉEL', costMult: 'Coût', result: 'GAIN', noWin: 'Pas de gain',
+        errNet: 'Erreur réseau : vérifiez la connexion et rechargez.', errSum: 'Les événements du replay ne correspondent pas au montant annoncé par le serveur : le montant du serveur est affiché.', bet: 'MISE', betSocial: 'MONTANT JOUÉ', realCost: 'COÛT RÉEL', costMult: 'Coût', result: 'GAIN', noWin: 'Pas de gain',
         modeStd: 'STANDARD', modePlus: 'ORACLE+', modeBonus: 'BONUS'
       }
     },
@@ -983,6 +994,12 @@
       errGen: 'Erreur du serveur de jeu. Réessayez dans un instant.',
       errNet: 'Réseau indisponible ou réponse invalide. Votre mise n\'a peut-être pas été prise en compte : vérifiez votre solde.',
       errBook: 'Résultat du tour illisible. Contactez l\'assistance.',
+      errIs: 'Session invalide ou expirée. Relancez le jeu depuis le site.',
+      errAte: 'Authentification expirée. Relancez le jeu depuis le site pour vous reconnecter.',
+      errLoc: 'Ce jeu n\'est pas disponible depuis votre région.',
+      errMaint: 'Maintenance en cours. Réessayez dans quelques minutes.',
+      errSum: 'Le résultat affiché ne correspond pas au montant du serveur de jeu : le montant du serveur est appliqué.',
+      resuming: 'Reprise du tour en cours…',
       buyConfirm: 'Acheter {name} pour {price} ?', buyConfirmTitle: 'CONFIRMER L\'ACHAT',
       autoTitle: 'JEU AUTOMATIQUE', autoSub: 'Choisissez le nombre de tours et les conditions d\'arrêt, puis confirmez.',
       autoRounds: 'Nombre de tours', autoStopWin: 'Arrêt sur un gain d\'au moins', autoStart: 'Démarrer', autoCost: 'Coût par tour'
@@ -998,6 +1015,12 @@
       errGen: 'Game server error. Please try again in a moment.',
       errNet: 'Network unavailable or invalid response. Your bet may not have been taken into account: check your balance.',
       errBook: 'The round result could not be read. Please contact support.',
+      errIs: 'Invalid or expired session. Please relaunch the game from the site.',
+      errAte: 'Authentication expired. Please relaunch the game from the site to sign in again.',
+      errLoc: 'This game is not available from your location.',
+      errMaint: 'Maintenance in progress. Please try again in a few minutes.',
+      errSum: 'The result shown does not match the amount from the game server: the server amount is applied.',
+      resuming: 'Resuming the round in progress…',
       buyConfirm: 'Buy {name} for {price}?', buyConfirmTitle: 'CONFIRM PURCHASE',
       autoTitle: 'AUTOPLAY', autoSub: 'Choose the number of rounds and the stop conditions, then confirm.',
       autoRounds: 'Number of rounds', autoStopWin: 'Stop on a win of at least', autoStart: 'Start', autoCost: 'Cost per round'
