@@ -392,6 +392,25 @@ var FINISH = `(async()=>{ G.turbo=true; G.speed=1.6; var g=0; while(G.S.busy&&g<
   var so = await s.p.evaluate("({soc:SOCIAL.active, cur:G.currency, attr:document.documentElement.getAttribute('data-social'), bal:document.getElementById('bal').textContent, locked:G.S.curLocked, bets:G.BETS.length})");
   ok(so.soc && so.attr === 'true' && so.cur === 'XSC' && /SC/.test(so.bal) && !/\$/.test(so.bal) && so.locked && so.bets === 12, 'social : SOCIAL.set(config.jurisdiction.socialCasino), devise XSC du solde RGS verrouillée (« ' + so.bal + ' »)');
   await done(s);
+  // ---- [77] / E1 : écran d'accueil et mention « démo / argent fictif » ----
+  // social signalé UNIQUEMENT par config.jurisdiction.socialCasino (pas de ?social=true) : l'écran d'accueil est rafraîchi après l'authentification ;
+  // en session RGS (réelle ou sociale) ni « Démo · argent fictif / pièces fictives » sur l'écran d'accueil ni « Argent fictif — démo… » dans les règles
+  var WORDS_DEMO = /d[ée]mo|fictif|money|argent|pièces|coins|play money/i;
+  for (var spi = 0; spi < 2; spi++) {
+    var msp = mockRgs.create({ seed: 70 + spi, social: spi === 0, currency: spi === 0 ? 'XSC' : 'USD' }); s = await open(msp, '&splash=1');
+    var spl = await s.p.evaluate("({hidden:document.getElementById('splash') ? document.getElementById('splash').hidden : null, soc:SOCIAL.active, param:/social=true/.test(location.search), demo:document.getElementById('spDemo').textContent, sub:document.getElementById('spSub').textContent, want:I18N.t().splashDemo})");
+    ok(spl.hidden === false && !spl.param && spl.soc === (spi === 0) && spl.demo.length > 0 && !WORDS_DEMO.test(spl.demo) && spl.demo === spl.want.split(' · ').pop(), '[77] E1 session RGS ' + (spi === 0 ? 'sociale (config.jurisdiction.socialCasino seul)' : 'non sociale') + ' : écran d\'accueil sans « démo / argent fictif » (« ' + spl.demo + ' »)');
+    await clk(s.p, '#btnInfo'); await s.p.waitForTimeout(200);
+    var inf = await s.p.evaluate("({sub:Array.prototype.map.call(document.querySelectorAll('#modalBody .sub'),function(e){return e.textContent}).join(' | '), demo:I18N.t().demo})");
+    ok(inf.sub.indexOf(inf.demo) < 0 && !WORDS_DEMO.test(inf.sub), '[77] E1 session RGS : pas de « ' + inf.demo + ' » en tête des règles');
+    await done(s);
+  }
+  // démo locale (sans RGS) : la mention reste affichée
+  var dctx = await b.newContext({ viewport: { width: 1280, height: 720 } }), dp = await dctx.newPage();
+  await dp.goto(gurl + '?splash=1&lang=en'); await dp.waitForTimeout(700);
+  var dm = await dp.evaluate("({demo:document.getElementById('spDemo').textContent, want:I18N.t().splashDemo})");
+  ok(dm.demo === dm.want && /demo/i.test(dm.demo), '[77] E1 démo locale (hors RGS) : « ' + dm.demo + ' » reste affiché');
+  await dctx.close();
   var mj = mockRgs.create({ seed: 61, currency: 'JPY', balance: 100000 * MICRO, betLevels: [100, 200, 500, 1000].map(function (x) { return x * MICRO; }), defaultBetLevel: 100 * MICRO }); s = await open(mj, '');
   var jp = await s.p.evaluate("({cur:G.currency, bal:document.getElementById('bal').textContent, bet:document.getElementById('bet').textContent, bets:G.BETS.slice()})");
   ok(jp.cur === 'JPY' && /¥/.test(jp.bal) && jp.bets.join() === '100,200,500,1000', 'JPY : devise du RGS, niveaux de mise du RGS conservés (aucune conversion locale) : ' + jp.bal + ' / ' + jp.bet);

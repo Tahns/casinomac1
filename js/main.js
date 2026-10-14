@@ -528,6 +528,7 @@
     if ($('tabBlock') && !$('tabBlock').hidden) tabBlockUi(true);
     I18N.apply(); if (!S.curSet && !S.curLocked) { var pc = pickCurrency(); if (pc !== S.cur) { S.cur = pc; G.currency = pc; applyScale(root.CUR.rate(pc)); } } shown.bal = shown.win = -1; updateHud(); setMoney($('win'), winNow); shown.win = winNow; curButton(); setSpinBtn(); refreshMixer(); say(S.busy ? '' : I18N.t().ready);
     if (G.wheel.build && G.w) G.wheel.build();
+    if (G.refreshSplash) G.refreshSplash();   // écran d'accueil : langue / mode social / session RGS changés
   }
   // sélecteur de langue : menu déroulant des 16 langues Stake (noms natifs), fermé par un clic ailleurs ou Échap
   var langMenu = null;
@@ -647,7 +648,8 @@
       rows += '<tr><td><span class="sw" style="background:' + G.kindColor(id) + '"></span>' + T.kinds[id] + disc + '</td><td class="n">' + def.count + ' / ' + M.N + '</td><td>' + pays + '</td></tr>';
     });
     $('modalBody').innerHTML =
-      '<h2>' + T.infoTitle + '</h2><p class="sub">' + T.demo + '</p>' +
+      '<h2>' + T.infoTitle + '</h2>' + (LIVE ? '' : '<p class="sub">' + T.demo + '</p>') +   // [77] « argent fictif / démo » : démo locale seulement, jamais en session RGS
+
       '<div class="kv"><div><label>' + T.rtp + '</label><b>' + STATS.rtp + '% <small style="font-size:11px;color:var(--turq)">· ORACLE+ ' + STATS.rtpPlus + '%</small></b></div><div><label>' + T.maxWin + '</label><b>' + G.fmt(M.MAX_WIN) + '×</b></div>' +
       '<div><label>' + T.hitRate + '</label><b>' + STATS.hit + '%</b></div><div><label>' + T.bonusFreq + '</label><b>1 / ' + STATS.bonusEvery + '</b></div><div><label>' + T.volat + '</label><b>' + T.volatV + '</b></div></div>' +
       '<h3>' + T.infoTitle.split('&')[0].trim() + '</h3>' + T.rules.map(function (r) { return '<p>• ' + r + '</p>'; }).join('') + '<p>• ' + T.rulesPlus + '</p>' + (S.buyOn ? '<p>• ' + T.buyTitle + ' : ' + BUY_ORDER.map(function (k) { return (k === 'hand' ? T.kindsLong.hand : T.kindsLong[k]) + ' ×' + M.BUY[k].price; }).join(' · ') + '</p>' : '') +
@@ -785,16 +787,25 @@
   // utilitaires de test (?debug)
   G.AUTO_STEPS = AUTO_STEPS; G.S = S; G.SESS = SESS; G.play = play; G.updateHud = updateHud; G.setWin = setWin; G.BETS = BETS; G.setCurrency = setCurrency; G.applyLang = applyLang; G.lockCurrency = function (on) { S.curLocked = on !== false; curButton(); };
   // mode social activé après coup (config.jurisdiction.socialCasino du RGS) : devise et textes sont recalculés
-  G.onSocial = function () { var c = pickCurrency(); if (c !== S.cur) setCurrency(c, false); applyLang(); };
+  G.onSocial = function () { var c = pickCurrency(); if (c !== S.cur) setCurrency(c, false); applyLang(); if (G.refreshSplash) G.refreshSplash(); };
   if (/[?&]debug/.test(location.search)) { G.debug = true; }
 
   /* ---------- écran d'accueil : ambiance + déverrouillage de l'audio ---------- */
   (function () {
     var sp = $('splash');
-    if (!sp || REPLAY || navigator.webdriver || /[?&](debug|nosplash)/.test(location.search)) { if (sp) sp.remove(); return; }
-    var T = I18N.t(), port = root.innerHeight > root.innerWidth, src = (root.ANUBIS_IMG || {})[port ? 'splashp' : 'splash'];
+    // ?splash=1 force l'affichage (tests automatisés : sinon l'écran est retiré en présence de webdriver / ?debug)
+    if (!sp || REPLAY || (!/[?&]splash=1/.test(location.search) && (navigator.webdriver || /[?&](debug|nosplash)/.test(location.search)))) { if (sp) sp.remove(); return; }
+    var port = root.innerHeight > root.innerWidth, src = (root.ANUBIS_IMG || {})[port ? 'splashp' : 'splash'];
     if (src) sp.style.backgroundImage = 'url(' + src + ')';
-    $('spSub').textContent = T.splashSub; $('spBtn').textContent = T.splashEnter; $('spDemo').textContent = T.splashDemo;
+    // textes de l'écran d'accueil, recalculés après l'authentification (G.onSocial : le mode social peut ne venir que de config.jurisdiction.socialCasino)
+    // [77] E1 : « démo · argent fictif » n'a de sens qu'en démo locale ; en session RGS (portefeuille réel) il ne reste que le rappel de jeu responsable
+    G.refreshSplash = function () {
+      if (!sp.isConnected) return;
+      var T = I18N.t();
+      $('spSub').textContent = T.splashSub; $('spBtn').textContent = T.splashEnter;
+      $('spDemo').textContent = LIVE ? String(T.splashDemo).split(' · ').pop() : T.splashDemo;
+    };
+    G.refreshSplash();
     sp.hidden = false;
     function enter() {
       Sfx.unlock(); Sfx.startAmbient(); Sfx.bonus();
