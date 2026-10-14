@@ -1,5 +1,5 @@
 // node tools/tune.js [tirages=1000 (plafonné à 1000)] — espérance de chaque bonus pris isolément (gains plafonnés à MAX_WIN)
-// et du bonus SECRET (Crypte d'Anubis) comparée à l'espérance moyenne du bonus qu'il remplace (profil Équilibré, 8 % de Fureur).
+// et du bonus SECRET (Sanctuaire des Marées) comparée à l'espérance moyenne du bonus qu'il remplace (profil Équilibré, 8 % de Fureur).
 var M = require('../js/math.js'), rng = M.mulberry32(7), n = require('./cap')(parseInt(process.argv[2] || '1000', 10)), ev = {};
 ['scarab', 'weigh', 'vault', 'hand', 'crypt'].forEach(function (k) {
   var s = 0, s2 = 0, mx = 0, f = M._bonus[k], big = 0;

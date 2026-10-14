@@ -23,9 +23,10 @@
   // familles de police : une seule source pour tout le canvas (miroir des variables CSS --f-title / --f-num / --f-text)
   // titres et lettrage : capitales romaines gravées (Cinzel) ; chiffres : Philosopher gras, chiffres alignés et lisibles en petit
   // (le « 1 » de Cinzel ressemble à un I) ; textes courants : Philosopher
-  G.TITLE = 'Cinzel, "Trajan Pro", Georgia, serif';
-  G.NUM = 'Philosopher, Cinzel, Georgia, serif';
-  G.TEXT = 'Philosopher, Georgia, serif';
+  G.TITLE0 = 'Cinzel, "Trajan Pro", Georgia, serif'; G.NUM0 = 'Philosopher, Cinzel, Georgia, serif';   // bases ; I18N.setLang y ajoute les polices de repli (ar, hi, ja, ko, zh)
+  G.TITLE = G.TITLE0;
+  G.NUM = G.NUM0;
+  G.TEXT0 = 'Philosopher, Georgia, serif'; G.TEXT = G.TEXT0;
   G.NUM_K = 1.12; // Philosopher a une hauteur de chiffre plus faible qu’Oswald : compensation pour garder les chiffres lisibles en petit
   G.FONT_LOADS = ['600 20px Cinzel', '700 20px Cinzel', '900 20px Cinzel', '400 20px Philosopher', '700 20px Philosopher'];
   var isNum = G.isNum = function (s) { s = root.CUR ? root.CUR.strip(s, G.currency) : String(s); return /^[+×x\d\s.,\u00a0\u202f\u20ac$\-]+$/.test(s) && /\d/.test(s); };
@@ -34,7 +35,7 @@
     var num = !o.family && isNum(s);
     ctx.font = (num ? 700 : (o.weight || 800)) + ' ' + (o.size || 20) * (num ? G.NUM_K : 1) + 'px ' + (num ? G.NUM : (o.family || G.TITLE));
     ctx.textAlign = o.align || 'center'; ctx.textBaseline = o.base || 'middle';
-    if (o.spacing && ctx.letterSpacing !== undefined) ctx.letterSpacing = o.spacing + 'px';
+    if (o.spacing && ctx.letterSpacing !== undefined && !I18N.joined()) ctx.letterSpacing = o.spacing + 'px';   // jamais d'espacement entre lettres liées (arabe, hindi)
     if (o.shadow) { ctx.shadowColor = o.shadow; ctx.shadowBlur = o.blur || 12; }
     if (o.stroke) { ctx.lineWidth = o.sw || Math.max(2, (o.size || 20) * 0.12); ctx.strokeStyle = o.stroke; ctx.lineJoin = 'round'; ctx.strokeText(s, x, y); }
     ctx.fillStyle = o.fill || '#fff1b8'; ctx.fillText(s, x, y);
@@ -50,7 +51,7 @@
   };
   G.fmt = function (n) {
     var a = Math.abs(n);
-    return n.toLocaleString(I18N.lang() === 'fr' ? 'fr-FR' : 'en-US', { minimumFractionDigits: a % 1 ? 2 : 0, maximumFractionDigits: 2 });
+    return n.toLocaleString(I18N.locale(), { minimumFractionDigits: a % 1 ? 2 : 0, maximumFractionDigits: 2 });
   };
 
   // argent : symbole, position et décimales de la devise (js/currency.js : $10.00, CA$10.00, ¥10, 10.00 SC…) ; un gain sous-centime garde ses
@@ -60,7 +61,7 @@
   G.r2 = function (n) { return Math.round(n * 100 + (n < 0 ? -1e-9 : 1e-9)) / 100; };
   G.r6 = function (n) { return Math.round(n * 1e6 + (n < 0 ? -1e-9 : 1e-9)) / 1e6; };   // précision du RGS (micro-unités)
   G.rc = function (n) { return root.CUR.round(n, G.currency); };                            // précision de la devise (compteurs animés)
-  G.money = function (n, signed) { return root.CUR.format(n, G.currency, { signed: signed, lang: I18N.lang() }); };
+  G.money = function (n, signed) { return root.CUR.format(n, G.currency, { signed: signed, lang: I18N.lang(), locale: I18N.locale && I18N.locale(), after: I18N.currencyAfter && I18N.currencyAfter() }); };
   // compteur animé : décimales de la devise pendant le défilement, valeur exacte (sous-centime compris) à l'arrivée
   G.moneyCount = function (cur, fin) { return cur >= fin ? G.money(G.r6(fin)) : G.money(G.rc(cur)); };
 
@@ -118,8 +119,8 @@
   }
 
   var ART = G.art = {};
-  Object.keys(window.HOA_IMG || {}).forEach(function (k) {
-    var im = new Image(); im.onload = function () { ART[k] = im; if (k === 'key' && G.w) buildBackdrop(); if ((k === 'gold' || k.indexOf('ic_') === 0) && G.w && W.build) W.build(); }; im.src = window.HOA_IMG[k];
+  Object.keys(window.ANUBIS_IMG || {}).forEach(function (k) {
+    var im = new Image(); im.onload = function () { ART[k] = im; if (k === 'key' && G.w) buildBackdrop(); if ((k === 'gold' || k.indexOf('ic_') === 0) && G.w && W.build) W.build(); }; im.src = window.ANUBIS_IMG[k];
   });
   // logo de bonus illustré (fond noir fondu en 'screen') ; renvoie false si l'image manque
   // le fond noir devient transparent (alpha = canal max) : le logo se pose sur n'importe quel fond
@@ -347,7 +348,7 @@
       wedge(f, i, ri, ro); f.lineWidth = Math.max(1, R * 0.006); f.strokeStyle = 'rgba(255,214,110,.75)'; f.stroke();
       // contenu : tout est centré dans la case (axe radial) et borné par la largeur réelle du secteur
       f.save(); f.rotate(am);
-      var big = M.KINDS[k].bonus || k === 'ankh', fr = I18N.lang() === 'fr';
+      var big = M.KINDS[k].bonus || k === 'ankh', fr = I18N.decimalComma();
       if (!big && (k === 'm05' || k === 'm025')) {
         // disque solaire de Râ : à moitié (0,5×) ou au quart (0,25×) rempli — se lit d'un coup d'œil, sans chiffre
         var rd = Math.min(chord(RC) * 0.36, R * 0.07), fq = k === 'm05' ? 0.5 : 0.25;
@@ -595,7 +596,7 @@
         var bg2 = ctx.createRadialGradient(-br * 0.3, -br * 0.3, 0, 0, 0, br); bg2.addColorStop(0, '#fffbe0'); bg2.addColorStop(1, '#d99a1e');
         ctx.fillStyle = bg2; ctx.shadowColor = 'rgba(255,200,60,.9)'; ctx.shadowBlur = 14; ctx.fill(); ctx.shadowBlur = 0;
         ctx.lineWidth = 1.5; ctx.strokeStyle = '#5b4311'; ctx.stroke();
-        G.txt('×' + o.boost, 0, br * 0.06, { size: br * 0.95, weight: 900, fill: '#3a2000' });
+        G.txt(o.revealed ? '×' + o.boost : '?', 0, br * 0.06, { size: br * 0.95, weight: 900, fill: '#3a2000' });   // bénédiction scellée : la valeur n'est révélée qu'à l'arrêt de la roue
         ctx.restore();
         if (o.num && o.ap > 0) wheelBoostLabel(i, am, o, R, (ri + ro) / 2);
       }
@@ -625,11 +626,17 @@
   /* ---- actions de la roue (promesses) ---- */
   W.showOracle = function (o) {
     var kd = M.KINDS[o.kind];
-    W.oracle = { kind: o.kind, boost: o.boost, t: 0, ap: 0, num: !kd.bonus && !kd.respin && kd.mult > 0 && o.boost > 1 };
+    W.oracle = { kind: o.kind, boost: o.boost, revealed: false, t: 0, ap: 0, num: !kd.bonus && !kd.respin && kd.mult > 0 && o.boost > 1 };
     Sfx.oracle(); FX.ring(G.cx, G.cy, '#ffe9a0', G.R * 1.1, 0.9); FX.flash(0.25, '#ffe9a0');
     return G.sleep(G.turbo ? 0.5 : 1.5);
   };
   W.clearOracle = function () { W.oracle = null; };
+  // la roue est arrêtée : la valeur de la bénédiction (scellée avant le tour) se révèle, que la case soit atteinte ou non
+  W.revealOracle = function () {
+    var o = W.oracle; if (!o) return Promise.resolve();
+    o.revealed = true; if (!FX.reduced) { Sfx.sparkle && Sfx.sparkle(); FX.ring(G.cx, G.cy, '#ffe9a0', G.R * 1.0, 0.6); }
+    return G.sleep(G.turbo ? 0.2 : 0.55);
+  };
   // la roue s'est arrêtée sur la case boostée : son chiffre est réécrit avec la valeur déjà multipliée (durée : turbo plus court, FX.reduced : fondu)
   W.applyBoost = function () {
     var o = W.oracle; if (!o || !o.num) return Promise.resolve();
@@ -752,7 +759,7 @@
       ctx.fillStyle = bg; ctx.beginPath(); ctx.moveTo(ex, ey - size * 0.02); ctx.lineTo(ex + p[1] * bl * 0.5, ey - bl * 0.5); ctx.lineTo(ex + p[1] * bl * 0.5, ey - bl * 0.1); ctx.lineTo(ex, ey + size * 0.02); ctx.closePath(); ctx.fill();
     });
     // 5) particules du thème
-    var spName = { scarab: 'scarab', weigh: 'weigh', crypt: 'skull' }[k];
+    var spName = { scarab: 'scarab', weigh: 'weigh', crypt: 'amulet' }[k];
     if (spName) for (i = 0; i < e.parts.length; i++) { var q = e.parts[i]; spr(spName, q.x, q.y, q.s, q.r + (k === 'scarab' ? Math.sin(q.l * 20) * 0.25 : Math.sin(q.l * 2 + (q.sw || 0)) * 0.4), clamp(1 - (q.l - 1.4) / 0.8, 0, 1) * (1 - fadeOut)); }
     if (k === 'weigh') { var fy = -size * 0.4 + (H_ * 0.55 + size * 0.4) * G.ease.out3(clamp((u - 0.25) / 0.45, 0, 1)); spr('weigh', cx + Math.sin(e.t * 2.4) * size * 0.08, fy, size * 0.5, Math.sin(e.t * 2.4) * 0.3, clamp((u - 0.25) / 0.1, 0, 1) * (1 - fadeOut)); }
   }

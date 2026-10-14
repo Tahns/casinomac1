@@ -1,10 +1,27 @@
 // node tools/rtp-exact.js — RTP, écart-type, taux de gain et prix d'achat calculés EXACTEMENT (aucun tirage), à partir des tables de js/math.js.
 // Pourquoi : à très haute volatilité (écart-type ≈ 16), 2 M de tours ne donnent le RTP qu'à ± 2 points ; le calcul exact (moments d'ordre 1 et 2) est la
 // référence, la simulation (tools/simulate.js) sert à la recouper. Hypothèses : gains non plafonnés (le plafond n'est atteint qu'aux achats de la Fureur,
-// effet < 0,01 pt) ; la Crypte (bonus secret) est une moyenne de colonnes non calculable en forme close : on prend ses moments mesurés (CRYPT_MEASURED,
-// 2 M de scripts, tools/tune.js), égaux à l'espérance du bonus qu'elle remplace à ± 0,1× près (effet < 0,03 pt de RTP).
+// effet < 0,01 pt) ; le Sanctuaire des Marées (bonus secret) est calculé EXACTEMENT lui aussi (cryptMoments : récurrence sur les moments
+// de l'offrande P et de la marée T, les 9 tablettes étant indépendantes) ; seul son plafond à MAX_WIN est ignoré (probabilité négligeable).
 var M = require('../js/math.js');
-var CRYPT_MEASURED = { ev: 10.13, sd: 79.4 };
+function typeProbs() { var W = 0, o = {}; M.CRYPT_TYPES.forEach(function (t) { W += t[1]; }); M.CRYPT_TYPES.forEach(function (t) { o[t[0]] = t[1] / W; }); return o; }
+function cryptMoments() {   // [E[gain], E[gain²]] : état (P, T) -> moments m = [P², PT, T², P, T]
+  var pr = typeProbs(), vm = {};
+  ['tab', 'tide', 'eclipse'].forEach(function (k) { vm[k] = wmom(M.CRYPT_VALUES[k]); });
+  var m = [0, 0, 1, 0, 1], i;   // offrande de départ 0 (plancher ×1 si aucune tablette : voir cryptReplay), marée ×1
+  for (i = 0; i < M.CRYPT_CELLS; i++) {
+    var a = m[0], b = m[1], c = m[2], p = m[3], t = m[4], v1 = vm.tab[0], v2 = vm.tab[1], k1 = vm.tide[0], k2 = vm.tide[1], e1 = vm.eclipse[0], e2 = vm.eclipse[1];
+    m = [
+      pr.dust * a + pr.tab * (a + 2 * v1 * b + v2 * c) + pr.tide * a + pr.eclipse * e2 * a,
+      pr.dust * b + pr.tab * (b + v1 * c) + pr.tide * k1 * b + pr.eclipse * e1 * b,
+      pr.dust * c + pr.tab * c + pr.tide * k2 * c + pr.eclipse * c,
+      pr.dust * p + pr.tab * (p + v1 * t) + pr.tide * p + pr.eclipse * e1 * p,
+      pr.dust * t + pr.tab * t + pr.tide * k1 * t + pr.eclipse * t
+    ];
+  }
+  var q = Math.pow(1 - pr.tab, M.CRYPT_CELLS);   // aucune tablette : offrande 0, relevée au plancher ×1
+  return [m[3] + q, m[0] + q];
+}
 
 function wmom(tab) { var s = 0, a = 0, b = 0; tab.forEach(function (t) { s += t[1]; }); tab.forEach(function (t) { a += t[1] * t[0]; b += t[1] * t[0] * t[0]; }); return [a / s, b / s]; }
 function scarab(prof) {
@@ -18,23 +35,31 @@ function weigh(prof) {   // gain = multiplicateur du plateau choisi s'il est le 
   tab.forEach(function (t) { var p = t[0]; a += t[1] * 0.5 * (p[0] + p[1]) / 2; b += t[1] * 0.5 * (p[0] * p[0] + p[1] * p[1]) / 2; });
   return [a / s, b / s];
 }
-function vault(prof) {   // énumération exacte des 7 choix (au plus ~10^7 feuilles)
-  var vp = M.VAULT_PROFILES[prof], pool = vp.tokens.concat([['curse', vp.curse]]), W = 0, E = 0, E2 = 0;
+function vaultOf(vp) {   // calcul exact par propagation des lois (position, coffres permis, total) : clé d'or = +VAULT_KEY_PICKS coffres (plafonné)
+  var pool = vp.tokens.concat([['seal', vp.seal]]), W = 0, E = 0, E2 = 0, i;
   pool.forEach(function (t) { W += t[1]; });
-  var Wnc = W - vp.curse;
-  (function rec(i, total, shield, p) {
-    if (i === M.VAULT_MAX_PICKS) { var f = total + 5; E += p * f; E2 += p * f * f; return; }
-    pool.forEach(function (t) {
-      var pr = i < 2 ? (t[0] === 'curse' ? 0 : t[1] / Wnc) : t[1] / W, k = t[0];
-      if (!pr) return;
-      if (k === 'curse') { if (shield > 0) rec(i + 1, total, shield - 1, p * pr); else { E += p * pr * total; E2 += p * pr * total * total; } }
-      else if (k === 'ankh') rec(i + 1, total, shield + 1, p * pr);
-      else if (k === 'scepter') rec(i + 1, total * 2, shield, p * pr);
-      else rec(i + 1, total + k, shield, p * pr);
+  var Wns = W - vp.seal, layer = new Map();
+  layer.set(M.VAULT_BASE_PICKS + '|0', 1);   // clé « permis|total »
+  for (i = 0; i < M.VAULT_PICK_CAP; i++) {
+    var next = new Map();
+    layer.forEach(function (p, key) {
+      var parts = key.split('|'), allowed = +parts[0], total = +parts[1];
+      if (i >= allowed) { var f = total + M.VAULT_FINISH; E += p * f; E2 += p * f * f; return; }
+      pool.forEach(function (t) {
+        var pr = i < 2 ? (t[0] === 'seal' ? 0 : t[1] / Wns) : t[1] / W, k = t[0];
+        if (!pr) return;
+        if (k === 'seal') { E += p * pr * total; E2 += p * pr * total * total; return; }
+        var al = allowed, tt = total;
+        if (k === 'key') al = Math.min(M.VAULT_PICK_CAP, allowed + M.VAULT_KEY_PICKS); else if (k === 'scepter') tt = total * 2; else tt = total + k;
+        var nk = al + '|' + tt; next.set(nk, (next.get(nk) || 0) + p * pr);
+      });
     });
-  })(0, 0, 0, 1);
+    layer = next;
+  }
+  layer.forEach(function (p, key) { var f = +key.split('|')[1] + M.VAULT_FINISH; E += p * f; E2 += p * f * f; });
   return [E, E2];
 }
+function vault(prof) { return vaultOf(M.VAULT_PROFILES[prof]); }
 var FN = { scarab: scarab, weigh: weigh, vault: vault };
 
 function compute() {
@@ -56,10 +81,10 @@ function compute() {
   var q = S.filter(function (sg) { return sg.d === 0; }).length / n, v22 = V(false), v18 = V(true), H = [0, 0], L, pr, m;
   for (L = 0; L < MAXL; L++) { pr = Math.pow(q, L) * (1 - q); m = Math.pow(2, L); H[0] += pr * m * v22[0]; H[1] += pr * m * m * v22[1]; }
   pr = Math.pow(q, MAXL); m = Math.pow(2, MAXL); H[0] += pr * m * v18[0]; H[1] += pr * m * m * v18[1];
-  // bonus gagné sur la roue = (1-s)·[(1-h)·bonus profil Équilibré + h·Fureur] + s·Crypte
+  // bonus gagné sur la roue = (1-s)·[(1-h)·bonus profil Équilibré + h·Fureur] + s·Sanctuaire des Marées
   var rep = {}, rep1 = 0;
   ['scarab', 'weigh', 'vault'].forEach(function (k) { rep[k] = [(1 - h) * BON[k].std[0] + h * H[0], (1 - h) * BON[k].std[1] + h * H[1]]; rep1 += rep[k][0] / 3; });
-  var C = [CRYPT_MEASURED.ev, CRYPT_MEASURED.sd * CRYPT_MEASURED.sd + CRYPT_MEASURED.ev * CRYPT_MEASURED.ev];
+  var C = cryptMoments();
   function onWheel(k) { return [(1 - s) * rep[k][0] + s * C[0], (1 - s) * rep[k][1] + s * C[1]]; }
   var Nn = M.N - M.KINDS.ankh.count, W = 0;   // le tour se termine sur une case non-Ankh (les relances sont gratuites et ne paient rien)
   M.ORACLE_KIND_W.forEach(function (t) { W += t[1]; });
@@ -84,6 +109,8 @@ function compute() {
   return { std: std, plus: { mean: plus.mean / M.MODES.plus.cost, sd: plus.sd, sdRel: plus.sd / M.MODES.plus.cost, hit: plus.hit }, buy: buy, bonusEvery: Nn / 3, bonus: BON, hand: H, replaced: rep1 };
 }
 module.exports = compute;
+module.exports.vaultOf = vaultOf;
+module.exports.cryptMoments = cryptMoments;
 
 if (require.main === module) {
   var r = compute();

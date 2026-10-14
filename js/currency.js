@@ -1,7 +1,7 @@
-/* ANUBIS UNCHAINED — devises : symbole, position, décimales, formatage des montants (checklist [219] [273] [78]).
-   Fichier autonome (aucune dépendance) : CUR.format(montant, code, {signed, lang}), CUR.info(code), CUR.fromUrl()…
-   Un montant plus petit que la plus petite unité de la devise (gain sous-centime : 0,1× sur une mise de 0,05 = 0,005) garde ses décimales
-   (jusqu'à 6, précision du RGS) : jamais « 0.00 » ni arrondi à 0.01 ; les autres montants s'arrondissent aux décimales de la devise. */
+// ANUBIS UNCHAINED — devises : symbole, position, décimales, formatage des montants (checklist [219] [273] [78]).
+// Fichier autonome (aucune dépendance) : CUR.format(montant, code, {signed, lang}), CUR.info(code), CUR.fromUrl()…
+// Un montant plus petit que la plus petite unité de la devise (gain sous-centime : 0,1× sur une mise de 0,05 = 0,005) garde ses décimales
+// (jusqu'à 6, précision du RGS) : jamais « 0.00 » ni arrondi à 0.01 ; les autres montants s'arrondissent aux décimales de la devise. 
 (function (root) {
   'use strict';
   // sym : symbole ou code affiché ; suf : placé après le nombre (« 10.00 SC ») ; sp : espace entre symbole et nombre (préfixe) ;
@@ -32,7 +32,7 @@
   var fmts = {};
   function nf(lang, dec, sub) {
     var key = lang + dec + (sub ? 's' : '');
-    return fmts[key] || (fmts[key] = new Intl.NumberFormat(lang === 'fr' ? 'fr-FR' : 'en-US', { minimumFractionDigits: dec, maximumFractionDigits: sub ? 6 : dec, useGrouping: true }));
+    return fmts[key] || (fmts[key] = new Intl.NumberFormat(lang, { minimumFractionDigits: dec, maximumFractionDigits: sub ? 6 : dec, useGrouping: true }));
   }
   function round6(n) { return Math.round(n * 1e6 + (n < 0 ? -1e-9 : 1e-9)) / 1e6; }
   // arrondi à la précision de la devise (animations de compteur uniquement)
@@ -42,8 +42,8 @@
     o = o || {};
     n = +n; if (!isFinite(n)) n = 0;
     n = round6(n);
-    var t = info(code), lang = o.lang || 'en', a = Math.abs(n);
-    var sub = a > 0 && a < Math.pow(10, -t.dec), num = nf(lang, t.dec, sub).format(a).replace(/ /g, ' ');
+    var t = info(code), lang = o.lang || 'en', a = Math.abs(n), loc = o.locale || (lang === 'fr' ? 'fr-FR' : 'en-US'), after = o.after != null ? o.after : lang === 'fr';
+    var sub = a > 0 && a < Math.pow(10, -t.dec), num = nf(loc, t.dec, sub).format(a).replace(/ /g, ' ');
     var sg = n < 0 ? '-' : (o.signed && n > 0 ? '+' : '');
     // préfixe en anglais (« CA$10.00 »), suffixe en français (« 10,00 CA$ ») ; les jetons SC / GC et les symboles de suffixe restent après le nombre
     if (t.suf || lang === 'fr') return sg + num + (lang === 'fr' ? ' ' : ' ') + t.sym;
