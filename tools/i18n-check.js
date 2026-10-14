@@ -63,6 +63,10 @@ files.forEach(function (f) {
     if (m) m.forEach(function (s) { if (/[a-zA-Z]{3}/.test(s)) hits.push(f + ':' + (i + 1) + ' ' + s.slice(0, 60)); });
   });
 });
+// [E4] HTML statique (visible avant main.js) : neutre / anglais, jamais de français ni de mots interdits en mode social (bet, buy…)
+var htmlSrc = fs.readFileSync(path.join(root, 'index.html'), 'utf8').replace(/<script[\s\S]*?<\/script>/g, '').replace(/<!--[\s\S]*?-->/g, ''),
+  htmlTxt = (htmlSrc.match(/>[^<>]+</g) || []).join(' ') + ' ' + (htmlSrc.match(/aria-label="[^"]*"/g) || []).join(' ');
+ok(!/[éèêàâùûçôîï]|\b(SOLDE|MISE|GAIN|ACHETER|Langue|Infos|Aigus|Hauteur)\b/.test(htmlTxt) && !/\b(bet|buy|bets|money|cash|wager|stake)\b/i.test(htmlTxt), 'index.html : texte statique en anglais neutre (ni français ni mot interdit du mode social avant main.js)');
 // textes affichés à l'écran qui doivent passer par I18N (les commentaires et les noms internes sont exclus ci-dessus)
 ok(hits.length === 0, 'aucun texte français écrit en dur dans le code' + (hits.length ? ' (' + hits.length + ') : ' + hits.slice(0, 8).join(' | ') : ''));
 // chiffres affichés aux joueurs vs maths réelles

@@ -230,6 +230,11 @@ async function playIt(p, label, expectText) {
   await p.waitForFunction(function () { return Replay.state() === 'ready'; }, null, { timeout: 15000 });
   txt = await p.evaluate(function () { return document.getElementById('rpBet').textContent; });
   check(!/\bbet\b/i.test(txt), 'libellé social de la mise : ' + txt); await p.close();
+  // [E4] replay social avec ?currency=USD : jetons XSC / XGC seulement, jamais « $ »
+  p = await open(b, { ev: 'loss', q: '&currency=USD&lang=en&amount=5000000&social=true' });
+  await p.waitForFunction(function () { return Replay.state() === 'ready'; }, null, { timeout: 15000 });
+  txt = await p.evaluate(function () { return document.getElementById('rpBet').textContent + ' | ' + document.getElementById('rpRes').textContent + ' | ' + G.currency; });
+  check(!/\$/.test(txt) && /SC/.test(txt) && /XSC$/.test(txt), 'replay social avec currency=USD : devise XSC, pas de « $ » : ' + txt); await p.close();
 
   check(wallet.length === 0, 'aucun appel /wallet (' + wallet.length + ')');
   check(replays.length > 0, replays.length + ' appel(s) GET /bet/replay/…');

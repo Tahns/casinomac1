@@ -190,7 +190,10 @@
     build();
     var G = root.G;
     if (R.social && root.SOCIAL && !root.SOCIAL.active) root.SOCIAL.set(true);
-    if (P.currency && G.setCurrency) { try { G.setCurrency(P.currency, true); if (G.lockCurrency) G.lockCurrency(true); } catch (e) {} }
+    // [E4] replay social : jetons XSC / XGC seulement, jamais « $ » (un ?currency=USD ou une devise inconnue devient XSC)
+    var cur = P.currency;
+    if (R.social && root.CUR && (!cur || !root.CUR.isSocial(cur))) cur = 'XSC';
+    if (cur && G.setCurrency) { try { G.setCurrency(cur, true); if (G.lockCurrency) G.lockCurrency(true); } catch (e) {} }
     refreshTexts();
     root.dispatchEvent(new Event('resize'));   // la barre replay change la hauteur du bas : la roue est recadrée
     ui.go.addEventListener('click', function () { if (state === 'ready' || state === 'done') play(); });
