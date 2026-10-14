@@ -97,8 +97,17 @@ var server = http.createServer(function (req, res) {
   ok(cards === 4, 'le menu « Acheter un bonus » affiche 4 cartes');
   await p.keyboard.press('Escape'); await p.waitForTimeout(100);
 
+  async function pick(code) { await p.click('#btnLang'); await p.waitForSelector('#langMenu'); await p.click('#langMenu [data-l=' + code + ']'); await p.waitForTimeout(200); }
   // 6. bascule FR -> EN : le HUD et la table des gains suivent, et le maximum annoncé pour la Pesée est le bon
-  await p.click('#btnLang'); await p.waitForTimeout(200);
+  var menu = await p.evaluate("(function(){ document.getElementById('btnLang').click(); var n = document.querySelectorAll('#langMenu button').length; document.getElementById('btnLang').click(); return n; })()");
+  ok(menu === 16, 'sélecteur de langue : 16 entrées');
+  await pick('fr');
+  var fr0 = await p.evaluate("({spin:document.getElementById('spinText').textContent,html:document.documentElement.lang,dir:document.documentElement.dir})");
+  ok(fr0.spin === 'TOURNER' && fr0.html === 'fr' && fr0.dir === 'ltr', 'passage en français : HUD traduit (' + fr0.spin + ')');
+  await pick('ar');
+  var ar0 = await p.evaluate("({dir:document.documentElement.dir,lang:document.documentElement.lang,spin:document.getElementById('spinText').textContent,btn:document.getElementById('btnLang').textContent})");
+  ok(ar0.dir === 'rtl' && ar0.lang === 'ar' && ar0.btn === 'AR' && ar0.spin.length > 0, 'arabe : dir=rtl, bouton AR, HUD traduit (' + ar0.spin + ')');
+  await pick('en');
   var en = await p.evaluate("({spin:document.getElementById('spinText').textContent,bal:document.querySelector('#statBal label').textContent,html:document.documentElement.lang})");
   ok(en.spin === 'SPIN' && en.bal === 'BALANCE' && en.html === 'en', 'passage en anglais : HUD traduit (' + en.spin + ' / ' + en.bal + ')');
   await p.click('#btnInfo'); await p.waitForTimeout(200);
@@ -106,15 +115,17 @@ var server = http.createServer(function (req, res) {
   ok(/3,?000×/.test(tbl) && !/ 300×/.test(tbl), 'table des gains en anglais : Pesée annoncée jusqu\'à 3000×');
   ok(!/[éèêà]/.test(tbl.replace(/Jugement/g, '')), 'table des gains en anglais : aucun accent français résiduel');
   await p.keyboard.press('Escape'); await p.waitForTimeout(100);
-  await p.click('#btnLang'); await p.waitForTimeout(150);
 
   // 7. argent : devise, format, arrondis au centime, migration de l'ancienne sauvegarde
   await p.evaluate("localStorage.clear()"); await p.reload(); await p.waitForTimeout(500);
   var fm = await p.evaluate(`({ s: G.money(0.1 + 0.2), big: G.money(1234.5), neg: G.money(-12.345, true), pos: G.money(7, true), sym: document.getElementById('btnCur').textContent, bet: document.getElementById('bet').textContent, bal: document.getElementById('bal').textContent, bets: G.BETS.slice(), bi: G.S.bi })`);
+  ok(fm.sym === '$' && fm.bal === '$1,000.00' && fm.bet === '$1.00', 'EN par défaut (premier lancement, sans ?lang=) : devise $, mise $1.00, solde $1,000.00');
+  await pick('fr');
+  fm = await p.evaluate(`({ s: G.money(0.1 + 0.2), big: G.money(1234.5), neg: G.money(-12.345, true), pos: G.money(7, true), sym: document.getElementById('btnCur').textContent, bet: document.getElementById('bet').textContent, bal: document.getElementById('bal').textContent, bets: G.BETS.slice() })`);
   ok(fm.s === '0,30 €' && fm.big === '1 234,50 €' && fm.neg === '-12,35 €' && fm.pos === '+7,00 €', 'FR : montants « 0,30 € », « 1 234,50 € », signes (' + [fm.s, fm.big, fm.neg].join(' | ') + ')');
   ok(fm.sym === '€' && fm.bet === '1,00 €' && fm.bal === '1 000,00 €', 'FR par défaut : devise €, mise 1,00 €, solde 1 000,00 €');
   ok(fm.bets[0] === 0.2 && fm.bets.length <= 14, 'mise minimale 0,20 (' + fm.bets.join(', ') + ')');
-  await p.click('#btnLang'); await p.waitForTimeout(200);
+  await pick('en');
   var en2 = await p.evaluate(`({ s: G.money(0.1 + 0.2), big: G.money(1234.5), neg: G.money(-5, true), sym: document.getElementById('btnCur').textContent, bal: document.getElementById('bal').textContent })`);
   ok(en2.s === '$0.30' && en2.big === '$1,234.50' && en2.neg === '-$5.00' && en2.sym === '$' && en2.bal === '$1,000.00', 'EN : devise $ suivie automatiquement, montants « $1,234.50 »');
   await p.click('#btnCur'); await p.waitForTimeout(150);
@@ -139,7 +150,7 @@ var server = http.createServer(function (req, res) {
   // bouton « réinitialiser le solde » et limite de perte dans la nouvelle échelle
   await p.evaluate("G.S.balance=3.2"); await p.click('#btnInfo'); await p.waitForTimeout(200);
   var lim = await p.evaluate("Array.from(document.querySelectorAll('#optLimit button')).map(function(b){return b.textContent})");
-  ok(lim.length >= 4 && lim[1] === '20,00 €', 'limites de perte en €: ' + lim.join(' / '));
+  ok(lim.length >= 4 && /^20[.,]00/.test(lim[1].replace(/^[^\d]+/, '')), 'limites de perte (2 décimales) : ' + lim.join(' / '));
   await p.click('#optReset'); await p.waitForTimeout(150);
   ok(await p.evaluate("G.S.balance") === 1000, 'réinitialiser le solde : retour à 1 000,00');
   await p.keyboard.press('Escape'); await p.waitForTimeout(100);

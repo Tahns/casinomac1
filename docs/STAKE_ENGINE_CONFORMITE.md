@@ -118,7 +118,7 @@ Ce qui est **risqué** : la combinaison précise de plusieurs mécaniques proche
 **P1 — avant la bêta**
 5. Brancher le front au RGS (authenticate, play, end-round, reprise de round), supprimer solde et RNG locaux, gérer les codes d'erreur.
 6. Devises, niveaux de mise et langues issus du RGS ; variante sociale (XGC/XSC).
-7. Renommer les fichiers et modes qui contiennent encore « hand » ; retirer toute trace de « Hand of Anubis » du dépôt public.
+7. Renommer les fichiers et modes qui contiennent encore « hand » ; retirer toute trace de « Hand of Anubis » du dépôt public. **Fait pour les fichiers, préfixes et textes** (voir « État après corrections ») ; l'identifiant interne `hand` reste.
 8. Conserver les preuves de génération des images, ajouter les fichiers OFL, lire les conditions Higgsfield.
 
 **P2 — avant publication**
@@ -126,6 +126,48 @@ Ce qui est **risqué** : la combinaison précise de plusieurs mécaniques proche
 10. Remplacer ou modifier le Bouclier Ankh si l'expiration des brevets d'anti-terminateur n'est pas confirmée.
 11. Déposer la marque « Anubis Unchained » si la recherche est favorable.
 12. Tests de bout en bout sur appareil réel (son et fluidité jamais vérifiés, cf. ANALYSE §7).
+
+## État après corrections
+
+Date : 2026-10-14. **Le jeu n'est toujours pas conforme ni soumissible à Stake Engine** : ce qui suit corrige ce qui l'était dans ce dépôt, rien de plus.
+
+### Corrigé dans ce dépôt
+
+| Point (ligne de la checklist) | Correction | Vérification |
+|---|---|---|
+| Restes de « Hand of Anubis » (marques, plan P1 n°7) | `img/hand.webp` et `img/ic_hand.jpg` renommés en `img/fury.webp` et `img/ic_fury.jpg` ; `HOA_IMG` devient `ANUBIS_IMG` ; `HOA_BIG` devient `ANUBIS_BIG` ; clés de sauvegarde `anubis_save_v1` et `anubis_grade` (les anciennes clés `hoa_save_v1` et `hoa_grade` sont encore LUES, pour ne pas perdre les soldes) ; mode `buy-hand` devenu `buy-fury` dans `tools/simulate.js` et le README. **L'identifiant interne `hand` est conservé** (math, scènes, clés i18n `hand*`, tests) : le renommer touche `handScene` et des dizaines d'endroits, pour aucun gain visible | aucun texte visible ni nom de fichier ne contient « Hand of Anubis » (il ne reste que les notes historiques de `docs/`) |
+| Multiplicateurs entiers (ligne 9) | `M.SCALE = 100`, `M.toInt(x)`, `M.fromInt(n)`, `M.isExact(x)` dans `js/math.js`. Tous les gains (0,25 ; 0,5 ; 0,65 ; 0,79 ; moyenne des 5 colonnes de la Crypte = somme ÷ 5 ; boosts et paliers entiers) sont des multiples exacts de 0,01 : **la conversion est exacte, aucun arrondi, aucun effet sur le RTP**. Les coûts (1,1 ; 9,24 ; 10,31 ; 12,37 ; 27,28) le sont aussi | `tools/check.js` : 1000 tours par mode, 0 gain inexact |
+| Fichiers books / lookup / `index.json` (lignes 4, 8, 10) | `tools/stake-export.js` (Node, sans dépendance) écrit dans `tools/out/` (ignoré par git) un `index.json` à 6 modes (`std`, `plus`, `buy_scarab`, `buy_weigh`, `buy_vault`, `buy_fury`, avec `cost` et `is_buybonus`), des `books_<mode>.jsonl.zst` (zstd via `zlib.zstdCompressSync` de Node 22 ; repli en `.jsonl` brut si absent) et des `lookUpTable_<mode>_0.csv` (n°, poids, `payoutMultiplier` entier). **C'est une démonstration du format** : 1000 books tirés au hasard, poids égaux à 1, aucune optimisation d'RTP (le RTP d'un échantillon de 1000 books est sans valeur) | `node tools/stake-export.js` : 0 anomalie |
+| Choix du joueur pré-résolus (lignes 5 à 7) | Stratégie documentée en tête de `tools/stake-export.js` : **Pesée** : le book donne seulement `playerWins` et `playerMult` pour le choix du joueur (50/50, choix décoratif) ; **Fureur** : les trois couleurs sont symétriques, le book est écrit pour « la couleur du joueur » (index 0) et le front renomme les couleurs par rotation ; **Chambre du Trésor** : l'ordre des jetons est déjà tiré d'avance, la tuile touchée est neutre ; **profil Prudent / Équilibré / Audacieux** : non symétrique, le book joue l'Équilibré et le choix ne peut pas rester réel (il faudrait un mode Stake par profil, ou retirer le choix) | revue du code ; **le front n'est pas encore adapté à ces books** |
+| Langues (ligne 18) | **Anglais par défaut** (premier lancement, sans sauvegarde ni `?lang=`, et pour tout code inconnu). **16 traductions complètes** : ar, de, en, es, fi, fr, hi, id, ja, ko, pl, pt, ru, tr, vi, zh. Sélecteur de langue (menu déroulant au bouton de langue). Arabe en `dir="rtl"` sur le document (HUD et canvas gardent leur structure d'origine). Polices système de repli pour ar, hi, ja, ko, zh (aucun fichier ajouté). Les noms WIN / BIG WIN / EXTRA WIN / MEGA WIN restent en anglais dans toutes les langues ; les noms de bonus sont traduits ou transcrits | `tools/i18n-check.js` : parité des clés, types, longueurs de listes et marqueurs `{x}` pour les 16 langues, textes courts et longs bornés, `dir` ; captures Chromium vérifiées en ar, de, ja, ru, vi |
+| Paramètres de lancement (ligne 2) | `?lang=` est appliqué ; `sessionID`, `rgs_url`, `device`, `social` sont **lus** dans `window.LAUNCH` (`js/i18n.js`) mais pas encore utilisés | capture avec `?lang=xx&sessionID=...&social=true` |
+
+### Reste à faire (rien de ceci n'est fait)
+
+1. **Porter les maths et le RNG dans le math-sdk Python** (≥ 3.12) : un book par résultat, lookup table, optimisation (Rust/Cargo), 6 modes, plafond de gain et sa distribution. Les books de `tools/stake-export.js` ne valent que comme modèle de format ; leurs événements sont ceux du jeu, pas ceux d'un `gamestate` du SDK.
+2. **Écrire le client RGS** (structure ci-dessous) et retirer du jeu solde, RNG (`crypto.getRandomValues`), sauvegarde `localStorage` du solde et reprise de round locale.
+3. **Solde, devise, niveaux de mise, limites fournis par l'API** : le jeu code encore € / $, des mises de 0,20 à 1 000 et une limite de perte locale ; les 19 devises et les devises sociales (XGC, XSC) viennent de l'authentification.
+4. **Adapter le front aux books** : Pesée et Fureur lisent le résultat du book (voir la stratégie ci-dessus), roue et Plinko lisent angle d'arrêt et chemins dans les événements, plus aucun tirage côté client.
+5. **Réaligner les RTP** des 6 modes (écart actuel 0,9 point contre 0,5 cité par une source tierce), mesurer la fréquence du gain max, lire les directives d'approbation Stake.
+6. Variante sociale (`social=true` : « BET » devient « SPIN », sans vocabulaire de pari), codes d'erreur (`ERR_*`), fin de round, drapeaux par marché (achat de bonus, turbo, auto-play).
+7. Tout le volet juridique (P0 n°1 et 2 : conditions Stake, recherche d'antériorité et de marques, droits des images), non traité par du code.
+
+### Structure d'un futur client RGS (non écrit)
+
+Fichier prévu : `js/rgs.js`, chargé avant `js/main.js`. Il lit `window.LAUNCH` (déjà rempli) et n'est actif que si `LAUNCH.sessionID` et `LAUNCH.rgs_url` existent ; sinon le jeu reste en démo locale.
+
+```
+RGS.authenticate(sessionID)      POST {rgs_url}/wallet/authenticate -> { balance, currency, config: { minBet, maxBet, stepBet, betLevels, jurisdiction }, round? }
+                                  si round actif : reprendre ses événements, puis end-round
+RGS.play(mode, amount)           POST {rgs_url}/wallet/play         -> { round: { events[], payoutMultiplier, active }, balance }
+RGS.endRound()                   POST {rgs_url}/wallet/end-round    (après l'animation du gain, y compris après un bonus acheté)
+RGS.balance()                    POST {rgs_url}/wallet/balance
+RGS.event(id)                    POST {rgs_url}/bet/event           (progression dans un round à plusieurs étapes)
+unités : montants entiers à 6 décimales (1 000 000 = 1 unité) ; payoutMultiplier entier à l'échelle M.SCALE
+erreurs : ERR_IPB, ERR_IS, ERR_ATE, ERR_GLE, ERR_LOC, ERR_GEN, ERR_MAINTENANCE -> écrans dédiés, sans perte de round
+```
+
+Branchement dans `js/main.js` : `M.playRound(rng)` est remplacé par `RGS.play(...)`, dont les `events[]` sont convertis par un adaptateur en l'objet de tour déjà consommé par les scènes (`spins[]`, `bonus`, `pay`). Les noms exacts des endpoints et des champs doivent être revérifiés sur `RGS.md` avant d'écrire le code : ce schéma est un plan, pas une spécification lue ligne à ligne.
 
 ## 5. Sources
 
