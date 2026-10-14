@@ -3,13 +3,13 @@
  * MODE RGS = sessionID ET/OU rgs_url présents dans l'adresse. Sinon : démo locale (AnubisMath tire les tours dans le navigateur).
  * Aucune adresse de serveur n'est écrite en dur : tout passe par rgs_url (un hôte nu « rgs.exemple.com » reçoit https://).
  * Montants : micro-unités (1 000 000 = 1,00). payoutMultiplier de la réponse = multiple de la MISE DE BASE (float, 11.5 = 11,5×).
- * Un book (round.state) est la liste d'événements produite par tools/stake-export.js (payoutMultiplier des événements : entiers x100).
+ * Un book (round.state) est la liste d'événements v2 produite par tools/stake-export.js (montants des événements : entiers x100).
  *
- * Adaptateur books -> tours (bookToRound) — ce qui est perdu à l'export est repris par défaut :
- *  - profils Prudent/Audacieux : le book ne joue que le profil enregistré (profileChoice.binding = false), pas de choix côté joueur ;
- *  - Fureur d'Anubis : pas de choix de couleur (couleur 0 = turquoise) ; Pesée du Cœur : le choix plume/cœur reste affiché mais
- *    le résultat du book s'applique quel que soit le plateau touché (voir weighData) ;
- *  - Crypte : les blocs (type, colonne, valeur) sont rejoués par M.cryptReplay, source unique des règles.
+ * Adaptateur books v2 -> tours (bookToRound) : format DÉFINITIF documenté en tête de tools/stake-export.js.
+ *  - le front ne recalcule jamais le gain : payoutMultiplier (RGS) fait foi ; l'adaptateur relève seulement les incohérences (round.issues) ;
+ *  - choix du joueur : Fureur d'Anubis (3 variantes de couleur dans le book -> sp.options) et Pesée du Cœur (2 variantes plume / cœur ->
+ *    data.pick sélectionne l'affichage) restent de vrais choix, pré-résolus : tous les choix paient le même total ;
+ *  - profils Prudent/Audacieux : absents (tous les bonus se jouent en profil Équilibré) ; Sanctuaire des Marées et Oracle scellé lus tels quels.
  */
 (function (root, factory) {
   if (typeof module === 'object' && module.exports) module.exports = factory(root);
@@ -101,96 +101,124 @@
     return { mode: name === 'plus' ? 'plus' : 'std', buy: buy };
   };
 
-  // réponse /wallet/play ou round actif -> { events, mult, amount (unités), active }
+  // réponse /wallet/play ou round actif -> { events, mult, amount (mise de base, unités), payout (gain en unités ou null), active }
   RGS.readRound = function (round) {
     var st = round && round.state, ev = Array.isArray(st) ? st : (st && Array.isArray(st.events) ? st.events : []);
     var mult = Number(round && round.payoutMultiplier);
     if (!isFinite(mult)) mult = 0;
-    return { events: ev, mult: mult, amount: RGS.fromMicro(Number(round && round.amount) || 0), active: !!(round && round.active), mode: round && round.mode };
+    var pay = round && round.payout != null && isFinite(Number(round.payout)) ? RGS.fromMicro(Number(round.payout)) : null;
+    return { events: ev, mult: mult, amount: RGS.fromMicro(Number(round && round.amount) || 0), payout: pay, active: !!(round && round.active), mode: round && round.mode };
   };
 
-  /* ---------- adaptateur book -> tour ---------- */
+  // ---------- adaptateur book v2 -> tour du jeu ----------
+  // Format : voir l'en-tête de tools/stake-export.js (contrat DÉFINITIF). Aucun gain n'est recalculé ici : chaque valeur vient d'un événement ;
+  // round.issues liste les incohérences relevées (somme des tours, finalWin, roue) — le jeu les signale et crédite le montant du RGS.
+  function bookError(msg) { var e = new Error(msg); e.code = 'ERR_BOOK'; return e; }
+  var TOL = 1e-6;
   function bookToRound(events, M) {
     var S = M.SCALE || 100, f = function (n) { return n / S; };
-    var rs = null, spins = [], spin = null, bev = null, bstart = null, oracle = null, fin = null;
+    var rs = null, spins = [], spin = null, bev = null, bstart = null, oracle = null, fin = null, issues = [];
     function blank() { return { oracle: null, index: -1, kind: 'm0', boost: 1, bonus: null, base: 0, pay: 0 }; }
+    function of(list, type) { return list.filter(function (e) { return e.type === type; }); }
 
-    function weighData(list, profile) {
-      var rv = list.filter(function (e) { return e.type === 'weighReveal'; })[0] || { mults: [1, 1], playerMult: 1, playerWins: false, win: 0 };
-      var mine = f(rv.playerMult), other = f(rv.mults[1] != null ? rv.mults[1] : rv.mults[0]), wins = !!rv.playerWins;
-      var d = { pair: [mine, other].sort(function (a, b) { return a - b; }), mults: [mine, other], heavy: wins ? 0 : 1, total: f(rv.win), profile: profile || 'std' }, p = 0;
-      // le plateau TOUCHÉ reçoit la valeur du joueur ; il gagne si et seulement si le book le dit -> résultat identique quel que soit le choix
+    // Pesée : les deux variantes (plume / cœur) viennent du book ; le choix du joueur sélectionne celle qui est affichée (total identique)
+    function weighData(list) {
+      var rv = of(list, 'weighReveal')[0];
+      if (!rv || !rv.variants || rv.variants.length !== 2) throw bookError('weighReveal');
+      var vs = rv.variants.map(function (v) { return { mults: v.mults.map(f), heavy: v.heavy }; }), p = 0;
+      var d = { pair: vs[0].mults.slice().sort(function (a, b) { return a - b; }), mults: vs[0].mults.slice(), heavy: vs[0].heavy, total: f(rv.win), fixed: f(rv.win), profile: 'std' };
       Object.defineProperty(d, 'pick', { enumerable: true, get: function () { return p; }, set: function (v) {
-        p = v === 1 ? 1 : 0; d.mults = p === 0 ? [mine, other] : [other, mine]; d.heavy = wins ? p : 1 - p;
+        p = v === 1 ? 1 : 0; d.mults = vs[p].mults.slice(); d.heavy = vs[p].heavy;
       } });
       return d;
     }
+    function handData(list, color) {
+      var mine = list.filter(function (e) { return e.color === color; }), hs = [], cur = null, end = of(mine, 'furyEnd')[0];
+      if (!end) throw bookError('furyEnd ' + color);
+      mine.forEach(function (e) {
+        if (e.type === 'furySpin') { cur = { ev: e, nested: [] }; hs.push(cur); }
+        else if (e.nested && cur) cur.nested.push(e);
+      });
+      var spinsH = hs.map(function (h) {
+        var e = h.ev, rec = { idx: e.segment, kind: e.kind, mult: e.tier, final: !!e.final };
+        if (e.kind === 'num') rec.base = f(e.number);
+        if (e.kind === 'band') { rec.band = e.band; rec.x = e.bandMult; rec.bonus = build(e.band, h.nested); }
+        return rec;
+      });
+      if (!spinsH.length) throw bookError('furySpin ' + color);
+      spinsH[spinsH.length - 1].pay = f(end.pay);
+      return { spins: spinsH, mult: spinsH[spinsH.length - 1].mult, total: f(end.win), colour: color };
+    }
     function build(kind, list) {
-      var pc = list.filter(function (e) { return e.type === 'profileChoice'; })[0], profile = pc && pc.profile || 'std', i;
+      var i;
       if (kind === 'scarab') {
-        var balls = list.filter(function (e) { return e.type === 'scarabDrop'; }).map(function (e) { return { path: e.path, slot: e.slot, value: f(e.win) }; }), t = 0;
+        var balls = of(list, 'scarabDrop').map(function (e) { return { path: e.path, slot: e.slot, value: f(e.win) }; }), t = 0;
         balls.forEach(function (b) { t += b.value; });
-        return { balls: balls, total: t, values: M.SCARAB_PROFILES[profile] || M.SCARAB_PROFILES.std, profile: profile };
+        return { balls: balls, total: Math.round(t * S) / S, values: M.SCARAB_PROFILES.std, profile: 'std' };
       }
-      if (kind === 'weigh') return weighData(list, profile);
+      if (kind === 'weigh') return weighData(list);
       if (kind === 'vault') {
-        var picks = list.filter(function (e) { return e.type === 'vaultPick'; }).map(function (e) { return { token: typeof e.token === 'number' ? f(e.token) : e.token, total: f(e.runningTotal), saved: !!e.saved }; });
-        var ve = list.filter(function (e) { return e.type === 'vaultEnd'; })[0] || { ended: 'cleared', finishBonus: 0, win: 0 };
-        return { picks: picks, ended: ve.ended, bonusFinish: f(ve.finishBonus), total: f(ve.win), profile: profile };
+        var picks = of(list, 'vaultPick').map(function (e) { return { token: typeof e.token === 'number' ? f(e.token) : e.token, total: f(e.runningTotal), left: e.chestsLeft }; });
+        var ve = of(list, 'vaultEnd')[0];
+        if (!ve) throw bookError('vaultEnd');
+        return { picks: picks, ended: ve.ended, bonusFinish: f(ve.finishBonus), total: f(ve.win), profile: 'std' };
       }
-      if (kind === 'crypt') {   // Sanctuaire des Marées : tablettes sanctuaryTablet (tablet_type, value ; value d'une tablette « tab » à l'échelle M.SCALE), rejouées par M.cryptReplay
-        var drops = list.filter(function (e) { return e.type === 'sanctuaryTablet'; }).map(function (e) { return { t: e.tablet_type, v: e.tablet_type === 'tab' ? f(e.value) : e.value }; });
-        var r = M.cryptReplay(drops);
-        return { drops: drops, steps: r.steps, pool: r.pool, tide: r.tide, capped: r.capped, total: r.total, profile: 'crypt' };
+      if (kind === 'crypt') {
+        var steps = of(list, 'sanctuaryTablet').map(function (e) { return { t: e.tablet_type, v: e.value, poolBefore: f(e.offeringBefore), tideBefore: e.tideBefore, gain: f(e.gain), pool: f(e.offering), tide: e.tide }; });
+        var se = of(list, 'sanctuaryEnd')[0];
+        if (!se) throw bookError('sanctuaryEnd');
+        return { drops: steps.map(function (st) { return { t: st.t, v: st.v }; }), steps: steps, pool: f(se.offering), tide: se.tide, capped: !!se.capped, total: f(se.win), profile: 'crypt' };
       }
       if (kind === 'hand') {
-        var hs = [], cur = null, end = list.filter(function (e) { return e.type === 'furyEnd'; })[0] || { win: 0 };
-        list.forEach(function (e) {
-          if (e.type === 'furySpin') { cur = { ev: e, nested: [] }; hs.push(cur); }
-          else if (e.nested && cur) cur.nested.push(e);
-        });
-        var spinsH = hs.map(function (h) {
-          var e = h.ev, rec = { idx: e.segment, kind: e.kind, mult: e.tier, final: !!e.final };
-          if (e.kind === 'num') rec.base = e.number;
-          if (e.kind === 'band') { rec.band = e.band; rec.x = e.bandMult; rec.bonus = build(e.band, h.nested); }
-          return rec;
-        });
-        var hd = { spins: spinsH, mult: spinsH.length ? spinsH[spinsH.length - 1].mult : 1, total: 0, colour: 0 };
-        M.handRecalc(hd);
-        var want = f(end.win);
-        if (Math.abs(hd.total - want) > 1e-9) { hd.total = want; if (spinsH.length) spinsH[spinsH.length - 1].pay = want; }
-        return hd;
+        var opts = {}, names = M.HAND_COLORS;
+        for (i = 0; i < 3; i++) opts[names[i]] = handData(list, i);
+        return { options: opts };   // la scène choisit la variante (couleur du joueur)
       }
-      return null;
+      throw bookError('bonus ' + kind);
     }
     function closeSpin(e) {
       if (!spin) spin = blank();
       spin.pay = f(e.win); spin.base = spin.boost > 1 ? spin.pay / spin.boost : spin.pay;
       if (bstart) {
         var kind = bstart.bonus, b = build(kind, bev || []);
-        spin.bonus = b; spin.base = b.total; spin.pay = b.total * (spin.boost || 1);
-        if (Math.abs(spin.pay - f(e.win)) > 1e-6) spin.pay = f(e.win);
-        if (kind === 'crypt' || bstart.secret) { spin.secret = true; spin.profile = 'crypt'; }
-        else if (kind === 'hand') { spin.upgraded = true; spin.profile = 'turq'; }
-        else spin.profile = b.profile || 'std';
-        if (spin.index < 0) spin.kind = kind === 'crypt' ? 'vault' : kind;   // achat : la scène lit sp.kind
+        if (kind === 'hand') {
+          spin.options = b.options; spin.bonus = b.options[M.HAND_COLORS[0]]; spin.upgraded = true; spin.profile = M.HAND_COLORS[0];
+        } else {
+          spin.bonus = b; spin.profile = b.profile || 'std';
+          if (kind === 'crypt' || bstart.secret) { spin.secret = true; spin.profile = 'crypt'; }
+        }
+        spin.base = spin.bonus.total;
+        if (Math.abs(spin.base * (spin.boost || 1) - spin.pay) > TOL) issues.push('spin ' + (spins.length + 1) + ': bonus ' + spin.base * (spin.boost || 1) + ' != spinWin ' + spin.pay);
+        if (spin.index < 0) spin.kind = bstart.kind || (kind === 'crypt' ? 'vault' : kind);   // achat : la scène lit sp.kind
       }
       spins.push(spin); spin = null; bev = null; bstart = null;
     }
     (events || []).forEach(function (e) {
       switch (e.type) {
-        case 'roundStart': rs = e; break;
+        case 'roundStart':
+          rs = e;
+          if (e.v !== 2) throw bookError('book format ' + e.v + ' (v2 expected)');
+          if (e.cells !== M.N) throw bookError('wheel of ' + e.cells + ' cells (' + M.N + ' expected)');
+          break;
         case 'oracle': oracle = { kind: e.kind, boost: e.boost }; break;
-        case 'wheelStop': spin = blank(); spin.oracle = oracle; oracle = null; spin.index = e.index; spin.kind = e.kind; spin.boost = e.boost || 1; break;
+        case 'wheelStop':
+          spin = blank(); spin.oracle = oracle; oracle = null; spin.index = e.index; spin.kind = e.kind; spin.boost = e.boost || 1;
+          if (M.LAYOUT[e.index] !== e.kind) issues.push('wheel: cell ' + e.index + ' = ' + M.LAYOUT[e.index] + ' != ' + e.kind);
+          break;
         case 'bonusStart': if (!spin) spin = blank(); bstart = e; bev = []; break;
         case 'spinWin': closeSpin(e); break;
         case 'finalWin': fin = e; break;
+        case 'oracleReveal': break;   // la valeur est déjà dans l'événement oracle ; l'affichage la révèle à l'arrêt de la roue
         default: if (bev) bev.push(e);
       }
     });
-    var total = 0; spins.forEach(function (s) { total += s.pay; });
-    var capped = fin ? !!fin.capped : total > M.MAX_WIN;
-    return { spins: spins, total: fin ? f(fin.amount) : Math.min(total, M.MAX_WIN), capped: capped, cost: rs ? f(rs.cost) : 1, mode: rs ? rs.mode : 'std' };
+    if (!rs) throw bookError('roundStart missing');
+    if (!fin) throw bookError('finalWin missing');
+    var sum = 0; spins.forEach(function (s) { sum += s.pay; });
+    sum = Math.min(Math.round(sum * S) / S, M.MAX_WIN);
+    var total = f(fin.amount);
+    if (Math.abs(total - sum) > TOL) issues.push('finalWin ' + total + ' != sum of spins ' + sum);
+    return { spins: spins, total: total, sum: sum, capped: !!fin.capped, cost: f(rs.cost), mode: rs.mode, issues: issues, version: 2 };
   }
   RGS.bookToRound = bookToRound;
 
