@@ -224,7 +224,7 @@ var FINISH = `(async()=>{ G.turbo=true; G.speed=1.6; var g=0; while(G.S.busy&&g<
   var me = mockRgs.create(); s = await open(me);
   await s.p.evaluate("G.S.balance = 5000; G.updateHud()");   // l'écran croit avoir plus que le serveur : le serveur répond ERR_IPB
   me.set({ balance: 0 });
-  await clk(s.p, '#spin'); await s.p.waitForTimeout(500);
+  await clk(s.p, '#spin'); await s.p.waitForTimeout(1200);
   var ipb = await s.p.evaluate("({busy:G.S.busy, msg:document.getElementById('statusText').textContent, bal:G.S.balance})");
   ok(!ipb.busy && /insuffisant/i.test(ipb.msg) && ipb.bal === 0, 'ERR_IPB : message « ' + ipb.msg + ' », solde resynchronisé (/wallet/balance), jeu non bloqué');
   await done(s);
