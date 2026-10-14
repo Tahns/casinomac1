@@ -44,7 +44,7 @@ var FINISH = `(async()=>{ G.turbo=true; G.speed=1.6; var g=0; while(G.S.busy&&g<
     var ctx = await b.newContext({ viewport: { width: 1280, height: 720 } }), p = await ctx.newPage();
     p.on('pageerror', function (e) { allErrs.push(e.message); });
     p.on('console', function (m) { if (m.type() === 'error' && !/RGS|Failed to load resource|net::ERR/.test(m.text())) allErrs.push(m.text()); });
-    await p.goto(gurl + '?debug&sessionID=' + mock.state.sessionID + '&rgs_url=' + encodeURIComponent('http://localhost:' + port) + (extra || ''));
+    await p.goto(gurl + '?debug&lang=fr&sessionID=' + mock.state.sessionID + '&rgs_url=' + encodeURIComponent('http://localhost:' + port) + (extra || ''));
     await p.waitForTimeout(700);
     return { p: p, ctx: ctx, mock: mock };
   }

@@ -262,7 +262,7 @@
   }
   // message clair selon le code d'erreur du RGS ; ERR_IPB / ERR_GLE : on resynchronise le solde (/wallet/balance)
   function rgsFail(e) {
-    var T = I18N.t().rgs, code = e && e.code || 'ERR_NET', key = { ERR_VAL: 'errVal', ERR_IPB: 'errIpb', ERR_GLE: 'errGle', ERR_ACT: 'errAct', ERR_GEN: 'errGen', ERR_BOOK: 'errBook', ERR_URL: 'errUrl' }[code] || 'errNet';
+    var T = I18N.rgs(), code = e && e.code || 'ERR_NET', key = { ERR_VAL: 'errVal', ERR_IPB: 'errIpb', ERR_GLE: 'errGle', ERR_ACT: 'errAct', ERR_GEN: 'errGen', ERR_BOOK: 'errBook', ERR_URL: 'errUrl' }[code] || 'errNet';
     if (root.console) console.error('RGS', code, e && e.message);
     if (code === 'ERR_IPB') { say(T.errIpb); Sfx.curse(); }
     else say(T[key]);
@@ -271,7 +271,7 @@
   }
   // blocage total : aucune mise possible tant que la connexion n'est pas établie (pas de repli local)
   function blockGame(code) {
-    var T = I18N.t().rgs, key = { ERR_URL: 'errUrl', ERR_VAL: 'errVal' }[code] || 'errAuth', el = $('rgsBlock');
+    var T = I18N.rgs(), key = { ERR_URL: 'errUrl', ERR_VAL: 'errVal' }[code] || 'errAuth', el = $('rgsBlock');
     S.blocked = true; setSpinBtn();
     if (!el) {
       el = document.createElement('div'); el.id = 'rgsBlock'; el.setAttribute('role', 'alertdialog'); el.setAttribute('aria-live', 'assertive');
@@ -294,11 +294,10 @@
   function startRgs() {
     var P = RG.params, T = I18N.t();
     S.blocked = true; S.balance = 0;
-    if (P.lang) { I18N.setLang(P.lang); if (I18N.lang() !== P.lang.toLowerCase()) I18N.setLang('en'); }   // langue inconnue -> anglais
     if (P.currency === 'EUR' || P.currency === 'USD') { S.cur = P.currency; S.curSet = true; G.currency = P.currency; }
     applyLang(); T = I18N.t();
     if (RG.error) { blockGame(RG.error); return; }
-    say(T.rgs.connecting);
+    say(I18N.rgs().connecting);
     RG.authenticate().then(function (a) {
       var cfg = a.config, lv = betLevelsFrom(cfg), rd = a.round && a.round.active ? a.round : null, ix;
       if (rd && !(rd.amount > 0)) rd = null;
@@ -345,7 +344,7 @@
   var STOP_WINS = [0, 10, 50, 100];
   function openAuto() {
     if (S.busy || S.blocked) return;
-    var T = I18N.t(), R = T.rgs, sel = Math.max(1, S.autoLast || 1), sw = S.stopWin;
+    var T = I18N.t(), R = I18N.rgs(), sel = Math.max(1, S.autoLast || 1), sw = S.stopWin;
     $('modalBody').innerHTML = '<h2>' + R.autoTitle + '</h2><p class="sub">' + R.autoSub + '</p>' +
       '<p class="sub">' + R.autoCost + ' : ' + G.money(cost()) + '</p>' +
       '<div class="opt"><span>' + R.autoRounds + '</span><div class="chips" id="apN"></div></div>' +
@@ -490,7 +489,7 @@
   }
   // [31] achat de bonus (coût > 2x la mise) : fenêtre « Acheter X pour Y » avec Annuler / Confirmer ; rien n'est misé avant « Confirmer »
   function confirmBuy(k, name, price) {
-    var R = I18N.t().rgs;
+    var R = I18N.rgs();
     $('modalBody').innerHTML = '<h2>' + R.buyConfirmTitle + '</h2><p id="buyConfirmTxt"></p><div class="acts"><button type="button" class="chip" id="buyNo">' + R.cancel + '</button><button type="button" class="btn-go" id="buyYes">' + R.confirm + '</button></div>';
     $('buyConfirmTxt').textContent = R.buyConfirm.replace('{name}', name).replace('{price}', G.money(price));
     $('buyNo').onclick = function () { hideModal(); };
