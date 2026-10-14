@@ -89,7 +89,7 @@
   var LAYOUT = buildLayout();
   var N = LAYOUT.length;
 
-  /* ---------- Oracle (booster pré-tour, façon « top slot ») ---------- */
+  /* ---------- Oracle (bénédiction scellée avant le tour : la valeur n'est révélée qu'à l'arrêt de la roue) ---------- */
   var MODES = { std: { cost: 1, oracle: 0.31 }, plus: { cost: 1.1, oracle: 0.72 } };
   var ORACLE_CHANCE = MODES.std.oracle;
   var ORACLE_KIND_W = [['m05', 3], ['m1', 4], ['m2', 3], ['m3', 2], ['scarab', 3], ['weigh', 3], ['vault', 3]];
@@ -98,7 +98,7 @@
     bonus: [[2, 66], [3, 21], [5, 8.5], [10, 3.4], [25, 0.8], [100, 0.06]]
   };
 
-  /* ---------- Bonus 1 : Chute du Scarabée (Plinko 8 rangées, 3 scarabées) ---------- */
+  /* ---------- Bonus 1 : Chute du Scarabée (cascade de chevilles, 8 rangées, 3 scarabées) ---------- */
   var SCARAB_ROWS = 8;
   var SCARAB_BALLS = 3;
   // Trois profils de même espérance : le joueur choisit sa volatilité avant le bonus.

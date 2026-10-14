@@ -1,6 +1,6 @@
 /* ANUBIS UNCHAINED — les 4 bonus.
  * Chaque scène REJOUE un script déjà tiré par le noyau mathématique (AnubisMath) : elle n'invente aucun résultat.
- *  - Chute des Scarabées (Plinko)      - Pesée du Cœur (balance)
+ *  - Chute des Scarabées (cascade)     - Pesée du Cœur (balance)
  *  - Sanctuaire des Marées (SECRET : grille 3×3 de tablettes)
  *  - Chambre du Trésor (pick-me)       - Fureur d'Anubis (roue géante : couleur au choix, DOUBLE, bandes de bonus) */
 (function (root) {
@@ -159,7 +159,7 @@
   }
 
   /* ======================================================================
-   * 1. CHUTE DES SCARABÉES — Plinko 8 rangées × 3 scarabées
+   * 1. CHUTE DES SCARABÉES — cascade de chevilles, 8 rangées × 3 scarabées
    * ====================================================================== */
   function scarabScene(sp, bet) {
     var T = I18N.t(), data = sp.bonus, rows = M.SCARAB_ROWS, vals = data.values || M.SCARAB_VALUES, B = bf(sp);   // B : boost, appliqué à tout ce qui s'affiche
@@ -206,14 +206,14 @@
       ctx.lineWidth = 4; ctx.strokeStyle = A.goldGrad(ctx, g.px0, g.py0, g.px1, g.py1); ctx.stroke();
       ctx.lineWidth = 1.2; ctx.strokeStyle = 'rgba(255,233,160,.35)'; A.roundRect(ctx, g.px0 + 6, g.py0 + 6, g.px1 - g.px0 - 12, g.py1 - g.py0 - 12, 14); ctx.stroke();
       ctx.restore();
-      // grille dense de petites lumières (décor, comme le mur du Pachinko) : les vraies chevilles restent les plus grosses
+      // grille dense de petites lumières (décor, mur de lumières décoratif) : les vraies chevilles restent les plus grosses
       var dsx = g.dx / 2, dsy = g.dy / 2, dr = Math.max(1.1, g.pegR * 0.26), de = clamp((ent - 0.2) / 0.6, 0, 1);
       if (de > 0) {
         ctx.save(); ctx.globalAlpha = 0.5 * de; ctx.fillStyle = '#fff6dc'; ctx.shadowColor = 'rgba(255,240,190,.9)'; ctx.shadowBlur = dr * 3; ctx.beginPath();
         for (var dyy = g.py0 + 16; dyy < g.slotTop - 8; dyy += dsy) for (var dxx = g.px0 + 14; dxx < g.px1 - 10; dxx += dsx) { ctx.moveTo(dxx + dr, dyy); ctx.arc(dxx, dyy, dr, 0, TAU); }
         ctx.fill(); ctx.restore();
       }
-      // séparateurs dorés entre les cases (comme les barres du Pachinko)
+      // séparateurs dorés entre les cases (barres dorées décoratives)
       for (i = 0; i <= rows + 1; i++) {
         var bx = G.cx + (i - 0.5 - rows / 2) * g.dx, be = clamp((ent - 0.9) / 0.5, 0, 1);
         if (be <= 0) continue;
@@ -366,7 +366,7 @@
           await G.tween(0.42 * sk, function (u) { ball.x = lerp(f4.x, sx, G.ease.out3(u)); ball.y = lerp(f4.y, g.slotTop + g.slotH * 0.5, G.ease.outBounce(u)); ball.rot += 0.1; }, null);
         }
       }
-      if (col !== d.slot) console.error('plinko: case atteinte ' + col + ' ≠ tirage ' + d.slot);
+      if (col !== d.slot) console.error('cascade: case atteinte ' + col + ' ≠ tirage ' + d.slot);
       var v = d.value;
       slotPulse[d.slot] = 1; used = b + 1; ball = null; landed[d.slot] = (landed[d.slot] || 0) + 1;
       var sx2 = G.cx + (d.slot - rows / 2) * g.dx, sy = g.slotTop;
@@ -826,7 +826,7 @@
         await G.sleep(quick() ? 0.3 : 0.9);
         tiles.forEach(function (o) { if (o.state === 'closed') o.dim = false; });
       } else if (rec.token === 'key') { Sfx.keyGet(); left = rec.left; leftPop = 1; FX.float(T.vaultKey.replace('{n}', M.VAULT_KEY_PICKS), cx, cy - r.s * 0.7, '#6ff0dd', 26); FX.ring(cx, cy, '#6ff0dd', r.s * 1.6, 0.8); FX.spark(cx, cy, 22, '#9ff4e6', 300); }
-      else if (rec.token === 'scepter') { Sfx.lightning(); FX.flash(0.35, '#9ab8ff'); FX.float(T.vaultScepter, cx, cy - r.s * 0.7, '#9ab8ff', 28); FX.ring(cx, cy, '#9ab8ff', r.s * 2, 0.9); FX.ring(cx, cy, '#dbe6ff', r.s * 3, 1.2); FX.spark(cx, cy, 24, '#9ab8ff', 380); FX.shake(8, 0.3); }
+      else if (rec.token === 'scepter') { Sfx.thunder(); FX.flash(0.35, '#9ab8ff'); FX.float(T.vaultScepter, cx, cy - r.s * 0.7, '#9ab8ff', 28); FX.ring(cx, cy, '#9ab8ff', r.s * 2, 0.9); FX.ring(cx, cy, '#dbe6ff', r.s * 3, 1.2); FX.spark(cx, cy, 24, '#9ab8ff', 380); FX.shake(8, 0.3); }
       else { Sfx.chime(rec.token); FX.coins(cx, cy, 10 + Math.min(34, rec.token * 4), 700 + (big ? 200 : 0), 40); FX.spark(cx, cy, 18, '#ffe9a0', 300); FX.ring(cx, cy, '#ffd86a', r.s * 2.2, 0.8); if (big) { FX.rain(G.w, 18); FX.flash(0.2, '#ffe9a0'); FX.shake(6, 0.3); } FX.float('+' + fb(rec.token, B), cx, cy - r.s * 0.7, '#fff1b8', 30); }
       if (rec.token !== 'key') left = rec.left;
       bump(S, rec.total * B);
@@ -1192,7 +1192,7 @@
       await G.sleep(0.5);
       Sfx.whoosh();
       await G.tween(0.55, function (k) { handY = lerp(-s * 1.8, g.cy - tipOff - u * 0.04, k * k); beam = 1 + k * 0.6; vig = Math.max(vig, k * 0.7); if (Math.random() < 0.8) FX.spark(G.cx + (Math.random() - 0.5) * u * 0.25, handY + s * 0.8, 2, '#ffe9a0', 260); }, null);
-      Sfx.furySlam && Sfx.furySlam(); Sfx.lightning(); Sfx.thud(); FX.shake(34, 1.1); FX.flash(1, '#ffffff'); bolts = 1; crush = 1; shock = 1; FX.ring(G.cx, g.cy, '#ffe9a0', u * 0.5, 1); FX.ring(G.cx, g.cy, '#9ab8ff', u * 0.8, 1.2); FX.spark(G.cx, g.cy, 90, '#ffd86a', 560); FX.dust(G.cx, g.cy + u * 0.1, 30, '#c9a46a');
+      Sfx.furySlam && Sfx.furySlam(); Sfx.thunder(); Sfx.thud(); FX.shake(34, 1.1); FX.flash(1, '#ffffff'); bolts = 1; crush = 1; shock = 1; FX.ring(G.cx, g.cy, '#ffe9a0', u * 0.5, 1); FX.ring(G.cx, g.cy, '#9ab8ff', u * 0.8, 1.2); FX.spark(G.cx, g.cy, 90, '#ffd86a', 560); FX.dust(G.cx, g.cy + u * 0.1, 30, '#c9a46a');
       await G.sleep(0.2); Sfx.thud(); FX.shake(14, 0.5); FX.ring(G.cx, g.cy, '#ffffff', u * 0.35, 0.7);
       await G.sleep(0.4);
       G.tween(0.8, function (k) { beam = 1.6 * (1 - k); }, null);
@@ -1217,7 +1217,7 @@
           // DOUBLE de VOTRE couleur : l'orbe file vers le palier, la roue est améliorée (tous les nombres doublent), on relance
           var cp = counterPos(), m0 = mult, lvl = clamp(sx.mult / 4, 1, 3);
           flyOrb = { x0: tp.x, y0: tp.y, x1: cp.x, y1: cp.y, t: 0, c: cc.a, v: 2 };
-          Sfx.furyDouble && Sfx.furyDouble(Math.round(lvl)); Sfx.lightning(); FX.flash(0.4, cc.a); FX.shake(12 + 4 * lvl, 0.5); FX.ring(tp.x, tp.y, cc.a, g.R * 0.55, 0.7); FX.ring(tp.x, tp.y, '#ffffff', g.R * 0.35, 0.6); FX.spark(tp.x, tp.y, 30 + 10 * lvl, cc.a, 320); bolts = 0.8; rays = 0.9; raysCol = cc.a;
+          Sfx.furyDouble && Sfx.furyDouble(Math.round(lvl)); Sfx.thunder(); FX.flash(0.4, cc.a); FX.shake(12 + 4 * lvl, 0.5); FX.ring(tp.x, tp.y, cc.a, g.R * 0.55, 0.7); FX.ring(tp.x, tp.y, '#ffffff', g.R * 0.35, 0.6); FX.spark(tp.x, tp.y, 30 + 10 * lvl, cc.a, 320); bolts = 0.8; rays = 0.9; raysCol = cc.a;
           banner(T.handUp, T.handUpSub, cc.a);
           await G.tween(0.7, function (k) { flyOrb.t = k; }, null);
           var ox2 = flyOrb.x1, oy2 = flyOrb.y1;
@@ -1261,7 +1261,7 @@
       }
       G.say('');
       // apothéose finale : explosion de lumière avant le décompte
-      rays = 1.4; raysCol = '#ffe9a0'; Sfx.lightning(); FX.flash(0.7, '#fff1b8'); FX.shake(22, 0.9); shock = 1; bolts = 1;
+      rays = 1.4; raysCol = '#ffe9a0'; Sfx.thunder(); FX.flash(0.7, '#fff1b8'); FX.shake(22, 0.9); shock = 1; bolts = 1;
       FX.ring(G.cx, g.cy, '#ffd86a', g.u * 0.9, 1.3); FX.ring(G.cx, g.cy, '#ffffff', g.u * 0.5, 0.9); FX.spark(G.cx, g.cy, 110, '#ffd86a', 640); FX.rain(G.w, 70); FX.coins(G.cx, g.cy, 60, 1000, 160);
       await G.sleep(0.8);
       await settle(S, sp, bet);
@@ -1518,7 +1518,7 @@
         Sfx.sparkle(); FX.ring(cx, cy, '#6fd0ff', r.s * 2.4, 0.9); FX.spark(cx, cy, 22, '#9fdcff', 300); addFloat('×' + st.v, cx, cy - r.s * 0.6, '#cfe6ff', clamp(g.s * 0.36, 18, 34));
         await raiseTide(st.tide, quick() ? 0.15 : 0.55);
       } else if (t === 'eclipse') {
-        Sfx.thud(); Sfx.lightning(); eclipse = 1.2; shake = 0.7; FX.shake(14, 0.6); FX.flash(0.4, '#ffd86a'); FX.ring(cx, cy, '#ffd86a', r.s * 3, 1.0); FX.spark(cx, cy, 30, '#ffe08a', 380);
+        Sfx.thud(); Sfx.thunder(); eclipse = 1.2; shake = 0.7; FX.shake(14, 0.6); FX.flash(0.4, '#ffd86a'); FX.ring(cx, cy, '#ffd86a', r.s * 3, 1.0); FX.spark(cx, cy, 30, '#ffe08a', 380);
         addFloat('×' + st.v, cx, cy - r.s * 0.6, '#ffe08a', clamp(g.s * 0.38, 18, 36));
         bump(S, st.pool * B);
       } else {

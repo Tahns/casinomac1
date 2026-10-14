@@ -234,7 +234,7 @@
     shield: function () { tone(520, 0.35, 'sine', 0.08, 0, 1040, true); bell(1046, 0.7, 0.08, 0.1, true); bell(1568, 0.8, 0.06, 0.22, true); },
     sealShut: function () { tone(120, 0.9, 'sine', 0.22, 0, 46, true); noise(0.8, 0.14, 0, 900, 'lowpass', 140); noise(0.25, 0.1, 0.55, 1600, 'bandpass', 600, 1.5); boom(0.32, 0.5); bell(SCALE[0] * 2, 1.0, 0.05, 0.62, true); },
     keyGet: function () { [0, 2, 4].forEach(function (k, i) { bell(SCALE[k] * 8, 0.6, 0.07, i * 0.07, true, 3); }); noise(0.06, 0.05, 0, 5200, 'highpass'); },
-    lightning: function () { noise(0.3, 0.22, 0, 1800, 'bandpass', 500, 0.8); tone(900, 0.2, 'triangle', 0.06, 0, 150); boom(0.3, 0.03); },
+    thunder: function () { noise(0.3, 0.22, 0, 1800, 'bandpass', 500, 0.8); tone(900, 0.2, 'triangle', 0.06, 0, 150); boom(0.3, 0.03); },
     // jingle de gain : plus le multiplicateur est grand, plus la phrase est longue, riche et brillante
     chime: function (mult) {
       mult = Math.max(0, +mult || 0);
