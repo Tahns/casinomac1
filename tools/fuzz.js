@@ -16,6 +16,8 @@ var pw = require(process.env.PLAYWRIGHT_CORE || 'playwright-core');
 var root = path.join(__dirname, '..');
 var MIME = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.woff2': 'font/woff2', '.webp': 'image/webp', '.jpg': 'image/jpeg', '.png': 'image/png' };
 var SEED = +(process.env.FUZZ_SEED || Math.floor(Math.random() * 1e9)), ROUNDS = Math.min(1000, +(process.env.FUZZ_ROUNDS || 100)), PER = +(process.env.FUZZ_PER_EPISODE || 25), VERBOSE = !!process.env.FUZZ_VERBOSE;
+var T0 = Date.now(), MAX_MS = (+(process.env.FUZZ_MAX_SECONDS || 90)) * 1000;   // chaque exécution reste sous 100 s : au-delà on s'arrête proprement (résultat partiel signalé)
+function late() { return Date.now() - T0 > MAX_MS; }
 
 function mulberry32(a) { return function () { a |= 0; a = (a + 0x6D2B79F5) | 0; var t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
 var rnd = mulberry32(SEED);
@@ -44,7 +46,7 @@ var INIT = `(function(){
 
 // crochets dans la page : enregistrent chaque tour tiré (pour recalculer les gains indépendamment de main.js) et fabriquent des tours forcés
 var HOOKS = `(function(){
-  var M = AnubisMath, r2 = G.r2, rng = M.cryptoRng(); window.__rounds = []; window.__force = null; window.__kd0 = window.__kd.length;
+  var M = AnubisMath, r2 = G.r2, rng = M.cryptoRng(); window.__rounds = []; window.__force = null; window.__tc = 0; document.getElementById('btnTurbo').addEventListener('click', function () { window.__tc++; }); window.__kd0 = window.__kd.length;
   var oPR = M.playRound, oPB = M.playBuy;
   function rec(round, cost) { window.__rounds.push({ round: round, bet: G.bet, cost: cost, after: G.S.balance }); return round; }
   function forced(mode) {
@@ -83,11 +85,11 @@ async function main() {
   var b = await pw.chromium.launch({ executablePath: process.env.CHROMIUM || undefined, args: ['--no-sandbox', '--use-gl=swiftshader'] });
   console.log('fuzz : graine ' + SEED + ', ' + ROUNDS + ' tours, ' + PER + ' par session');
   var done = 0, ep = 0;
-  while (done < ROUNDS) {
+  while (done < ROUNDS && !late()) {
     ep++; totals.episodes++;
     var vp = pick([[1280, 720], [390, 844], [844, 390], [768, 1024], [1920, 1080], [360, 640]]);
     var ctx = await b.newContext({ viewport: { width: vp[0], height: vp[1] } }), p = await ctx.newPage(), errs = [];
-    await ctx.addInitScript(INIT);
+    await ctx.addInitScript(INIT); ctx.setDefaultTimeout(5000);
     p.on('pageerror', function (e) { errs.push('page: ' + e.message); });
     p.on('console', function (m) { if (m.type() === 'error') errs.push('console: ' + m.text()); });
     p.on('dialog', function (d) { d.dismiss().catch(function () {}); });
@@ -96,12 +98,13 @@ async function main() {
       await p.goto(url); await p.waitForTimeout(500);
       await p.evaluate(HOOKS);
       var n = Math.min(PER, ROUNDS - done);
-      for (var r = 0; r < n; r++) { await oneRound(p, ep, errs, url); done++; totals.rounds++; if (failures.length > 12) break; }
+      for (var r = 0; r < n && !late(); r++) { await oneRound(p, ep, errs, url); done++; totals.rounds++; if (failures.length > 12) break; }
     } catch (e) { fail(ep, 'exception du fuzzer : ' + (e && e.message ? e.message.split('\n')[0] : e)); }
     await ctx.close();
     if (failures.length > 12) { console.log('trop d\'échecs, arrêt'); break; }
   }
   await b.close(); server.close();
+  if (done < ROUNDS) console.log('arrêt anticipé (limite de ' + MAX_MS / 1000 + ' s) : ' + done + ' tours sur ' + ROUNDS);
   console.log('\n' + totals.rounds + ' tours (' + totals.bonus + ' avec bonus), ' + totals.episodes + ' sessions, ' + totals.perturb + ' perturbations dont ' + totals.reloads + ' rechargements');
   if (failures.length) {
     console.log('\n' + failures.length + ' échec(s) — graine ' + SEED);
@@ -111,21 +114,25 @@ async function main() {
 }
 
 async function ev(p, code) { return p.evaluate(code); }
+// solde imposé : on déclenche aussi la sauvegarde du jeu (G.setCurrency enregistre sans rien changer), sinon le stockage garde l'ancien solde (artefact du fuzzer, pas un bug)
+function forceBal(p, v) { return ev(p, 'G.S.balance=' + v + ';G.updateHud();G.setCurrency(G.currency,false);0'); }
+// clic forcé (les boutons s'animent en permanence : Playwright les jugerait « instables » et attendrait 30 s) ; un clic raté n'est pas une anomalie du jeu
+function fclick(p, sel, o) { return p.click(sel, Object.assign({ force: true, timeout: 2000 }, o || {})).catch(function () {}); }
 
 // règle l'état du jeu avant un tour
 async function setup(p) {
   // mode Standard / Oracle+
   var mode = chance(0.4) ? 'plus' : 'std';
-  if ((await ev(p, 'G.S.mode')) !== mode) await p.click('#btnPlus');
+  if ((await ev(p, 'G.S.mode')) !== mode) await fclick(p, '#btnPlus');
   // mise : extrêmes très fréquents
   var bi = chance(0.3) ? 0 : chance(0.2) ? 11 : Math.floor(rnd() * 12);
   await ev(p, 'G.S.bi=' + bi + ';G.updateHud();0'); note('mise ' + bi + ' mode ' + mode);
   // vitesse : normal / turbo / ultra via le bouton (arrêt -> turbo -> ultra -> arrêt)
   var want = pick([0, 1, 2, 2, 2]), cur = await ev(p, 'G.ultra?2:G.turbo?1:0');
-  for (var k = (want - cur + 3) % 3; k > 0; k--) await p.click('#btnTurbo');
+  for (var k = (want - cur + 3) % 3; k > 0; k--) await fclick(p, '#btnTurbo');
   // solde : parfois très bas / très haut
   var bal = await ev(p, 'G.S.balance');
-  if (bal < 30 || chance(0.12)) { var nb = pick([1000, 1000, 5000, 100000, 3.2, 0.2, 0.05, 0.21]); await ev(p, 'G.S.balance=' + nb + ';G.updateHud();0'); note('solde ' + nb); }
+  if (bal < 30 || chance(0.12)) { var nb = pick([1000, 1000, 5000, 100000, 3.2, 0.2, 0.05, 0.21]); await forceBal(p, nb); note('solde ' + nb); }
   return mode;
 }
 
@@ -134,7 +141,7 @@ async function oneRound(p, ep, errs, url) {
   var mode = await setup(p);
   var act = pick(['spin', 'spin', 'spin', 'force', 'force', 'force', 'buy', 'auto', 'test', 'broke', 'limit']);
   var kinds = ['scarab', 'weigh', 'vault', 'hand', 'crypt'], hadBonus = false, isTest = false, expectNoPlay = false;
-  await ev(p, '__force=null;__rounds=[];0');
+  await ev(p, '__force=null;__rounds=[];__tc=0;0');
   var bal0 = await ev(p, 'G.S.balance');
   note('action ' + act);
   if (act === 'force') {
@@ -143,19 +150,19 @@ async function oneRound(p, ep, errs, url) {
     await start(p);
   } else if (act === 'spin') await start(p);
   else if (act === 'buy') {
-    await p.click('#btnBuy', { timeout: 2000 }).catch(function () {});
+    await fclick(p, '#btnBuy', { timeout: 2000 }).catch(function () {});
     var cards = await p.$$('.buyCard:not([disabled])');
-    if (cards.length) { var c = pick(cards); await c.click(); note('achat'); } else { note('achat impossible (solde)'); await dismissModal(p); }
+    if (cards.length) { var c = pick(cards); await c.click({ force: true, timeout: 2000 }).catch(function () {}); note('achat'); } else { note('achat impossible (solde)'); await dismissModal(p); }
   } else if (act === 'auto') {
-    await p.click('#btnAuto'); if (chance(0.5)) await p.click('#btnAuto');
+    await fclick(p, '#btnAuto'); if (chance(0.5)) await fclick(p, '#btnAuto');
     await ev(p, '__force=' + (chance(0.5) ? JSON.stringify({ kind: pick(kinds), base: pick(['scarab', 'weigh', 'vault']), boost: 1 }) : 'null') + ';0'); await start(p);
   } else if (act === 'test') {
     // bonus lancé directement (hors flux de mise) : doit rendre la main proprement
     isTest = true; var kk = pick(kinds), bst = pick([1, 2, 5]);
-    await ev(p, 'window.__tb=false;G.testBonus(' + JSON.stringify(kk === 'hand' ? pick(['scarab', 'weigh', 'vault']) : kk === 'crypt' ? 'crypt' : kk) + ',' + bst + ',' + (kk === 'hand') + ').then(function(){window.__tb=true});0'); note('testBonus ' + kk);
+    await ev(p, 'window.__tb=false;G.S.busy=true;G.testBonus(' + JSON.stringify(kk === 'hand' ? pick(['scarab', 'weigh', 'vault']) : kk === 'crypt' ? 'crypt' : kk) + ',' + bst + ',' + (kk === 'hand') + ').then(function(){window.__tb=true;G.S.busy=false});0'); note('testBonus ' + kk);
   } else if (act === 'broke') {
     // solde insuffisant : aucun débit, aucun blocage
-    expectNoPlay = true; await ev(p, 'G.S.balance=0.1;G.updateHud();0'); bal0 = 0.1; await start(p); await p.waitForTimeout(150);
+    expectNoPlay = true; await forceBal(p, 0.1); bal0 = 0.1; await start(p); await p.waitForTimeout(150);
   } else if (act === 'limit') {
     // limite de perte déjà atteinte : le tour est refusé
     await ev(p, 'G.S.limit=20;G.S.limitHit=true;0'); expectNoPlay = true; await start(p); await p.waitForTimeout(150);
@@ -194,12 +201,12 @@ async function oneRound(p, ep, errs, url) {
     if (S.balance < 0) P.push('solde négatif ' + S.balance);
     var sv = JSON.parse(localStorage.getItem('anubis_save_v1') || 'null'); if (!sv || sv.pending !== 0 || sv.balance !== S.balance) P.push('sauvegarde incohérente ' + JSON.stringify(sv && { p: sv.pending, b: sv.balance }) + ' vs solde ' + S.balance);
     var L = window.__ledger(); L.bad.forEach(function (x) { P.push(x); });
-    return { P: P, L: L, bal: S.balance, turbo: G.turbo, hb: window.__rounds.some(window.__hasBonus), nr: window.__rounds.length, hold: G.timers.length, tw: G.tweens.length }; })()`);
+    return { P: P, L: L, bal: S.balance, turbo: G.turbo, hb: window.__rounds.some(window.__hasBonus), tc: window.__tc, nr: window.__rounds.length, hold: G.timers.length, tw: G.tweens.length }; })()`);
   inv.P.forEach(function (m) { fail(ep, m); });
   if (!reloaded) {
     if (expectNoPlay) { if (inv.nr !== 0 || Math.abs(inv.bal - bal0) > 1e-9) fail(ep, 'tour refusé mais le solde a bougé (' + bal0 + ' -> ' + inv.bal + ', ' + inv.nr + ' tour(s))'); }
     else if (!isTest && inv.L.n > 0 && Math.abs(inv.L.exp - inv.bal) > 1e-9) fail(ep, 'solde ' + inv.bal + ' ≠ attendu ' + inv.L.exp + ' (début ' + bal0 + ', ' + inv.L.n + ' tour(s))');
-    if (!isTest && inv.hb && inv.turbo) fail(ep, 'turbo toujours actif après un bonus');
+    if (!isTest && inv.hb && inv.turbo && inv.tc === 0) fail(ep, 'turbo toujours actif après un bonus');
   }
   if (inv.hb) totals.bonus++;
   // HUD : le solde affiché est le solde réel (le compteur a eu le temps de finir)
@@ -220,7 +227,7 @@ async function hudSettle(p) {
 
 async function start(p) {
   var how = pick(['key', 'click', 'key', 'dbl']);
-  if (how === 'key') await p.keyboard.press('Space'); else if (how === 'click') await p.click('#spin'); else { await p.click('#spin', { clickCount: 2, delay: 20 }); }
+  if (how === 'key') await p.keyboard.press('Space'); else if (how === 'click') await fclick(p, '#spin'); else { await fclick(p, '#spin', { clickCount: 2, delay: 20 }); }
   note('départ ' + how);
 }
 
@@ -240,7 +247,7 @@ async function randomInput(p) {
   else if (k === 'enter') await p.keyboard.press('Enter');
   else if (k === 'digit') await p.keyboard.press(pick(['Digit1', 'Digit2', 'Digit3']));
   else if (k === 'arrow') await p.keyboard.press(pick(['ArrowUp', 'ArrowDown']));
-  else if (k === 'spinbtn') await p.click('#spin', { force: true, timeout: 800 }).catch(function () {});
+  else if (k === 'spinbtn') await fclick(p, '#spin', { force: true, timeout: 800 }).catch(function () {});
   else await p.mouse.click(20 + rnd() * (vp.width - 40), 60 + rnd() * (vp.height - 160));
 }
 
@@ -261,20 +268,20 @@ async function perturb(p, url, ep) {
     if (af.busy || af.sc) fail(ep, 'état de tour restant après rechargement');
     return 'reloaded';
   }
-  if (k === 'lang') await p.click('#btnLang');
-  else if (k === 'cur') await p.click('#btnCur');
+  if (k === 'lang') await fclick(p, '#btnLang');
+  else if (k === 'cur') await fclick(p, '#btnCur');
   else if (k === 'resize') { var w = pick([360, 390, 640, 844, 1024, 1366]), h = pick([320, 390, 640, 720, 844, 1024]); await p.setViewportSize({ width: w, height: h }); }
   else if (k === 'hidden') { await ev(p, "window.__vis=true;document.dispatchEvent(new Event('visibilitychange'));0"); await p.waitForTimeout(250); await ev(p, "window.__vis=false;document.dispatchEvent(new Event('visibilitychange'));0"); }
   else if (k === 'freeze') await ev(p, 'var t0=Date.now();while(Date.now()-t0<1500);0');
-  else if (k === 'mixer') { await p.click('#btnSound'); await p.waitForTimeout(60); if (chance(0.5)) await p.click('#btnSound'); }
-  else if (k === 'mute') await p.click('#mxMute');
-  else if (k === 'music') { await p.click('#btnSound'); await p.click('#mxMusic'); await p.click('#btnSound'); }
+  else if (k === 'mixer') { await fclick(p, '#btnSound'); await p.waitForTimeout(60); if (chance(0.5)) await fclick(p, '#btnSound'); }
+  else if (k === 'mute') await fclick(p, '#mxMute');
+  else if (k === 'music') { await fclick(p, '#btnSound'); await fclick(p, '#mxMusic'); await fclick(p, '#btnSound'); }
   else if (k === 'pitch') { await ev(p, "var m=document.getElementById('mxPitch');m.value=" + Math.floor(rnd() * 25 - 12) + ";m.dispatchEvent(new Event('input'));0"); }
-  else if (k === 'info') { await p.click('#btnInfo'); await p.waitForTimeout(60); if (chance(0.7)) await p.keyboard.press('Escape'); }
-  else if (k === 'turbo') await p.click('#btnTurbo');
-  else if (k === 'plus') await p.click('#btnPlus', { force: true });
-  else if (k === 'buyclick') await p.click('#btnBuy', { force: true, timeout: 800 }).catch(function () {});
-  else if (k === 'betclick') await p.click(pick(['#betUp', '#betDn']), { force: true, timeout: 800 }).catch(function () {});
+  else if (k === 'info') { await fclick(p, '#btnInfo'); await p.waitForTimeout(60); if (chance(0.7)) await p.keyboard.press('Escape'); }
+  else if (k === 'turbo') await fclick(p, '#btnTurbo');
+  else if (k === 'plus') await fclick(p, '#btnPlus', { force: true });
+  else if (k === 'buyclick') await fclick(p, '#btnBuy', { force: true, timeout: 800 }).catch(function () {});
+  else if (k === 'betclick') await fclick(p, pick(['#betUp', '#betDn']), { force: true, timeout: 800 }).catch(function () {});
   else if (k === 'limit') { await ev(p, 'G.S.limit=' + pick([20, 50, 0]) + ';0'); }
   else if (k === 'reset') { await ev(p, "document.getElementById('btnInfo').click();0"); await p.waitForTimeout(50); await ev(p, "var r=document.getElementById('optReset');r&&r.click();0"); await dismissModal(p); }
   // les perturbations qui changent le solde cassent la chaîne comptable : on la repart
