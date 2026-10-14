@@ -66,48 +66,21 @@ garde-fou ; le vérificateur de `verify.py` contrôle toujours le multiple de 10
 
 ## Format des events
 
-Un book : `{ "id", "payoutMultiplier", "events": [...], "criteria", "baseGameWins", "freeGameWins" }` (les trois premiers champs sont les seuls exigés par le RGS ;
-les autres sont ceux du SDK). Chaque event a `seq` (compteur ; le SDK l'appelle `index`, mais ici `wheelStop.index` est la case de la roue, comme dans
-`tools/stake-export.js`, que lit déjà `js/rgs.js`) et `type`. **Montants : entiers à l'échelle 100**, sauf mention. Ordre d'un tour :
+**Format v2 définitif : la référence est l'en-tête de `tools/stake-export.js`** (champs, ordre, règles, et `verify(book)` qui recalcule tout). `game_events.py` l'écrit
+à l'identique : chaque event a `seq` (compteur) et `type` ; `roundStart { v:2, mode, cost, maxWin, cells:64 }` ; `oracle` scellé, puis `wheelStop { index, kind, boost }` et
+`oracleReveal` ; `bonusStart { kind, bonus, secret, upgraded, bought }` ; `scarabDrop`, `weighReveal { win, variants[2] }`, `vaultPick` / `vaultEnd`, `furySpin` / `furyEnd`
+(3 couleurs, champ `color`, bandes imbriquées `nested`), `sanctuaryTablet { tablet_type, value (tab : x100), tideBefore, tide, offeringBefore, gain, offering }` / `sanctuaryEnd` ;
+`spinWin` ; `finalWin { amount, exact, capped }`. Montants : entiers x100. Les books produits avec `--step 1` sont relus sans écart par `RGS.bookToRound` (js/rgs.js) et par
+`verify()` du JS (600 books contrôlés). Avec `--step 10`, `finalWin.amount` est arrondi : le front crédite `payoutMultiplier` et signale l'écart tant que les valeurs de gain
+ne sont pas des multiples de 0,1.
 
-| type | champs principaux | rôle |
-|---|---|---|
-| `roundStart` | `mode` (`std`/`plus`/`buy`), `modeName`, `cost`, `scale`, `wincap` | début |
-| `oracle` | `spin`, `kind`, `boost`, `sealed: true`, `revealOn: "wheelStop"` | **Oracle scellé** : la bénédiction est tirée avant la roue mais NE DOIT PAS être montrée avant l'arrêt de la roue ; elle s'applique si `kind` = la case d'arrêt |
-| `wheelStop` | `spin`, `index` (case 0-63), `kind`, `boost`, `respin` | la roue s'arrête ; `respin` = Ankh (relance gratuite, tour suivant) |
-| `bonusStart` | `spin`, `bonus` (`scarab`/`weigh`/`vault`/`hand`/`crypt`), `name`, `secret`, `bought`, `upgraded`, `wheelKind` | `hand` = Fureur d'Anubis, `crypt` = Sanctuaire des Marées (bonus secret) |
-| `profileChoice` | `binding: false`, `profile: "std"` | le book joue le profil Équilibré (voir ci-dessous) |
-| Scarabées : `scarabDrop` ×3 | `ball`, `path` (8 × 0/1), `slot` (0-8), `win` | cascade de chevilles ; les 3 gains s'additionnent |
-| Pesée : `weighReveal` | `mults [joueur, autre]`, `playerMult`, `playerWins`, `win`, `bookPick`, `plates {feather, heart}` | voir « Choix du joueur » |
-| Trésor : `vaultStart`, `vaultPick` ×k, `vaultEnd` | `token` (entier = pièces, ou `"scepter"` ×2, `"key"` clé d'or +2 coffres, `"seal"` sceau), `chestsLeft`, `runningTotal` ; `ended` (`seal`/`cleared`), `finishBonus` (+5 × si chambre vidée), `win` | jamais de sceau sur les 2 premiers coffres ; 7 coffres au départ, 10 au plus |
-| Fureur : `furyColor`, `furySpin` ×k, `furyEnd` | `segment` (0-23), `kind` (`up` DOUBLE de sa couleur, `wrong` DOUBLE d'une autre, `num`, `band`), `tier` (palier ×1/2/4/8/16), `final`, `doubleColour` (0 = la couleur choisie, 1 et 2), `number`, `band`, `bandMult` ; événements du bonus de la bande avec `nested: "<bonus>"` | gain = nombre × palier ; `wrong` = 3 × palier ; bande = gain du bonus × `bandMult` × palier ; plafonné à 25 000 × |
-| Sanctuaire : `sanctuaryTablet` ×9, `sanctuaryEnd` | `tablet_type` (`dust`/`tab`/`tide`/`eclipse`), `value` (`tab` : échelle 100 ; `tide`, `eclipse` : facteur), `tideBefore`, `offering`, `tide` ; `win` | 9 tablettes, plancher ×1 |
-| `bonusEnd` | `spin`, `bonus`, `win` | gain du bonus avant boost |
-| `spinWin` | `spin`, `win` (= base × boost), `base`, `boost`, `respin` | gain du tour de roue |
-| `finalWin` | `amount` (= `payoutMultiplier`), `exact`, `capped` | fin |
+## Choix du joueur : variantes de même total dans les books
 
-Comment le front lit un book : il parcourt `events` dans l'ordre, **sans aucun tirage** ; il montre l'Oracle scellé, laisse la roue s'arrêter sur `wheelStop.index`,
-révèle l'Oracle, joue le bonus d'après ses événements, affiche `spinWin`, enchaîne sur le tour suivant tant que `respin` est vrai, puis affiche `finalWin.amount`
-(÷ 100, × la mise) et le déclare au RGS. Les achats (`buy_*`) n'ont ni `oracle` ni `wheelStop`. `js/rgs.js` (`bookToRound`) lit déjà les noms et champs
-communs ; les noms qui changent par rapport à `tools/stake-export.js` sont : `seq` (nouveau), `weighReveal.plates`/`bookPick` (nouveaux), `furySpin.doubleColour`
-(nouveau). **À corriger côté front** : la branche `crypt` de `bookToRound` lit encore `cryptDrop` (`block_type`, `column`), un format de l'ancienne « Crypte » ;
-le Sanctuaire des Marées s'écrit `sanctuaryTablet` (`tablet_type`, `value` ; valeur d'une tablette `tab` et `offering` à l'échelle 100). Corrigé : `RGS.bookToRound` lit désormais `sanctuaryTablet`, et `tools/stake-export.js` écrit les mêmes unités que ce dossier.
+Un seul `payoutMultiplier` est payé : **toutes les variantes sélectionnables d'un book paient le même total** ; le choix du joueur ne fait que choisir celle qui s'affiche.
 
-## Choix du joueur : pré-résolus dans les books
-
-Un book est un résultat figé : **aucun choix du joueur ne peut changer son gain**. Chaque choix est donc réglé comme suit (tous les choix existants étaient déjà
-neutres en espérance ; ils le restent ; ce qui disparaît, c'est la possibilité d'en tirer un autre gain) :
-
-- **Fureur d'Anubis (couleur)** : les 3 couleurs ont exactement la même loi (2 DOUBLE chacune ; test `test_les_trois_couleurs_de_la_fureur_sont_symetriques`). Le moteur
-  tire les trois scripts (comme le JS, pour garder la parité des tirages) mais **le book n'écrit que celui de la couleur 0 = « la couleur choisie »**. Le front fait pivoter
-  les noms : un segment DOUBLE de couleur relative `d` s'affiche dans la couleur `(d + couleur choisie) mod 3`. Écrire les trois résultats dans le book serait faux : un seul
-  `payoutMultiplier` est payé.
-- **Pesée (plume ou cœur)** : le book décrit les deux plateaux tels que tirés (`plates`), et fige le plateau du joueur : `playerMult`, `playerWins`, `win`.
-  Le plateau le plus lourd est tiré 50/50, indépendamment des valeurs : gagner ou perdre ne dépend donc pas du plateau touché. Si le joueur touche l'autre plateau
-  que `bookPick`, le front **permute** les deux plateaux (valeurs et « plus lourd ») : même loi, même gain. Dans une bande de la Fureur, `bookPick` est tiré (comme en JS).
-- **Trésor, Sanctuaire** : tout est tiré d'avance (`vaultPick` dans l'ordre, 9 tablettes) ; la tuile ou la tablette touchée est neutre, l'ordre choisi ne change aucune probabilité.
-- **Profil Prudent / Équilibré / Audacieux** : les tables diffèrent (seules les espérances sont égales), donc ce n'est PAS un choix neutre. Le book joue l'Équilibré
-  (`profileChoice.binding = false`). Garder le choix exigerait un mode Stake par profil (même coût, même RTP) : non fait.
+- **Fureur d'Anubis (couleur)** : le book écrit les 3 variantes (`color` 0, 1, 2). La variante c est celle de la couleur 0 dont les cases DOUBLE sont remplacées par celles de la couleur c (mêmes rôles, paliers, nombres, bandes) : `game_events.fury_variant`.
+- **Pesée (plume ou cœur)** : `weighReveal.variants[0]` (plume) et `[1]` (cœur) ont la même valeur du joueur, le même résultat et le même `win`.
+- **Trésor, Sanctuaire** : tout est tiré d'avance ; la tuile ou la tablette touchée est neutre.
 
 ## Critères de distribution (wincap, 0, bonus, basegame)
 

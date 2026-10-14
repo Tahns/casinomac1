@@ -1,10 +1,13 @@
 // node tools/rgs-test.js — tests de bout en bout du client RGS (js/rgs.js) contre le faux RGS tools/mock-rgs.js (Playwright).
 // Mêmes variables d'environnement que e2e.js (PLAYWRIGHT_CORE, CHROMIUM). Couvre les guidelines Stake Engine
-// [181] [183] [274] [242] [187] [221] [222] [31] [104]. Au plus quelques dizaines de tours au total (jamais plus de 1000).
+// [181] [183] [274] [242] [187] [221] [222] [31] [104] et le FORMAT DE BOOK v2 (en-tête de tools/stake-export.js) : 6 modes × 10 tours, choix de couleur
+// de la Fureur et plume / cœur de la Pesée dans le même book, Sanctuaire des Marées, Oracle scellé révélé, gain max 25 000×, écart book / RGS,
+// erreurs de session (ERR_IS, ERR_ATE, ERR_LOC, ERR_MAINTENANCE), mode social et devise du RGS. Au plus ~150 tours au total (jamais plus de 1000).
+// SHOTS=dossier : captures des écrans d'erreur (390×844 et 1280×720).
 var http = require('http'), fs = require('fs'), path = require('path');
 var pw = require(process.env.PLAYWRIGHT_CORE || 'playwright-core');
 var mockRgs = require('./mock-rgs');
-var R = require('../js/rgs.js'), M = require('../js/math.js');
+var R = require('../js/rgs.js'), M = require('../js/math.js'), E = require('./stake-export');
 var root = path.join(__dirname, '..'), fails = 0;
 var MIME = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.woff2': 'font/woff2' };
 function ok(c, m) { if (!c) { fails++; console.log('ÉCHEC  ' + m); } else console.log('ok     ' + m); }
@@ -34,6 +37,18 @@ var FINISH = `(async()=>{ G.turbo=true; G.speed=1.6; var g=0; while(G.S.busy&&g<
     if (Math.abs(r.total * 100 - bk.payoutMultiplier) > 1e-6) bad++;
   }); });
   ok(bad === 0 && nb <= 1000, 'adaptateur : ' + nb + ' books des 6 modes -> gains identiques au payoutMultiplier (écarts : ' + bad + ')');
+  var vbad = 0, ibad = 0, variants = 0;
+  Object.keys(probe.pool).forEach(function (mode) { probe.pool[mode].forEach(function (bk) {
+    if (E.verify(bk).length) vbad++;
+    if (R.bookToRound(bk.events, M).issues.length) ibad++;
+    bk.events.forEach(function (e) { if (e.type === 'weighReveal' || e.type === 'furyEnd') variants++; });
+  }); });
+  ok(vbad === 0 && ibad === 0 && variants > 0, 'format v2 : verify() (règles recalculées sans le front) et adaptateur sans écart sur ' + nb + ' books (' + variants + ' variantes Pesée / Fureur, mêmes totaux)');
+  var v1 = false; try { R.bookToRound([{ type: 'roundStart', mode: 'std', cost: 100 }], M); } catch (e) { v1 = e.code === 'ERR_BOOK'; }
+  ok(v1, 'un book qui n\'est pas en v2 est refusé (ERR_BOOK)');
+  var wb = probe.pool.buy_weigh.filter(function (b) { return b.payoutMultiplier > 0; })[0], wr = R.bookToRound(wb.events, M).spins[0].bonus, w0 = wr.total;
+  wr.pick = 1; var w1 = wr.mults.slice(); wr.pick = 0;
+  ok(wr.total === w0 && wr.fixed === w0 && wr.mults[wr.pick] === wb.events.filter(function (e) { return e.type === 'weighReveal'; })[0].variants[0].playerMult / 100 && w1[1] === wr.mults[0], 'Pesée : plume et cœur portent la même valeur du joueur, gain figé du book (' + w0 + '×)');
 
   await new Promise(function (r) { server.listen(0, r); });
   var gurl = 'http://localhost:' + server.address().port + '/index.html';
@@ -218,6 +233,161 @@ var FINISH = `(async()=>{ G.turbo=true; G.speed=1.6; var g=0; while(G.S.busy&&g<
   ok(badMode.length === 0 && plays(mm).length === seq.length, seq.length + ' tours RGS (Standard, Oracle+, 4 achats) rejoués sans blocage' + (badMode.length ? ' : ' + badMode.join(',') : ''));
   ok(Math.abs((await s.p.evaluate('G.S.balance')) - mm.state.balance / MICRO) < 1e-6, 'solde final du jeu = solde du serveur (' + mm.state.balance / MICRO + ')');
   ok(mm.state.active === null, 'aucun round laissé ouvert côté serveur');
+  await done(s);
+
+  // ---- 6 modes × 10 tours : chaque book v2 rejoué, solde final = solde RGS ----
+  var ALL = [[null, 'std'], ['plus', 'plus'], ['scarab', 'buy_scarab'], ['weigh', 'buy_weigh'], ['vault', 'buy_vault'], ['hand', 'buy_fury']];
+  for (var mi = 0; mi < ALL.length; mi++) {
+    var m6 = mockRgs.create({ seed: 100 + mi, balance: 100000 * MICRO }); s = await open(m6);
+    var blocked6 = 0, over = [];
+    for (i = 0; i < 10; i++) {
+      var r6 = await s.p.evaluate('(async()=>{ G.turbo=true; G.speed=1.6; G.S.mode=' + JSON.stringify(ALL[mi][0] === null || ALL[mi][0] === 'plus' ? (ALL[mi][0] || 'std') : 'std') + '; G.play(' + (ALL[mi][0] && ALL[mi][0] !== 'plus' ? JSON.stringify(ALL[mi][0]) : 'null') + '); var g=0; await new Promise(function(r){setTimeout(r,60)}); ' +
+        'while(G.S.busy&&g<8000){ await G.advance(0.25); g++; if(G.winOv) G.skipWinOv(); if(!document.getElementById("modal").hidden){ var c=document.getElementById("modalClose"); if(c) c.click(); } if(g%10===0) await new Promise(function(r){setTimeout(r,6)}); } return !G.S.busy && !G.scene; })()');
+      if (!r6) blocked6++;
+      await s.p.waitForTimeout(40);
+    }
+    var sums = m6.state.log.filter(function (l) { return l.path === '/wallet/play'; }).length;
+    ok(blocked6 === 0 && sums === 10, 'mode ' + ALL[mi][1] + ' : 10 tours rejoués sans blocage (' + sums + ' /wallet/play)');
+    ok(Math.abs((await s.p.evaluate('G.S.balance')) - m6.state.balance / MICRO) < 1e-6 && m6.state.active === null, 'mode ' + ALL[mi][1] + ' : solde final du jeu = solde du RGS (' + m6.state.balance / MICRO + ') et aucun round ouvert');
+    await done(s);
+  }
+
+  // pilote interactif : avance le temps du jeu par pas, appuie sur les touches des choix quand leur écran est là, relève l'Oracle affiché
+  async function drive(p, o) {
+    o = o || {};
+    var seen = { titles: {}, oracle: [] }, g = 0, T = await p.evaluate('({c:I18N.t().handColorTitle,w:I18N.t().weighIntro})');
+    while (g < 9000) {
+      var st = await p.evaluate('(async()=>{ await G.advance(0.25); if(G.winOv) G.skipWinOv(); var o=document.getElementById("oracle"); return { busy:G.S.busy, title:G.scene&&G.scene.title||"", oracle:o&&!o.hidden?document.getElementById("oracleText").textContent:"" }; })()');
+      g++;
+      if (st.oracle && seen.oracle[seen.oracle.length - 1] !== st.oracle) seen.oracle.push(st.oracle);
+      if (st.title) seen.titles[st.title] = (seen.titles[st.title] || 0) + 1;
+      if (st.title === T.c && o.color != null) await p.keyboard.press('Digit' + (o.color + 1));
+      if (st.title === T.w && o.pick != null) await p.keyboard.press('Digit' + (o.pick + 1));
+      if (!st.busy) break;
+      if (g % 8 === 0) await p.waitForTimeout(4);
+    }
+    seen.T = T; seen.done = g < 9000; return seen;
+  }
+  function spinOf(kind, o) { return Object.assign({ oracle: null, index: -1, kind: kind, boost: 1, bonus: null, base: 0, pay: 0 }, o); }
+  var wallet = function (mock) { return mock.state.balance / MICRO; };
+
+  // ---- Fureur (3 couleurs) + Pesée imbriquée (plume / cœur) dans le MÊME book : de vrais choix, gain = RGS ----
+  var hrng = M.mulberry32(4242), hd = null, tries = 0;
+  while (tries++ < 400) { hd = M._bonus.hand(hrng, 0, [12]); if (hd.total > 0) break; }   // 12 = bande « Pesée ×6 » : gain > 0 (le joueur gagne la Pesée)
+  var hsp = spinOf('hand', { bonus: hd, upgraded: true, base: hd.total, pay: hd.total, profile: 'turq' });
+  var hround = { spins: [hsp], total: Math.min(hsp.pay, M.MAX_WIN), capped: hsp.pay > M.MAX_WIN, cost: M.BUY.hand.price, mode: 'buy' };
+  var hbook = E.makeBook(1, hround), wev = hbook.events.filter(function (e) { return e.type === 'weighReveal' && e.color === 1; })[0];
+  ok(E.verify(hbook).length === 0 && hd.total > 0 && !!wev, 'book Fureur → bande Pesée ×6 fabriqué (' + hbook.payoutMultiplier / 100 + '×) : 3 couleurs et 2 variantes plume / cœur, mêmes totaux');
+  var mh = mockRgs.create({ seed: 31, balance: 1000 * MICRO }); mh.queueBook('buy_fury', hbook);
+  s = await open(mh, '');
+  await s.p.evaluate("(function(){ var o=G.runBonus; G.__sps=[]; G.runBonus=function(sp,b){ G.__sps.push(sp); return o.call(G,sp,b); }; })()");
+  await clk(s.p, '#btnBuy'); await s.p.waitForTimeout(250);
+  await s.p.evaluate("document.querySelectorAll('.buyCard')[3].click()"); await s.p.waitForTimeout(200);
+  await clk(s.p, '#buyYes'); await s.p.waitForFunction('G.S.busy', null, { timeout: 5000 });
+  var dh = await drive(s.p, { color: 1, pick: 1 });   // couleur n°2 (or), cœur
+  var hv = await s.p.evaluate('(function(){ var sp=G.__sps[0], b=sp.bonus, nb=b.spins.filter(function(x){return x.kind==="band"})[0]; return { profile:sp.profile, first:b.spins[0].idx, colour:b.colour, total:b.total, pay:sp.pay, nbPick:nb&&nb.bonus.pick, nbMults:nb&&nb.bonus.mults, nbTotal:nb&&nb.bonus.total }; })()');
+  var colEv = hbook.events.filter(function (e) { return e.type === 'furySpin' && e.color === 1 && e.spin === 1; })[0];
+  ok(dh.done && dh.titles && dh.titles[dh.T.c] > 0 && dh.titles[dh.T.w] > 0, 'Fureur : l\'écran de choix de la couleur ET celui de la Pesée sont passés par le joueur (mode RGS, rien de cosmétique)');
+  ok(hv.profile === 'gold' && hv.colour === 1 && hv.first === colEv.segment, 'Fureur : la touche 2 a joué la variante or du book (case ' + hv.first + ' = furySpin de la couleur 1)');
+  ok(hv.nbPick === 1 && hv.nbMults[1] === wev.variants[1].playerMult / 100 && Math.abs(hv.nbTotal - wev.win / 100) < 1e-9, 'Pesée imbriquée : le cœur a joué la variante « cœur » du book (valeur du joueur ' + hv.nbMults[1] + '×, gain figé ' + hv.nbTotal + '×)');
+  ok(Math.abs((await s.p.evaluate('G.S.lastWin')) - hbook.payoutMultiplier / 100) < 1e-9 && Math.abs((await s.p.evaluate('G.S.balance')) - wallet(mh)) < 1e-6 && await s.p.evaluate("document.getElementById('modal').hidden"), 'Fureur : gain affiché = payoutMultiplier du RGS (' + hbook.payoutMultiplier / 100 + '×), solde = solde RGS, aucune erreur de cohérence');
+  await done(s);
+
+  // ---- Pesée seule (achat) : plume puis cœur dans deux tours, même gain ----
+  var wrng = M.mulberry32(99), wd = null; tries = 0;
+  while (tries++ < 400) { wd = M._bonus.weigh(wrng, 'std'); if (wd.heavy === 0 && wd.mults[0] > 1) break; }
+  var wround = { spins: [spinOf('weigh', { bonus: wd, base: wd.total, pay: wd.total })], total: wd.total, capped: false, cost: M.BUY.weigh.price, mode: 'buy' }, wbook = E.makeBook(1, wround);
+  var mw = mockRgs.create({ seed: 32, balance: 1000 * MICRO }); mw.queueBook('buy_weigh', wbook); mw.queueBook('buy_weigh', wbook);
+  s = await open(mw, '');
+  var wgains = [];
+  for (i = 0; i < 2; i++) {
+    await s.p.evaluate("G.__sps=[]; if(!G.__w){ G.__w=1; var o=G.runBonus; G.runBonus=function(sp,b){ G.__sps.push(sp); return o.call(G,sp,b); }; }");
+    await clk(s.p, '#btnBuy'); await s.p.waitForTimeout(250);
+    await s.p.evaluate("document.querySelectorAll('.buyCard')[2].click()"); await s.p.waitForTimeout(200);
+    await clk(s.p, '#buyYes'); await s.p.waitForFunction('G.S.busy', null, { timeout: 5000 });
+    var dw = await drive(s.p, { pick: i });
+    wgains.push(await s.p.evaluate('({win:G.S.lastWin, pick:G.__sps[0].bonus.pick, m:G.__sps[0].bonus.mults.slice(), h:G.__sps[0].bonus.heavy})'));
+    ok(dw.done && dw.titles[dw.T.w] > 0, 'Pesée tour ' + (i + 1) + ' : choix ' + (i ? 'cœur' : 'plume') + ' fait par le joueur');
+  }
+  ok(wgains[0].pick === 0 && wgains[1].pick === 1 && wgains[0].win === wgains[1].win && Math.abs(wgains[0].win - wbook.payoutMultiplier / 100) < 1e-9 && wgains[0].h === 0 && wgains[1].h === 1, 'Pesée : plume et cœur → plateaux différents mais le même gain (' + wgains[0].win + '×), celui du RGS');
+  ok(Math.abs((await s.p.evaluate('G.S.balance')) - wallet(mw)) < 1e-6, 'Pesée : solde final = solde RGS');
+  await done(s);
+
+  // ---- Oracle scellé (×? puis valeur révélée) + Sanctuaire des Marées dans un book fabriqué ----
+  var vi = M.LAYOUT.indexOf('vault'), crng = M.mulberry32(7);
+  var cb = M._bonus.crypt(crng, [{ t: 'tab', v: 5 }, { t: 'tide', v: 3 }, { t: 'tab', v: 10 }, { t: 'eclipse', v: 2 }, { t: 'tab', v: 2 }]);
+  var csp = spinOf('vault', { oracle: { kind: 'vault', boost: 5 }, index: vi, boost: 5, bonus: cb, secret: true, profile: 'crypt', base: cb.total, pay: cb.total * 5 });
+  var cround = { spins: [csp], total: Math.min(csp.pay, M.MAX_WIN), capped: csp.pay > M.MAX_WIN, cost: 1, mode: 'std' }, cbook = E.makeBook(1, cround);
+  ok(E.verify(cbook).length === 0 && cb.total >= 1, 'book Sanctuaire des Marées + Oracle ×5 sur le Trésor fabriqué (' + cbook.payoutMultiplier / 100 + '×)');
+  var mc = mockRgs.create({ seed: 33, balance: 1000 * MICRO }); mc.queueBook('std', cbook);
+  s = await open(mc, '');
+  await clk(s.p, '#spin'); await s.p.waitForFunction('G.S.busy', null, { timeout: 5000 });
+  var dc = await drive(s.p, {});
+  var sealed = dc.oracle.some(function (t) { return /×\?/.test(t); }), shownV = dc.oracle.some(function (t) { return /×5\b/.test(t); });
+  ok(dc.done && sealed && shownV && dc.oracle.findIndex(function (t) { return /×\?/.test(t); }) < dc.oracle.findIndex(function (t) { return /×5\b/.test(t); }), 'Oracle scellé : la pastille affiche « ×? » avant l\'arrêt puis « ×5 » révélé (' + dc.oracle.join(' | ') + ')');
+  ok(Math.abs((await s.p.evaluate('G.S.lastWin')) - cbook.payoutMultiplier / 100) < 1e-9 && Math.abs((await s.p.evaluate('G.S.balance')) - wallet(mc)) < 1e-6, 'Sanctuaire : gain = RGS (' + cbook.payoutMultiplier / 100 + '×), solde final = solde RGS');
+  await done(s);
+
+  // ---- gain max 25 000× affiché (Sanctuaire plafonné) ----
+  var xb = M._bonus.crypt(M.mulberry32(8), [{ t: 'tide', v: 10 }, { t: 'tide', v: 10 }, { t: 'tide', v: 10 }, { t: 'tide', v: 10 }, { t: 'tab', v: 300 }]);
+  var xsp = spinOf('vault', { index: vi, bonus: xb, secret: true, profile: 'crypt', base: xb.total, pay: xb.total }), xround = { spins: [xsp], total: Math.min(xsp.pay, M.MAX_WIN), capped: xsp.pay > M.MAX_WIN, cost: 1, mode: 'std' };
+  var xbook = E.makeBook(1, xround);
+  ok(xbook.payoutMultiplier === 2500000 && xb.capped && E.verify(xbook).length === 0, 'book au plafond : payoutMultiplier 2 500 000 (25 000×), sanctuaryEnd.capped (offrande ' + xb.pool + '×)');
+  var mx = mockRgs.create({ seed: 34, balance: 1000 * MICRO }); mx.queueBook('std', xbook);
+  s = await open(mx, '');
+  await clk(s.p, '#spin'); await s.p.waitForFunction('G.S.busy', null, { timeout: 5000 });
+  var dx = await drive(s.p, {});
+  await s.p.waitForTimeout(1200);   // le compteur du HUD finit de défiler
+  var xs = await s.p.evaluate("({win:G.S.lastWin, txt:document.getElementById('win').textContent.replace(/\\D/g,''), bal:G.S.balance, modal:document.getElementById('modal').hidden})");
+  ok(dx.done && xs.win === 25000 && /^2500000/.test(xs.txt) && xs.modal, 'gain max : 25 000× affiché dans le HUD (' + xs.txt + '), aucune erreur');
+  ok(Math.abs(xs.bal - wallet(mx)) < 1e-6 && Math.abs(wallet(mx) - (1000 - 1 + 25000)) < 1e-6, 'gain max : solde final = solde RGS (' + wallet(mx) + ')');
+  await done(s);
+
+  // ---- écart book / RGS : erreur affichée, montant du RGS crédité ----
+  var wbk = null;
+  var mt = mockRgs.create({ seed: 35, balance: 1000 * MICRO });
+  mt.pool.std.forEach(function (b) { if (!wbk && b.payoutMultiplier > 0 && b.payoutMultiplier < 2000) wbk = b; });
+  var tamp = { id: 9999, events: wbk.events, payoutMultiplier: wbk.payoutMultiplier + 500 };
+  mt.queueBook('std', tamp);
+  s = await open(mt, '');
+  await clk(s.p, '#spin'); await s.p.waitForFunction('G.S.busy', null, { timeout: 5000 });
+  await s.p.evaluate(FINISH); await s.p.waitForTimeout(300);
+  var tm = await s.p.evaluate("({modal:!document.getElementById('modal').hidden, txt:document.getElementById('modalBody').textContent, win:G.S.lastWin, bal:G.S.balance, sum:I18N.rgs().errSum})");
+  ok(tm.modal && tm.txt.indexOf(tm.sum) >= 0, 'écart somme des événements ≠ payoutMultiplier : message affiché (« ' + tm.sum.slice(0, 50) + '… »)');
+  ok(Math.abs(tm.win - tamp.payoutMultiplier / 100) < 1e-9 && Math.abs(tm.bal - wallet(mt)) < 1e-6, 'écart : le montant du RGS est crédité (' + tm.win + '×), solde = solde RGS');
+  await done(s);
+
+  // ---- écrans d'erreur de session : ERR_IS, ERR_ATE, ERR_LOC, ERR_MAINTENANCE (au lancement et en cours de jeu) ----
+  var codes = [['ERR_IS', 'errIs'], ['ERR_ATE', 'errAte'], ['ERR_LOC', 'errLoc'], ['ERR_MAINTENANCE', 'errMaint']];
+  for (i = 0; i < codes.length; i++) {
+    var me2 = mockRgs.create({ seed: 40 + i }); me2.set({ fail: { '/wallet/authenticate': codes[i][0] } });
+    s = await open(me2, '');
+    var eb = await s.p.evaluate("({vis:!document.getElementById('rgsBlock').hidden, msg:document.getElementById('rgsBlockM').textContent, want:I18N.rgs()['" + codes[i][1] + "'], dis:document.getElementById('spin').disabled, blocked:G.S.blocked, btn:document.getElementById('rgsBlockB').textContent})");
+    ok(eb.vis && eb.dis && eb.blocked && eb.msg === eb.want && eb.msg.length > 15 && eb.btn.length > 0, codes[i][0] + ' à l\'authentification : écran de blocage « ' + eb.msg.slice(0, 48) + '… »');
+    if (process.env.SHOTS && i < 2) {
+      for (var vp = 0; vp < 2; vp++) {
+        var dim = vp ? { width: 390, height: 844 } : { width: 1280, height: 720 };
+        await s.p.setViewportSize(dim); await s.p.waitForTimeout(250);
+        await s.p.screenshot({ path: path.join(process.env.SHOTS, 'rgs-' + codes[i][0] + '-' + dim.width + 'x' + dim.height + '.png') });
+      }
+    }
+    await done(s);
+  }
+  var mp = mockRgs.create({ seed: 50 }); s = await open(mp, '');
+  mp.set({ fail: { '/wallet/play': 'ERR_IS' } });
+  await clk(s.p, '#spin'); await s.p.waitForTimeout(600);
+  var pb = await s.p.evaluate("({vis:!document.getElementById('rgsBlock').hidden, msg:document.getElementById('rgsBlockM').textContent, want:I18N.rgs().errIs, busy:G.S.busy})");
+  ok(pb.vis && pb.msg === pb.want && !pb.busy, 'ERR_IS pendant le jeu : écran de blocage (session perdue), plus aucune mise possible');
+  await done(s);
+
+  // ---- mode social et devise fournis par le RGS (config.jurisdiction.socialCasino, balance.currency) ----
+  var ms = mockRgs.create({ seed: 60, social: true, currency: 'XSC' }); s = await open(ms, '');
+  var so = await s.p.evaluate("({soc:SOCIAL.active, cur:G.currency, attr:document.documentElement.getAttribute('data-social'), bal:document.getElementById('bal').textContent, locked:G.S.curLocked, bets:G.BETS.length})");
+  ok(so.soc && so.attr === 'true' && so.cur === 'XSC' && /SC/.test(so.bal) && !/\$/.test(so.bal) && so.locked && so.bets === 12, 'social : SOCIAL.set(config.jurisdiction.socialCasino), devise XSC du solde RGS verrouillée (« ' + so.bal + ' »)');
+  await done(s);
+  var mj = mockRgs.create({ seed: 61, currency: 'JPY', balance: 100000 * MICRO, betLevels: [100, 200, 500, 1000].map(function (x) { return x * MICRO; }), defaultBetLevel: 100 * MICRO }); s = await open(mj, '');
+  var jp = await s.p.evaluate("({cur:G.currency, bal:document.getElementById('bal').textContent, bet:document.getElementById('bet').textContent, bets:G.BETS.slice()})");
+  ok(jp.cur === 'JPY' && /¥/.test(jp.bal) && jp.bets.join() === '100,200,500,1000', 'JPY : devise du RGS, niveaux de mise du RGS conservés (aucune conversion locale) : ' + jp.bal + ' / ' + jp.bet);
   await done(s);
 
   // ---- erreurs du RGS : ERR_IPB -> message, pas de blocage ----

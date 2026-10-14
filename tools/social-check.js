@@ -5,6 +5,7 @@
 //  3. dynamique (si PLAYWRIGHT_CORE est défini) : ?social=true&currency=XSC puis XGC, quelques tours (≤ 12), fenêtres ouvertes ; tout le texte du DOM et du canvas
 //     (G.txt) est scanné. CHROMIUM=/chemin/chrome si besoin. Sortie 1 au premier mot interdit.
 var fs = require('fs'), path = require('path'), vm = require('vm'), http = require('http');
+var WORDS = require('./social-words.js').compile();   // équivalents des mots interdits dans les 16 langues (liste et choix documentés dans tools/social-words.js)
 var root = path.join(__dirname, '..'), fails = 0;
 function ok(c, m) { if (!c) { fails++; console.log('ÉCHEC  ' + m); } else console.log('ok     ' + m); }
 
@@ -19,28 +20,35 @@ ok(SOC && SOC.active, 'js/social.js : ?social=true active le mode social');
 
 function esc(s) { return s.replace(/[.*+?^${}()|[\]\\\/]/g, '\\$&').replace(/\s+/g, '\\s+'); }
 var RES = SOC.RESTRICTED.map(function (w) { return { w: w, re: new RegExp('(?<![\\p{L}\\p{N}])' + esc(w) + '(?![\\p{L}\\p{N}])', 'iu') }; });
-function scan(text) { var t = String(text).normalize('NFC').replace(/\{\w+\}/g, ' '), out = [];   // les marqueurs {buy} ne sont pas du texte affiché
- RES.forEach(function (r) { if (r.re.test(t)) out.push(r.w); }); return out; }
+function scan(text, lang) { var t = String(text).normalize('NFC').replace(/\{\w+\}/g, ' '), out = [];   // les marqueurs {buy} ne sont pas du texte affiché
+ RES.forEach(function (r) { if (r.re.test(t)) out.push(r.w); });   // liste anglaise de la checklist, cherchée dans toutes les langues
+ (WORDS[lang] || []).forEach(function (r) { if (r.re.test(t)) out.push(lang + ':' + r.w); });   // équivalents dans la langue du texte
+ return out; }
 
 var found = {};   // mot → premiers exemples
-function check(where, text) {
+function check(where, text, lang) {
   if (/[$\u20ac]/.test(String(text)) && where.indexOf('normal.') !== 0) (found['« $ » ou « € » en dur'] = found['« $ » ou « € » en dur'] || []).push(where + ' : « ' + String(text).slice(0, 90) + ' »');
-  scan(text).forEach(function (w) { (found[w] = found[w] || []).push(where + ' : « ' + String(text).replace(/\s+/g, ' ').slice(0, 90) + ' »'); });
+  scan(text, lang || 'en').forEach(function (w) { (found[w] = found[w] || []).push(where + ' : « ' + String(text).replace(/\s+/g, ' ').slice(0, 90) + ' »'); });
 }
-function walk(v, p) {
-  if (typeof v === 'string') check(p, v);
-  else if (typeof v === 'function') { if (p.indexOf('I18N_SOCIAL') === 0) return; try { check(p + '()', v(12, '+5.00 SC')); } catch (e) { check(p + '()', v.toString()); } }
-  else if (Array.isArray(v)) v.forEach(function (x, i) { walk(x, p + '[' + i + ']'); });
-  else if (v && typeof v === 'object') Object.keys(v).forEach(function (k) { walk(v[k], p + '.' + k); });
+function walk(v, p, lang) {
+  if (typeof v === 'string') check(p, v, lang);
+  else if (typeof v === 'function') { if (p.indexOf('I18N_SOCIAL') === 0) return; try { check(p + '()', v(12, '+5.00 SC'), lang); } catch (e) { check(p + '()', v.toString(), lang); } }
+  else if (Array.isArray(v)) v.forEach(function (x, i) { walk(x, p + '[' + i + ']', lang); });
+  else if (v && typeof v === 'object') Object.keys(v).forEach(function (k) { walk(v[k], p + '.' + k, lang); });
 }
 
 // 1. textes sociaux de chaque langue (la langue sans bloc social reçoit le jeu anglais)
 var langs = Object.keys(D);
-langs.forEach(function (l) { walk(SOC.strings(l), l); var bl = SOC.blocks(l); Object.keys(bl).forEach(function (n) { walk(bl[n], l + '.$' + n); }); });
+langs.forEach(function (l) { walk(SOC.strings(l), l, l); var bl = SOC.blocks(l); Object.keys(bl).forEach(function (n) { walk(bl[n], l + '.$' + n, l); }); });
+// chaque langue a son propre jeu de textes sociaux (aucune ne retombe sur l'anglais) et sa liste de mots interdits
+var SOCIAL_KEYS = ['bet', 'cost', 'buyBtn', 'buyNow', 'buyPrice', 'infoTitle', 'currencyL', 'demo', 'splashDemo', 'rules', '$rules', '$replay', '$rgs'];
+langs.forEach(function (l) { var so = (W.I18N_SOCIAL || {})[l]; ok(!!so && SOCIAL_KEYS.every(function (k) { return so[k] != null; }) && (l === 'en' || (WORDS[l] || []).length > 3), l + ' : jeu de textes sociaux propre à la langue (' + (so ? Object.keys(so).length : 0) + ' entrées) et ' + (l === 'en' ? RES.length + ' mots interdits (liste officielle)' : (WORDS[l] || []).length + ' mots interdits équivalents')); });
+// titre de la fenêtre des règles : « Rules & Win table » (casse respectée), pas de majuscules forcées
+ok(W.I18N_SOCIAL.en.infoTitle === 'Rules & Win table', 'titre des règles en mode social : « ' + W.I18N_SOCIAL.en.infoTitle + ' »');
 ok(langs.length >= 2, 'langues scannées en mode social : ' + langs.join(', '));
-Object.keys(W.I18N_SOCIAL || {}).forEach(function (l) { walk(W.I18N_SOCIAL[l], 'I18N_SOCIAL.' + l); });
+Object.keys(W.I18N_SOCIAL || {}).forEach(function (l) { walk(W.I18N_SOCIAL[l], 'I18N_SOCIAL.' + l, l); });
 // à titre de contrôle : le mode normal contient bien des mots interdits (sinon la recherche ne vaut rien)
-var normal = []; langs.forEach(function (l) { var s0 = found; found = {}; walk(D[l], 'normal.' + l); if (Object.keys(found).length) normal.push(l); found = s0; });
+var normal = []; langs.forEach(function (l) { var s0 = found; found = {}; walk(D[l], 'normal.' + l, l); if (Object.keys(found).length) normal.push(l); found = s0; });
 ok(normal.indexOf('en') >= 0, 'contrôle : la recherche trouve bien des mots interdits dans les textes anglais hors mode social');
 
 // HTML statique visible (texte, aria-label, title, alt)
@@ -89,7 +97,7 @@ else (async function () {
   });
   await new Promise(function (r) { server.listen(0, r); });
   var b = await pw.chromium.launch({ executablePath: process.env.CHROMIUM || undefined, args: ['--no-sandbox', '--use-gl=swiftshader'] });
-  var cases = [['en', 'XSC'], ['fr', 'XGC'], ['en', 'XGC']];
+  var cases = [['en', 'XSC'], ['fr', 'XGC'], ['en', 'XGC'], ['de', 'XSC'], ['ja', 'XGC'], ['ar', 'XSC'], ['ru', 'XGC'], ['vi', 'XSC'], ['tr', 'XGC'], ['hi', 'XSC'], ['zh', 'XGC'], ['ko', 'XSC'], ['es', 'XGC'], ['pt', 'XSC'], ['pl', 'XGC'], ['id', 'XSC'], ['fi', 'XGC']];
   for (var i = 0; i < cases.length; i++) {
     var lang = cases[i][0], cur = cases[i][1], p = await b.newPage({ viewport: { width: 1280, height: 720 } }), errs = [], tag = lang + '/' + cur;
     p.on('pageerror', function (e) { errs.push(e.message); });
@@ -112,11 +120,11 @@ else (async function () {
       G.S.balance = 0.1; G.updateHud(); G.play(); grab();
       return { dom: Array.from(out).join('\\n'), canvas: Array.from(window.__t), cur: G.currency, bal: document.getElementById('bal').textContent, bet: document.getElementById('bet').textContent, html: document.documentElement.lang };
     })()`);
-    got.dom.split('\n').forEach(function (l) { if (l.trim()) check('DOM ' + tag, l); });
-    got.canvas.forEach(function (s) { check('canvas ' + tag, s); });
+    got.dom.split('\n').forEach(function (l) { if (l.trim()) check('DOM ' + tag, l, lang); });
+    got.canvas.forEach(function (s) { check('canvas ' + tag, s, lang); });
     var all = got.dom + '\n' + got.canvas.join('\n');
     ok(got.canvas.length > 5 && got.dom.length > 400, tag + ' : ' + got.canvas.length + ' textes canvas et ' + got.dom.length + ' caractères de DOM scannés');
-    ok(lang !== 'en' || (/\bPLAY\b/.test(all) && /GET A BONUS/.test(all) && /WIN TABLE/.test(all)), tag + ' : les textes sociaux (PLAY, GET A BONUS, WIN TABLE) sont bien affichés');
+    ok(lang !== 'en' || (/\bPLAY\b/.test(all) && /GET A BONUS/.test(all) && /Win table/.test(all)), tag + ' : les textes sociaux (PLAY, GET A BONUS, WIN TABLE) sont bien affichés');
     ok(got.cur === cur, tag + ' : devise ' + got.cur);
     ok(all.indexOf('$') < 0, tag + ' : aucun « $ » affiché (DOM + canvas)');
     ok(new RegExp('' + (cur === 'XSC' ? 'SC' : 'GC') + '$').test(got.bal.trim()), tag + ' : solde lu « ' + got.bal + ' », mise « ' + got.bet + ' »');

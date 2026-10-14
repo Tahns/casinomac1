@@ -221,7 +221,7 @@
       kinds: { m0: 'PÓ', m025: '0,3×', m05: '0,5×', m1: '1×', m2: '2×', m3: '3×', ankh: 'ANKH', scarab: 'ESCARAVELHOS', weigh: 'PESAGEM', vault: 'TESOURO' },
       kindsLong: { scarab: 'Queda dos Escaravelhos', weigh: 'Pesagem do Coração', vault: 'Câmara do Tesouro', hand: 'Fúria de Anúbis', crypt: 'Santuário das Marés' },
       tiers: ['WIN', 'BIG WIN', 'EXTRA WIN', 'MEGA WIN', 'JULGAMENTO DIVINO'],
-      scarabSub: 'Três escaravelhos mergulham na escuridão. Cada um paga a casa onde cai.', scarabIntro: 'QUEDA ESCARAVELHOS',
+      scarabSub: 'Três escaravelhos mergulham na escuridão. Cada um paga a casa onde cai.', scarabIntro: 'QUEDA DE ESCARAVELHOS',
       weighIntro: 'PESAGEM DO CORAÇÃO', weighSub: 'Pena de Maat ou coração? O prato mais pesado ganha seu multiplicador, o mais leve não ganha nada.', feather: 'PENA', featherOf: 'DE MAAT', heart: 'CORAÇÃO', heartOf: 'DA SUA ALMA', weighRoll: 'Os multiplicadores são revelados…', weighWon: 'GANHOU', weighLost: 'PERDEU', sayRight: 'Seu prato é o mais pesado: ×{m}!', sayWrong: 'O outro prato pesa mais: sem ganho', weighing: 'Os deuses pesam sua alma…',
       vaultIntro: 'CÂMARA DO TESOURO', vaultSub: 'Um toque abre um baú. O selo fecha a câmara (você mantém seu total); uma chave de ouro adiciona baús para abrir.', pick: 'Toque em um baú', vaultSeal: 'SELADO!', vaultKey: 'CHAVE DE OURO  +{n} BAÚS', vaultLeft: 'BAÚS: {n}', vaultScepter: 'CETRO ×2', vaultClear: 'CÂMARA ESVAZIADA  +{p}×', total: 'TOTAL',
       splashEnter: 'ENTRAR', splashSub: 'O julgamento aguarda', splashDemo: 'Demo · dinheiro fictício · Jogue com responsabilidade',
@@ -838,13 +838,13 @@
       en: {
         badge: 'REPLAY', start: 'PLAY', again: 'PLAY AGAIN', playing: 'PLAYING…', loading: 'Loading the replay…',
         errLoad: 'Could not load this replay.', errParams: 'Missing replay parameters (game, version, mode, event, rgs_url).', errFormat: 'This replay has an unknown format.',
-        errNet: 'Network error: check the connection and reload.', bet: 'BET', betSocial: 'PLAY AMOUNT', realCost: 'REAL COST', costMult: 'Cost', result: 'WIN', noWin: 'No win',
+        errNet: 'Network error: check the connection and reload.', errSum: 'The replay events do not match the amount announced by the server: the server amount is shown.', bet: 'BET', betSocial: 'PLAY AMOUNT', realCost: 'REAL COST', costMult: 'Cost', result: 'WIN', noWin: 'No win',
         modeStd: 'STANDARD', modePlus: 'ORACLE+', modeBonus: 'BONUS'
       },
       fr: {
         badge: 'REPLAY', start: 'LECTURE', again: 'REJOUER', playing: 'EN COURS…', loading: 'Chargement du replay…',
         errLoad: 'Impossible de charger ce replay.', errParams: 'Paramètres du replay manquants (game, version, mode, event, rgs_url).', errFormat: 'Ce replay a un format inconnu.',
-        errNet: 'Erreur réseau : vérifiez la connexion et rechargez.', bet: 'MISE', betSocial: 'MONTANT JOUÉ', realCost: 'COÛT RÉEL', costMult: 'Coût', result: 'GAIN', noWin: 'Pas de gain',
+        errNet: 'Erreur réseau : vérifiez la connexion et rechargez.', errSum: 'Les événements du replay ne correspondent pas au montant annoncé par le serveur : le montant du serveur est affiché.', bet: 'MISE', betSocial: 'MONTANT JOUÉ', realCost: 'COÛT RÉEL', costMult: 'Coût', result: 'GAIN', noWin: 'Pas de gain',
         modeStd: 'STANDARD', modePlus: 'ORACLE+', modeBonus: 'BONUS'
       }
     },
@@ -944,6 +944,8 @@
     }
   };
   var lang = 'fr';
+  // textes des 14 autres langues, définis dans les blocs en fin de fichier : blocs « rules » / « replay », textes du RGS, noms localisés des paliers de gain
+  var X = root.I18N_X = { rules: {}, replay: {}, rgs: {}, tiers: {} };
 
   /* ---------- Langues Stake : les 16 codes acceptés par le RGS (paramètre ?lang=). Défaut : anglais. ---------- */
   var LANGS = [
@@ -968,12 +970,13 @@
     return D[c] ? c : null;
   }
   // paramètres de lancement Stake : lus ici, SANS être utilisés encore (voir docs/STAKE_ENGINE_CONFORMITE.md, « État après corrections »)
-  var launch = { lang: null, sessionID: null, rgs_url: null, device: null, social: false };
+  var launch = { lang: null, sessionID: null, rgs_url: null, device: null, social: false, localTiers: false };
   try {
     var q = new URLSearchParams(root.location && root.location.search || '');
     launch.lang = norm(q.get('lang'));
     launch.sessionID = q.get('sessionID'); launch.rgs_url = q.get('rgs_url'); launch.device = q.get('device');
     launch.social = q.get('social') === 'true';
+    launch.localTiers = q.get('tiers') === 'local';
   } catch (e) {}
   root.LAUNCH = launch;
 
@@ -991,6 +994,12 @@
       errGen: 'Erreur du serveur de jeu. Réessayez dans un instant.',
       errNet: 'Réseau indisponible ou réponse invalide. Votre mise n\'a peut-être pas été prise en compte : vérifiez votre solde.',
       errBook: 'Résultat du tour illisible. Contactez l\'assistance.',
+      errIs: 'Session invalide ou expirée. Relancez le jeu depuis le site.',
+      errAte: 'Authentification expirée. Relancez le jeu depuis le site pour vous reconnecter.',
+      errLoc: 'Ce jeu n\'est pas disponible depuis votre région.',
+      errMaint: 'Maintenance en cours. Réessayez dans quelques minutes.',
+      errSum: 'Le résultat affiché ne correspond pas au montant du serveur de jeu : le montant du serveur est appliqué.',
+      resuming: 'Reprise du tour en cours…',
       buyConfirm: 'Acheter {name} pour {price} ?', buyConfirmTitle: 'CONFIRMER L\'ACHAT',
       autoTitle: 'JEU AUTOMATIQUE', autoSub: 'Choisissez le nombre de tours et les conditions d\'arrêt, puis confirmez.',
       autoRounds: 'Nombre de tours', autoStopWin: 'Arrêt sur un gain d\'au moins', autoStart: 'Démarrer', autoCost: 'Coût par tour'
@@ -1006,11 +1015,38 @@
       errGen: 'Game server error. Please try again in a moment.',
       errNet: 'Network unavailable or invalid response. Your bet may not have been taken into account: check your balance.',
       errBook: 'The round result could not be read. Please contact support.',
+      errIs: 'Invalid or expired session. Please relaunch the game from the site.',
+      errAte: 'Authentication expired. Please relaunch the game from the site to sign in again.',
+      errLoc: 'This game is not available from your location.',
+      errMaint: 'Maintenance in progress. Please try again in a few minutes.',
+      errSum: 'The result shown does not match the amount from the game server: the server amount is applied.',
+      resuming: 'Resuming the round in progress…',
       buyConfirm: 'Buy {name} for {price}?', buyConfirmTitle: 'CONFIRM PURCHASE',
       autoTitle: 'AUTOPLAY', autoSub: 'Choose the number of rounds and the stop conditions, then confirm.',
       autoRounds: 'Number of rounds', autoStopWin: 'Stop on a win of at least', autoStart: 'Start', autoCost: 'Cost per round'
     }
   };
+
+  // paliers localisés (OPTIONNEL, désactivé par défaut : les noms restent en anglais) : X.tiers[langue] = 4 noms (WIN, BIG WIN, EXTRA WIN, MEGA WIN), un 5e facultatif
+  // pour les langues où le palier ultime est resté en anglais. Un nom absent ou vide annule tout (repli sûr sur l'anglais). Les règles citent alors les mêmes noms.
+  var localTiers = !!launch.localTiers, tierCache = {};
+  function tiersOk(loc) { return Array.isArray(loc) && loc.length >= 4 && loc.every(function (n) { return typeof n === 'string' && n.trim(); }); }
+  function swapTiers(str, l) {
+    var loc = X.tiers[l], en = D.en.tiers;
+    if (!tiersOk(loc)) return str;
+    var o = str, ids = loc.length > 4 ? [4, 2, 3, 1, 0] : [2, 3, 1, 0];   // du plus long au plus court : « EXTRA WIN », « MEGA WIN », « BIG WIN », « WIN »
+    ids.forEach(function (i) { o = o.split(en[i]).join('\u0001' + i + '\u0002'); });
+    return o.replace(/\u0001(\d)\u0002/g, function (m, i) { return loc[i]; });
+  }
+  function withTiers(l) {
+    var c = tierCache[l], loc = X.tiers[l], d = D[l];
+    if (c && c.base === d && c.loc === loc) return c.val;
+    var tiers = d.tiers.slice();
+    if (tiersOk(loc)) for (var i = 0; i < Math.min(loc.length, 5); i++) tiers[i] = loc[i];
+    var val = Object.assign({}, d, { tiers: tiers, rules: d.rules.map(function (r) { return swapTiers(r, l); }) });
+    tierCache[l] = { base: d, loc: loc, val: val };
+    return val;
+  }
 
   var lang = DEFAULT_LANG;
   function info(l) { for (var i = 0; i < LANGS.length; i++) if (LANGS[i][0] === l) return LANGS[i]; return LANGS[0]; }
@@ -1027,15 +1063,19 @@
   root.I18N = {
     setLang: setLang,
     lang: function () { return lang; },
-    t: function () { return D[lang]; },
-    rgs: function () { return RGS_TXT[lang] || RGS_TXT.en; },
+    t: function () { return localTiers && X.tiers[lang] ? withTiers(lang) : D[lang]; },
+    rgs: function () { var cur = RGS_TXT[lang] || X.rgs[lang]; if (!cur || lang === 'en') return RGS_TXT.en; var o = {}, k; for (k in RGS_TXT.en) o[k] = RGS_TXT.en[k]; for (k in cur) o[k] = cur[k]; return o; },
     // bloc de textes séparé (« rules », « replay ») : langue courante, clé par clé repliée sur l'anglais
     block: function (name) {
-      var b = B[name] || {}, en = b.en || {}, cur = b[lang] || {}, out = {}, k;
+      var b = B[name] || {}, en = b.en || {}, cur = b[lang] || (X[name] || {})[lang] || {}, out = {}, k;
       for (k in en) out[k] = en[k];
       for (k in cur) out[k] = cur[k];
+      if (name === 'rules' && localTiers && Array.isArray(out.how)) out.how = out.how.map(function (t) { return swapTiers(t, lang); });   // paliers localisés : mêmes noms que l'écran
       return out;
     },
+    // noms localisés des paliers de gain (WIN, BIG WIN, EXTRA WIN, MEGA WIN) : OPTIONNEL, désactivé par défaut (anglais) ; ?tiers=local ou setLocalTiers(true)
+    setLocalTiers: function (v) { localTiers = !!v; },
+    localTiers: function () { return localTiers; },
     langs: LANGS, fallback: FALLBACK, norm: norm, fromUrl: launch.lang,
     locale: function () { return info(lang)[2]; },          // format des nombres
     currencyAfter: function () { return !!AFTER[lang]; },   // « 1 234,50 € » (true) ou « $1,234.50 » (false)
@@ -1065,7 +1105,7 @@
       buyBtn: 'GET A BONUS', buyTitle: 'GET A BONUS', buySub: 'Open a bonus directly, skipping the wheel. A bonus can be played for the play amount × its multiplier. Anubis\' Fury can still seize it.',
       buyPrice: 'PLAY FOR', buyNow: 'GET', buyOn: 'Bonus access', buyNoFunds: 'Not enough balance for this bonus',
       resumed: 'Interrupted round: winnings added', scarabSub: 'Three scarabs plunge through the dark. Each wins the slot it lands in.',
-      splashDemo: 'Demo · play coins · Play responsibly', infoTitle: 'RULES & WIN TABLE', demo: 'Play coins — demo, the amounts shown are not real.',
+      splashDemo: 'Demo · play coins · Play responsibly', infoTitle: 'Rules & Win table', demo: 'Play coins — demo, the amounts shown are not real.',
       tableCols: { 2: 'Wins' }, currencyL: 'Token', handWrongSub: 'The chain stops: current tier collected',
       rules: {
         0: 'One play, one spin: the wheel of judgement decides. Each segment wins its value × your play amount.',
@@ -1101,15 +1141,1154 @@
       buyPrice: 'JOUABLE POUR', buyNow: 'OBTENIR', buyOn: 'Accès aux bonus', buyNoFunds: 'Solde insuffisant pour ce bonus',
       resumed: 'Tour interrompu : gain ajouté',
       splashDemo: 'Démo · pièces fictives · Jouez avec modération', demo: 'Pièces fictives — démo : les montants affichés ne sont pas réels.',
-      currencyL: 'Jeton', handWrongSub: 'La chaîne s\'arrête : palier ramassé',
+      infoTitle: 'Règles & table des gains', currencyL: 'Jeton', handWrongSub: 'La chaîne s\'arrête : palier ramassé',
       rules: {
         0: 'Un jeu, un tour : la roue du jugement décide. Chaque case donne sa valeur × votre montant de jeu.',
         2: 'ANKH : relance gratuite de la roue, sans montant de jeu supplémentaire.',
-        4: function (s) { return s.replace('vous encaissez', 'vous ramassez'); }
+        4: function (s) { return s.replace('vous encaissez', 'vous ramassez'); },
+        6: function (s) { return s.replace('coût du tour', 'valeur de jeu du tour'); }
       },
-      $rules: { btn: { 9: { 0: 'SC / GC', 1: 'Passe l\'affichage entre les deux jetons (même valeur numérique).' } } },
-      $replay: { bet: 'MONTANT JOUÉ' },
-      $rgs: { buyConfirm: 'Obtenir {name} ? Jouable pour {price}.' }
+      $rules: {
+        modesH: 'Modes, valeur de jeu, RTP et gain max', colCost: 'Jouable pour',
+        modePlusD: 'Jouable pour ×{c} le montant sélectionné. L\'Oracle apparaît sur environ {pp} % des tours : les boosts tombent plus souvent. Même RTP.',
+        modesNote: function (s) { return s.replace('non du coût du mode', 'non de la valeur de jeu du mode').replace('Le coût est un multiple', 'La valeur de jeu est un multiple'); },
+        how: { 4: function (s) { return s.replace('le coût du mode', 'la valeur de jeu du mode'); } },
+        btn: {
+          4: { 1: function (s) { return s.replace('son coût', 'sa valeur de jeu'); } },
+          5: { 1: function (s) { return s.replace('coût ×', 'valeur de jeu ×').replace('Le coût s\'affiche', 'La valeur de jeu s\'affiche'); } },
+          7: { 1: function (s) { return s.replace('devise,', 'unité d\'affichage,'); } },
+          9: { 0: 'SC / GC', 1: 'Passe l\'affichage entre les deux jetons (même valeur numérique).' }
+        }
+      },
+      $replay: { bet: 'MONTANT JOUÉ', realCost: 'VALEUR DE JEU RÉELLE', costMult: 'Valeur de jeu' },
+      $rgs: {
+        errVal: 'Requête refusée : session expirée ou jeu invalide. Relancez le jeu depuis le site.', errIpb: 'Solde insuffisant pour cette partie.',
+        errGle: 'Limite de jeu atteinte : cette partie est refusée.',
+        errNet: 'Réseau indisponible ou réponse invalide. Votre partie n\'a peut-être pas été prise en compte : vérifiez votre solde.',
+        buyConfirm: 'Obtenir {name} ? Jouable pour {price}.', buyConfirmTitle: 'CONFIRMER LE BONUS', autoCost: 'Valeur de jeu par tour'
+      }
     }
   };
 })(window);
+
+/* ===== TRADUCTIONS : début (généré par blocs, une langue par bloc) ===== */
+/* ---------- Langues sans relecteur natif : blocs « rules » (règles détaillées), « replay », textes du RGS, noms localisés des paliers et textes du mode social ----------
+   Un bloc par langue, rangé dans window.I18N_X (lu par I18N.block / I18N.rgs / I18N.t) et window.I18N_SOCIAL. Traductions faites SANS relecteur natif :
+   niveau de confiance et termes à faire relire dans docs/TRADUCTIONS.md. Marqueurs {x} identiques à l'anglais (contrôlé par tools/i18n-check.js).
+   Mode social : tools/social-check.js cherche, dans chaque langue, les équivalents des mots interdits (liste : tools/social-words.js). */
+
+/* --- fr --- */
+(function (X) {
+  X.tiers.fr = ['GAIN', 'GROS GAIN', 'GAIN EXTRA', 'MÉGA GAIN'];
+})(window.I18N_X);
+
+/* --- ar --- */
+(function (X, S) {
+  X.tiers.ar = ['ربح', 'ربح كبير', 'ربح إضافي', 'ربح ضخم', 'الحكم الإلهي'];
+  X.replay.ar = {
+    badge: 'إعادة', start: 'تشغيل', again: 'تشغيل مجدداً', playing: 'جارٍ التشغيل…', loading: 'جارٍ تحميل الإعادة…',
+    errSum: 'أحداث الإعادة لا تطابق المبلغ المعلن من الخادم: يُعرض مبلغ الخادم.',
+    errLoad: 'تعذّر تحميل هذه الإعادة.', errParams: 'معاملات الإعادة ناقصة (game, version, mode, event, rgs_url).', errFormat: 'هذه الإعادة بصيغة غير معروفة.',
+    errNet: 'خطأ في الشبكة: تحقق من الاتصال وأعد التحميل.', bet: 'الرهان', betSocial: 'مبلغ اللعب', realCost: 'التكلفة الفعلية', costMult: 'التكلفة', result: 'الربح', noWin: 'لا ربح',
+    modeStd: 'قياسي', modePlus: 'العرّاف+', modeBonus: 'بونص'
+  };
+  X.rgs.ar = {
+    connecting: 'جارٍ الاتصال بخادم اللعبة…', retry: 'إعادة المحاولة', confirm: 'تأكيد', cancel: 'إلغاء',
+    errUrl: 'تعذّر الاتصال: عنوان خادم اللعبة (rgs_url) أو الجلسة مفقود أو غير صالح. يرجى إعادة تشغيل اللعبة من الموقع.',
+    errAuth: 'تعذّر الوصول إلى خادم اللعبة. تحقق من اتصالك ثم أعد تشغيل اللعبة.',
+    errVal: 'تم رفض الطلب: انتهت الجلسة أو أن الرهان غير صالح. يرجى إعادة تشغيل اللعبة من الموقع.',
+    errIpb: 'الرصيد غير كافٍ لهذا الرهان.',
+    errGle: 'تم بلوغ حد اللعب: رُفض هذا الرهان.',
+    errAct: 'الخادم مشغول. يرجى المحاولة بعد قليل.',
+    errGen: 'خطأ في خادم اللعبة. يرجى المحاولة بعد قليل.',
+    errNet: 'الشبكة غير متاحة أو الاستجابة غير صالحة. ربما لم يُحتسب رهانك: تحقق من رصيدك.',
+    errBook: 'تعذّرت قراءة نتيجة الجولة. يرجى التواصل مع الدعم.',
+    errIs: 'الجلسة غير صالحة أو منتهية. يرجى إعادة تشغيل اللعبة من الموقع.',
+    errAte: 'انتهت صلاحية المصادقة. يرجى إعادة تشغيل اللعبة من الموقع لتسجيل الدخول من جديد.',
+    errLoc: 'هذه اللعبة غير متاحة في موقعك.',
+    errMaint: 'الصيانة جارية. يرجى المحاولة بعد بضع دقائق.',
+    errSum: 'النتيجة المعروضة لا تطابق المبلغ الصادر عن خادم اللعبة: يُطبَّق مبلغ الخادم.',
+    resuming: 'استئناف الجولة الجارية…',
+    buyConfirm: 'شراء {name} مقابل {price}؟', buyConfirmTitle: 'تأكيد الشراء',
+    autoTitle: 'لعب تلقائي', autoSub: 'اختر عدد الجولات وشروط الإيقاف ثم أكّد.',
+    autoRounds: 'عدد الجولات', autoStopWin: 'أوقف عند ربح لا يقل عن', autoStart: 'ابدأ', autoCost: 'التكلفة لكل جولة'
+  };
+  X.rules.ar = {
+    modesH: 'الأوضاع والتكلفة وRTP وأقصى ربح', colMode: 'الوضع', colCost: 'التكلفة', colRtp: 'RTP', colMax: 'أقصى ربح', colChance: 'الفرصة', colValue: 'القيمة', colBoost: 'التعزيز', colNumCase: 'خانة رقم', colBonusCase: 'خانة بونص',
+    modeStd: 'قياسي', modePlus: 'العرّاف+', tokScepter: 'صولجان ×2 (على المجموع الحالي)', tokKey: 'مفتاح ذهبي (+{keys} صناديق للفتح)', tokSeal: 'الختم (يغلق الغرفة)',
+    modeStdD: 'لفة واحدة من عجلة الحكم. يظهر العرّاف في حوالي {p}٪ من اللفات.',
+    modePlusD: 'تكلفته ×{c} من المبلغ المحدد. يظهر العرّاف في حوالي {pp}٪ من اللفات، فتأتي التعزيزات أكثر. نفس الـ RTP.',
+    buyScarabD: 'يفتح بونص سقوط الجعارين مباشرة دون العجلة.', buyWeighD: 'يفتح بونص وزن القلب مباشرة دون العجلة.',
+    buyVaultD: 'يفتح بونص غرفة الكنز مباشرة دون العجلة.', buyHandD: 'يفتح غضب أنوبيس مباشرة: تدور العجلة العملاقة فوراً.',
+    modesNote: 'الـ RTP هو العائد المتوقع على عدد كبير جداً من الجولات (حساب دقيق وليس وعداً لجلسة واحدة). أقصى ربح هو مضاعف للمبلغ المحدد وليس لتكلفة الوضع، ومحدد بـ {m}× في كل الأوضاع. التكلفة مضاعف للمبلغ المحدد وتُعرض قبل التأكيد. يمكن لغضب أنوبيس أن يستولي على بونص مفتوح مباشرة ({h}٪ من المرات)، كما على العجلة.',
+    howH: 'كيف تتكوّن الأرباح',
+    how: [
+      'لا توجد خطوط ربح أو تركيبات أو رموز يجب اصطفافها. كل لفة تتوقف عند إحدى خانات العجلة الـ {n}. الربح هو قيمة تلك الخانة × المبلغ المحدد.',
+      'خانات الأرقام تربح قيمتها (×{nums}). خانات التراب لا تربح شيئاً. عنخ يمنح لفة مجانية: تدور العجلة مجدداً دون تكلفة، حتى {chain} مرات متتالية، وتنتهي الجولة عند خانة غير عنخ. تُجمع أرباح اللفات المتسلسلة.',
+      'خانات البونص (الجعارين، الميزان، الكنز) تُطلق البونص المقابل: الربح هو نتيجة البونص × المبلغ المحدد. كل واحدة من الثلاث تشغل {one} من {n} خانة.',
+      'العرّاف: قبل اللفة يختار نوعاً من الخانات ({kinds}) ويمنحه تعزيزاً. تبقى قيمة التعزيز مختومة (تظهر ×?) حتى تتوقف العجلة. إذا توقفت العجلة على هذا النوع تُضرب قيمة الخانة (أو نتيجة البونص) في التعزيز. لا يفعل العرّاف شيئاً إذا توقفت العجلة في مكان آخر.',
+      'إجمالي ربح الجولة محدد بـ {m}× المبلغ المحدد: عند بلوغ الحد تنتهي الجولة ويُقيَّد الربح به. مؤثرات الربح (WIN وBIG WIN وEXTRA WIN وMEGA WIN وDIVINE JUDGEMENT) تعتمد على إجمالي الجولة ÷ تكلفة الوضع؛ ولا تغيّر أبداً المبلغ الذي ربحته.'
+    ],
+    oracleH: 'تعزيزات العرّاف', oracleNote: 'فرصة كل تعزيز عندما يختار العرّاف نوعاً من الخانات.',
+    bonusH: 'جولات البونص: التفعيل والقيم',
+    scarabH: 'سقوط الجعارين', scarabP: 'يُفعَّل بخانة الجعارين ({one} من {n}) أو يُفتح مباشرة. يسقط ثلاثة جعارين عبر {rows} صفوف من المسامير ويربح كل واحد قيمة الفتحة التي يهبط فيها (× تعزيز العرّاف إن انطبق). قيم الفتحات من اليسار إلى اليمين مع فرصة كل فتحة:',
+    weighH: 'وزن القلب', weighP: 'يُفعَّل بخانة الميزان ({one} من {n}) أو يُفتح مباشرة. تعرض كفتان مضاعفاً لكل منهما. تختار الريشة أو القلب؛ الكفة الأثقل تربح مضاعفها والأخف لا تربح شيئاً: فرصة واحدة من اثنتين. يُختار زوج المضاعفات بهذه الفرص:',
+    vaultH: 'غرفة الكنز', vaultP: 'تُفعَّل بخانة الكنز ({one} من {n}) أو تُفتح مباشرة. افتح الصناديق واحداً تلو الآخر: {picks} في البداية. يحتوي كل صندوق على قيمة تُضاف إلى المجموع، أو صولجان (×2 على المجموع الحالي)، أو مفتاح ذهبي (+{keys} صناديق إضافية، حتى {cap} في المجموع)، أو الختم الذي يغلق الغرفة ويحتفظ بالمجموع الحالي. لا شيء يلغي الختم أو يؤخره؛ والمفتاح يطيل الاختيار فقط. لا يحتوي أول صندوقين على ختم أبداً. فتح كل الصناديق المسموحة يضيف مكافأة +{fin}×. محتويات الصناديق وفرصها (بعد أول صندوقين):',
+    handH: 'غضب أنوبيس', handP: 'يمكن للغضب أن يستولي على أي بونص ({h}٪ من المرات على العجلة وفي البونص المفتوح مباشرة؛ دائماً في وضع الغضب). اختر لوناً (فيروزي أو ذهبي أو ياقوتي: بنفس الفرص) ثم دوّر العجلة العملاقة ذات {segs} خانة. رقم: الربح = الرقم × المستوى. مضاعفة بلونك: تتضاعف كل الأرقام (المستوى ×2 و×4 و×8 حتى ×{tier}) وتدور مجدداً. مضاعفة بلون آخر: تنتهي السلسلة ويُربح أصغر رقم ({min}) × المستوى. الشريط يُطلق بونصاً: ربح البونص × مضاعف الشريط × المستوى. أرقام العجلة العملاقة: ×{hnums}. خانات المضاعفة: {dbl} ({dblc} لكل لون). الأشرطة: {bands}. لا يتجاوز المستوى ×{tier} (ولا تُحتسب خانات المضاعفة بعد ذلك).',
+    cryptH: 'محراب المدّ والجزر (بونص مخفي)', cDust: 'غبار (لا شيء)', cTab: 'لوح (+ القيمة × المدّ الحالي)', cTide: 'مدّ (× المدّ)', cEclipse: 'كسوف (× القربان)', cryptP: 'قد يُستبدل بونص مربوح بمحراب المدّ والجزر ({s}٪ من المرات، ولا يحدث أبداً مع بونص مفتوح مباشرة). المس الألواح الـ {tiles} في شبكة 3×3 بأي ترتيب؛ الترتيب لا يغيّر الفرص. يبدأ القربان من 0 والمدّ من ×1. كل لوح هو واحد من: لوح (يضيف قيمته × المدّ الحالي إلى القربان)، مدّ (يضرب المدّ، فقط للألواح التي تنكشف بعده)، كسوف (يضرب القربان المجمّع) أو غبار (لا شيء). الربح هو القربان النهائي × المبلغ المحدد (×1 على الأقل إن لم يظهر أي لوح)، بحد أقصى {m}×. أنواع الألواح:',
+    retrigH: 'البونص واللفات المجانية وإعادة التفعيل',
+    retrig: [
+      'لا توجد لفات مجانية لإعادة تفعيلها: يُلعب كل بونص مرة واحدة لكل تفعيل وتُضاف نتيجته إلى الجولة. لا يمكن لأي بونص أن يُفعّل بونصاً آخر: شريط الغضب يُطلق بونصاً لا يعود أبداً إلى الغضب.',
+      'الميزة الوحيدة المتكررة هي لفة عنخ المجانية (انظر أعلاه). خانات البونص والعرّاف والغضب لها الفرص نفسها في كل الأوضاع.',
+      'إذا انقطع الاتصال أثناء جولة، أعد تحميل اللعبة: تُنهى الجولة المحسومة مسبقاً ويُسوّى ربحها.'
+    ],
+    btnH: 'الأزرار وأدوات التحكم',
+    btn: [
+      ['− / +', 'يخفض أو يرفع المبلغ المحدد (المفتاحان ↓ / ↑). مقفلان أثناء الجولة.'],
+      ['{spin}', 'يبدأ جولة بالمبلغ المحدد (تعمل أيضاً مفتاح المسافة أو Enter). أثناء اللعب التلقائي يصبح {stop}.'],
+      ['{auto}', 'اختر عدد الجولات التلقائية ({autos})؛ تلعبها اللعبة تباعاً حتى يكتمل العدد أو تضغط {stop} أو يُبلغ حد ما أو يصبح الرصيد غير كافٍ. خيار «إيقاف اللعب التلقائي عند البونص» موجود في المعلومات.'],
+      ['{turbo}', 'جولات أسرع: ضغطة واحدة لـ TURBO، ضغطتان لـ ULTRA (نتيجة شبه فورية)، وثالثة للإيقاف. يُلعب البونص دائماً بإيقاع أهدأ.'],
+      ['{buy}', 'يفتح قائمة البونصات المفتوحة مباشرة. تعرض كل بطاقة تكلفتها؛ واختيار بطاقة يبدأ ذلك البونص.'],
+      ['{plus}', 'يشغّل العرّاف+ أو يوقفه للجولات التالية: التكلفة ×{c} ويظهر العرّاف أكثر بكثير. تُعرض التكلفة تحت المبلغ.'],
+      ['الصوت (مكبّر الصوت)', 'يفتح لوحة الصوت: مستوى الصوت، الحدّة، طبقة الصوت، الأجواء الموسيقية، الألوان ومفتاح يكتم كل الأصوات.'],
+      ['i (معلومات)', 'يفتح هذه القواعد والإعدادات: وحدة العرض، حد الخسارة، جودة الرسوم، تقليل المؤثرات، خيارات اللعب التلقائي، تفعيل/إيقاف الوصول المباشر للبونص، إعادة ضبط الرصيد.'],
+      ['اللغة', 'يغيّر لغة اللعبة.'],
+      ['€ / $', 'يبدّل عرض المبالغ بين اليورو والدولار (نفس القيمة الرقمية).'],
+      ['×', 'يغلق النافذة المفتوحة (يعمل Esc أيضاً).'],
+      ['لمس / مسافة', 'في البونص: يبدأ البونص، يُسقط الجعران أو الكتلة، يختار صندوقاً أو بطاقة أو لوناً. في مؤثر الربح: المس لتخطيه.']
+    ],
+    discH: 'مهم', disc: 'يؤدي أي عطل إلى إبطال جميع الأرباح والجولات. يلزم اتصال إنترنت مستقر. عند انقطاع الاتصال، أعد تحميل اللعبة لإنهاء الجولات غير المكتملة. يُحسب العائد المتوقع على عدد كبير من الجولات. عرض اللعبة لا يمثل أي جهاز مادي وهو للتوضيح فقط. تُسوّى الأرباح وفق المبلغ المستلم من Remote Game Server وليس وفق الأحداث داخل متصفح الويب. TM و© 2026 Engine.'
+  };
+  S.ar = {
+    bet: 'اللعب', plusHint: 'العرّاف+: تعزيز في ≈ 3 من كل 4 لفات · مبلغ اللعب ×1.1', cost: 'قيمة اللعب', sessWag: 'ما لُعب',
+    rulesPlus: 'وضع العرّاف+: مبلغ اللعب ×1.1، يظهر العرّاف في ≈ 3 من كل 4 لفات. نفس نسبة العائد (≈ 96٪).',
+    buyBtn: 'احصل على بونص', buyTitle: 'احصل على بونص', buySub: 'افتح بونصاً مباشرة دون العجلة. قابل للعب بقيمة: مبلغ اللعب × المضاعف. يمكن لغضب أنوبيس أن يستولي عليه.',
+    buyPrice: 'قيمة اللعب', buyNow: 'احصل', buyOn: 'الوصول إلى البونص', resumed: 'جولة متوقفة: تمت إضافة الربح',
+    scarabSub: 'ثلاثة جعارين تهوي في الظلام. كل واحد يربح قيمة الخانة التي يسقط فيها.',
+    splashDemo: 'عرض تجريبي · قطع اللعب · العب بمسؤولية', demo: 'قطع اللعب — نسخة تجريبية، المبالغ المعروضة ليست حقيقية.',
+    tableCols: { 2: 'الربح' }, currencyL: 'توكن', handWrongSub: 'تنتهي السلسلة: يُجمع المستوى الحالي',
+    rules: {
+      0: 'لعبة واحدة، لفة واحدة: عجلة الحكم تقرر. كل خانة تربح قيمتها × مبلغ لعبك.',
+      2: 'عنخ: لفة مجانية للعجلة بدون مبلغ لعب إضافي.',
+      6: function (s) { return s.replace('تكلفة الجولة', 'قيمة لعب الجولة'); }
+    },
+    $rules: {
+      modesH: 'الأوضاع وقيمة اللعب وRTP وأقصى ربح', colCost: 'قيمة اللعب',
+      modePlusD: 'قيمة لعبه ×{c} من المبلغ المحدد. يظهر العرّاف في حوالي {pp}٪ من اللفات، فتأتي التعزيزات أكثر. نفس الـ RTP.',
+      modesNote: function (s) { return s.replace('لتكلفة الوضع', 'لقيمة لعب الوضع').replace('التكلفة مضاعف', 'قيمة اللعب مضاعف'); },
+      how: { 1: function (s) { return s.replace('دون تكلفة', 'دون مبلغ لعب إضافي'); }, 4: function (s) { return s.replace('تكلفة الوضع', 'قيمة لعب الوضع'); } },
+      btn: {
+        4: { 1: 'يفتح قائمة البونصات المفتوحة مباشرة. تعرض كل بطاقة قيمة لعبها؛ واختيار بطاقة يبدأ ذلك البونص.' },
+        5: { 1: 'يشغّل العرّاف+ أو يوقفه للجولات التالية: قيمة اللعب ×{c} ويظهر العرّاف أكثر بكثير. تُعرض قيمة اللعب تحت المبلغ.' },
+        9: { 0: 'SC / GC', 1: 'يبدّل العرض بين التوكنين (نفس القيمة الرقمية).' }
+      }
+    },
+    $replay: { bet: 'مبلغ اللعب', realCost: 'قيمة اللعب الفعلية', costMult: 'قيمة اللعب' },
+    $rgs: {
+      errVal: 'تم رفض الطلب: انتهت الجلسة أو أن اللعبة غير صالحة. يرجى إعادة تشغيل اللعبة من الموقع.',
+      errIpb: 'الرصيد غير كافٍ لهذه اللعبة.', errGle: 'تم بلوغ الحد: رُفضت هذه اللعبة.',
+      errNet: 'الشبكة غير متاحة أو الاستجابة غير صالحة. ربما لم تُحتسب لعبتك: تحقق من رصيدك.',
+      buyConfirm: 'الحصول على {name}؟ قابل للعب بقيمة {price}.', buyConfirmTitle: 'تأكيد البونص', autoCost: 'قيمة اللعب لكل جولة'
+    }
+  };
+})(window.I18N_X, window.I18N_SOCIAL);
+
+/* --- de --- */
+(function (X, S) {
+  X.tiers.de = ['GEWINN', 'GROSSER GEWINN', 'EXTRA-GEWINN', 'MEGA-GEWINN'];
+  X.replay.de = {
+    badge: 'REPLAY', start: 'ABSPIELEN', again: 'ERNEUT ABSPIELEN', playing: 'LÄUFT…', loading: 'Replay wird geladen…',
+    errSum: 'Die Ereignisse des Replays stimmen nicht mit dem vom Server gemeldeten Betrag überein: Der Serverbetrag wird angezeigt.',
+    errLoad: 'Dieser Replay konnte nicht geladen werden.', errParams: 'Replay-Parameter fehlen (game, version, mode, event, rgs_url).', errFormat: 'Dieser Replay hat ein unbekanntes Format.',
+    errNet: 'Netzwerkfehler: Verbindung prüfen und neu laden.', bet: 'EINSATZ', betSocial: 'SPIELBETRAG', realCost: 'TATSÄCHLICHE KOSTEN', costMult: 'Kosten', result: 'GEWINN', noWin: 'Kein Gewinn',
+    modeStd: 'STANDARD', modePlus: 'ORAKEL+', modeBonus: 'BONUS'
+  };
+  X.rgs.de = {
+    connecting: 'Verbindung zum Spielserver…', retry: 'Erneut versuchen', confirm: 'Bestätigen', cancel: 'Abbrechen',
+    errUrl: 'Verbindung nicht möglich: Die Adresse des Spielservers (rgs_url) oder die Sitzung fehlt oder ist ungültig. Bitte starte das Spiel erneut über die Website.',
+    errAuth: 'Der Spielserver ist nicht erreichbar. Prüfe deine Verbindung und starte das Spiel neu.',
+    errVal: 'Anfrage abgelehnt: Die Sitzung ist abgelaufen oder der Einsatz ist ungültig. Bitte starte das Spiel erneut über die Website.',
+    errIpb: 'Guthaben für diesen Einsatz nicht ausreichend.',
+    errGle: 'Spiellimit erreicht: Dieser Einsatz wird abgelehnt.',
+    errAct: 'Der Server ist ausgelastet. Bitte versuche es gleich noch einmal.',
+    errGen: 'Fehler des Spielservers. Bitte versuche es gleich noch einmal.',
+    errNet: 'Netzwerk nicht verfügbar oder ungültige Antwort. Dein Einsatz wurde möglicherweise nicht berücksichtigt: Prüfe dein Guthaben.',
+    errBook: 'Das Rundenergebnis konnte nicht gelesen werden. Bitte wende dich an den Support.',
+    errIs: 'Ungültige oder abgelaufene Sitzung. Bitte starte das Spiel erneut über die Seite.',
+    errAte: 'Authentifizierung abgelaufen. Bitte starte das Spiel erneut über die Seite, um dich neu anzumelden.',
+    errLoc: 'Dieses Spiel ist an deinem Standort nicht verfügbar.',
+    errMaint: 'Wartungsarbeiten laufen. Bitte versuche es in einigen Minuten erneut.',
+    errSum: 'Das angezeigte Ergebnis stimmt nicht mit dem Betrag des Spielservers überein: Der Serverbetrag wird übernommen.',
+    resuming: 'Laufende Runde wird fortgesetzt…',
+    buyConfirm: '{name} für {price} kaufen?', buyConfirmTitle: 'KAUF BESTÄTIGEN',
+    autoTitle: 'AUTOSPIEL', autoSub: 'Wähle die Anzahl der Runden und die Stoppbedingungen, dann bestätige.',
+    autoRounds: 'Anzahl der Runden', autoStopWin: 'Stopp bei einem Gewinn ab', autoStart: 'Start', autoCost: 'Kosten pro Runde'
+  };
+  X.rules.de = {
+    modesH: 'Modi, Kosten, RTP und Maximalgewinn', colMode: 'Modus', colCost: 'Kosten', colRtp: 'RTP', colMax: 'Max. Gewinn', colChance: 'Chance', colValue: 'Wert', colBoost: 'Boost', colNumCase: 'Zahlenfeld', colBonusCase: 'Bonusfeld',
+    modeStd: 'Standard', modePlus: 'ORAKEL+', tokScepter: 'SZEPTER ×2 (auf die bisherige Summe)', tokKey: 'GOLDENER SCHLÜSSEL (+{keys} Truhen zu öffnen)', tokSeal: 'SIEGEL (schließt die Kammer)',
+    modeStdD: 'Eine Drehung des Rads des Gerichts. Das Orakel erscheint bei etwa {p} % der Drehungen.',
+    modePlusD: 'Kostet ×{c} des gewählten Betrags. Das Orakel erscheint bei etwa {pp} % der Drehungen, Boosts fallen also häufiger. Gleicher RTP.',
+    buyScarabD: 'Öffnet direkt den Bonus Skarabäenfall, ohne das Rad.', buyWeighD: 'Öffnet direkt den Bonus Wägung des Herzens, ohne das Rad.',
+    buyVaultD: 'Öffnet direkt den Bonus Schatzkammer, ohne das Rad.', buyHandD: 'Öffnet direkt die Wut des Anubis: Das Riesenrad wird sofort gedreht.',
+    modesNote: 'Der RTP ist die erwartete Rückgabe über eine sehr große Zahl von Spielen (exakte Berechnung, kein Versprechen für eine einzelne Sitzung). Der Maximalgewinn ist ein Vielfaches des gewählten Betrags, nicht der Modus-Kosten, und ist in jedem Modus auf {m}× begrenzt. Die Kosten sind ein Vielfaches des gewählten Betrags und werden vor der Bestätigung angezeigt. Die Wut des Anubis kann einen direkt geöffneten Bonus trotzdem übernehmen ({h} % der Fälle), wie am Rad.',
+    howH: 'Wie Gewinne entstehen',
+    how: [
+      'Es gibt keine Gewinnlinien, Kombinationen oder Symbole, die man aufreihen müsste. Jede Drehung bleibt auf einem der {n} Felder des Rads stehen. Der Gewinn ist der Wert dieses Feldes × der gewählte Betrag.',
+      'Zahlenfelder gewinnen ihren Wert (×{nums}). Staubfelder gewinnen nichts. ANKH schenkt einen Gratis-Respin: Das Rad dreht sich ohne Kosten erneut, bis zu {chain}-mal hintereinander, und die Runde endet auf einem Feld, das kein ANKH ist. Die Gewinne verketteter Drehungen werden addiert.',
+      'Bonusfelder (Skarabäen, Wägung, Schatz) starten den passenden Bonus: Der Gewinn ist das Bonusergebnis × der gewählte Betrag. Jedes der drei belegt {one} von {n} Feldern.',
+      'Orakel: Vor der Drehung wählt es eine Feldart ({kinds}) und gibt ihr einen Boost. Der Wert des Boosts bleibt versiegelt (angezeigt als ×?), bis das Rad stehen bleibt. Hält das Rad auf dieser Feldart an, wird der Feldwert (oder das Bonusergebnis) mit dem Boost multipliziert. Hält das Rad woanders an, bewirkt das Orakel nichts.',
+      'Der Gesamtgewinn einer Runde ist auf {m}× den gewählten Betrag begrenzt: Ist die Grenze erreicht, endet die Runde und der Gewinn wird darauf beschränkt. Die Gewinnanimationen (WIN, BIG WIN, EXTRA WIN, MEGA WIN, GÖTTLICHES URTEIL) hängen von der Rundensumme ÷ den Kosten des Modus ab; sie ändern nie den gewonnenen Betrag.'
+    ],
+    oracleH: 'Boosts des Orakels', oracleNote: 'Chance jedes Boosts, wenn das Orakel eine Feldart wählt.',
+    bonusH: 'Bonusrunden: Auslöser und Werte',
+    scarabH: 'Skarabäenfall', scarabP: 'Ausgelöst durch das Skarabäenfeld ({one} von {n}) oder direkt geöffnet. Drei Skarabäen fallen durch {rows} Reihen von Stiften und jeder gewinnt den Wert des Fachs, in dem er landet (× Boost des Orakels, falls er greift). Fachwerte von links nach rechts, mit der Chance jedes Fachs:',
+    weighH: 'Wägung des Herzens', weighP: 'Ausgelöst durch das Wägungsfeld ({one} von {n}) oder direkt geöffnet. Zwei Schalen zeigen je einen Multiplikator. Du wählst die Feder oder das Herz; die schwerere Schale gewinnt ihren Multiplikator, die leichtere nichts: eine Chance von eins zu zwei. Das Paar von Multiplikatoren wird mit diesen Chancen gezogen:',
+    vaultH: 'Schatzkammer', vaultP: 'Ausgelöst durch das Schatzfeld ({one} von {n}) oder direkt geöffnet. Öffne die Truhen nacheinander: zu Beginn {picks}. Jede Truhe enthält einen Wert, der zur Summe addiert wird, oder ein SZEPTER (×2 auf die bisherige Summe), oder einen GOLDENEN SCHLÜSSEL (+{keys} weitere Truhen, höchstens {cap} insgesamt), oder das SIEGEL, das die Kammer schließt und die bisherige Summe behält. Nichts hebt das Siegel auf oder verzögert es; ein Schlüssel verlängert nur die Auswahl. Die ersten zwei Truhen enthalten nie ein Siegel. Werden alle erlaubten Truhen geöffnet, gibt es eine Prämie von +{fin}×. Truheninhalte und Chancen (nach den ersten zwei Truhen):',
+    handH: 'Wut des Anubis', handP: 'Jeder Bonus kann von der Wut übernommen werden ({h} % der Fälle am Rad und bei direkt geöffneten Bonus; immer im Wut-Modus). Wähle eine Farbe (Türkis, Gold oder Rubin: gleiche Chancen) und drehe dann das Riesenrad mit {segs} Feldern. Eine Zahl: Gewinn = Zahl × Stufe. DOPPELT in deiner Farbe: Alle Zahlen werden verdoppelt (Stufe ×2, ×4, ×8 bis ×{tier}) und du drehst erneut. DOPPELT in einer anderen Farbe: Die Kette endet und die kleinste Zahl ({min}) × Stufe wird gewonnen. Ein Band startet einen Bonus: Bonusgewinn × Bandmultiplikator × Stufe. Zahlen auf dem Riesenrad: ×{hnums}. DOPPELT-Felder: {dbl} ({dblc} pro Farbe). Bänder: {bands}. Die Stufe wächst nicht über ×{tier} hinaus (DOPPELT-Felder zählen dann nicht mehr).',
+    cryptH: 'Heiligtum der Gezeiten (versteckter Bonus)', cDust: 'STAUB (nichts)', cTab: 'TAFEL (+ Wert × aktuelle Gezeit)', cTide: 'GEZEITEN (× die Gezeit)', cEclipse: 'FINSTERNIS (× die Gabe)', cryptP: 'Ein gewonnener Bonus kann durch das Heiligtum der Gezeiten ersetzt werden ({s} % der Fälle, nie bei einem direkt geöffneten Bonus). Berühre die {tiles} Tafeln eines 3×3-Gitters in beliebiger Reihenfolge; die Reihenfolge ändert die Chancen nicht. Die Gabe beginnt bei 0 und die Gezeit bei ×1. Jede Tafel ist eines von: TAFEL (addiert ihren Wert × die aktuelle Gezeit zur Gabe), GEZEITEN (multipliziert die Gezeit, nur für die danach aufgedeckten Tafeln), FINSTERNIS (multipliziert die bereits gesammelte Gabe) oder STAUB (nichts). Der Gewinn ist die Endgabe × der gewählte Betrag (mindestens ×1, falls keine Tafel erscheint), begrenzt auf {m}×. Tafelarten:',
+    retrigH: 'Bonus, Respins und Neuauslösungen',
+    retrig: [
+      'Es gibt keine Freispiele, die neu ausgelöst werden könnten: Jeder Bonus wird pro Auslösung einmal gespielt und sein Ergebnis wird zur Runde addiert. Kein Bonus kann einen anderen Bonus auslösen: Ein Band der Wut startet einen Bonus, der nie zur Wut zurückführt.',
+      'Die einzige sich wiederholende Funktion ist der ANKH-Respin (siehe oben). Bonusfelder, Orakel und Wut haben in jedem Modus dieselben Chancen.',
+      'Bricht die Verbindung während einer Runde ab, lade das Spiel neu: Die bereits entschiedene Runde wird beendet und ihr Gewinn abgerechnet.'
+    ],
+    btnH: 'Tasten und Bedienung',
+    btn: [
+      ['− / +', 'Verringert oder erhöht den gewählten Betrag (Tasten ↓ / ↑). Gesperrt, solange eine Runde läuft.'],
+      ['{spin}', 'Startet eine Runde mit dem gewählten Betrag (Leertaste oder Eingabe geht auch). Im Autospiel wird sie zu {stop}.'],
+      ['{auto}', 'Wähle die Anzahl der automatischen Runden ({autos}); das Spiel spielt sie nacheinander, bis die Zahl erreicht ist, du {stop} drückst, ein Limit erreicht wird oder das Guthaben zu niedrig ist. Die Option „Autospiel bei Bonus stoppen“ findest du unter Info.'],
+      ['{turbo}', 'Schnellere Runden: einmal drücken für TURBO, zweimal für ULTRA (fast sofortiges Ergebnis), ein drittes Mal zum Ausschalten. Ein Bonus läuft immer in ruhigerem Tempo.'],
+      ['{buy}', 'Öffnet das Menü der direkt geöffneten Bonus. Jede Karte zeigt ihre Kosten; wer eine Karte wählt, startet diesen Bonus.'],
+      ['{plus}', 'Schaltet ORAKEL+ für die nächsten Runden ein oder aus: Kosten ×{c}, das Orakel erscheint deutlich häufiger. Die Kosten stehen unter dem Betrag.'],
+      ['Ton (Lautsprecher)', 'Öffnet das Tonfeld: Lautstärke, Höhen, Tonhöhe, Musikstimmung, Farbgebung und ein Schalter, der alle Töne stummschaltet.'],
+      ['i (Info)', 'Öffnet diese Regeln und die Einstellungen: Anzeigeeinheit, Verlustlimit, Grafikqualität, reduzierte Effekte, Autospiel-Optionen, direkter Bonuszugang an/aus, Guthaben zurücksetzen.'],
+      ['Sprache', 'Wechselt die Sprache des Spiels.'],
+      ['€ / $', 'Wechselt die Anzeige der Beträge zwischen Euro und Dollar (gleicher Zahlenwert).'],
+      ['×', 'Schließt das geöffnete Fenster (Esc geht auch).'],
+      ['Tippen / Leertaste', 'In einem Bonus: startet den Bonus, lässt den Skarabäus oder Block fallen, wählt eine Truhe, eine Karte oder eine Farbe. In einer Gewinnanimation: Tippen überspringt sie.']
+    ],
+    discH: 'Wichtig', disc: 'Eine Fehlfunktion macht alle Gewinne und Spiele ungültig. Eine stabile Internetverbindung ist erforderlich. Bei einer Unterbrechung lade das Spiel neu, um nicht abgeschlossene Runden zu beenden. Der erwartete Ertrag wird über viele Spiele berechnet. Die Spielanzeige repräsentiert kein physisches Gerät und dient nur der Veranschaulichung. Gewinne werden nach dem vom Remote Game Server erhaltenen Betrag abgerechnet und nicht nach Ereignissen im Webbrowser. TM und © 2026 Engine.'
+  };
+  S.de = {
+    bet: 'SPIEL', plusHint: 'ORAKEL+: Boost bei ≈ 3 von 4 Drehungen · Spielbetrag ×1,1', cost: 'SPIELEN FÜR', sessWag: 'Gespielt',
+    rulesPlus: 'Modus ORAKEL+: Spielbetrag ×1,1, das Orakel erscheint bei ≈ 3 von 4 Drehungen. Gleicher RTP (≈ 96 %).',
+    buyBtn: 'BONUS HOLEN', buyTitle: 'BONUS HOLEN', buySub: 'Öffne direkt einen Bonus, ohne das Rad. Spielbar für: Spielbetrag × Multiplikator. Die Wut des Anubis kann ihn trotzdem ergreifen.',
+    buyPrice: 'SPIELBAR FÜR', buyNow: 'HOLEN', buyOn: 'Bonuszugang', resumed: 'Unterbrochene Runde: Gewinn hinzugefügt',
+    scarabSub: 'Drei Skarabäen stürzen durch die Dunkelheit. Jeder gewinnt das Feld, in dem er landet.',
+    splashDemo: 'Demo · Spielmünzen · Spiele verantwortungsvoll', infoTitle: 'Regeln & Gewinntabelle', demo: 'Spielmünzen — Demo, die angezeigten Beträge sind nicht echt.',
+    tableCols: { 2: 'Gewinn' }, currencyL: 'Token', handWrongSub: 'Die Kette endet: aktuelle Stufe eingesammelt',
+    rules: {
+      0: 'Ein Spiel, eine Drehung: Das Rad des Gerichts entscheidet. Jedes Feld gewinnt seinen Wert × deinen Spielbetrag.',
+      2: 'ANKH: kostenloser Respin des Rads, ohne zusätzlichen Spielbetrag.',
+      4: function (s) { return s.replace('kassierst', 'erhältst'); },
+      6: function (s) { return s.replace('Rundenkosten', 'Spielwert der Runde'); }
+    },
+    $rules: {
+      modesH: 'Modi, Spielwert, RTP und Maximalgewinn', colCost: 'Spielbar für',
+      modePlusD: 'Spielbar für ×{c} des gewählten Betrags. Das Orakel erscheint bei etwa {pp} % der Drehungen, Boosts fallen also häufiger. Gleicher RTP.',
+      modesNote: function (s) { return s.replace('nicht der Modus-Kosten', 'nicht des Spielwerts des Modus').replace('Die Kosten sind ein Vielfaches', 'Der Spielwert ist ein Vielfaches'); },
+      how: { 1: function (s) { return s.replace('ohne Kosten', 'ohne zusätzlichen Spielbetrag'); }, 4: function (s) { return s.replace('den Kosten des Modus', 'dem Spielwert des Modus'); } },
+      btn: {
+        4: { 1: 'Öffnet das Menü der direkt geöffneten Bonus. Jede Karte zeigt, wofür sie spielbar ist; wer eine Karte wählt, startet diesen Bonus.' },
+        5: { 1: 'Schaltet ORAKEL+ für die nächsten Runden ein oder aus: Spielwert ×{c}, das Orakel erscheint deutlich häufiger. Der Spielwert steht unter dem Betrag.' },
+        9: { 0: 'SC / GC', 1: 'Wechselt die Anzeige zwischen den beiden Token (gleicher Zahlenwert).' }
+      }
+    },
+    $replay: { bet: 'SPIELBETRAG', realCost: 'TATSÄCHLICHER SPIELWERT', costMult: 'Spielwert' },
+    $rgs: {
+      errVal: 'Anfrage abgelehnt: Die Sitzung ist abgelaufen oder die Runde ist ungültig. Bitte starte das Spiel erneut über die Website.',
+      errIpb: 'Guthaben für diese Runde nicht ausreichend.', errGle: 'Limit erreicht: Diese Runde wird abgelehnt.',
+      errNet: 'Netzwerk nicht verfügbar oder ungültige Antwort. Deine Runde wurde möglicherweise nicht berücksichtigt: Prüfe dein Guthaben.',
+      buyConfirm: '{name} holen? Spielbar für {price}.', buyConfirmTitle: 'BONUS BESTÄTIGEN', autoCost: 'Spielwert pro Runde'
+    }
+  };
+})(window.I18N_X, window.I18N_SOCIAL);
+
+/* --- es --- */
+(function (X, S) {
+  X.tiers.es = ['PREMIO', 'GRAN PREMIO', 'PREMIO EXTRA', 'MEGA PREMIO'];
+  X.replay.es = {
+    badge: 'REPETICIÓN', start: 'REPRODUCIR', again: 'REPRODUCIR DE NUEVO', playing: 'EN CURSO…', loading: 'Cargando la repetición…',
+    errSum: 'Los eventos de la repetición no coinciden con el importe anunciado por el servidor: se muestra el importe del servidor.',
+    errLoad: 'No se pudo cargar esta repetición.', errParams: 'Faltan parámetros de la repetición (game, version, mode, event, rgs_url).', errFormat: 'Esta repetición tiene un formato desconocido.',
+    errNet: 'Error de red: comprueba la conexión y vuelve a cargar.', bet: 'APUESTA', betSocial: 'IMPORTE DE JUEGO', realCost: 'COSTE REAL', costMult: 'Coste', result: 'PREMIO', noWin: 'Sin premio',
+    modeStd: 'ESTÁNDAR', modePlus: 'ORÁCULO+', modeBonus: 'BONUS'
+  };
+  X.rgs.es = {
+    connecting: 'Conectando con el servidor de juego…', retry: 'Reintentar', confirm: 'Confirmar', cancel: 'Cancelar',
+    errUrl: 'No se puede conectar: la dirección del servidor de juego (rgs_url) o la sesión falta o no es válida. Vuelve a iniciar el juego desde el sitio.',
+    errAuth: 'No se puede acceder al servidor de juego. Comprueba tu conexión y vuelve a iniciar el juego.',
+    errVal: 'Solicitud rechazada: la sesión ha caducado o la apuesta no es válida. Vuelve a iniciar el juego desde el sitio.',
+    errIpb: 'Saldo insuficiente para esta apuesta.',
+    errGle: 'Límite de juego alcanzado: esta apuesta se rechaza.',
+    errAct: 'El servidor está ocupado. Inténtalo de nuevo en un momento.',
+    errGen: 'Error del servidor de juego. Inténtalo de nuevo en un momento.',
+    errNet: 'Red no disponible o respuesta no válida. Es posible que tu apuesta no se haya tenido en cuenta: comprueba tu saldo.',
+    errBook: 'No se pudo leer el resultado de la ronda. Ponte en contacto con el soporte.',
+    errIs: 'Sesión no válida o caducada. Vuelve a iniciar el juego desde el sitio.',
+    errAte: 'La autenticación ha caducado. Vuelve a iniciar el juego desde el sitio para identificarte de nuevo.',
+    errLoc: 'Este juego no está disponible desde tu ubicación.',
+    errMaint: 'Mantenimiento en curso. Inténtalo de nuevo en unos minutos.',
+    errSum: 'El resultado mostrado no coincide con el importe del servidor de juego: se aplica el importe del servidor.',
+    resuming: 'Reanudando la ronda en curso…',
+    buyConfirm: '¿Comprar {name} por {price}?', buyConfirmTitle: 'CONFIRMAR COMPRA',
+    autoTitle: 'JUEGO AUTOMÁTICO', autoSub: 'Elige el número de rondas y las condiciones de parada, y confirma.',
+    autoRounds: 'Número de rondas', autoStopWin: 'Parar con un premio de al menos', autoStart: 'Iniciar', autoCost: 'Coste por ronda'
+  };
+  X.rules.es = {
+    modesH: 'Modos, coste, RTP y premio máximo', colMode: 'Modo', colCost: 'Coste', colRtp: 'RTP', colMax: 'Premio máx.', colChance: 'Probabilidad', colValue: 'Valor', colBoost: 'Potenciador', colNumCase: 'Casilla de número', colBonusCase: 'Casilla de bonus',
+    modeStd: 'Estándar', modePlus: 'ORÁCULO+', tokScepter: 'CETRO ×2 (sobre el total acumulado)', tokKey: 'LLAVE DE ORO (+{keys} cofres por abrir)', tokSeal: 'SELLO (cierra la cámara)',
+    modeStdD: 'Un giro de la rueda del juicio. El Oráculo aparece en cerca del {p} % de los giros.',
+    modePlusD: 'Cuesta ×{c} el importe seleccionado. El Oráculo aparece en cerca del {pp} % de los giros, así que los potenciadores salen más a menudo. Mismo RTP.',
+    buyScarabD: 'Abre directamente el bonus Caída de Escarabajos, sin pasar por la rueda.', buyWeighD: 'Abre directamente el bonus Pesaje del Corazón, sin pasar por la rueda.',
+    buyVaultD: 'Abre directamente el bonus Cámara del Tesoro, sin pasar por la rueda.', buyHandD: 'Abre directamente la Furia de Anubis: la rueda gigante gira de inmediato.',
+    modesNote: 'El RTP es el retorno esperado a lo largo de un número muy grande de partidas (cálculo exacto, no una promesa para una sola sesión). El premio máximo es un múltiplo del importe seleccionado, no del coste del modo, y está limitado a {m}× en todos los modos. El coste es un múltiplo del importe seleccionado y se muestra antes de confirmar. La Furia de Anubis aún puede tomar un bonus abierto directamente ({h} % de las veces), como en la rueda.',
+    howH: 'Cómo se forman los premios',
+    how: [
+      'No hay líneas, combinaciones ni símbolos que alinear. Cada giro se detiene en una de las {n} casillas de la rueda. El premio es el valor de esa casilla × el importe seleccionado.',
+      'Las casillas de número ganan su valor (×{nums}). Las casillas de polvo no ganan nada. ANKH regala un giro gratis: la rueda gira de nuevo sin coste, hasta {chain} veces seguidas, y la ronda termina en una casilla que no sea ANKH. Los premios de los giros encadenados se suman.',
+      'Las casillas de bonus (Escarabajos, Pesaje, Tesoro) activan el bonus correspondiente: el premio es el resultado del bonus × el importe seleccionado. Cada una de las tres ocupa {one} de las {n} casillas.',
+      'Oráculo: antes del giro elige un tipo de casilla ({kinds}) y le da un potenciador. El valor del potenciador permanece sellado (se muestra como ×?) hasta que la rueda se detiene. Si la rueda se detiene en ese tipo de casilla, el valor de la casilla (o el resultado del bonus) se multiplica por el potenciador. El Oráculo no hace nada si la rueda se detiene en otro sitio.',
+      'El premio total de una ronda está limitado a {m}× el importe seleccionado: al alcanzar el límite la ronda termina y el premio queda limitado a él. Las animaciones de premio (WIN, BIG WIN, EXTRA WIN, MEGA WIN, JUICIO DIVINO) dependen del total de la ronda ÷ el coste del modo; nunca cambian el importe ganado.'
+    ],
+    oracleH: 'Potenciadores del Oráculo', oracleNote: 'Probabilidad de cada potenciador cuando el Oráculo elige un tipo de casilla.',
+    bonusH: 'Rondas de bonus: activación y valores',
+    scarabH: 'Caída de Escarabajos', scarabP: 'Se activa con la casilla Escarabajos ({one} de {n}) o se abre directamente. Tres escarabajos caen entre {rows} filas de clavijas y cada uno gana el valor de la ranura donde aterriza (× el potenciador del Oráculo si se aplica). Valores de las ranuras de izquierda a derecha, con la probabilidad de cada una:',
+    weighH: 'Pesaje del Corazón', weighP: 'Se activa con la casilla Pesaje ({one} de {n}) o se abre directamente. Dos platillos muestran cada uno un multiplicador. Eliges la pluma o el corazón; el platillo más pesado gana su multiplicador, el más ligero no gana nada: una probabilidad de una entre dos. La pareja de multiplicadores se sortea con estas probabilidades:',
+    vaultH: 'Cámara del Tesoro', vaultP: 'Se activa con la casilla Tesoro ({one} de {n}) o se abre directamente. Abre los cofres uno tras otro: {picks} al empezar. Cada cofre contiene un valor que se suma al total, o un CETRO (×2 sobre el total acumulado), o una LLAVE DE ORO (+{keys} cofres más por abrir, hasta {cap} en total), o el SELLO, que cierra la cámara y conserva el total acumulado. Nada anula ni retrasa el sello; una llave solo alarga la selección. Los dos primeros cofres nunca contienen un sello. Abrir todos los cofres permitidos añade una prima de +{fin}×. Contenido de los cofres y probabilidades (después de los dos primeros cofres):',
+    handH: 'Furia de Anubis', handP: 'Cualquier bonus puede ser tomado por la Furia ({h} % de las veces en la rueda y en los bonus abiertos directamente; siempre en el modo Furia). Elige un color (turquesa, oro o rubí: mismas probabilidades) y luego gira la rueda gigante de {segs} casillas. Un número: premio = número × nivel. DOBLE de tu color: todos los números se duplican (nivel ×2, ×4, ×8 hasta ×{tier}) y giras de nuevo. DOBLE de otro color: la cadena se detiene y se gana el número más pequeño ({min}) × nivel. Una banda activa un bonus: premio del bonus × multiplicador de la banda × nivel. Números de la rueda gigante: ×{hnums}. Casillas DOBLE: {dbl} ({dblc} por color). Bandas: {bands}. El nivel no crece más allá de ×{tier} (las casillas DOBLE dejan de contar).',
+    cryptH: 'Santuario de las Mareas (bonus oculto)', cDust: 'POLVO (nada)', cTab: 'TABLILLA (+ valor × marea actual)', cTide: 'MAREA (× la marea)', cEclipse: 'ECLIPSE (× la ofrenda)', cryptP: 'Un bonus ganado puede ser reemplazado por el Santuario de las Mareas ({s} % de las veces, nunca para un bonus abierto directamente). Toca las {tiles} tablillas de una cuadrícula de 3×3 en el orden que quieras; el orden no cambia las probabilidades. La ofrenda empieza en 0 y la marea en ×1. Cada tablilla es una de estas: TABLILLA (suma su valor × la marea actual a la ofrenda), MAREA (multiplica la marea, solo para las tablillas reveladas después), ECLIPSE (multiplica la ofrenda ya reunida) o POLVO (nada). El premio es la ofrenda final × el importe seleccionado (al menos ×1 si no aparece ninguna tablilla), limitado a {m}×. Tipos de tablilla:',
+    retrigH: 'Bonus, giros gratis y reactivaciones',
+    retrig: [
+      'No hay giros gratis que reactivar: cada bonus se juega una vez por activación y su resultado se suma a la ronda. Ningún bonus puede activar otro bonus: una banda de la Furia lanza un bonus que nunca vuelve a la Furia.',
+      'La única función que se repite es el giro gratis ANKH (ver arriba). Las casillas de bonus, el Oráculo y la Furia tienen las mismas probabilidades en todos los modos.',
+      'Si se corta la conexión durante una ronda, vuelve a cargar el juego: la ronda ya decidida se termina y su premio queda liquidado.'
+    ],
+    btnH: 'Botones y controles',
+    btn: [
+      ['− / +', 'Baja o sube el importe seleccionado (teclas ↓ / ↑). Bloqueados mientras hay una ronda en curso.'],
+      ['{spin}', 'Inicia una ronda con el importe seleccionado (también con Espacio o Intro). Durante el juego automático se convierte en {stop}.'],
+      ['{auto}', 'Elige el número de rondas automáticas ({autos}); el juego las encadena hasta alcanzar el número, pulsar {stop}, llegar a un límite o quedarse sin saldo suficiente. La opción «Parar el automático con bonus» está en Info.'],
+      ['{turbo}', 'Rondas más rápidas: una pulsación para TURBO, dos para ULTRA (resultado casi instantáneo), una tercera para desactivarlo. Un bonus siempre se juega a un ritmo más tranquilo.'],
+      ['{buy}', 'Abre el menú de bonus abiertos directamente. Cada tarjeta muestra su coste; al elegir una tarjeta se inicia ese bonus.'],
+      ['{plus}', 'Activa o desactiva ORÁCULO+ para las próximas rondas: coste ×{c}, el Oráculo aparece mucho más a menudo. El coste se muestra bajo el importe.'],
+      ['Sonido (altavoz)', 'Abre el panel de sonido: volumen, agudos, tono, ambiente musical, color y un interruptor que silencia todos los sonidos.'],
+      ['i (Info)', 'Abre estas reglas y los ajustes: unidad de visualización, límite de pérdida, calidad gráfica, efectos reducidos, opciones del automático, acceso directo a bonus sí/no, reinicio del saldo.'],
+      ['Idioma', 'Cambia el idioma del juego.'],
+      ['€ / $', 'Cambia la visualización de los importes entre euro y dólar (mismo valor numérico).'],
+      ['×', 'Cierra la ventana abierta (Esc también funciona).'],
+      ['Toque / Espacio', 'En un bonus: inicia el bonus, suelta el escarabajo o el bloque, elige un cofre, una carta o un color. En una animación de premio: toca para saltarla.']
+    ],
+    discH: 'Importante', disc: 'Un mal funcionamiento anula todos los premios y partidas. Se requiere una conexión a internet estable. En caso de desconexión, vuelve a cargar el juego para terminar las rondas inconclusas. El retorno esperado se calcula a lo largo de muchas partidas. La pantalla del juego no representa ningún dispositivo físico y es solo ilustrativa. Los premios se liquidan según el importe recibido del Remote Game Server y no según los eventos del navegador web. TM y © 2026 Engine.'
+  };
+  S.es = {
+    bet: 'JUEGO', plusHint: 'ORÁCULO+: potenciador en ≈ 3 de cada 4 giros · importe de juego ×1,1', cost: 'JUGAR POR', sessWag: 'Jugado',
+    rulesPlus: 'Modo ORÁCULO+: importe de juego ×1,1, el Oráculo aparece en ≈ 3 de cada 4 giros. Mismo RTP (≈ 96 %).',
+    buyBtn: 'OBTENER BONUS', buyTitle: 'OBTENER BONUS', buySub: 'Abre un bonus directamente, sin pasar por la rueda. Jugable por: importe de juego × multiplicador. La Furia de Anubis aún puede tomarlo.',
+    buyPrice: 'JUGABLE POR', buyNow: 'OBTENER', buyOn: 'Acceso a bonus', resumed: 'Ronda interrumpida: premio añadido',
+    scarabSub: 'Tres escarabajos caen en la oscuridad. Cada uno gana la casilla donde aterriza.',
+    splashDemo: 'Demo · monedas de juego · Juega con moderación', infoTitle: 'Reglas y tabla de premios', demo: 'Monedas de juego — demo, los importes mostrados no son reales.',
+    tableCols: { 2: 'Premio' }, currencyL: 'Ficha', handWrongSub: 'La cadena se detiene: se recoge el nivel actual',
+    rules: {
+      0: 'Un juego, un giro: la rueda del juicio decide. Cada casilla gana su valor × tu importe de juego.',
+      2: 'ANKH: giro gratis de la rueda, sin importe de juego adicional.',
+      6: function (s) { return s.replace('coste de la ronda', 'valor de juego de la ronda'); }
+    },
+    $rules: {
+      modesH: 'Modos, valor de juego, RTP y premio máximo', colCost: 'Jugable por',
+      modePlusD: 'Jugable por ×{c} el importe seleccionado. El Oráculo aparece en cerca del {pp} % de los giros, así que los potenciadores salen más a menudo. Mismo RTP.',
+      modesNote: function (s) { return s.replace('no del coste del modo', 'no del valor de juego del modo').replace('El coste es un múltiplo', 'El valor de juego es un múltiplo'); },
+      how: { 1: function (s) { return s.replace('sin coste', 'sin importe de juego adicional'); }, 4: function (s) { return s.replace('el coste del modo', 'el valor de juego del modo'); } },
+      btn: {
+        4: { 1: 'Abre el menú de bonus abiertos directamente. Cada tarjeta muestra por cuánto se puede jugar; al elegir una tarjeta se inicia ese bonus.' },
+        5: { 1: 'Activa o desactiva ORÁCULO+ para las próximas rondas: valor de juego ×{c}, el Oráculo aparece mucho más a menudo. El valor de juego se muestra bajo el importe.' },
+        9: { 0: 'SC / GC', 1: 'Cambia la visualización entre las dos fichas (mismo valor numérico).' }
+      }
+    },
+    $replay: { bet: 'IMPORTE DE JUEGO', realCost: 'VALOR DE JUEGO REAL', costMult: 'Valor de juego' },
+    $rgs: {
+      errVal: 'Solicitud rechazada: la sesión ha caducado o la jugada no es válida. Vuelve a iniciar el juego desde el sitio.',
+      errIpb: 'Saldo insuficiente para esta jugada.', errGle: 'Límite alcanzado: esta jugada se rechaza.',
+      errNet: 'Red no disponible o respuesta no válida. Es posible que tu jugada no se haya tenido en cuenta: comprueba tu saldo.',
+      buyConfirm: '¿Obtener {name}? Jugable por {price}.', buyConfirmTitle: 'CONFIRMAR BONUS', autoCost: 'Valor de juego por ronda'
+    }
+  };
+})(window.I18N_X, window.I18N_SOCIAL);
+
+/* --- fi --- */
+(function (X, S) {
+  X.tiers.fi = ['VOITTO', 'ISO VOITTO', 'EXTRA-VOITTO', 'MEGAVOITTO'];
+  X.replay.fi = {
+    badge: 'TOISTO', start: 'TOISTA', again: 'TOISTA UUDELLEEN', playing: 'TOISTETAAN…', loading: 'Ladataan toistoa…',
+    errSum: 'Toiston tapahtumat eivät vastaa palvelimen ilmoittamaa summaa: näytetään palvelimen summa.',
+    errLoad: 'Tämän toiston lataus epäonnistui.', errParams: 'Toiston parametreja puuttuu (game, version, mode, event, rgs_url).', errFormat: 'Tämän toiston muoto on tuntematon.',
+    errNet: 'Verkkovirhe: tarkista yhteys ja lataa uudelleen.', bet: 'PANOS', betSocial: 'PELISUMMA', realCost: 'TODELLINEN HINTA', costMult: 'Hinta', result: 'VOITTO', noWin: 'Ei voittoa',
+    modeStd: 'NORMAALI', modePlus: 'ORAAKKELI+', modeBonus: 'BONUS'
+  };
+  X.rgs.fi = {
+    connecting: 'Yhdistetään pelipalvelimeen…', retry: 'Yritä uudelleen', confirm: 'Vahvista', cancel: 'Peruuta',
+    errUrl: 'Yhteys ei onnistu: pelipalvelimen osoite (rgs_url) tai istunto puuttuu tai on virheellinen. Käynnistä peli uudelleen sivustolta.',
+    errAuth: 'Pelipalvelimeen ei saada yhteyttä. Tarkista yhteytesi ja käynnistä peli uudelleen.',
+    errVal: 'Pyyntö hylättiin: istunto on vanhentunut tai panos on virheellinen. Käynnistä peli uudelleen sivustolta.',
+    errIpb: 'Saldo ei riitä tähän panokseen.',
+    errGle: 'Pelirajoitus täyttyi: tämä panos hylätään.',
+    errAct: 'Palvelin on varattu. Yritä hetken kuluttua uudelleen.',
+    errGen: 'Pelipalvelimen virhe. Yritä hetken kuluttua uudelleen.',
+    errNet: 'Verkko ei ole käytettävissä tai vastaus on virheellinen. Panostasi ei ehkä ole otettu huomioon: tarkista saldosi.',
+    errBook: 'Kierroksen tulosta ei voitu lukea. Ota yhteyttä tukeen.',
+    errIs: 'Virheellinen tai vanhentunut istunto. Käynnistä peli uudelleen sivustolta.',
+    errAte: 'Tunnistautuminen on vanhentunut. Käynnistä peli uudelleen sivustolta kirjautuaksesi uudelleen.',
+    errLoc: 'Tämä peli ei ole saatavilla sijainnissasi.',
+    errMaint: 'Huolto käynnissä. Yritä uudelleen muutaman minuutin kuluttua.',
+    errSum: 'Näytetty tulos ei vastaa pelipalvelimen summaa: palvelimen summa otetaan käyttöön.',
+    resuming: 'Käynnissä olevaa kierrosta jatketaan…',
+    buyConfirm: 'Ostetaanko {name} hintaan {price}?', buyConfirmTitle: 'VAHVISTA OSTO',
+    autoTitle: 'AUTOMAATTIPELI', autoSub: 'Valitse kierrosten määrä ja pysäytysehdot ja vahvista sitten.',
+    autoRounds: 'Kierrosten määrä', autoStopWin: 'Pysäytä vähintään tällä voitolla', autoStart: 'Aloita', autoCost: 'Hinta kierrosta kohti'
+  };
+  X.rules.fi = {
+    modesH: 'Tilat, hinta, RTP ja enimmäisvoitto', colMode: 'Tila', colCost: 'Hinta', colRtp: 'RTP', colMax: 'Enimmäisvoitto', colChance: 'Todennäköisyys', colValue: 'Arvo', colBoost: 'Tehostus', colNumCase: 'Numeroruutu', colBonusCase: 'Bonusruutu',
+    modeStd: 'Normaali', modePlus: 'ORAAKKELI+', tokScepter: 'SEPPELE ×2 (siihen asti kertyneelle summalle)', tokKey: 'KULTAINEN AVAIN (+{keys} avattavaa arkkua)', tokSeal: 'SINETTI (sulkee kammion)',
+    modeStdD: 'Yksi tuomion ratas pyöräytys. Oraakkeli ilmestyy noin {p} %:lla pyöräytyksistä.',
+    modePlusD: 'Hinta on ×{c} valitusta summasta. Oraakkeli ilmestyy noin {pp} %:lla pyöräytyksistä, joten tehostuksia tulee useammin. Sama RTP.',
+    buyScarabD: 'Avaa Skarabeusten pudotus -bonuksen suoraan ilman rataa.', buyWeighD: 'Avaa Sydämen punnitus -bonuksen suoraan ilman rataa.',
+    buyVaultD: 'Avaa Aarrekammio-bonuksen suoraan ilman rataa.', buyHandD: 'Avaa Anubiksen raivon suoraan: jättiratas pyöräytetään heti.',
+    modesNote: 'RTP on odotettu tuotto hyvin suuressa määrässä pelejä (tarkka laskelma, ei lupaus yksittäiselle istunnolle). Enimmäisvoitto on valitun summan monikerta, ei tilan hinnan, ja se on rajattu arvoon {m}× kaikissa tiloissa. Hinta on valitun summan monikerta ja se näytetään ennen vahvistusta. Anubiksen raivo voi silti ottaa haltuunsa suoraan avatun bonuksen ({h} % kerroista), kuten radalla.',
+    howH: 'Miten voitot muodostuvat',
+    how: [
+      'Voittolinjoja, yhdistelmiä tai riviin asetettavia symboleja ei ole. Jokainen pyöräytys pysähtyy yhteen radan {n} ruudusta. Voitto on kyseisen ruudun arvo × valittu summa.',
+      'Numeroruudut antavat arvonsa (×{nums}). Tomuruudut eivät anna mitään. ANKH antaa ilmaisen uudelleenpyöräytyksen: ratas pyörii uudelleen ilman hintaa, enintään {chain} kertaa peräkkäin, ja kierros päättyy muuhun kuin ANKH-ruutuun. Ketjutettujen pyöräytysten voitot lasketaan yhteen.',
+      'Bonusruudut (Skarabeukset, Punnitus, Aarre) käynnistävät vastaavan bonuksen: voitto on bonuksen tulos × valittu summa. Kukin kolmesta vie {one} ruutua {n}:stä.',
+      'Oraakkeli: ennen pyöräytystä se valitsee ruututyypin ({kinds}) ja antaa sille tehostuksen. Tehostuksen arvo pysyy sinetöitynä (näytetään ×?) kunnes ratas pysähtyy. Jos ratas pysähtyy kyseiseen ruututyyppiin, ruudun arvo (tai bonuksen tulos) kerrotaan tehostuksella. Jos ratas pysähtyy muualle, Oraakkeli ei tee mitään.',
+      'Kierroksen kokonaisvoitto on rajattu arvoon {m}× valittu summa: kun raja saavutetaan, kierros päättyy ja voitto rajoitetaan siihen. Voittoanimaatiot (WIN, BIG WIN, EXTRA WIN, MEGA WIN, JUMALAINEN TUOMIO) riippuvat kierroksen summasta ÷ tilan hinta; ne eivät koskaan muuta voitettua summaa.'
+    ],
+    oracleH: 'Oraakkelin tehostukset', oracleNote: 'Kunkin tehostuksen todennäköisyys, kun Oraakkeli valitsee ruututyypin.',
+    bonusH: 'Bonuskierrokset: käynnistys ja arvot',
+    scarabH: 'Skarabeusten pudotus', scarabP: 'Käynnistyy Skarabeukset-ruudusta ({one} ruutua {n}:stä) tai avataan suoraan. Kolme skarabeusta putoaa {rows} tappirivin läpi ja kukin voittaa sen lokeron arvon, johon se päätyy (× Oraakkelin tehostus, jos se pätee). Lokeroiden arvot vasemmalta oikealle sekä kunkin lokeron todennäköisyys:',
+    weighH: 'Sydämen punnitus', weighP: 'Käynnistyy Punnitus-ruudusta ({one} ruutua {n}:stä) tai avataan suoraan. Kaksi vaakakuppia näyttää kumpikin kertoimen. Valitset sulan tai sydämen; painavampi kuppi voittaa kertoimensa, kevyempi ei mitään: yksi mahdollisuus kahdesta. Kerroinpari arvotaan näillä todennäköisyyksillä:',
+    vaultH: 'Aarrekammio', vaultP: 'Käynnistyy Aarre-ruudusta ({one} ruutua {n}:stä) tai avataan suoraan. Avaa arkut yksi kerrallaan: aluksi {picks}. Kukin arkku sisältää joko summaan lisättävän arvon, SEPPELEEN (×2 siihen asti kertyneelle summalle), KULTAISEN AVAIMEN (+{keys} arkkua lisää, yhteensä enintään {cap}) tai SINETIN, joka sulkee kammion ja säilyttää siihen asti kertyneen summan. Mikään ei peruuta tai viivytä sinettiä; avain vain pidentää valintaa. Kaksi ensimmäistä arkkua eivät koskaan sisällä sinettiä. Kaikkien sallittujen arkkujen avaaminen lisää palkkion +{fin}×. Arkkujen sisältö ja todennäköisyydet (kahden ensimmäisen arkun jälkeen):',
+    handH: 'Anubiksen raivo', handP: 'Raivo voi ottaa haltuunsa minkä tahansa bonuksen ({h} % kerroista radalla ja suoraan avatuissa bonuksissa; aina Raivo-tilassa). Valitse väri (turkoosi, kulta tai rubiini: samat todennäköisyydet) ja pyöräytä sitten {segs} ruudun jättirataa. Numero: voitto = numero × taso. TUPLA omalla värilläsi: kaikki numerot kaksinkertaistuvat (taso ×2, ×4, ×8 aina arvoon ×{tier} asti) ja pyöräytät uudelleen. TUPLA toisella värillä: ketju päättyy ja voitat pienimmän numeron ({min}) × taso. Nauha käynnistää bonuksen: bonuksen voitto × nauhan kerroin × taso. Jättiradan numerot: ×{hnums}. TUPLA-ruudut: {dbl} ({dblc} väriä kohti). Nauhat: {bands}. Taso ei kasva yli arvon ×{tier} (TUPLA-ruudut eivät silloin enää lasketa).',
+    cryptH: 'Vuorovesien pyhäkkö (piilotettu bonus)', cDust: 'PÖLY (ei mitään)', cTab: 'TAULU (+ arvo × nykyinen vuorovesi)', cTide: 'VUOROVESI (× vuorovesi)', cEclipse: 'PIMENNYS (× uhri)', cryptP: 'Voitettu bonus voidaan korvata Vuorovesien pyhäkölle ({s} % kerroista, ei koskaan suoraan avatussa bonuksessa). Kosketa 3×3-ruudukon {tiles} taulua missä järjestyksessä tahansa; järjestys ei muuta todennäköisyyksiä. Uhri alkaa nollasta ja vuorovesi arvosta ×1. Jokainen taulu on yksi näistä: TAULU (lisää arvonsa × nykyinen vuorovesi uhriin), VUOROVESI (kertoo vuorovesen, vain sen jälkeen paljastettaville tauluille), PIMENNYS (kertoo jo kerätyn uhrin) tai PÖLY (ei mitään). Voitto on lopullinen uhri × valittu summa (vähintään ×1, jos yhtään taulua ei ilmesty), rajattu arvoon {m}×. Taulutyypit:',
+    retrigH: 'Bonukset, uudelleenpyöräytykset ja uudelleenkäynnistykset',
+    retrig: [
+      'Uudelleenkäynnistettäviä ilmaiskierroksia ei ole: kukin bonus pelataan kerran käynnistystä kohti ja sen tulos lisätään kierrokseen. Mikään bonus ei voi käynnistää toista bonusta: Raivon nauha käynnistää bonuksen, joka ei koskaan johda takaisin Raivoon.',
+      'Ainoa toistuva ominaisuus on ANKH-uudelleenpyöräytys (katso yllä). Bonusruuduilla, Oraakkelilla ja Raivolla on samat todennäköisyydet kaikissa tiloissa.',
+      'Jos yhteys katkeaa kierroksen aikana, lataa peli uudelleen: jo ratkaistu kierros saatetaan loppuun ja sen voitto selvitetään.'
+    ],
+    btnH: 'Painikkeet ja ohjaimet',
+    btn: [
+      ['− / +', 'Pienentää tai suurentaa valittua summaa (näppäimet ↓ / ↑). Lukittu kierroksen ajaksi.'],
+      ['{spin}', 'Aloittaa kierroksen valitulla summalla (myös välilyönti tai Enter). Automaattipelissä siitä tulee {stop}.'],
+      ['{auto}', 'Valitse automaattikierrosten määrä ({autos}); peli pelaa ne peräkkäin, kunnes määrä täyttyy, painat {stop}, raja täyttyy tai saldo ei riitä. Valinta “Pysäytä automaattipeli bonuksessa” löytyy Tiedoista.'],
+      ['{turbo}', 'Nopeammat kierrokset: yksi painallus TURBO, kaksi ULTRA (tulos lähes heti), kolmas sammuttaa. Bonus pelataan aina rauhallisemmalla tahdilla.'],
+      ['{buy}', 'Avaa suoraan avattavien bonusten valikon. Jokainen kortti näyttää hintansa; kortin valinta käynnistää kyseisen bonuksen.'],
+      ['{plus}', 'Kytkee ORAAKKELI+ -tilan päälle tai pois seuraaville kierroksille: hinta ×{c}, Oraakkeli ilmestyy paljon useammin. Hinta näkyy summan alla.'],
+      ['Ääni (kaiutin)', 'Avaa ääniruudun: äänenvoimakkuus, diskantti, sävelkorkeus, musiikin tunnelma, värisävy ja kytkin, joka mykistää kaikki äänet.'],
+      ['i (Tiedot)', 'Avaa nämä säännöt ja asetukset: näyttöyksikkö, tappioraja, grafiikan laatu, vähennetyt tehosteet, automaattipelin asetukset, suora bonuspääsy päällä/pois, saldon nollaus.'],
+      ['Kieli', 'Vaihtaa pelin kielen.'],
+      ['€ / $', 'Vaihtaa summien näytön euron ja dollarin välillä (sama numeroarvo).'],
+      ['×', 'Sulkee avoimen ikkunan (myös Esc).'],
+      ['Kosketus / välilyönti', 'Bonuksessa: aloittaa bonuksen, pudottaa skarabeuksen tai lohkon, valitsee arkun, kortin tai värin. Voittoanimaatiossa: kosketus ohittaa sen.']
+    ],
+    discH: 'Tärkeää', disc: 'Toimintahäiriö mitätöi kaikki voitot ja pelit. Vakaa internetyhteys on välttämätön. Yhteyden katketessa lataa peli uudelleen saattaaksesi keskeneräiset kierrokset loppuun. Odotettu tuotto lasketaan monen pelin perusteella. Pelin näyttö ei edusta mitään fyysistä laitetta ja on vain havainnollistava. Voitot selvitetään Remote Game Serveriltä saadun summan mukaan, ei verkkoselaimen tapahtumien mukaan. TM ja © 2026 Engine.'
+  };
+  S.fi = {
+    bet: 'PELI', plusHint: 'ORAAKKELI+: tehostus ≈ 3 pyöräytyksellä 4:stä · pelisumma ×1,1', cost: 'PELIARVO', sessWag: 'Pelattu',
+    rulesPlus: 'ORAAKKELI+-tila: pelisumma ×1,1, Oraakkeli ilmestyy ≈ 3 pyöräytyksellä 4:stä. Sama RTP (≈ 96 %).',
+    buyBtn: 'AVAA BONUS', buyTitle: 'AVAA BONUS', buySub: 'Avaa bonus suoraan ohittaen rata. Pelattavissa arvolla: pelisumma × kerroin. Anubiksen raivo voi silti ottaa sen haltuunsa.',
+    buyPrice: 'PELIARVO', buyNow: 'AVAA', buyOn: 'Suora bonuspääsy', resumed: 'Keskeytynyt kierros: voitto lisätty',
+    scarabSub: 'Kolme skarabeusta syöksyy pimeyteen. Kukin voittaa ruudun, johon se putoaa.',
+    splashDemo: 'Demo · pelikolikot · Pelaa vastuullisesti', infoTitle: 'Säännöt & voittotaulukko', demo: 'Pelikolikot — demo, näytetyt summat eivät ole oikeita.',
+    tableCols: { 2: 'Voitto' }, currencyL: 'Poletti',
+    rules: {
+      0: 'Yksi peli, yksi pyöräytys: tuomion ratas ratkaisee. Jokainen ruutu antaa arvonsa × pelisummasi.',
+      2: 'ANKH: ratasta pyöräytetään ilmaiseksi uudelleen, ilman lisäpelisummaa.'
+    },
+    $rules: {
+      modesH: 'Tilat, peliarvo, RTP ja enimmäisvoitto', colCost: 'Peliarvo',
+      modePlusD: 'Peliarvo on ×{c} valitusta summasta. Oraakkeli ilmestyy noin {pp} %:lla pyöräytyksistä, joten tehostuksia tulee useammin. Sama RTP.',
+      modesNote: function (s) { return s.replace('ei tilan hinnan', 'ei tilan peliarvon').replace('Hinta on valitun', 'Peliarvo on valitun'); },
+      how: { 1: function (s) { return s.replace('ilman hintaa', 'ilman lisäpelisummaa'); }, 4: function (s) { return s.replace('tilan hinta', 'tilan peliarvo'); } },
+      btn: {
+        4: { 1: 'Avaa suoraan avattavien bonusten valikon. Jokainen kortti näyttää peliarvonsa; kortin valinta käynnistää kyseisen bonuksen.' },
+        5: { 1: 'Kytkee ORAAKKELI+ -tilan päälle tai pois seuraaville kierroksille: peliarvo ×{c}, Oraakkeli ilmestyy paljon useammin. Peliarvo näkyy summan alla.' },
+        9: { 0: 'SC / GC', 1: 'Vaihtaa näytön kahden polettilajin välillä (sama numeroarvo).' }
+      }
+    },
+    $replay: { bet: 'PELISUMMA', realCost: 'TODELLINEN PELIARVO', costMult: 'Peliarvo' },
+    $rgs: {
+      errVal: 'Pyyntö hylättiin: istunto on vanhentunut tai peli on virheellinen. Käynnistä peli uudelleen sivustolta.',
+      errIpb: 'Saldo ei riitä tähän peliin.', errGle: 'Raja täyttyi: tämä peli hylätään.',
+      errNet: 'Verkko ei ole käytettävissä tai vastaus on virheellinen. Peliäsi ei ehkä ole otettu huomioon: tarkista saldosi.',
+      buyConfirm: 'Avataanko {name}? Pelattavissa arvolla {price}.', buyConfirmTitle: 'VAHVISTA BONUS', autoCost: 'Peliarvo kierrosta kohti'
+    }
+  };
+})(window.I18N_X, window.I18N_SOCIAL);
+
+/* --- id --- */
+(function (X, S) {
+  X.tiers.id = ['MENANG', 'MENANG BESAR', 'MENANG EKSTRA', 'MENANG MEGA'];
+  X.replay.id = {
+    badge: 'REPLAY', start: 'PUTAR', again: 'PUTAR LAGI', playing: 'BERJALAN…', loading: 'Memuat replay…',
+    errSum: 'Peristiwa replay tidak sesuai dengan jumlah yang diumumkan server: jumlah server ditampilkan.',
+    errLoad: 'Replay ini tidak dapat dimuat.', errParams: 'Parameter replay tidak lengkap (game, version, mode, event, rgs_url).', errFormat: 'Replay ini memiliki format yang tidak dikenal.',
+    errNet: 'Kesalahan jaringan: periksa koneksi lalu muat ulang.', bet: 'TARUHAN', betSocial: 'JUMLAH MAIN', realCost: 'BIAYA SEBENARNYA', costMult: 'Biaya', result: 'MENANG', noWin: 'Tidak menang',
+    modeStd: 'STANDAR', modePlus: 'ORAKEL+', modeBonus: 'BONUS'
+  };
+  X.rgs.id = {
+    connecting: 'Menghubungkan ke server permainan…', retry: 'Coba lagi', confirm: 'Konfirmasi', cancel: 'Batal',
+    errUrl: 'Tidak dapat terhubung: alamat server permainan (rgs_url) atau sesi tidak ada atau tidak valid. Silakan luncurkan ulang permainan dari situs.',
+    errAuth: 'Tidak dapat menjangkau server permainan. Periksa koneksimu lalu luncurkan ulang permainan.',
+    errVal: 'Permintaan ditolak: sesi telah berakhir atau taruhan tidak valid. Silakan luncurkan ulang permainan dari situs.',
+    errIpb: 'Saldo tidak cukup untuk taruhan ini.',
+    errGle: 'Batas permainan tercapai: taruhan ini ditolak.',
+    errAct: 'Server sedang sibuk. Silakan coba lagi sebentar lagi.',
+    errGen: 'Kesalahan server permainan. Silakan coba lagi sebentar lagi.',
+    errNet: 'Jaringan tidak tersedia atau respons tidak valid. Taruhanmu mungkin belum diperhitungkan: periksa saldomu.',
+    errBook: 'Hasil ronde tidak dapat dibaca. Silakan hubungi dukungan.',
+    errIs: 'Sesi tidak valid atau telah berakhir. Silakan jalankan ulang permainan dari situs.',
+    errAte: 'Autentikasi telah berakhir. Silakan jalankan ulang permainan dari situs untuk masuk kembali.',
+    errLoc: 'Permainan ini tidak tersedia dari lokasi Anda.',
+    errMaint: 'Pemeliharaan sedang berlangsung. Silakan coba lagi dalam beberapa menit.',
+    errSum: 'Hasil yang ditampilkan tidak sesuai dengan jumlah dari server permainan: jumlah server diterapkan.',
+    resuming: 'Melanjutkan ronde yang sedang berjalan…',
+    buyConfirm: 'Beli {name} seharga {price}?', buyConfirmTitle: 'KONFIRMASI PEMBELIAN',
+    autoTitle: 'MAIN OTOMATIS', autoSub: 'Pilih jumlah ronde dan kondisi berhenti, lalu konfirmasi.',
+    autoRounds: 'Jumlah ronde', autoStopWin: 'Berhenti pada kemenangan minimal', autoStart: 'Mulai', autoCost: 'Biaya per ronde'
+  };
+  X.rules.id = {
+    modesH: 'Mode, biaya, RTP, dan kemenangan maksimum', colMode: 'Mode', colCost: 'Biaya', colRtp: 'RTP', colMax: 'Menang maks.', colChance: 'Peluang', colValue: 'Nilai', colBoost: 'Boost', colNumCase: 'Kotak angka', colBonusCase: 'Kotak bonus',
+    modeStd: 'Standar', modePlus: 'ORAKEL+', tokScepter: 'TONGKAT ×2 (pada total sejauh ini)', tokKey: 'KUNCI EMAS (+{keys} peti untuk dibuka)', tokSeal: 'SEGEL (menutup ruangan)',
+    modeStdD: 'Satu putaran roda penghakiman. Orakel muncul pada sekitar {p} % putaran.',
+    modePlusD: 'Berbiaya ×{c} dari jumlah yang dipilih. Orakel muncul pada sekitar {pp} % putaran, sehingga boost lebih sering datang. RTP sama.',
+    buyScarabD: 'Langsung membuka bonus Jatuhnya Kumbang, tanpa melewati roda.', buyWeighD: 'Langsung membuka bonus Penimbangan Hati, tanpa melewati roda.',
+    buyVaultD: 'Langsung membuka bonus Ruang Harta, tanpa melewati roda.', buyHandD: 'Langsung membuka Amarah Anubis: roda raksasa diputar seketika.',
+    modesNote: 'RTP adalah hasil yang diharapkan dari sangat banyak permainan (perhitungan pasti, bukan janji untuk satu sesi). Kemenangan maksimum adalah kelipatan dari jumlah yang dipilih, bukan dari biaya mode, dan dibatasi hingga {m}× di setiap mode. Biaya adalah kelipatan dari jumlah yang dipilih dan ditampilkan sebelum konfirmasi. Amarah Anubis tetap dapat mengambil alih bonus yang dibuka langsung ({h} % dari waktu), seperti pada roda.',
+    howH: 'Bagaimana kemenangan terbentuk',
+    how: [
+      'Tidak ada garis, kombinasi, atau simbol yang harus disejajarkan. Setiap putaran berhenti di salah satu dari {n} kotak roda. Kemenangannya adalah nilai kotak itu × jumlah yang dipilih.',
+      'Kotak angka memberi nilainya (×{nums}). Kotak debu tidak memberi apa-apa. ANKH memberi putar ulang gratis: roda berputar lagi tanpa biaya, hingga {chain} kali berturut-turut, dan ronde berakhir di kotak selain ANKH. Kemenangan dari putaran berantai dijumlahkan.',
+      'Kotak bonus (Kumbang, Timbang, Harta) memicu bonus yang sesuai: kemenangannya adalah hasil bonus × jumlah yang dipilih. Masing-masing dari ketiganya menempati {one} dari {n} kotak.',
+      'Orakel: sebelum putaran, ia memilih satu jenis kotak ({kinds}) dan memberinya boost. Nilai boost tetap tersegel (ditampilkan sebagai ×?) hingga roda berhenti. Jika roda berhenti pada jenis kotak itu, nilai kotak (atau hasil bonus) dikalikan dengan boost. Orakel tidak berbuat apa-apa jika roda berhenti di tempat lain.',
+      'Total kemenangan satu ronde dibatasi hingga {m}× jumlah yang dipilih: ketika batas tercapai, ronde berakhir dan kemenangan dibatasi sebesar itu. Animasi kemenangan (WIN, BIG WIN, EXTRA WIN, MEGA WIN, PENGHAKIMAN ILAHI) bergantung pada total ronde ÷ biaya mode; animasi tidak pernah mengubah jumlah yang dimenangkan.'
+    ],
+    oracleH: 'Boost Orakel', oracleNote: 'Peluang setiap boost saat Orakel memilih jenis kotak.',
+    bonusH: 'Ronde bonus: pemicu dan nilai',
+    scarabH: 'Jatuhnya Kumbang', scarabP: 'Dipicu oleh kotak Kumbang ({one} dari {n}) atau dibuka langsung. Tiga kumbang jatuh melewati {rows} baris pasak dan masing-masing memenangkan nilai slot tempatnya mendarat (× boost Orakel jika berlaku). Nilai slot dari kiri ke kanan, beserta peluang tiap slot:',
+    weighH: 'Penimbangan Hati', weighP: 'Dipicu oleh kotak Timbang ({one} dari {n}) atau dibuka langsung. Dua piringan masing-masing menampilkan satu pengali. Kamu memilih bulu atau hati; piringan yang lebih berat memenangkan pengalinya, yang lebih ringan tidak mendapat apa-apa: peluang satu banding dua. Pasangan pengali diundi dengan peluang berikut:',
+    vaultH: 'Ruang Harta', vaultP: 'Dipicu oleh kotak Harta ({one} dari {n}) atau dibuka langsung. Buka peti satu per satu: {picks} di awal. Setiap peti berisi nilai yang ditambahkan ke total, atau TONGKAT (×2 pada total sejauh ini), atau KUNCI EMAS (+{keys} peti lagi untuk dibuka, paling banyak {cap} seluruhnya), atau SEGEL yang menutup ruangan dan mempertahankan total sejauh ini. Tidak ada yang membatalkan atau menunda segel; kunci hanya memperpanjang pilihan. Dua peti pertama tidak pernah berisi segel. Membuka semua peti yang diizinkan menambah hadiah +{fin}×. Isi peti dan peluangnya (setelah dua peti pertama):',
+    handH: 'Amarah Anubis', handP: 'Bonus apa pun dapat diambil alih oleh Amarah ({h} % dari waktu pada roda dan untuk bonus yang dibuka langsung; selalu pada mode Amarah). Pilih warna (biru tosca, emas, atau rubi: peluang sama), lalu putar roda raksasa dengan {segs} kotak. Sebuah angka: kemenangan = angka × tingkat. GANDA pada warnamu: semua angka digandakan (tingkat ×2, ×4, ×8 hingga ×{tier}) dan kamu memutar lagi. GANDA pada warna lain: rantai berhenti dan angka terkecil ({min}) × tingkat dimenangkan. Sebuah pita memicu bonus: kemenangan bonus × pengali pita × tingkat. Angka pada roda raksasa: ×{hnums}. Kotak GANDA: {dbl} ({dblc} per warna). Pita: {bands}. Tingkat tidak naik melebihi ×{tier} (kotak GANDA lalu tidak dihitung).',
+    cryptH: 'Kuil Pasang Surut (bonus tersembunyi)', cDust: 'DEBU (tidak ada)', cTab: 'TABLET (+ nilai × pasang saat ini)', cTide: 'PASANG (× pasang)', cEclipse: 'GERHANA (× persembahan)', cryptP: 'Bonus yang dimenangkan dapat digantikan oleh Kuil Pasang Surut ({s} % dari waktu, tidak pernah untuk bonus yang dibuka langsung). Sentuh {tiles} tablet pada kisi 3×3 dalam urutan apa pun; urutan tidak mengubah peluang. Persembahan dimulai dari 0 dan pasang dari ×1. Setiap tablet adalah salah satu dari: TABLET (menambahkan nilainya × pasang saat ini ke persembahan), PASANG (mengalikan pasang, hanya untuk tablet yang terbuka sesudahnya), GERHANA (mengalikan persembahan yang sudah terkumpul), atau DEBU (tidak ada). Kemenangannya adalah persembahan akhir × jumlah yang dipilih (minimal ×1 jika tidak ada tablet muncul), dibatasi hingga {m}×. Jenis tablet:',
+    retrigH: 'Bonus, putar ulang, dan pemicu ulang',
+    retrig: [
+      'Tidak ada putaran gratis yang dapat dipicu ulang: setiap bonus dimainkan sekali per pemicu dan hasilnya ditambahkan ke ronde. Tidak ada bonus yang dapat memicu bonus lain: pita Amarah memicu bonus yang tidak pernah kembali ke Amarah.',
+      'Satu-satunya fitur yang berulang adalah putar ulang ANKH (lihat di atas). Kotak bonus, Orakel, dan Amarah memiliki peluang yang sama di setiap mode.',
+      'Jika koneksi terputus selama ronde, muat ulang permainan: ronde yang sudah diputuskan diselesaikan dan kemenangannya dihitung.'
+    ],
+    btnH: 'Tombol dan kontrol',
+    btn: [
+      ['− / +', 'Menurunkan atau menaikkan jumlah yang dipilih (tombol ↓ / ↑). Terkunci selama ronde berjalan.'],
+      ['{spin}', 'Memulai ronde dengan jumlah yang dipilih (Spasi atau Enter juga bisa). Saat main otomatis berubah menjadi {stop}.'],
+      ['{auto}', 'Pilih jumlah ronde otomatis ({autos}); permainan memainkannya berurutan sampai jumlahnya tercapai, kamu menekan {stop}, batas tercapai, atau saldo tidak cukup. Opsi “Hentikan main otomatis saat bonus” ada di Info.'],
+      ['{turbo}', 'Ronde lebih cepat: tekan sekali untuk TURBO, dua kali untuk ULTRA (hasil hampir seketika), tiga kali untuk mematikan. Bonus selalu dimainkan dengan kecepatan yang lebih tenang.'],
+      ['{buy}', 'Membuka menu bonus yang dibuka langsung. Setiap kartu menampilkan biayanya; memilih kartu memulai bonus itu.'],
+      ['{plus}', 'Menyalakan atau mematikan ORAKEL+ untuk ronde berikutnya: biaya ×{c}, Orakel muncul jauh lebih sering. Biaya ditampilkan di bawah jumlah.'],
+      ['Suara (speaker)', 'Membuka panel suara: volume, nada tinggi, tinggi nada, suasana musik, warna, dan sakelar yang membisukan semua suara.'],
+      ['i (Info)', 'Membuka aturan ini dan pengaturan: satuan tampilan, batas kerugian, kualitas grafis, efek dikurangi, opsi main otomatis, akses bonus langsung ya/tidak, reset saldo.'],
+      ['Bahasa', 'Mengganti bahasa permainan.'],
+      ['€ / $', 'Mengganti tampilan jumlah antara euro dan dolar (nilai numerik sama).'],
+      ['×', 'Menutup jendela yang terbuka (Esc juga bisa).'],
+      ['Ketuk / Spasi', 'Dalam bonus: memulai bonus, menjatuhkan kumbang atau blok, memilih peti, kartu, atau warna. Dalam animasi kemenangan: ketuk untuk melewatinya.']
+    ],
+    discH: 'Penting', disc: 'Kerusakan membatalkan semua kemenangan dan permainan. Koneksi internet yang stabil diperlukan. Jika terputus, muat ulang permainan untuk menyelesaikan ronde yang belum selesai. Hasil yang diharapkan dihitung dari banyak permainan. Tampilan permainan tidak mewakili perangkat fisik apa pun dan hanya bersifat ilustrasi. Kemenangan dihitung berdasarkan jumlah yang diterima dari Remote Game Server dan bukan dari kejadian di peramban web. TM dan © 2026 Engine.'
+  };
+  S.id = {
+    bet: 'MAIN', plusHint: 'ORAKEL+: boost pada ≈ 3 dari 4 putaran · jumlah main ×1,1', cost: 'NILAI MAIN', sessWag: 'Dimainkan',
+    rulesPlus: 'Mode ORAKEL+: jumlah main ×1,1, Orakel muncul pada ≈ 3 dari 4 putaran. RTP sama (≈ 96 %).',
+    buyBtn: 'AMBIL BONUS', buyTitle: 'AMBIL BONUS', buySub: 'Buka bonus langsung tanpa melewati roda. Dapat dimainkan seharga: jumlah main × pengali. Amarah Anubis tetap dapat mengambil alihnya.',
+    buyPrice: 'NILAI MAIN', buyNow: 'AMBIL', buyOn: 'Akses bonus', resumed: 'Ronde terputus: kemenangan ditambahkan',
+    scarabSub: 'Tiga kumbang menukik ke dalam gelap. Masing-masing memenangkan kotak tempatnya mendarat.',
+    splashDemo: 'Demo · koin permainan · Bermainlah dengan bijak', infoTitle: 'Aturan & Tabel kemenangan', demo: 'Koin permainan — demo, jumlah yang ditampilkan tidak nyata.',
+    tableCols: { 2: 'Menang' }, currencyL: 'Token', handWrongSub: 'Rantai berhenti: tingkat saat ini dikumpulkan',
+    rules: {
+      0: 'Satu permainan, satu putaran: roda penghakiman yang menentukan. Setiap kotak memberi nilainya × jumlah mainmu.',
+      2: 'ANKH: putar ulang roda gratis, tanpa jumlah main tambahan.',
+      6: function (s) { return s.replace('biaya ronde', 'nilai main ronde'); }
+    },
+    $rules: {
+      modesH: 'Mode, nilai main, RTP, dan kemenangan maksimum', colCost: 'Nilai main',
+      modePlusD: 'Nilai main ×{c} dari jumlah yang dipilih. Orakel muncul pada sekitar {pp} % putaran, sehingga boost lebih sering datang. RTP sama.',
+      modesNote: function (s) { return s.replace('bukan dari biaya mode', 'bukan dari nilai main mode').replace('Biaya adalah kelipatan', 'Nilai main adalah kelipatan'); },
+      how: { 1: function (s) { return s.replace('tanpa biaya', 'tanpa jumlah main tambahan'); }, 4: function (s) { return s.replace('biaya mode', 'nilai main mode'); } },
+      btn: {
+        4: { 1: 'Membuka menu bonus yang dibuka langsung. Setiap kartu menampilkan nilai mainnya; memilih kartu memulai bonus itu.' },
+        5: { 1: 'Menyalakan atau mematikan ORAKEL+ untuk ronde berikutnya: nilai main ×{c}, Orakel muncul jauh lebih sering. Nilai main ditampilkan di bawah jumlah.' },
+        9: { 0: 'SC / GC', 1: 'Mengganti tampilan antara kedua token (nilai numerik sama).' }
+      }
+    },
+    $replay: { bet: 'JUMLAH MAIN', realCost: 'NILAI MAIN SEBENARNYA', costMult: 'Nilai main' },
+    $rgs: {
+      errVal: 'Permintaan ditolak: sesi telah berakhir atau permainan tidak valid. Silakan luncurkan ulang permainan dari situs.',
+      errIpb: 'Saldo tidak cukup untuk permainan ini.', errGle: 'Batas tercapai: permainan ini ditolak.',
+      errNet: 'Jaringan tidak tersedia atau respons tidak valid. Permainanmu mungkin belum diperhitungkan: periksa saldomu.',
+      buyConfirm: 'Ambil {name}? Dimainkan seharga {price}.', buyConfirmTitle: 'KONFIRMASI BONUS', autoCost: 'Nilai main per ronde'
+    }
+  };
+})(window.I18N_X, window.I18N_SOCIAL);
+
+/* --- pl --- */
+(function (X, S) {
+  X.tiers.pl = ['WYGRANA', 'DUŻA WYGRANA', 'EXTRA WYGRANA', 'MEGA WYGRANA'];
+  X.replay.pl = {
+    badge: 'POWTÓRKA', start: 'ODTWÓRZ', again: 'ODTWÓRZ PONOWNIE', playing: 'TRWA…', loading: 'Wczytywanie powtórki…',
+    errSum: 'Zdarzenia powtórki nie zgadzają się z kwotą podaną przez serwer: wyświetlana jest kwota serwera.',
+    errLoad: 'Nie udało się wczytać tej powtórki.', errParams: 'Brak parametrów powtórki (game, version, mode, event, rgs_url).', errFormat: 'Ta powtórka ma nieznany format.',
+    errNet: 'Błąd sieci: sprawdź połączenie i wczytaj ponownie.', bet: 'ZAKŁAD', betSocial: 'KWOTA GRY', realCost: 'RZECZYWISTY KOSZT', costMult: 'Koszt', result: 'WYGRANA', noWin: 'Brak wygranej',
+    modeStd: 'STANDARD', modePlus: 'WYROCZNIA+', modeBonus: 'BONUS'
+  };
+  X.rgs.pl = {
+    connecting: 'Łączenie z serwerem gry…', retry: 'Spróbuj ponownie', confirm: 'Potwierdź', cancel: 'Anuluj',
+    errUrl: 'Nie można się połączyć: adres serwera gry (rgs_url) lub sesja jest nieobecna albo nieprawidłowa. Uruchom grę ponownie ze strony.',
+    errAuth: 'Nie można połączyć się z serwerem gry. Sprawdź połączenie i uruchom grę ponownie.',
+    errVal: 'Żądanie odrzucone: sesja wygasła lub zakład jest nieprawidłowy. Uruchom grę ponownie ze strony.',
+    errIpb: 'Niewystarczające saldo na ten zakład.',
+    errGle: 'Osiągnięto limit gry: ten zakład został odrzucony.',
+    errAct: 'Serwer jest zajęty. Spróbuj ponownie za chwilę.',
+    errGen: 'Błąd serwera gry. Spróbuj ponownie za chwilę.',
+    errNet: 'Sieć niedostępna lub nieprawidłowa odpowiedź. Twój zakład mógł nie zostać uwzględniony: sprawdź saldo.',
+    errBook: 'Nie można odczytać wyniku rundy. Skontaktuj się z pomocą techniczną.',
+    errIs: 'Nieprawidłowa lub wygasła sesja. Uruchom grę ponownie ze strony.',
+    errAte: 'Uwierzytelnienie wygasło. Uruchom grę ponownie ze strony, aby zalogować się ponownie.',
+    errLoc: 'Ta gra nie jest dostępna w Twojej lokalizacji.',
+    errMaint: 'Trwają prace konserwacyjne. Spróbuj ponownie za kilka minut.',
+    errSum: 'Wyświetlony wynik nie zgadza się z kwotą z serwera gry: stosowana jest kwota serwera.',
+    resuming: 'Wznawianie trwającej rundy…',
+    buyConfirm: 'Kupić {name} za {price}?', buyConfirmTitle: 'POTWIERDŹ ZAKUP',
+    autoTitle: 'GRA AUTOMATYCZNA', autoSub: 'Wybierz liczbę rund i warunki zatrzymania, a następnie potwierdź.',
+    autoRounds: 'Liczba rund', autoStopWin: 'Zatrzymaj przy wygranej co najmniej', autoStart: 'Start', autoCost: 'Koszt rundy'
+  };
+  X.rules.pl = {
+    modesH: 'Tryby, koszt, RTP i maksymalna wygrana', colMode: 'Tryb', colCost: 'Koszt', colRtp: 'RTP', colMax: 'Maks. wygrana', colChance: 'Szansa', colValue: 'Wartość', colBoost: 'Wzmocnienie', colNumCase: 'Pole z liczbą', colBonusCase: 'Pole bonusowe',
+    modeStd: 'Standard', modePlus: 'WYROCZNIA+', tokScepter: 'BERŁO ×2 (na dotychczasową sumę)', tokKey: 'ZŁOTY KLUCZ (+{keys} skrzyń do otwarcia)', tokSeal: 'PIECZĘĆ (zamyka komnatę)',
+    modeStdD: 'Jeden obrót koła sądu. Wyrocznia pojawia się w około {p} % obrotów.',
+    modePlusD: 'Kosztuje ×{c} wybranej kwoty. Wyrocznia pojawia się w około {pp} % obrotów, więc wzmocnienia padają częściej. Ten sam RTP.',
+    buyScarabD: 'Otwiera od razu bonus Upadek Skarabeuszy, z pominięciem koła.', buyWeighD: 'Otwiera od razu bonus Ważenie Serca, z pominięciem koła.',
+    buyVaultD: 'Otwiera od razu bonus Skarbiec, z pominięciem koła.', buyHandD: 'Otwiera od razu Gniew Anubisa: gigantyczne koło zostaje natychmiast puszczone w ruch.',
+    modesNote: 'RTP to oczekiwany zwrot w bardzo dużej liczbie gier (dokładne obliczenie, a nie obietnica dla pojedynczej sesji). Maksymalna wygrana jest wielokrotnością wybranej kwoty, a nie kosztu trybu, i we wszystkich trybach jest ograniczona do {m}×. Koszt jest wielokrotnością wybranej kwoty i jest pokazywany przed potwierdzeniem. Gniew Anubisa nadal może przejąć bonus otwarty bezpośrednio ({h} % przypadków), tak jak na kole.',
+    howH: 'Jak powstają wygrane',
+    how: [
+      'Nie ma linii, kombinacji ani symboli do ustawiania w rzędzie. Każdy obrót zatrzymuje się na jednym z {n} pól koła. Wygrana to wartość tego pola × wybrana kwota.',
+      'Pola z liczbą dają swoją wartość (×{nums}). Pola Prochu nie dają nic. ANCH daje darmowy obrót: koło kręci się ponownie bez kosztu, do {chain} razy z rzędu, a runda kończy się na polu innym niż ANCH. Wygrane z łańcucha obrotów się sumują.',
+      'Pola bonusowe (Skarabeusze, Ważenie, Skarb) uruchamiają odpowiedni bonus: wygrana to wynik bonusu × wybrana kwota. Każde z trzech zajmuje {one} z {n} pól.',
+      'Wyrocznia: przed obrotem wybiera rodzaj pola ({kinds}) i daje mu wzmocnienie. Wartość wzmocnienia pozostaje zapieczętowana (pokazana jako ×?), dopóki koło się nie zatrzyma. Jeśli koło zatrzyma się na tym rodzaju pola, wartość pola (lub wynik bonusu) jest mnożona przez wzmocnienie. Jeśli koło zatrzyma się gdzie indziej, Wyrocznia nic nie robi.',
+      'Łączna wygrana w rundzie jest ograniczona do {m}× wybranej kwoty: po osiągnięciu limitu runda się kończy, a wygrana jest do niego ograniczona. Animacje wygranych (WIN, BIG WIN, EXTRA WIN, MEGA WIN, BOSKI WYROK) zależą od sumy rundy ÷ koszt trybu; nigdy nie zmieniają wygranej kwoty.'
+    ],
+    oracleH: 'Wzmocnienia Wyroczni', oracleNote: 'Szansa każdego wzmocnienia, gdy Wyrocznia wybiera rodzaj pola.',
+    bonusH: 'Rundy bonusowe: uruchomienie i wartości',
+    scarabH: 'Upadek Skarabeuszy', scarabP: 'Uruchamiany polem Skarabeusze ({one} z {n}) lub otwarty bezpośrednio. Trzy skarabeusze spadają przez {rows} rzędów kołków i każdy wygrywa wartość szczeliny, w której wyląduje (× wzmocnienie Wyroczni, jeśli ma zastosowanie). Wartości szczelin od lewej do prawej wraz z szansą każdej z nich:',
+    weighH: 'Ważenie Serca', weighP: 'Uruchamiane polem Ważenie ({one} z {n}) lub otwarte bezpośrednio. Dwie szale pokazują po jednym mnożniku. Wybierasz piórko lub serce; cięższa szala wygrywa swój mnożnik, lżejsza nic: jedna szansa na dwie. Para mnożników jest losowana z takimi szansami:',
+    vaultH: 'Skarbiec', vaultP: 'Uruchamiany polem Skarb ({one} z {n}) lub otwarty bezpośrednio. Otwieraj skrzynie jedna po drugiej: na początek {picks}. Każda skrzynia zawiera wartość dodawaną do sumy, albo BERŁO (×2 na dotychczasową sumę), albo ZŁOTY KLUCZ (+{keys} skrzyń więcej, łącznie najwyżej {cap}), albo PIECZĘĆ, która zamyka komnatę i zachowuje dotychczasową sumę. Nic nie anuluje ani nie opóźnia pieczęci; klucz tylko wydłuża wybór. Pierwsze dwie skrzynie nigdy nie zawierają pieczęci. Otwarcie wszystkich dozwolonych skrzyń dodaje premię +{fin}×. Zawartość skrzyń i szanse (po dwóch pierwszych skrzyniach):',
+    handH: 'Gniew Anubisa', handP: 'Każdy bonus może zostać przejęty przez Gniew ({h} % przypadków na kole i przy bonusach otwartych bezpośrednio; zawsze w trybie Gniewu). Wybierz kolor (turkus, złoto lub rubin: te same szanse), a następnie zakręć gigantycznym kołem o {segs} polach. Liczba: wygrana = liczba × poziom. PODWÓJNIE w twoim kolorze: wszystkie liczby się podwajają (poziom ×2, ×4, ×8 aż do ×{tier}) i kręcisz ponownie. PODWÓJNIE w innym kolorze: łańcuch się kończy i wygrywasz najmniejszą liczbę ({min}) × poziom. Pas uruchamia bonus: wygrana z bonusu × mnożnik pasa × poziom. Liczby na gigantycznym kole: ×{hnums}. Pola PODWÓJNIE: {dbl} ({dblc} na kolor). Pasy: {bands}. Poziom nie rośnie powyżej ×{tier} (pola PODWÓJNIE przestają się wtedy liczyć).',
+    cryptH: 'Sanktuarium Pływów (ukryty bonus)', cDust: 'PYŁ (nic)', cTab: 'TABLICA (+ wartość × bieżący pływ)', cTide: 'PŁYW (× pływ)', cEclipse: 'ZAĆMIENIE (× ofiara)', cryptP: 'Wygrany bonus może zostać zastąpiony przez Sanktuarium Pływów ({s} % przypadków, nigdy przy bonusie otwartym bezpośrednio). Dotknij {tiles} tablic w siatce 3×3 w dowolnej kolejności; kolejność nie zmienia szans. Ofiara zaczyna od 0, a pływ od ×1. Każda tablica jest jedną z: TABLICA (dodaje swoją wartość × bieżący pływ do ofiary), PŁYW (mnoży pływ, tylko dla tablic odsłoniętych po niej), ZAĆMIENIE (mnoży zebraną już ofiarę) lub PROCH (nic). Wygrana to końcowa ofiara × wybrana kwota (co najmniej ×1, jeśli żadna tablica się nie pojawi), ograniczona do {m}×. Rodzaje tablic:',
+    retrigH: 'Bonusy, darmowe obroty i ponowne uruchomienia',
+    retrig: [
+      'Nie ma darmowych obrotów do ponownego uruchomienia: każdy bonus jest rozgrywany raz na uruchomienie, a jego wynik dodaje się do rundy. Żaden bonus nie może uruchomić innego bonusu: pas Gniewu uruchamia bonus, który nigdy nie prowadzi z powrotem do Gniewu.',
+      'Jedyną powtarzającą się funkcją jest darmowy obrót ANCH (patrz wyżej). Pola bonusowe, Wyrocznia i Gniew mają te same szanse we wszystkich trybach.',
+      'Jeśli połączenie zostanie przerwane w trakcie rundy, wczytaj grę ponownie: już rozstrzygnięta runda zostanie dokończona, a jej wygrana rozliczona.'
+    ],
+    btnH: 'Przyciski i sterowanie',
+    btn: [
+      ['− / +', 'Zmniejsza lub zwiększa wybraną kwotę (klawisze ↓ / ↑). Zablokowane podczas rundy.'],
+      ['{spin}', 'Rozpoczyna rundę z wybraną kwotą (działa też Spacja lub Enter). Podczas gry automatycznej zmienia się w {stop}.'],
+      ['{auto}', 'Wybierz liczbę rund automatycznych ({autos}); gra odtwarza je jedna po drugiej, aż do osiągnięcia liczby, naciśnięcia {stop}, osiągnięcia limitu lub wyczerpania salda. Opcja „Zatrzymaj grę automatyczną przy bonusie” jest w Info.'],
+      ['{turbo}', 'Szybsze rundy: jedno naciśnięcie to TURBO, dwa to ULTRA (wynik niemal natychmiast), trzecie wyłącza tryb. Bonus zawsze gra się w spokojniejszym tempie.'],
+      ['{buy}', 'Otwiera menu bonusów otwieranych bezpośrednio. Każda karta pokazuje swój koszt; wybranie karty uruchamia ten bonus.'],
+      ['{plus}', 'Włącza lub wyłącza WYROCZNIA+ w kolejnych rundach: koszt ×{c}, Wyrocznia pojawia się znacznie częściej. Koszt jest widoczny pod kwotą.'],
+      ['Dźwięk (głośnik)', 'Otwiera panel dźwięku: głośność, wysokie tony, wysokość dźwięku, nastrój muzyczny, kolorystykę i przełącznik wyciszający wszystkie dźwięki.'],
+      ['i (Info)', 'Otwiera te zasady i ustawienia: jednostka wyświetlania, limit strat, jakość grafiki, ograniczone efekty, opcje gry automatycznej, bezpośredni dostęp do bonusów tak/nie, zerowanie salda.'],
+      ['Język', 'Zmienia język gry.'],
+      ['€ / $', 'Przełącza wyświetlanie kwot między euro a dolarem (ta sama wartość liczbowa).'],
+      ['×', 'Zamyka otwarte okno (działa też Esc).'],
+      ['Dotknięcie / Spacja', 'W bonusie: uruchamia bonus, upuszcza skarabeusza lub blok, wybiera skrzynię, kartę lub kolor. W animacji wygranej: dotknięcie ją pomija.']
+    ],
+    discH: 'Ważne', disc: 'Awaria unieważnia wszystkie wygrane i gry. Wymagane jest stabilne połączenie z internetem. W razie rozłączenia wczytaj grę ponownie, aby dokończyć niedokończone rundy. Oczekiwany zwrot jest obliczany na podstawie wielu gier. Wyświetlany obraz gry nie przedstawia żadnego fizycznego urządzenia i służy wyłącznie jako ilustracja. Wygrane są rozliczane według kwoty otrzymanej z Remote Game Server, a nie według zdarzeń w przeglądarce. TM i © 2026 Engine.'
+  };
+  S.pl = {
+    bet: 'GRA', plusHint: 'WYROCZNIA+: wzmocnienie w ≈ 3 z 4 obrotów · kwota gry ×1,1', cost: 'GRA ZA', sessWag: 'Zagrano',
+    rulesPlus: 'Tryb WYROCZNIA+: kwota gry ×1,1, Wyrocznia pojawia się w ≈ 3 z 4 obrotów. Ten sam RTP (≈ 96 %).',
+    buyBtn: 'WEŹ BONUS', buyTitle: 'WEŹ BONUS', buySub: 'Otwórz bonus od razu, z pominięciem koła. Do zagrania za: kwota gry × mnożnik. Gniew Anubisa nadal może go przejąć.',
+    buyPrice: 'DO ZAGRANIA ZA', buyNow: 'WEŹ', buyOn: 'Dostęp do bonusów', resumed: 'Przerwana runda: wygrana dodana',
+    scarabSub: 'Trzy skarabeusze spadają w ciemność. Każdy wygrywa pole, w które trafi.',
+    splashDemo: 'Demo · monety do gry · Graj odpowiedzialnie', infoTitle: 'Zasady i tabela wygranych', demo: 'Monety do gry — demo, wyświetlane kwoty nie są prawdziwe.',
+    tableCols: { 2: 'Wygrana' }, currencyL: 'Żeton', handWrongSub: 'Łańcuch się kończy: zebrany obecny poziom',
+    rules: {
+      0: 'Jedna gra, jeden obrót: decyduje koło sądu. Każde pole daje swoją wartość × twoją kwotę gry.',
+      2: 'ANCH: darmowy obrót koła, bez dodatkowej kwoty gry.',
+      6: function (s) { return s.replace('koszt rundy', 'wartość gry rundy'); }
+    },
+    $rules: {
+      modesH: 'Tryby, wartość gry, RTP i maksymalna wygrana', colCost: 'Do zagrania za',
+      modePlusD: 'Do zagrania za ×{c} wybranej kwoty. Wyrocznia pojawia się w około {pp} % obrotów, więc wzmocnienia padają częściej. Ten sam RTP.',
+      modesNote: function (s) { return s.replace('a nie kosztu trybu', 'a nie wartości gry trybu').replace('Koszt jest wielokrotnością', 'Wartość gry jest wielokrotnością'); },
+      how: { 1: function (s) { return s.replace('bez kosztu', 'bez dodatkowej kwoty gry'); }, 4: function (s) { return s.replace('koszt trybu', 'wartość gry trybu'); } },
+      btn: {
+        4: { 1: 'Otwiera menu bonusów otwieranych bezpośrednio. Każda karta pokazuje, za ile można ją zagrać; wybranie karty uruchamia ten bonus.' },
+        5: { 1: 'Włącza lub wyłącza WYROCZNIA+ w kolejnych rundach: wartość gry ×{c}, Wyrocznia pojawia się znacznie częściej. Wartość gry jest widoczna pod kwotą.' },
+        9: { 0: 'SC / GC', 1: 'Przełącza wyświetlanie między dwoma żetonami (ta sama wartość liczbowa).' }
+      }
+    },
+    $replay: { bet: 'KWOTA GRY', realCost: 'RZECZYWISTA WARTOŚĆ GRY', costMult: 'Wartość gry' },
+    $rgs: {
+      errVal: 'Żądanie odrzucone: sesja wygasła lub gra jest nieprawidłowa. Uruchom grę ponownie ze strony.',
+      errIpb: 'Niewystarczające saldo na tę grę.', errGle: 'Osiągnięto limit: ta gra została odrzucona.',
+      errNet: 'Sieć niedostępna lub nieprawidłowa odpowiedź. Twoja gra mogła nie zostać uwzględniona: sprawdź saldo.',
+      buyConfirm: 'Wziąć {name}? Do zagrania za {price}.', buyConfirmTitle: 'POTWIERDŹ BONUS', autoCost: 'Wartość gry na rundę'
+    }
+  };
+})(window.I18N_X, window.I18N_SOCIAL);
+
+/* --- pt --- */
+(function (X, S) {
+  X.tiers.pt = ['GANHO', 'GRANDE GANHO', 'GANHO EXTRA', 'MEGA GANHO'];
+  X.replay.pt = {
+    badge: 'REPLAY', start: 'REPRODUZIR', again: 'REPRODUZIR DE NOVO', playing: 'EM ANDAMENTO…', loading: 'Carregando o replay…',
+    errSum: 'Os eventos do replay não correspondem ao valor anunciado pelo servidor: o valor do servidor é exibido.',
+    errLoad: 'Não foi possível carregar este replay.', errParams: 'Faltam parâmetros do replay (game, version, mode, event, rgs_url).', errFormat: 'Este replay tem um formato desconhecido.',
+    errNet: 'Erro de rede: verifique a conexão e recarregue.', bet: 'APOSTA', betSocial: 'VALOR JOGADO', realCost: 'CUSTO REAL', costMult: 'Custo', result: 'GANHO', noWin: 'Sem ganho',
+    modeStd: 'PADRÃO', modePlus: 'ORÁCULO+', modeBonus: 'BÔNUS'
+  };
+  X.rgs.pt = {
+    connecting: 'Conectando ao servidor de jogo…', retry: 'Tentar de novo', confirm: 'Confirmar', cancel: 'Cancelar',
+    errUrl: 'Não foi possível conectar: o endereço do servidor de jogo (rgs_url) ou a sessão está ausente ou é inválido. Reinicie o jogo a partir do site.',
+    errAuth: 'Não foi possível acessar o servidor de jogo. Verifique sua conexão e reinicie o jogo.',
+    errVal: 'Solicitação recusada: a sessão expirou ou a aposta é inválida. Reinicie o jogo a partir do site.',
+    errIpb: 'Saldo insuficiente para esta aposta.',
+    errGle: 'Limite de jogo atingido: esta aposta foi recusada.',
+    errAct: 'O servidor está ocupado. Tente novamente em instantes.',
+    errGen: 'Erro do servidor de jogo. Tente novamente em instantes.',
+    errNet: 'Rede indisponível ou resposta inválida. Sua aposta pode não ter sido considerada: verifique seu saldo.',
+    errBook: 'Não foi possível ler o resultado da rodada. Entre em contato com o suporte.',
+    errIs: 'Sessão inválida ou expirada. Reinicie o jogo a partir do site.',
+    errAte: 'A autenticação expirou. Reinicie o jogo a partir do site para entrar novamente.',
+    errLoc: 'Este jogo não está disponível na sua localização.',
+    errMaint: 'Manutenção em andamento. Tente novamente em alguns minutos.',
+    errSum: 'O resultado exibido não corresponde ao valor do servidor do jogo: o valor do servidor é aplicado.',
+    resuming: 'Retomando a rodada em andamento…',
+    buyConfirm: 'Comprar {name} por {price}?', buyConfirmTitle: 'CONFIRMAR COMPRA',
+    autoTitle: 'JOGO AUTOMÁTICO', autoSub: 'Escolha o número de rodadas e as condições de parada e confirme.',
+    autoRounds: 'Número de rodadas', autoStopWin: 'Parar com um ganho de pelo menos', autoStart: 'Iniciar', autoCost: 'Custo por rodada'
+  };
+  X.rules.pt = {
+    modesH: 'Modos, custo, RTP e ganho máximo', colMode: 'Modo', colCost: 'Custo', colRtp: 'RTP', colMax: 'Ganho máx.', colChance: 'Chance', colValue: 'Valor', colBoost: 'Boost', colNumCase: 'Casa de número', colBonusCase: 'Casa de bônus',
+    modeStd: 'Padrão', modePlus: 'ORÁCULO+', tokScepter: 'CETRO ×2 (sobre o total acumulado)', tokKey: 'CHAVE DE OURO (+{keys} baús para abrir)', tokSeal: 'SELO (fecha a câmara)',
+    modeStdD: 'Um giro da roda do julgamento. O Oráculo aparece em cerca de {p} % dos giros.',
+    modePlusD: 'Custa ×{c} o valor selecionado. O Oráculo aparece em cerca de {pp} % dos giros, então os boosts saem com mais frequência. Mesmo RTP.',
+    buyScarabD: 'Abre diretamente o bônus Queda de Escaravelhos, sem passar pela roda.', buyWeighD: 'Abre diretamente o bônus Pesagem do Coração, sem passar pela roda.',
+    buyVaultD: 'Abre diretamente o bônus Câmara do Tesouro, sem passar pela roda.', buyHandD: 'Abre diretamente a Fúria de Anúbis: a roda gigante gira na hora.',
+    modesNote: 'O RTP é o retorno esperado ao longo de um número muito grande de partidas (cálculo exato, não uma promessa para uma única sessão). O ganho máximo é um múltiplo do valor selecionado, não do custo do modo, e é limitado a {m}× em todos os modos. O custo é um múltiplo do valor selecionado e é mostrado antes de confirmar. A Fúria de Anúbis ainda pode tomar um bônus aberto diretamente ({h} % das vezes), como na roda.',
+    howH: 'Como os ganhos se formam',
+    how: [
+      'Não há linhas, combinações nem símbolos para alinhar. Cada giro para em uma das {n} casas da roda. O ganho é o valor dessa casa × o valor selecionado.',
+      'As casas de número ganham o seu valor (×{nums}). As casas de pó não ganham nada. ANKH dá um giro grátis: a roda gira de novo sem custo, até {chain} vezes seguidas, e a rodada termina em uma casa que não seja ANKH. Os ganhos dos giros encadeados se somam.',
+      'As casas de bônus (Escaravelhos, Pesagem, Tesouro) ativam o bônus correspondente: o ganho é o resultado do bônus × o valor selecionado. Cada uma das três ocupa {one} das {n} casas.',
+      'Oráculo: antes do giro, ele escolhe um tipo de casa ({kinds}) e lhe dá um boost. O valor do boost fica selado (exibido como ×?) até a roda parar. Se a roda parar nesse tipo de casa, o valor da casa (ou o resultado do bônus) é multiplicado pelo boost. O Oráculo não faz nada se a roda parar em outro lugar.',
+      'O ganho total de uma rodada é limitado a {m}× o valor selecionado: ao atingir o limite, a rodada termina e o ganho fica limitado a ele. As animações de ganho (WIN, BIG WIN, EXTRA WIN, MEGA WIN, JULGAMENTO DIVINO) dependem do total da rodada ÷ o custo do modo; elas nunca mudam o valor ganho.'
+    ],
+    oracleH: 'Boosts do Oráculo', oracleNote: 'Chance de cada boost quando o Oráculo escolhe um tipo de casa.',
+    bonusH: 'Rodadas de bônus: ativação e valores',
+    scarabH: 'Queda de Escaravelhos', scarabP: 'Ativada pela casa Escaravelhos ({one} de {n}) ou aberta diretamente. Três escaravelhos caem por {rows} fileiras de pinos e cada um ganha o valor da ranhura onde pousa (× o boost do Oráculo, se aplicável). Valores das ranhuras da esquerda para a direita, com a chance de cada uma:',
+    weighH: 'Pesagem do Coração', weighP: 'Ativada pela casa Pesagem ({one} de {n}) ou aberta diretamente. Dois pratos mostram cada um um multiplicador. Você escolhe a pena ou o coração; o prato mais pesado ganha o seu multiplicador, o mais leve não ganha nada: uma chance em duas. O par de multiplicadores é sorteado com estas chances:',
+    vaultH: 'Câmara do Tesouro', vaultP: 'Ativada pela casa Tesouro ({one} de {n}) ou aberta diretamente. Abra os baús um após o outro: {picks} no início. Cada baú contém um valor somado ao total, ou um CETRO (×2 sobre o total acumulado), ou uma CHAVE DE OURO (+{keys} baús a mais, até {cap} no total), ou o SELO, que fecha a câmara e mantém o total acumulado. Nada cancela ou adia o selo; a chave só aumenta a seleção. Os dois primeiros baús nunca contêm selo. Abrir todos os baús permitidos acrescenta um prêmio de +{fin}×. Conteúdo dos baús e chances (depois dos dois primeiros baús):',
+    handH: 'Fúria de Anúbis', handP: 'Qualquer bônus pode ser tomado pela Fúria ({h} % das vezes na roda e nos bônus abertos diretamente; sempre no modo Fúria). Escolha uma cor (turquesa, ouro ou rubi: mesmas chances) e gire a roda gigante de {segs} casas. Um número: ganho = número × nível. DOBRO da sua cor: todos os números dobram (nível ×2, ×4, ×8 até ×{tier}) e você gira de novo. DOBRO de outra cor: a sequência termina e ganha-se o menor número ({min}) × nível. Uma faixa inicia um bônus: ganho do bônus × multiplicador da faixa × nível. Números da roda gigante: ×{hnums}. Casas DOBRO: {dbl} ({dblc} por cor). Faixas: {bands}. O nível não passa de ×{tier} (as casas DOBRO deixam de contar).',
+    cryptH: 'Santuário das Marés (bônus oculto)', cDust: 'PÓ (nada)', cTab: 'TÁBUA (+ valor × maré atual)', cTide: 'MARÉ (× a maré)', cEclipse: 'ECLIPSE (× a oferenda)', cryptP: 'Um bônus ganho pode ser substituído pelo Santuário das Marés ({s} % das vezes, nunca para um bônus aberto diretamente). Toque nas {tiles} tábuas de uma grade 3×3 na ordem que quiser; a ordem não muda as chances. A oferenda começa em 0 e a maré em ×1. Cada tábua é uma destas: TÁBUA (soma seu valor × a maré atual à oferenda), MARÉ (multiplica a maré, só para as tábuas reveladas depois), ECLIPSE (multiplica a oferenda já reunida) ou PÓ (nada). O ganho é a oferenda final × o valor selecionado (pelo menos ×1 se nenhuma tábua aparecer), limitado a {m}×. Tipos de tábua:',
+    retrigH: 'Bônus, giros grátis e reativações',
+    retrig: [
+      'Não há giros grátis para reativar: cada bônus é jogado uma vez por ativação e seu resultado é somado à rodada. Nenhum bônus pode ativar outro bônus: uma faixa da Fúria inicia um bônus que nunca volta à Fúria.',
+      'O único recurso que se repete é o giro grátis ANKH (veja acima). As casas de bônus, o Oráculo e a Fúria têm as mesmas chances em todos os modos.',
+      'Se a conexão cair durante uma rodada, recarregue o jogo: a rodada já decidida é concluída e o seu ganho é liquidado.'
+    ],
+    btnH: 'Botões e controles',
+    btn: [
+      ['− / +', 'Diminui ou aumenta o valor selecionado (teclas ↓ / ↑). Bloqueados durante uma rodada.'],
+      ['{spin}', 'Inicia uma rodada com o valor selecionado (Espaço ou Enter também funcionam). Durante o jogo automático, vira {stop}.'],
+      ['{auto}', 'Escolha o número de rodadas automáticas ({autos}); o jogo as encadeia até atingir o número, você apertar {stop}, um limite ser atingido ou o saldo ficar insuficiente. A opção “Parar o automático no bônus” fica em Info.'],
+      ['{turbo}', 'Rodadas mais rápidas: um toque para TURBO, dois para ULTRA (resultado quase instantâneo), um terceiro para desligar. Um bônus sempre é jogado em ritmo mais calmo.'],
+      ['{buy}', 'Abre o menu de bônus abertos diretamente. Cada carta mostra o seu custo; escolher uma carta inicia esse bônus.'],
+      ['{plus}', 'Liga ou desliga ORÁCULO+ para as próximas rodadas: custo ×{c}, o Oráculo aparece bem mais vezes. O custo é mostrado sob o valor.'],
+      ['Som (alto-falante)', 'Abre o painel de som: volume, agudos, tom, ambiente musical, cores e uma chave que silencia todos os sons.'],
+      ['i (Info)', 'Abre estas regras e os ajustes: unidade de exibição, limite de perda, qualidade gráfica, efeitos reduzidos, opções do automático, acesso direto a bônus sim/não, reinício do saldo.'],
+      ['Idioma', 'Troca o idioma do jogo.'],
+      ['€ / $', 'Alterna a exibição dos valores entre euro e dólar (mesmo valor numérico).'],
+      ['×', 'Fecha a janela aberta (Esc também funciona).'],
+      ['Toque / Espaço', 'Em um bônus: inicia o bônus, solta o escaravelho ou o bloco, escolhe um baú, uma carta ou uma cor. Em uma animação de ganho: toque para pulá-la.']
+    ],
+    discH: 'Importante', disc: 'O mau funcionamento anula todos os ganhos e partidas. É necessária uma conexão de internet estável. Em caso de desconexão, recarregue o jogo para concluir as rodadas inacabadas. O retorno esperado é calculado ao longo de muitas partidas. A tela do jogo não representa nenhum dispositivo físico e serve apenas como ilustração. Os ganhos são liquidados conforme o valor recebido do Remote Game Server e não conforme eventos do navegador. TM e © 2026 Engine.'
+  };
+  S.pt = {
+    bet: 'JOGO', plusHint: 'ORÁCULO+: boost em ≈ 3 de cada 4 giros · valor jogado ×1,1', cost: 'JOGAR POR', sessWag: 'Jogado',
+    rulesPlus: 'Modo ORÁCULO+: valor jogado ×1,1, o Oráculo aparece em ≈ 3 de cada 4 giros. Mesmo RTP (≈ 96 %).',
+    buyBtn: 'OBTER BÔNUS', buyTitle: 'OBTER BÔNUS', buySub: 'Abra um bônus diretamente, sem passar pela roda. Jogável por: valor jogado × multiplicador. A Fúria de Anúbis ainda pode tomá-lo.',
+    buyPrice: 'JOGÁVEL POR', buyNow: 'OBTER', buyOn: 'Acesso a bônus', resumed: 'Rodada interrompida: ganho adicionado',
+    scarabSub: 'Três escaravelhos mergulham na escuridão. Cada um ganha a casa onde cai.',
+    splashDemo: 'Demo · moedas de jogo · Jogue com responsabilidade', infoTitle: 'Regras e tabela de ganhos', demo: 'Moedas de jogo — demo, os valores exibidos não são reais.',
+    tableCols: { 2: 'Ganho' }, currencyL: 'Ficha', handWrongSub: 'A sequência termina: nível atual coletado',
+    rules: {
+      0: 'Um jogo, um giro: a roda do julgamento decide. Cada casa ganha o seu valor × o valor jogado.',
+      2: 'ANKH: giro grátis da roda, sem valor jogado adicional.',
+      6: function (s) { return s.replace('custo da rodada', 'valor de jogo da rodada'); }
+    },
+    $rules: {
+      modesH: 'Modos, valor de jogo, RTP e ganho máximo', colCost: 'Jogável por',
+      modePlusD: 'Jogável por ×{c} o valor selecionado. O Oráculo aparece em cerca de {pp} % dos giros, então os boosts saem com mais frequência. Mesmo RTP.',
+      modesNote: function (s) { return s.replace('não do custo do modo', 'não do valor de jogo do modo').replace('O custo é um múltiplo', 'O valor de jogo é um múltiplo'); },
+      how: { 1: function (s) { return s.replace('sem custo', 'sem valor jogado adicional'); }, 4: function (s) { return s.replace('o custo do modo', 'o valor de jogo do modo'); } },
+      btn: {
+        4: { 1: 'Abre o menu de bônus abertos diretamente. Cada carta mostra por quanto pode ser jogada; escolher uma carta inicia esse bônus.' },
+        5: { 1: 'Liga ou desliga ORÁCULO+ para as próximas rodadas: valor de jogo ×{c}, o Oráculo aparece bem mais vezes. O valor de jogo é mostrado sob o valor.' },
+        9: { 0: 'SC / GC', 1: 'Alterna a exibição entre as duas fichas (mesmo valor numérico).' }
+      }
+    },
+    $replay: { bet: 'VALOR JOGADO', realCost: 'VALOR DE JOGO REAL', costMult: 'Valor de jogo' },
+    $rgs: {
+      errVal: 'Solicitação recusada: a sessão expirou ou a jogada é inválida. Reinicie o jogo a partir do site.',
+      errIpb: 'Saldo insuficiente para esta jogada.', errGle: 'Limite atingido: esta jogada foi recusada.',
+      errNet: 'Rede indisponível ou resposta inválida. Sua jogada pode não ter sido considerada: verifique seu saldo.',
+      buyConfirm: 'Obter {name}? Jogável por {price}.', buyConfirmTitle: 'CONFIRMAR BÔNUS', autoCost: 'Valor de jogo por rodada'
+    }
+  };
+})(window.I18N_X, window.I18N_SOCIAL);
+
+/* --- ru --- */
+(function (X, S) {
+  X.tiers.ru = ['ВЫИГРЫШ', 'БОЛЬШОЙ ВЫИГРЫШ', 'ЭКСТРА ВЫИГРЫШ', 'МЕГА ВЫИГРЫШ'];
+  X.replay.ru = {
+    badge: 'ПОВТОР', start: 'ВОСПРОИЗВЕСТИ', again: 'ЕЩЁ РАЗ', playing: 'ИДЁТ…', loading: 'Загрузка повтора…',
+    errSum: 'События повтора не совпадают с суммой, объявленной сервером: показана сумма сервера.',
+    errLoad: 'Не удалось загрузить этот повтор.', errParams: 'Не хватает параметров повтора (game, version, mode, event, rgs_url).', errFormat: 'У этого повтора неизвестный формат.',
+    errNet: 'Ошибка сети: проверьте соединение и перезагрузите.', bet: 'СТАВКА', betSocial: 'СУММА ИГРЫ', realCost: 'РЕАЛЬНАЯ СТОИМОСТЬ', costMult: 'Стоимость', result: 'ВЫИГРЫШ', noWin: 'Нет выигрыша',
+    modeStd: 'СТАНДАРТ', modePlus: 'ОРАКУЛ+', modeBonus: 'БОНУС'
+  };
+  X.rgs.ru = {
+    connecting: 'Подключение к игровому серверу…', retry: 'Повторить', confirm: 'Подтвердить', cancel: 'Отмена',
+    errUrl: 'Не удаётся подключиться: адрес игрового сервера (rgs_url) или сессия отсутствует или недействительна. Перезапустите игру с сайта.',
+    errAuth: 'Не удаётся связаться с игровым сервером. Проверьте соединение и перезапустите игру.',
+    errVal: 'Запрос отклонён: сессия истекла или ставка недействительна. Перезапустите игру с сайта.',
+    errIpb: 'Недостаточно средств на балансе для этой ставки.',
+    errGle: 'Достигнут игровой лимит: эта ставка отклонена.',
+    errAct: 'Сервер занят. Повторите попытку через мгновение.',
+    errGen: 'Ошибка игрового сервера. Повторите попытку через мгновение.',
+    errNet: 'Сеть недоступна или ответ недействителен. Ваша ставка могла не быть учтена: проверьте баланс.',
+    errBook: 'Не удалось прочитать результат раунда. Обратитесь в поддержку.',
+    errIs: 'Сессия недействительна или истекла. Перезапустите игру с сайта.',
+    errAte: 'Срок аутентификации истёк. Перезапустите игру с сайта, чтобы войти снова.',
+    errLoc: 'Эта игра недоступна в вашем регионе.',
+    errMaint: 'Идут технические работы. Повторите попытку через несколько минут.',
+    errSum: 'Показанный результат не совпадает с суммой игрового сервера: применяется сумма сервера.',
+    resuming: 'Продолжаем текущий раунд…',
+    buyConfirm: 'Купить {name} за {price}?', buyConfirmTitle: 'ПОДТВЕРДИТЕ ПОКУПКУ',
+    autoTitle: 'АВТОИГРА', autoSub: 'Выберите число раундов и условия остановки, затем подтвердите.',
+    autoRounds: 'Число раундов', autoStopWin: 'Остановить при выигрыше от', autoStart: 'Старт', autoCost: 'Стоимость раунда'
+  };
+  X.rules.ru = {
+    modesH: 'Режимы, стоимость, RTP и максимальный выигрыш', colMode: 'Режим', colCost: 'Стоимость', colRtp: 'RTP', colMax: 'Макс. выигрыш', colChance: 'Шанс', colValue: 'Значение', colBoost: 'Усиление', colNumCase: 'Клетка с числом', colBonusCase: 'Бонусная клетка',
+    modeStd: 'Стандарт', modePlus: 'ОРАКУЛ+', tokScepter: 'СКИПЕТР ×2 (на уже набранную сумму)', tokKey: 'ЗОЛОТОЙ КЛЮЧ (+{keys} сундуков для открытия)', tokSeal: 'ПЕЧАТЬ (закрывает хранилище)',
+    modeStdD: 'Одно вращение колеса суда. Оракул появляется примерно в {p} % вращений.',
+    modePlusD: 'Стоит ×{c} от выбранной суммы. Оракул появляется примерно в {pp} % вращений, поэтому усиления выпадают чаще. Тот же RTP.',
+    buyScarabD: 'Сразу открывает бонус «Падение скарабеев», минуя колесо.', buyWeighD: 'Сразу открывает бонус «Взвешивание сердца», минуя колесо.',
+    buyVaultD: 'Сразу открывает бонус «Сокровищница», минуя колесо.', buyHandD: 'Сразу открывает «Ярость Анубиса»: гигантское колесо запускается немедленно.',
+    modesNote: 'RTP — это ожидаемый возврат на очень большом числе игр (точный расчёт, а не обещание для отдельной сессии). Максимальный выигрыш кратен выбранной сумме, а не стоимости режима, и ограничен {m}× во всех режимах. Стоимость кратна выбранной сумме и показывается до подтверждения. «Ярость Анубиса» всё равно может перехватить бонус, открытый напрямую ({h} % случаев), как и на колесе.',
+    howH: 'Как формируются выигрыши',
+    how: [
+      'Здесь нет линий, комбинаций и символов, которые нужно выстраивать. Каждое вращение останавливается на одной из {n} клеток колеса. Выигрыш — это значение клетки × выбранная сумма.',
+      'Клетки с числами дают своё значение (×{nums}). Клетки праха не дают ничего. АНКХ даёт бесплатное повторное вращение: колесо крутится снова без затрат, до {chain} раз подряд, и раунд заканчивается на клетке, отличной от АНКХ. Выигрыши цепочки вращений суммируются.',
+      'Бонусные клетки (Скарабеи, Взвешивание, Сокровище) запускают соответствующий бонус: выигрыш — это результат бонуса × выбранная сумма. Каждая из трёх занимает {one} из {n} клеток.',
+      'Оракул: перед вращением он выбирает тип клетки ({kinds}) и даёт ему усиление. Значение усиления остаётся запечатанным (показано как ×?), пока колесо не остановится. Если колесо остановится на этом типе клетки, значение клетки (или результат бонуса) умножается на усиление. Если колесо остановится в другом месте, Оракул ничего не делает.',
+      'Общий выигрыш раунда ограничен {m}× от выбранной суммы: при достижении предела раунд заканчивается, а выигрыш ограничивается им. Анимации выигрыша (WIN, BIG WIN, EXTRA WIN, MEGA WIN, БОЖЕСТВЕННЫЙ СУД) зависят от итога раунда ÷ стоимость режима; они никогда не меняют выигранную сумму.'
+    ],
+    oracleH: 'Усиления Оракула', oracleNote: 'Шанс каждого усиления, когда Оракул выбирает тип клетки.',
+    bonusH: 'Бонусные раунды: запуск и значения',
+    scarabH: 'Падение скарабеев', scarabP: 'Запускается клеткой «Скарабеи» ({one} из {n}) или открывается напрямую. Три скарабея падают через {rows} рядов штифтов, и каждый выигрывает значение ячейки, в которую приземлится (× усиление Оракула, если оно действует). Значения ячеек слева направо с шансом каждой:',
+    weighH: 'Взвешивание сердца', weighP: 'Запускается клеткой «Взвешивание» ({one} из {n}) или открывается напрямую. На двух чашах показано по множителю. Вы выбираете перо или сердце; более тяжёлая чаша выигрывает свой множитель, более лёгкая — ничего: один шанс из двух. Пара множителей разыгрывается с такими шансами:',
+    vaultH: 'Сокровищница', vaultP: 'Запускается клеткой «Сокровище» ({one} из {n}) или открывается напрямую. Открывайте сундуки один за другим: сначала {picks}. В каждом сундуке — значение, которое прибавляется к сумме, либо СКИПЕТР (×2 на уже набранную сумму), либо ЗОЛОТОЙ КЛЮЧ (+{keys} сундуков, всего не более {cap}), либо ПЕЧАТЬ, которая закрывает хранилище и сохраняет набранную сумму. Ничто не отменяет и не откладывает печать; ключ лишь удлиняет выбор. В первых двух сундуках печати не бывает никогда. Если открыть все допустимые сундуки, добавляется премия +{fin}×. Содержимое сундуков и шансы (после первых двух сундуков):',
+    handH: 'Ярость Анубиса', handP: 'Любой бонус может быть перехвачен Яростью ({h} % случаев на колесе и для бонусов, открытых напрямую; всегда в режиме Ярости). Выберите цвет (бирюза, золото или рубин: шансы одинаковые) и запустите гигантское колесо из {segs} клеток. Число: выигрыш = число × уровень. УДВОЕНИЕ вашего цвета: все числа удваиваются (уровень ×2, ×4, ×8 вплоть до ×{tier}), и вы крутите снова. УДВОЕНИЕ другого цвета: цепочка прерывается, и выигрывается наименьшее число ({min}) × уровень. Полоса запускает бонус: выигрыш бонуса × множитель полосы × уровень. Числа гигантского колеса: ×{hnums}. Клетки УДВОЕНИЯ: {dbl} ({dblc} на каждый цвет). Полосы: {bands}. Уровень не растёт выше ×{tier} (клетки УДВОЕНИЯ после этого не учитываются).',
+    cryptH: 'Святилище приливов (скрытый бонус)', cDust: 'ПЫЛЬ (ничего)', cTab: 'ТАБЛИЧКА (+ значение × текущий прилив)', cTide: 'ПРИЛИВ (× прилив)', cEclipse: 'ЗАТМЕНИЕ (× приношение)', cryptP: 'Выигранный бонус может быть заменён Святилищем приливов ({s} % случаев, никогда — для бонуса, открытого напрямую). Коснитесь {tiles} табличек сетки 3×3 в любом порядке; порядок не меняет шансов. Приношение начинается с 0, прилив — с ×1. Каждая табличка — это одно из: ТАБЛИЧКА (добавляет своё значение × текущий прилив к приношению), ПРИЛИВ (умножает прилив, только для табличек, открытых после неё), ЗАТМЕНИЕ (умножает уже собранное приношение) или ПЫЛЬ (ничего). Выигрыш — это итоговое приношение × выбранная сумма (не менее ×1, если ни одна табличка не появилась), не более {m}×. Типы табличек:',
+    retrigH: 'Бонусы, повторные вращения и повторный запуск',
+    retrig: [
+      'Бесплатных вращений, которые можно запустить повторно, нет: каждый бонус разыгрывается один раз за запуск, а его результат прибавляется к раунду. Ни один бонус не может запустить другой бонус: полоса Ярости запускает бонус, который никогда не возвращает к Ярости.',
+      'Единственная повторяющаяся функция — повторное вращение АНКХ (см. выше). Бонусные клетки, Оракул и Ярость имеют одинаковые шансы во всех режимах.',
+      'Если соединение оборвётся во время раунда, перезагрузите игру: уже решённый раунд будет завершён, а его выигрыш учтён.'
+    ],
+    btnH: 'Кнопки и управление',
+    btn: [
+      ['− / +', 'Уменьшает или увеличивает выбранную сумму (клавиши ↓ / ↑). Заблокированы во время раунда.'],
+      ['{spin}', 'Запускает раунд с выбранной суммой (работает и пробел или Enter). Во время автоигры превращается в {stop}.'],
+      ['{auto}', 'Выберите число автоматических раундов ({autos}); игра проводит их один за другим, пока число не будет достигнуто, вы не нажмёте {stop}, не будет достигнут лимит или баланса не хватит. Опция «Остановить автоигру на бонусе» находится в Инфо.'],
+      ['{turbo}', 'Более быстрые раунды: одно нажатие — TURBO, два — ULTRA (результат почти мгновенно), третье выключает. Бонус всегда проходит в более спокойном темпе.'],
+      ['{buy}', 'Открывает меню бонусов, открываемых напрямую. Каждая карточка показывает свою стоимость; выбор карточки запускает этот бонус.'],
+      ['{plus}', 'Включает или выключает ОРАКУЛ+ для следующих раундов: стоимость ×{c}, Оракул появляется заметно чаще. Стоимость показана под суммой.'],
+      ['Звук (динамик)', 'Открывает панель звука: громкость, высокие частоты, высота тона, музыкальная атмосфера, цветокоррекция и переключатель, отключающий все звуки.'],
+      ['i (Инфо)', 'Открывает эти правила и настройки: единица отображения, лимит потерь, качество графики, сниженные эффекты, параметры автоигры, прямой доступ к бонусам вкл/выкл, сброс баланса.'],
+      ['Язык', 'Меняет язык игры.'],
+      ['€ / $', 'Переключает отображение сумм между евро и долларом (то же числовое значение).'],
+      ['×', 'Закрывает открытое окно (работает и Esc).'],
+      ['Касание / пробел', 'В бонусе: запускает бонус, бросает скарабея или блок, выбирает сундук, карту или цвет. В анимации выигрыша: касание пропускает её.']
+    ],
+    discH: 'Важно', disc: 'Неисправность аннулирует все выигрыши и игры. Необходимо стабильное интернет-соединение. В случае разрыва соединения перезагрузите игру, чтобы завершить незавершённые раунды. Ожидаемый возврат рассчитывается на большом числе игр. Изображение игры не представляет какое-либо физическое устройство и служит только иллюстрацией. Выигрыши рассчитываются по сумме, полученной от Remote Game Server, а не по событиям в веб-браузере. TM и © 2026 Engine.'
+  };
+  S.ru = {
+    bet: 'ИГРА', plusHint: 'ОРАКУЛ+: усиление в ≈ 3 из 4 вращений · сумма игры ×1,1', cost: 'ИГРА НА', sessWag: 'Сыграно',
+    rulesPlus: 'Режим ОРАКУЛ+: сумма игры ×1,1, Оракул появляется в ≈ 3 из 4 вращений. Тот же RTP (≈ 96 %).',
+    buyBtn: 'ПОЛУЧИТЬ БОНУС', buyTitle: 'ПОЛУЧИТЬ БОНУС', buySub: 'Откройте бонус сразу, минуя колесо. Можно сыграть на: сумма игры × множитель. Ярость Анубиса всё равно может его перехватить.',
+    buyPrice: 'ИГРА НА', buyNow: 'ПОЛУЧИТЬ', buyOn: 'Доступ к бонусам', resumed: 'Прерванный раунд: выигрыш добавлен',
+    scarabSub: 'Три скарабея падают во тьму. Каждый получает выигрыш клетки, в которую упадёт.',
+    splashDemo: 'Демо · игровые монеты · Играйте ответственно', infoTitle: 'Правила и таблица выигрышей', demo: 'Игровые монеты — демо, показанные суммы не настоящие.',
+    tableCols: { 2: 'Выигрыш' }, currencyL: 'Жетон',
+    rules: {
+      0: 'Одна игра, одно вращение: решает колесо суда. Каждая клетка даёт своё значение × вашу сумму игры.',
+      2: 'АНКХ: бесплатное повторное вращение колеса, без дополнительной суммы игры.'
+    },
+    $rules: {
+      modesH: 'Режимы, значение игры, RTP и максимальный выигрыш', colCost: 'Игра на',
+      modePlusD: 'Игра на ×{c} от выбранной суммы. Оракул появляется примерно в {pp} % вращений, поэтому усиления выпадают чаще. Тот же RTP.',
+      modesNote: function (s) { return s.replace('а не стоимости режима', 'а не значению игры режима').replace('Стоимость кратна', 'Значение игры кратно'); },
+      how: { 1: function (s) { return s.replace('без затрат', 'без дополнительной суммы игры'); }, 4: function (s) { return s.replace('стоимость режима', 'значение игры режима'); } },
+      btn: {
+        4: { 1: 'Открывает меню бонусов, открываемых напрямую. Каждая карточка показывает, на сколько в неё можно сыграть; выбор карточки запускает этот бонус.' },
+        5: { 1: 'Включает или выключает ОРАКУЛ+ для следующих раундов: значение игры ×{c}, Оракул появляется заметно чаще. Значение игры показано под суммой.' },
+        9: { 0: 'SC / GC', 1: 'Переключает отображение между двумя жетонами (то же числовое значение).' }
+      }
+    },
+    $replay: { bet: 'СУММА ИГРЫ', realCost: 'РЕАЛЬНОЕ ЗНАЧЕНИЕ ИГРЫ', costMult: 'Значение игры' },
+    $rgs: {
+      errVal: 'Запрос отклонён: сессия истекла или игра недействительна. Перезапустите игру с сайта.',
+      errIpb: 'Недостаточно средств на балансе для этой игры.', errGle: 'Достигнут лимит: эта игра отклонена.',
+      errNet: 'Сеть недоступна или ответ недействителен. Ваша игра могла не быть учтена: проверьте баланс.',
+      buyConfirm: 'Получить {name}? Можно сыграть на {price}.', buyConfirmTitle: 'ПОДТВЕРДИТЕ БОНУС', autoCost: 'Значение игры за раунд'
+    }
+  };
+})(window.I18N_X, window.I18N_SOCIAL);
+
+/* --- tr --- */
+(function (X, S) {
+  X.tiers.tr = ['KAZANÇ', 'BÜYÜK KAZANÇ', 'EKSTRA KAZANÇ', 'MEGA KAZANÇ'];
+  X.replay.tr = {
+    badge: 'TEKRAR', start: 'OYNAT', again: 'TEKRAR OYNAT', playing: 'OYNATILIYOR…', loading: 'Tekrar yükleniyor…',
+    errSum: 'Tekrar olayları sunucunun bildirdiği tutarla eşleşmiyor: sunucu tutarı gösterilir.',
+    errLoad: 'Bu tekrar yüklenemedi.', errParams: 'Tekrar parametreleri eksik (game, version, mode, event, rgs_url).', errFormat: 'Bu tekrarın biçimi bilinmiyor.',
+    errNet: 'Ağ hatası: bağlantını kontrol et ve yeniden yükle.', bet: 'BAHİS', betSocial: 'OYUN TUTARI', realCost: 'GERÇEK MALİYET', costMult: 'Maliyet', result: 'KAZANÇ', noWin: 'Kazanç yok',
+    modeStd: 'STANDART', modePlus: 'KEHANET+', modeBonus: 'BONUS'
+  };
+  X.rgs.tr = {
+    connecting: 'Oyun sunucusuna bağlanılıyor…', retry: 'Yeniden dene', confirm: 'Onayla', cancel: 'İptal',
+    errUrl: 'Bağlanılamıyor: oyun sunucusu adresi (rgs_url) veya oturum eksik ya da geçersiz. Lütfen oyunu siteden yeniden başlat.',
+    errAuth: 'Oyun sunucusuna ulaşılamıyor. Bağlantını kontrol et ve oyunu yeniden başlat.',
+    errVal: 'İstek reddedildi: oturum süresi doldu veya bahis geçersiz. Lütfen oyunu siteden yeniden başlat.',
+    errIpb: 'Bu bahis için bakiye yetersiz.',
+    errGle: 'Oyun limitine ulaşıldı: bu bahis reddedildi.',
+    errAct: 'Sunucu meşgul. Lütfen birazdan tekrar dene.',
+    errGen: 'Oyun sunucusu hatası. Lütfen birazdan tekrar dene.',
+    errNet: 'Ağ kullanılamıyor veya geçersiz yanıt. Bahsin dikkate alınmamış olabilir: bakiyeni kontrol et.',
+    errBook: 'Turun sonucu okunamadı. Lütfen destek ile iletişime geç.',
+    errIs: 'Oturum geçersiz veya süresi dolmuş. Lütfen oyunu siteden yeniden başlatın.',
+    errAte: 'Kimlik doğrulamanın süresi doldu. Yeniden giriş yapmak için lütfen oyunu siteden yeniden başlatın.',
+    errLoc: 'Bu oyun bulunduğunuz konumda kullanılamıyor.',
+    errMaint: 'Bakım çalışması sürüyor. Lütfen birkaç dakika sonra tekrar deneyin.',
+    errSum: 'Gösterilen sonuç oyun sunucusunun tutarıyla eşleşmiyor: sunucu tutarı uygulanır.',
+    resuming: 'Devam eden tur sürdürülüyor…',
+    buyConfirm: '{name} {price} karşılığında satın alınsın mı?', buyConfirmTitle: 'SATIN ALMAYI ONAYLA',
+    autoTitle: 'OTOMATİK OYUN', autoSub: 'Tur sayısını ve durdurma koşullarını seç, sonra onayla.',
+    autoRounds: 'Tur sayısı', autoStopWin: 'En az şu kazançta dur', autoStart: 'Başlat', autoCost: 'Tur başına maliyet'
+  };
+  X.rules.tr = {
+    modesH: 'Modlar, maliyet, RTP ve en yüksek kazanç', colMode: 'Mod', colCost: 'Maliyet', colRtp: 'RTP', colMax: 'En yüksek kazanç', colChance: 'Şans', colValue: 'Değer', colBoost: 'Güçlendirme', colNumCase: 'Sayı hücresi', colBonusCase: 'Bonus hücresi',
+    modeStd: 'Standart', modePlus: 'KEHANET+', tokScepter: 'ASA ×2 (o ana kadarki toplam üzerinde)', tokKey: 'ALTIN ANAHTAR (açılacak +{keys} sandık)', tokSeal: 'MÜHÜR (odayı kapatır)',
+    modeStdD: 'Yargı çarkının bir dönüşü. Kehanet dönüşlerin yaklaşık %{p} kadarında belirir.',
+    modePlusD: 'Seçilen tutarın ×{c} katına mal olur. Kehanet dönüşlerin yaklaşık %{pp} kadarında belirir, yani güçlendirmeler daha sık gelir. Aynı RTP.',
+    buyScarabD: 'Scarab Düşüşü bonusunu çark olmadan doğrudan açar.', buyWeighD: 'Kalbin Tartılması bonusunu çark olmadan doğrudan açar.',
+    buyVaultD: 'Hazine Odası bonusunu çark olmadan doğrudan açar.', buyHandD: 'Anubis’in Gazabı’nı doğrudan açar: dev çark hemen döndürülür.',
+    modesNote: 'RTP, çok sayıda oyun üzerinden beklenen getiridir (kesin hesap; tek bir oturum için söz değil). En yüksek kazanç, modun maliyetinin değil seçilen tutarın katıdır ve her modda {m}× ile sınırlıdır. Maliyet, seçilen tutarın katıdır ve onaylamadan önce gösterilir. Anubis’in Gazabı, doğrudan açılan bir bonusu yine de devralabilir (zamanın %{h} kadarında), tıpkı çarkta olduğu gibi.',
+    howH: 'Kazançlar nasıl oluşur',
+    how: [
+      'Hizalanacak kazanç hattı, kombinasyon ya da sembol yoktur. Her dönüş, çarkın {n} hücresinden birinde durur. Kazanç, o hücrenin değeri × seçilen tutardır.',
+      'Sayı hücreleri değerlerini kazandırır (×{nums}). Toz hücreleri hiçbir şey kazandırmaz. ANKH ücretsiz bir yeniden dönüş verir: çark maliyetsiz yeniden döner, art arda en fazla {chain} kez, ve tur ANKH olmayan bir hücrede biter. Zincirleme dönüşlerin kazançları toplanır.',
+      'Bonus hücreleri (Scarablar, Tartı, Hazine) ilgili bonusu başlatır: kazanç, bonus sonucu × seçilen tutardır. Üçünün her biri {n} hücrenin {one} tanesini kaplar.',
+      'Kehanet: dönüşten önce bir hücre türü ({kinds}) seçer ve ona bir güçlendirme verir. Güçlendirmenin değeri, çark durana kadar mühürlü kalır (×? olarak gösterilir). Çark o hücre türünde durursa hücre değeri (veya bonus sonucu) güçlendirmeyle çarpılır. Çark başka yerde durursa Kehanet hiçbir şey yapmaz.',
+      'Bir turun toplam kazancı, seçilen tutarın {m}× katı ile sınırlıdır: sınıra ulaşıldığında tur biter ve kazanç bu sınırla kısıtlanır. Kazanç animasyonları (WIN, BIG WIN, EXTRA WIN, MEGA WIN, İLAHİ HÜKÜM) turun toplamı ÷ modun maliyetine bağlıdır; kazanılan tutarı asla değiştirmez.'
+    ],
+    oracleH: 'Kehanet güçlendirmeleri', oracleNote: 'Kehanet bir hücre türü seçtiğinde her güçlendirmenin şansı.',
+    bonusH: 'Bonus turları: tetikleme ve değerler',
+    scarabH: 'Scarab Düşüşü', scarabP: 'Scarablar hücresiyle ({n} hücrenin {one} tanesi) tetiklenir veya doğrudan açılır. Üç scarab, {rows} sıra çividen geçerek düşer ve her biri indiği yuvanın değerini kazanır (geçerliyse × Kehanet güçlendirmesi). Yuva değerleri soldan sağa, her yuvanın şansıyla birlikte:',
+    weighH: 'Kalbin Tartılması', weighP: 'Tartı hücresiyle ({n} hücrenin {one} tanesi) tetiklenir veya doğrudan açılır. İki kefe, birer çarpan gösterir. Tüyü ya da kalbi seçersin; ağır kefe çarpanını kazanır, hafif kefe hiçbir şey kazanmaz: iki şanstan bir. Çarpan çifti şu şanslarla çekilir:',
+    vaultH: 'Hazine Odası', vaultP: 'Hazine hücresiyle ({n} hücrenin {one} tanesi) tetiklenir veya doğrudan açılır. Sandıkları birer birer aç: başlangıçta {picks}. Her sandık, toplama eklenen bir değer, ya da bir ASA (o ana kadarki toplam ×2), ya da bir ALTIN ANAHTAR (açılacak +{keys} sandık daha, toplamda en fazla {cap}), ya da odayı kapatıp o ana kadarki toplamı koruyan MÜHÜR içerir. Hiçbir şey mührü iptal etmez ya da geciktirmez; anahtar yalnızca seçimi uzatır. İlk iki sandık asla mühür içermez. İzin verilen tüm sandıklar açılırsa +{fin}× ek ödül eklenir. Sandık içerikleri ve şanslar (ilk iki sandıktan sonra):',
+    handH: 'Anubis’in Gazabı', handP: 'Her bonus Gazap tarafından devralınabilir (çarkta ve doğrudan açılan bonuslarda zamanın %{h} kadarı; Gazap modunda her zaman). Bir renk seç (turkuaz, altın veya yakut: aynı şanslar), sonra {segs} hücreli dev çarkı döndür. Bir sayı: kazanç = sayı × kademe. Kendi renginde ÇİFT: tüm sayılar ikiye katlanır (kademe ×2, ×4, ×8, ×{tier} değerine kadar) ve yeniden döndürürsün. Başka renkte ÇİFT: zincir biter ve en küçük sayı ({min}) × kademe kazanılır. Bir bant bonus başlatır: bonus kazancı × bant çarpanı × kademe. Dev çarktaki sayılar: ×{hnums}. ÇİFT hücreleri: {dbl} (renk başına {dblc}). Bantlar: {bands}. Kademe ×{tier} değerinden öteye büyümez (ÇİFT hücreleri o zaman sayılmaz).',
+    cryptH: 'Gelgit Sığınağı (gizli bonus)', cDust: 'TOZ (hiçbir şey)', cTab: 'TABLET (+ değer × mevcut gelgit)', cTide: 'GELGİT (× gelgit)', cEclipse: 'TUTULMA (× adak)', cryptP: 'Kazanılan bir bonus Gelgit Sığınağı ile değiştirilebilir (zamanın %{s} kadarı, doğrudan açılan bonusta asla). 3×3 ızgaradaki {tiles} tablete istediğin sırayla dokun; sıra şansları değiştirmez. Adak 0’dan, gelgit ×1’den başlar. Her tablet şunlardan biridir: TABLET (değerini × mevcut gelgiti adağa ekler), GELGİT (gelgiti çarpar, yalnızca sonrasında açılan tabletler için), TUTULMA (biriken adağı çarpar) veya TOZ (hiçbir şey). Kazanç, son adak × seçilen tutardır (hiçbir tablet çıkmazsa en az ×1), {m}× ile sınırlıdır. Tablet türleri:',
+    retrigH: 'Bonuslar, yeniden dönüşler ve yeniden tetikleme',
+    retrig: [
+      'Yeniden tetiklenecek bedava dönüş yoktur: her bonus tetikleme başına bir kez oynanır ve sonucu tura eklenir. Hiçbir bonus başka bir bonusu tetikleyemez: Gazap’ın bir bandı, asla Gazap’a geri dönmeyen bir bonus başlatır.',
+      'Tekrarlanan tek özellik ANKH yeniden dönüşüdür (yukarıya bak). Bonus hücreleri, Kehanet ve Gazap her modda aynı şansa sahiptir.',
+      'Bir tur sırasında bağlantı koparsa oyunu yeniden yükle: zaten kararlaştırılmış tur tamamlanır ve kazancı hesaplanır.'
+    ],
+    btnH: 'Düğmeler ve kontroller',
+    btn: [
+      ['− / +', 'Seçilen tutarı azaltır veya artırır (↓ / ↑ tuşları). Tur sürerken kilitlidir.'],
+      ['{spin}', 'Seçilen tutarla bir tur başlatır (Boşluk veya Enter de çalışır). Otomatik oyunda {stop} olur.'],
+      ['{auto}', 'Otomatik tur sayısını seç ({autos}); oyun sayı dolana, {stop} düğmesine basana, bir limite ulaşılana veya bakiye yetersiz kalana kadar turları art arda oynar. “Bonusta otomatik oyunu durdur” seçeneği Bilgi bölümündedir.'],
+      ['{turbo}', 'Daha hızlı turlar: bir basış TURBO, iki basış ULTRA (neredeyse anında sonuç), üçüncü basış kapatır. Bonus her zaman daha sakin bir tempoda oynanır.'],
+      ['{buy}', 'Doğrudan açılan bonusların menüsünü açar. Her kart maliyetini gösterir; bir kartı seçmek o bonusu başlatır.'],
+      ['{plus}', 'Sonraki turlar için KEHANET+ modunu açar veya kapatır: maliyet ×{c}, Kehanet çok daha sık belirir. Maliyet, tutarın altında gösterilir.'],
+      ['Ses (hoparlör)', 'Ses panelini açar: ses düzeyi, tiz, perde, müzik ortamı, renk tonu ve tüm sesleri kapatan bir anahtar.'],
+      ['i (Bilgi)', 'Bu kuralları ve ayarları açar: gösterim birimi, kayıp limiti, grafik kalitesi, azaltılmış efektler, otomatik oyun seçenekleri, doğrudan bonus erişimi açık/kapalı, bakiyeyi sıfırlama.'],
+      ['Dil', 'Oyunun dilini değiştirir.'],
+      ['€ / $', 'Tutarların gösterimini euro ile dolar arasında değiştirir (aynı sayısal değer).'],
+      ['×', 'Açık pencereyi kapatır (Esc de çalışır).'],
+      ['Dokun / Boşluk', 'Bir bonusta: bonusu başlatır, scarabı veya bloğu bırakır, sandık, kart ya da renk seçer. Kazanç animasyonunda: atlamak için dokun.']
+    ],
+    discH: 'Önemli', disc: 'Arıza, tüm kazançları ve oyunları geçersiz kılar. Kesintisiz bir internet bağlantısı gereklidir. Bağlantı koparsa, tamamlanmamış turları bitirmek için oyunu yeniden yükle. Beklenen getiri, çok sayıda oyun üzerinden hesaplanır. Oyun ekranı hiçbir fiziksel cihazı temsil etmez ve yalnızca örnekleme amaçlıdır. Kazançlar, web tarayıcısındaki olaylara göre değil, Remote Game Server’dan alınan tutara göre hesaplanır. TM ve © 2026 Engine.'
+  };
+  S.tr = {
+    bet: 'OYUN', plusHint: 'KEHANET+: dönüşlerin ≈ 3/4’ünde güçlendirme · oyun tutarı ×1,1', cost: 'OYUN DEĞERİ', sessWag: 'Oynanan',
+    rulesPlus: 'KEHANET+ modu: oyun tutarı ×1,1, Kehanet dönüşlerin ≈ 3/4’ünde belirir. Aynı RTP (≈ %96).',
+    buyBtn: 'BONUS AÇ', buyTitle: 'BONUS AÇ', buySub: 'Çarkı atlayarak doğrudan bir bonus aç. Oynanabilir değer = oyun tutarı × çarpan. Anubis’in Gazabı yine de onu devralabilir.',
+    buyPrice: 'OYUN DEĞERİ', buyNow: 'AÇ', buyOn: 'Bonus erişimi', resumed: 'Yarıda kalan tur: kazanç eklendi',
+    scarabSub: 'Üç scarab karanlığa dalıyor. Her biri düştüğü hücreyi kazanır.',
+    splashDemo: 'Demo · oyun jetonları · Sorumlu oyna', infoTitle: 'Kurallar ve Kazanç tablosu', demo: 'Oyun jetonları — demo, gösterilen tutarlar gerçek değildir.',
+    tableCols: { 2: 'Kazanç' }, currencyL: 'Jeton', handWrongSub: 'Zincir biter: mevcut kademe toplandı',
+    rules: {
+      0: 'Bir oyun, bir dönüş: yargı çarkı karar verir. Her hücre, değeri × oyun tutarın kadar kazandırır.',
+      2: 'ANKH: çarkın ücretsiz yeniden dönüşü, ek oyun tutarı yok.',
+      6: function (s) { return s.replace('tur maliyeti', 'turun oyun değeri'); }
+    },
+    $rules: {
+      modesH: 'Modlar, oyun değeri, RTP ve en yüksek kazanç', colCost: 'Oyun değeri',
+      modePlusD: 'Oyun değeri, seçilen tutarın ×{c} katıdır. Kehanet dönüşlerin yaklaşık %{pp} kadarında belirir, yani güçlendirmeler daha sık gelir. Aynı RTP.',
+      modesNote: function (s) { return s.replace('modun maliyetinin değil', 'modun oyun değerinin değil').replace('Maliyet, seçilen', 'Oyun değeri, seçilen'); },
+      how: { 1: function (s) { return s.replace('maliyetsiz', 'ek oyun tutarı olmadan'); }, 4: function (s) { return s.replace('modun maliyetine', 'modun oyun değerine'); } },
+      btn: {
+        4: { 1: 'Doğrudan açılan bonusların menüsünü açar. Her kart hangi değerle oynanabildiğini gösterir; bir kartı seçmek o bonusu başlatır.' },
+        5: { 1: 'Sonraki turlar için KEHANET+ modunu açar veya kapatır: oyun değeri ×{c}, Kehanet çok daha sık belirir. Oyun değeri, tutarın altında gösterilir.' },
+        9: { 0: 'SC / GC', 1: 'Gösterimi iki jeton arasında değiştirir (aynı sayısal değer).' }
+      }
+    },
+    $replay: { bet: 'OYUN TUTARI', realCost: 'GERÇEK OYUN DEĞERİ', costMult: 'Oyun değeri' },
+    $rgs: {
+      errVal: 'İstek reddedildi: oturum süresi doldu veya oyun geçersiz. Lütfen oyunu siteden yeniden başlat.',
+      errIpb: 'Bu oyun için bakiye yetersiz.', errGle: 'Limite ulaşıldı: bu oyun reddedildi.',
+      errNet: 'Ağ kullanılamıyor veya geçersiz yanıt. Oyunun dikkate alınmamış olabilir: bakiyeni kontrol et.',
+      buyConfirm: '{name} açılsın mı? Oyun değeri: {price}.', buyConfirmTitle: 'BONUSU ONAYLA', autoCost: 'Tur başına oyun değeri'
+    }
+  };
+})(window.I18N_X, window.I18N_SOCIAL);
+
+/* --- vi --- */
+(function (X, S) {
+  X.tiers.vi = ['THẮNG', 'THẮNG LỚN', 'THẮNG CỰC LỚN', 'THẮNG SIÊU LỚN'];
+  X.replay.vi = {
+    badge: 'XEM LẠI', start: 'PHÁT', again: 'PHÁT LẠI', playing: 'ĐANG PHÁT…', loading: 'Đang tải bản xem lại…',
+    errSum: 'Các sự kiện của bản xem lại không khớp với giá trị máy chủ công bố: hiển thị giá trị của máy chủ.',
+    errLoad: 'Không thể tải bản xem lại này.', errParams: 'Thiếu tham số của bản xem lại (game, version, mode, event, rgs_url).', errFormat: 'Bản xem lại này có định dạng không xác định.',
+    errNet: 'Lỗi mạng: hãy kiểm tra kết nối rồi tải lại.', bet: 'CƯỢC', betSocial: 'MỨC CHƠI', realCost: 'CHI PHÍ THỰC', costMult: 'Chi phí', result: 'THẮNG', noWin: 'Không thắng',
+    modeStd: 'TIÊU CHUẨN', modePlus: 'THẦN LỜI+', modeBonus: 'BONUS'
+  };
+  X.rgs.vi = {
+    connecting: 'Đang kết nối tới máy chủ trò chơi…', retry: 'Thử lại', confirm: 'Xác nhận', cancel: 'Hủy',
+    errUrl: 'Không thể kết nối: địa chỉ máy chủ trò chơi (rgs_url) hoặc phiên bị thiếu hoặc không hợp lệ. Hãy khởi chạy lại trò chơi từ trang web.',
+    errAuth: 'Không thể truy cập máy chủ trò chơi. Hãy kiểm tra kết nối rồi khởi chạy lại trò chơi.',
+    errVal: 'Yêu cầu bị từ chối: phiên đã hết hạn hoặc mức cược không hợp lệ. Hãy khởi chạy lại trò chơi từ trang web.',
+    errIpb: 'Số dư không đủ cho mức cược này.',
+    errGle: 'Đã đạt giới hạn chơi: mức cược này bị từ chối.',
+    errAct: 'Máy chủ đang bận. Hãy thử lại sau giây lát.',
+    errGen: 'Lỗi máy chủ trò chơi. Hãy thử lại sau giây lát.',
+    errNet: 'Mạng không khả dụng hoặc phản hồi không hợp lệ. Mức cược của bạn có thể chưa được ghi nhận: hãy kiểm tra số dư.',
+    errBook: 'Không thể đọc kết quả của ván. Hãy liên hệ bộ phận hỗ trợ.',
+    errIs: 'Phiên không hợp lệ hoặc đã hết hạn. Vui lòng khởi động lại trò chơi từ trang web.',
+    errAte: 'Xác thực đã hết hạn. Vui lòng khởi động lại trò chơi từ trang web để đăng nhập lại.',
+    errLoc: 'Trò chơi này không khả dụng tại vị trí của bạn.',
+    errMaint: 'Đang bảo trì. Vui lòng thử lại sau vài phút.',
+    errSum: 'Kết quả hiển thị không khớp với giá trị từ máy chủ trò chơi: áp dụng giá trị của máy chủ.',
+    resuming: 'Đang tiếp tục ván đang diễn ra…',
+    buyConfirm: 'Mua {name} với giá {price}?', buyConfirmTitle: 'XÁC NHẬN MUA',
+    autoTitle: 'CHƠI TỰ ĐỘNG', autoSub: 'Chọn số ván và điều kiện dừng, rồi xác nhận.',
+    autoRounds: 'Số ván', autoStopWin: 'Dừng khi thắng tối thiểu', autoStart: 'Bắt đầu', autoCost: 'Chi phí mỗi ván'
+  };
+  X.rules.vi = {
+    modesH: 'Chế độ, chi phí, RTP và mức thắng tối đa', colMode: 'Chế độ', colCost: 'Chi phí', colRtp: 'RTP', colMax: 'Thắng tối đa', colChance: 'Tỷ lệ', colValue: 'Giá trị', colBoost: 'Tăng lực', colNumCase: 'Ô số', colBonusCase: 'Ô bonus',
+    modeStd: 'Tiêu chuẩn', modePlus: 'THẦN LỜI+', tokScepter: 'TRƯỢNG ×2 (trên tổng đã có)', tokKey: 'CHÌA KHÓA VÀNG (+{keys} rương để mở)', tokSeal: 'NIÊM PHONG (đóng căn phòng)',
+    modeStdD: 'Một lượt quay của bánh xe phán xét. Thần Lời xuất hiện ở khoảng {p} % số lượt quay.',
+    modePlusD: 'Có chi phí ×{c} mức đã chọn. Thần Lời xuất hiện ở khoảng {pp} % số lượt quay, nên tăng lực xuất hiện thường xuyên hơn. RTP như nhau.',
+    buyScarabD: 'Mở thẳng bonus Bọ Hung Rơi, không qua bánh xe.', buyWeighD: 'Mở thẳng bonus Cân Trái Tim, không qua bánh xe.',
+    buyVaultD: 'Mở thẳng bonus Phòng Kho Báu, không qua bánh xe.', buyHandD: 'Mở thẳng Thịnh Nộ của Anubis: bánh xe khổng lồ được quay ngay.',
+    modesNote: 'RTP là mức hoàn lại kỳ vọng trên một số lượng ván rất lớn (tính chính xác, không phải lời hứa cho một phiên). Mức thắng tối đa là bội số của mức đã chọn, không phải của chi phí chế độ, và bị giới hạn ở {m}× trong mọi chế độ. Chi phí là bội số của mức đã chọn và được hiển thị trước khi xác nhận. Thịnh Nộ của Anubis vẫn có thể chiếm một bonus được mở thẳng ({h} % số lần), như trên bánh xe.',
+    howH: 'Phần thắng được tạo ra thế nào',
+    how: [
+      'Không có đường thắng, tổ hợp hay biểu tượng nào cần xếp thẳng hàng. Mỗi lượt quay dừng ở một trong {n} ô của bánh xe. Phần thắng là giá trị của ô đó × mức đã chọn.',
+      'Các ô số cho giá trị của chúng (×{nums}). Các ô bụi không cho gì. ANKH tặng một lượt quay lại miễn phí: bánh xe quay tiếp mà không mất chi phí, tối đa {chain} lần liên tiếp, và ván kết thúc ở một ô không phải ANKH. Phần thắng của các lượt quay nối tiếp được cộng dồn.',
+      'Các ô bonus (Bọ Hung, Cân, Kho Báu) kích hoạt bonus tương ứng: phần thắng là kết quả bonus × mức đã chọn. Mỗi ô trong ba loại chiếm {one} trong {n} ô.',
+      'Thần Lời: trước lượt quay, Thần Lời chọn một loại ô ({kinds}) và ban cho nó một tăng lực. Giá trị tăng lực được niêm phong (hiển thị ×?) cho đến khi bánh xe dừng. Nếu bánh xe dừng ở loại ô đó, giá trị ô (hoặc kết quả bonus) được nhân với tăng lực. Thần Lời không làm gì nếu bánh xe dừng ở chỗ khác.',
+      'Tổng phần thắng của một ván bị giới hạn ở {m}× mức đã chọn: khi chạm giới hạn, ván kết thúc và phần thắng bị giới hạn ở mức đó. Hiệu ứng thắng (WIN, BIG WIN, EXTRA WIN, MEGA WIN, PHÁN XÉT THẦN THÁNH) phụ thuộc vào tổng của ván ÷ chi phí chế độ; chúng không bao giờ thay đổi số thắng.'
+    ],
+    oracleH: 'Tăng lực của Thần Lời', oracleNote: 'Tỷ lệ của từng tăng lực khi Thần Lời chọn một loại ô.',
+    bonusH: 'Ván bonus: điều kiện kích hoạt và giá trị',
+    scarabH: 'Bọ Hung Rơi', scarabP: 'Được kích hoạt bởi ô Bọ Hung ({one} trên {n} ô) hoặc mở thẳng. Ba con bọ hung rơi qua {rows} hàng chốt và mỗi con thắng giá trị của khe nó rơi vào (× tăng lực của Thần Lời nếu có). Giá trị các khe từ trái sang phải, kèm tỷ lệ của từng khe:',
+    weighH: 'Cân Trái Tim', weighP: 'Được kích hoạt bởi ô Cân ({one} trên {n} ô) hoặc mở thẳng. Hai đĩa cân, mỗi đĩa hiện một hệ số. Bạn chọn chiếc lông vũ hoặc trái tim; đĩa nặng hơn thắng hệ số của nó, đĩa nhẹ hơn không được gì: một cơ hội trên hai. Cặp hệ số được rút theo các tỷ lệ sau:',
+    vaultH: 'Phòng Kho Báu', vaultP: 'Được kích hoạt bởi ô Kho Báu ({one} trên {n} ô) hoặc mở thẳng. Mở lần lượt từng rương: {picks} lúc đầu. Mỗi rương chứa một giá trị được cộng vào tổng, hoặc một TRƯỢNG (×2 trên tổng đã có), hoặc một CHÌA KHÓA VÀNG (+{keys} rương nữa để mở, tối đa {cap} rương), hoặc NIÊM PHONG, đóng căn phòng và giữ lại tổng đã có. Không gì hủy hay trì hoãn được niêm phong; chìa khóa chỉ kéo dài lượt chọn. Hai rương đầu tiên không bao giờ chứa niêm phong. Mở hết mọi rương được phép sẽ cộng thêm thưởng +{fin}×. Nội dung rương và tỷ lệ (sau hai rương đầu tiên):',
+    handH: 'Thịnh Nộ của Anubis', handP: 'Bất kỳ bonus nào cũng có thể bị Thịnh Nộ chiếm ({h} % số lần trên bánh xe và với bonus mở thẳng; luôn luôn ở chế độ Thịnh Nộ). Chọn một màu (ngọc lam, vàng hoặc hồng ngọc: tỷ lệ như nhau) rồi quay bánh xe khổng lồ gồm {segs} ô. Một số: phần thắng = số × bậc. GẤP ĐÔI đúng màu của bạn: mọi số được nhân đôi (bậc ×2, ×4, ×8 cho đến ×{tier}) và bạn quay tiếp. GẤP ĐÔI ở màu khác: chuỗi dừng và thắng số nhỏ nhất ({min}) × bậc. Một dải kích hoạt bonus: phần thắng bonus × hệ số dải × bậc. Các số trên bánh xe khổng lồ: ×{hnums}. Ô GẤP ĐÔI: {dbl} ({dblc} mỗi màu). Dải: {bands}. Bậc không tăng quá ×{tier} (khi đó các ô GẤP ĐÔI không còn được tính).',
+    cryptH: 'Thánh Điện Thủy Triều (bonus ẩn)', cDust: 'BỤI (không gì cả)', cTab: 'BIA (+ giá trị × thủy triều hiện tại)', cTide: 'THỦY TRIỀU (× thủy triều)', cEclipse: 'NHẬT THỰC (× lễ vật)', cryptP: 'Một bonus đã thắng có thể được thay bằng Thánh Điện Thủy Triều ({s} % số lần, không bao giờ với bonus mở thẳng). Chạm vào {tiles} tấm bia của lưới 3×3 theo thứ tự tùy ý; thứ tự không đổi tỷ lệ. Lễ vật bắt đầu từ 0 và thủy triều từ ×1. Mỗi tấm bia là một trong: BIA (cộng giá trị của nó × thủy triều hiện tại vào lễ vật), THỦY TRIỀU (nhân thủy triều, chỉ với các tấm bia lật sau nó), NHẬT THỰC (nhân lễ vật đã gom) hoặc BỤI (không gì cả). Phần thắng là lễ vật cuối × mức đã chọn (tối thiểu ×1 nếu không có tấm bia nào xuất hiện), giới hạn ở {m}×. Các loại bia:',
+    retrigH: 'Bonus, quay lại và kích hoạt lại',
+    retrig: [
+      'Không có lượt quay miễn phí nào để kích hoạt lại: mỗi bonus được chơi một lần cho mỗi lần kích hoạt và kết quả của nó được cộng vào ván. Không bonus nào có thể kích hoạt bonus khác: một dải của Thịnh Nộ khởi động một bonus không bao giờ dẫn trở lại Thịnh Nộ.',
+      'Tính năng lặp lại duy nhất là lượt quay lại ANKH (xem ở trên). Các ô bonus, Thần Lời và Thịnh Nộ có cùng tỷ lệ ở mọi chế độ.',
+      'Nếu mất kết nối trong lúc một ván đang chạy, hãy tải lại trò chơi: ván đã được định đoạt sẽ được hoàn tất và phần thắng của nó được ghi nhận.'
+    ],
+    btnH: 'Nút và điều khiển',
+    btn: [
+      ['− / +', 'Giảm hoặc tăng mức đã chọn (phím ↓ / ↑). Bị khóa khi một ván đang chạy.'],
+      ['{spin}', 'Bắt đầu một ván với mức đã chọn (phím Cách hoặc Enter cũng được). Khi chơi tự động, nút trở thành {stop}.'],
+      ['{auto}', 'Chọn số ván tự động ({autos}); trò chơi chơi liên tiếp cho đến khi đủ số ván, bạn nhấn {stop}, chạm một giới hạn hoặc số dư không đủ. Tùy chọn “Dừng tự động khi có bonus” nằm trong Thông tin.'],
+      ['{turbo}', 'Ván nhanh hơn: nhấn một lần cho TURBO, hai lần cho ULTRA (kết quả gần như tức thì), lần thứ ba để tắt. Bonus luôn được chơi ở nhịp chậm hơn.'],
+      ['{buy}', 'Mở menu các bonus mở thẳng. Mỗi thẻ hiển thị chi phí của nó; chọn một thẻ sẽ bắt đầu bonus đó.'],
+      ['{plus}', 'Bật hoặc tắt THẦN LỜI+ cho các ván sau: chi phí ×{c}, Thần Lời xuất hiện thường xuyên hơn nhiều. Chi phí hiển thị bên dưới mức đã chọn.'],
+      ['Âm thanh (loa)', 'Mở bảng âm thanh: âm lượng, âm cao, cao độ, không khí âm nhạc, tông màu và một công tắc tắt mọi âm thanh.'],
+      ['i (Thông tin)', 'Mở luật chơi này và phần cài đặt: đơn vị hiển thị, hạn mức thua, chất lượng đồ họa, giảm hiệu ứng, tùy chọn chơi tự động, mở bonus trực tiếp bật/tắt, đặt lại số dư.'],
+      ['Ngôn ngữ', 'Đổi ngôn ngữ của trò chơi.'],
+      ['€ / $', 'Chuyển cách hiển thị các mức giữa euro và đô la (cùng giá trị số).'],
+      ['×', 'Đóng cửa sổ đang mở (phím Esc cũng được).'],
+      ['Chạm / Phím cách', 'Trong bonus: bắt đầu bonus, thả bọ hung hoặc khối, chọn rương, thẻ hoặc màu. Trong hiệu ứng thắng: chạm để bỏ qua.']
+    ],
+    discH: 'Quan trọng', disc: 'Sự cố làm mất hiệu lực mọi phần thắng và mọi ván chơi. Cần có kết nối internet ổn định. Nếu bị ngắt kết nối, hãy tải lại trò chơi để hoàn tất các ván dang dở. Mức hoàn lại kỳ vọng được tính trên nhiều ván chơi. Màn hình trò chơi không đại diện cho bất kỳ thiết bị vật lý nào và chỉ mang tính minh họa. Phần thắng được ghi nhận theo số lượng nhận từ Remote Game Server chứ không theo các sự kiện trong trình duyệt web. TM và © 2026 Engine.'
+  };
+  S.vi = {
+    bet: 'CHƠI', plusHint: 'THẦN LỜI+: tăng lực ở ≈ 3 trong 4 lượt quay · mức chơi ×1,1', cost: 'GIÁ TRỊ CHƠI', sessWag: 'Đã chơi',
+    rulesPlus: 'Chế độ THẦN LỜI+: mức chơi ×1,1, Thần Lời xuất hiện ở ≈ 3 trong 4 lượt quay. RTP như nhau (≈ 96 %).',
+    buyBtn: 'NHẬN BONUS', buyTitle: 'NHẬN BONUS', buySub: 'Mở thẳng một bonus, bỏ qua bánh xe. Chơi được với: mức chơi × hệ số. Thịnh Nộ của Anubis vẫn có thể chiếm nó.',
+    buyPrice: 'GIÁ TRỊ CHƠI', buyNow: 'NHẬN', buyOn: 'Truy cập bonus', resumed: 'Ván bị gián đoạn: phần thắng đã được cộng',
+    scarabSub: 'Ba con bọ hung lao xuống bóng tối. Mỗi con thắng ô nó rơi vào.',
+    splashDemo: 'Bản demo · xu chơi · Hãy chơi có trách nhiệm', infoTitle: 'Luật chơi & Bảng thắng', demo: 'Xu chơi — bản demo, các mức hiển thị không có giá trị thật.',
+    tableCols: { 2: 'Thắng' }, currencyL: 'Token', handWrongSub: 'Chuỗi dừng: đã thu bậc hiện tại', bonusWin: 'THẮNG BONUS',
+    rules: {
+      0: 'Một lần chơi, một lượt quay: bánh xe phán xét quyết định. Mỗi ô cho giá trị của nó × mức chơi của bạn.',
+      2: 'ANKH: quay lại bánh xe miễn phí, không thêm mức chơi.',
+      5: function (s) { return s.replace('tiền thắng bonus', 'phần thắng bonus'); },
+      6: function (s) { return s.replace('chi phí ván', 'giá trị chơi của ván'); }
+    },
+    $rules: {
+      modesH: 'Chế độ, giá trị chơi, RTP và mức thắng tối đa', colCost: 'Chơi được với',
+      modePlusD: 'Chơi được với ×{c} mức đã chọn. Thần Lời xuất hiện ở khoảng {pp} % số lượt quay, nên tăng lực xuất hiện thường xuyên hơn. RTP như nhau.',
+      modesNote: function (s) { return s.replace('không phải của chi phí chế độ', 'không phải của giá trị chơi của chế độ').replace('Chi phí là bội số', 'Giá trị chơi là bội số'); },
+      how: { 1: function (s) { return s.replace('mà không mất chi phí', 'mà không thêm mức chơi'); }, 4: function (s) { return s.replace('chi phí chế độ', 'giá trị chơi của chế độ'); } },
+      btn: {
+        4: { 1: 'Mở menu các bonus mở thẳng. Mỗi thẻ hiển thị giá trị chơi của nó; chọn một thẻ sẽ bắt đầu bonus đó.' },
+        5: { 1: 'Bật hoặc tắt THẦN LỜI+ cho các ván sau: giá trị chơi ×{c}, Thần Lời xuất hiện thường xuyên hơn nhiều. Giá trị chơi hiển thị bên dưới mức đã chọn.' },
+        9: { 0: 'SC / GC', 1: 'Chuyển cách hiển thị giữa hai token (cùng giá trị số).' }
+      }
+    },
+    $replay: { bet: 'MỨC CHƠI', realCost: 'GIÁ TRỊ CHƠI THỰC', costMult: 'Giá trị chơi' },
+    $rgs: {
+      errVal: 'Yêu cầu bị từ chối: phiên đã hết hạn hoặc ván chơi không hợp lệ. Hãy khởi chạy lại trò chơi từ trang web.',
+      errIpb: 'Số dư không đủ cho ván chơi này.', errGle: 'Đã đạt giới hạn: ván chơi này bị từ chối.',
+      errNet: 'Mạng không khả dụng hoặc phản hồi không hợp lệ. Ván chơi của bạn có thể chưa được ghi nhận: hãy kiểm tra số dư.',
+      buyConfirm: 'Nhận {name}? Chơi được với {price}.', buyConfirmTitle: 'XÁC NHẬN BONUS', autoCost: 'Giá trị chơi mỗi ván'
+    }
+  };
+})(window.I18N_X, window.I18N_SOCIAL);
+/* ===== TRADUCTIONS : fin ===== */

@@ -208,14 +208,13 @@ class TestEvenements(unittest.TestCase):
                     if e["type"] != "weighReveal":
                         continue
                     seen += 1
-                    pl = e["plates"]
-                    self.assertEqual(int(pl["feather"]["heavier"]) + int(pl["heart"]["heavier"]), 1)
-                    self.assertEqual(e["mults"][0], e["playerMult"])
-                    self.assertEqual(e["win"], e["playerMult"] if e["playerWins"] else 0)
-                    pk = e["bookPick"]
-                    mine = pl["feather" if pk == 0 else "heart"]
-                    self.assertEqual(mine["mult"], e["playerMult"])
-                    self.assertEqual(mine["heavier"], e["playerWins"])
+                    self.assertEqual(len(e["variants"]), 2)
+                    for q, v in enumerate(e["variants"]):          # plume (0) et coeur (1) : même valeur du joueur, même gain
+                        self.assertEqual(v["pick"], q)
+                        self.assertEqual(v["mults"][q], v["playerMult"])
+                        self.assertEqual(v["playerWins"], v["heavy"] == q)
+                        self.assertEqual(v["win"], e["win"])
+                        self.assertEqual(e["win"], v["mults"][q] if v["heavy"] == q else 0)
         self.assertGreater(seen, 20)
 
     def test_tresor(self):
@@ -260,23 +259,25 @@ class TestEvenements(unittest.TestCase):
                     if bn["start"]["bonus"] != "hand":
                         continue
                     seen += 1
-                    ev = bn["ev"]
-                    self.assertEqual([e["type"] for e in ev].count("furyColor"), 1)     # un script, pour la couleur choisie
-                    self.assertEqual([e for e in ev if e["type"] == "furyColor"][0]["colourIndex"], 0)
+                    allev = bn["ev"]
+                    ends = [e for e in allev if e["type"] == "furyEnd"]
+                    self.assertEqual([e["color"] for e in ends], [0, 1, 2])             # trois variantes de couleur, même total
+                    self.assertEqual(len({e["win"] for e in ends}), 1)
+                    ev = [e for e in allev if e.get("color", 0) == 0]
                     spins = [e for e in ev if e["type"] == "furySpin"]
                     self.assertTrue(spins[-1]["final"] and not any(s["final"] for s in spins[:-1]))
                     mult = 1
                     for s in spins[:-1]:
                         self.assertEqual(s["kind"], "up")
-                        self.assertEqual(s["doubleColour"], 0)
+                        self.assertEqual(C.HAND_SEGS[s["segment"]]["d"], 0)
                         mult *= 2
                         self.assertEqual(s["tier"], mult)
                     last = spins[-1]
                     self.assertEqual(last["tier"], mult)
                     if last["kind"] == "num":
-                        pay = last["number"] * C.SCALE * mult
+                        pay = last["number"] * mult
                     elif last["kind"] == "wrong":
-                        self.assertNotEqual(last["doubleColour"], 0)
+                        self.assertNotEqual(C.HAND_SEGS[last["segment"]]["d"], 0)
                         pay = C.HAND_MIN_N_INT * mult
                     else:
                         inner = [e for e in ev if e.get("nested") == last["band"] and e["type"] in ("scarabDrop", "weighReveal", "vaultEnd")]

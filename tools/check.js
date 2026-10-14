@@ -122,7 +122,7 @@ ok(upC.every(function (v) { return Math.abs(v / upC[0] - 1) < cntTol(upC); }) &&
 ok(Math.abs(evMean - EX.buy.hand.mean) < handTol, 'Fureur : espérance du bonus ≈ ' + evMean.toFixed(2) + '× (exact ' + EX.buy.hand.mean.toFixed(2) + '× ± ' + handTol.toFixed(1) + ', ' + nH + ' scripts)');
 // recalcul après le choix du joueur dans la Pesée imbriquée
 var rw2 = M.mulberry32(5), badR = 0;
-for (var wi = 0; wi < 20000; wi++) { var hh = M._bonus.hand(rw2, 0, [0]); if (hh.spins[0].kind !== 'band') { badR++; continue; } }
+for (var wi = 0; wi < cap(20000); wi++) { var hh = M._bonus.hand(rw2, 0, [0]); if (hh.spins[0].kind !== 'band') { badR++; continue; } }
 var forcedW = M._bonus.hand(M.mulberry32(3), 1, [12]); var d0 = forcedW.spins[0].bonus; d0.pick = 1 - d0.heavy; d0.total = M.weighGain(d0, d0.pick); M.handRecalc(forcedW);
 ok(badR === 0 && forcedW.total === 0 && forcedW.spins[0].band === 'weigh', 'Fureur : le total se recalcule si le joueur change son choix dans la Pesée imbriquée');
 
@@ -179,7 +179,7 @@ var rs = M.mulberry32(2024), nS = cap(2000000), secrets = 0, bonuses = 0, badS =
 var perRound = secrets / (2 * nS);
 ok(badS === 0 && perRound > 1 / 2000 && perRound < 1 / 100, 'Secret : 1 tour sur ' + (1 / perRound).toFixed(0) + ' (cible ≈ 500), uniquement à la place d\'un bonus de la roue, sans choix de profil (anomalies: ' + badS + ')');
 ok(Math.abs(secrets / bonuses - M.SECRET_UPGRADE) < 0.03, 'Secret : ' + (secrets / bonuses * 100).toFixed(2) + ' % des bonus gagnés (réglé à ' + M.SECRET_UPGRADE * 100 + ' %) — ' + (1 / (M.SECRET_UPGRADE * 0.05)).toFixed(0) + ' tours en théorie');
-var rbuy = M.mulberry32(8), secBuy = 0; ['scarab', 'weigh', 'vault', 'hand'].forEach(function (k) { for (var i = 0; i < 50000; i++) if (M.playBuy(rbuy, k).spins[0].secret) secBuy++; });
+var rbuy = M.mulberry32(8), secBuy = 0; ['scarab', 'weigh', 'vault', 'hand'].forEach(function (k) { for (var i = 0; i < cap(50000); i++) if (M.playBuy(rbuy, k).spins[0].secret) secBuy++; });
 ok(secBuy === 0, 'Secret : jamais proposé à l\'achat');
 // espérance du secret = espérance moyenne du bonus qu'il remplace (RTP global inchangé)
 var rE = M.mulberry32(31), nE = cap(2000000), eS = 0, eR = { scarab: 0, weigh: 0, vault: 0, hand: 0 };

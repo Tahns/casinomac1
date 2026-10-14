@@ -57,6 +57,8 @@
   }
 
   function quick() { return G.turbo || G.replay || (G.S && G.S.auto > 0); }   // G.replay : mode replay, le tour se joue seul   // turbo / auto-play : aucune attente du joueur
+  // choix du joueur (couleur de la Fureur, plume ou cœur) : un vrai choix en jeu comme en replay ; automatique seulement en turbo / auto-play
+  function autoChoice() { return G.turbo || (G.S && G.S.auto > 0); }
 
   // codes visuels communs aux menus dessinés (mêmes valeurs que css/style.css : --edge, --pnl, --go)
   var UI = { r: 14, edge: '#b8861e', pnl: ['#221a10', '#100c08'], pnlHi: ['#3a2c16', '#171109'], go: ['#fff1b8', '#e6b94a', '#c9962a'], goInk: '#140a00', goRim: '#fff1b8' };
@@ -597,7 +599,7 @@
     }
     // le choix fixe le gain : le plateau choisi gagne son multiplicateur s'il est le plus lourd, sinon rien ; le gain en attente est recalculé
     function commit(p) {
-      data.pick = p; data.total = M.weighGain(data, p);
+      data.pick = p; data.total = data.fixed != null ? data.fixed : M.weighGain(data, p);   // data.fixed : gain du book (mode RGS), jamais recalculé
       sp.base = data.total; sp.pay = sp.base * (sp.boost || 1);
       if (G.onBonusChoice) G.onBonusChoice();
     }
@@ -629,7 +631,7 @@
       await boostIntro(S, sp);
       await G.sleep(q ? 0.5 : 1.6);
       // 1. choix de la plume ou du coeur (les multiplicateurs sont cachés)
-      pick = data.fixedPick != null ? data.fixedPick : q ? (Math.random() < 0.5 ? 0 : 1) : await choose();   // fixedPick : choix enregistré (replay)
+      pick = autoChoice() ? (Math.random() < 0.5 ? 0 : 1) : await choose();
       choosing = false; commit(pick);
       if (q) { Sfx.shield(); var pq = platePt(pick); FX.ring(pq.x, pq.y, '#6ff0dd', g.pan * 1.6, 0.6); }
       G.tween(0.4, function (u) { cardA = 1 - u; }, null);
@@ -1696,7 +1698,7 @@
     await G.setFade(1, 0.35);
     if (sp.options && sp.upgraded) {   // Fureur d'Anubis : le joueur choisit sa couleur (au hasard en turbo / auto : les trois sont équivalentes)
       var ck = M.HAND_COLORS[Math.floor(Math.random() * 3)];
-      if (!quick()) {
+      if (!autoChoice()) {
         var hc = handColorScene(sp);
         G.setScene(hc); await G.setFade(0, 0.5);
         ck = await hc.run();
