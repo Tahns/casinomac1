@@ -58,6 +58,19 @@
 
   function quick() { return G.turbo || (G.S && G.S.auto > 0); }   // turbo / auto-play : aucune attente du joueur
 
+  // codes visuels communs aux menus dessinés (mêmes valeurs que css/style.css : --edge, --pnl, --go)
+  var UI = { r: 14, edge: '#b8861e', pnl: ['#221a10', '#100c08'], pnlHi: ['#3a2c16', '#171109'], go: ['#fff1b8', '#e6b94a', '#c9962a'], goInk: '#140a00', goRim: '#fff1b8' };
+  // bouton principal doré (centré en 0,0 du contexte courant) : le même que .btn-go
+  function goButton(w, h, label, glow) {
+    A.roundRect(ctx, -w / 2, -h / 2, w, h, h / 2);
+    var bg = ctx.createLinearGradient(0, -h / 2, 0, h / 2); bg.addColorStop(0, UI.go[0]); bg.addColorStop(0.55, UI.go[1]); bg.addColorStop(1, UI.go[2]);
+    ctx.fillStyle = bg; ctx.shadowColor = 'rgba(230,185,74,' + glow + ')'; ctx.shadowBlur = 26; ctx.fill(); ctx.shadowBlur = 0;
+    ctx.lineWidth = 2; ctx.strokeStyle = UI.goRim; ctx.stroke();
+    var lfs = clamp(h * 0.36, 14, 28); ctx.font = '900 ' + lfs + 'px ' + G.TITLE; if (ctx.letterSpacing !== undefined) ctx.letterSpacing = '3px';
+    while (lfs > 11 && ctx.measureText(label).width > w * 0.82) { lfs -= 1; ctx.font = '900 ' + lfs + 'px ' + G.TITLE; }
+    if (ctx.letterSpacing !== undefined) ctx.letterSpacing = '0px';
+    G.txt(label, 0, 1, { size: lfs, weight: 900, fill: UI.goInk, spacing: 3 });
+  }
   function waitTap(S, sec) {
     return new Promise(function (res) {
       var done = false;
@@ -1282,10 +1295,10 @@
     function drawCard(c, i) {
       var hv = hover === i || sel === i, lift = hv ? 6 : 0, y = c.y - lift, col = HCOL[i], name = T.handColorName[names[i]];
       sv(function () {
-        A.roundRect(ctx, c.x, y, c.w, c.h, 16);
-        var gg = ctx.createLinearGradient(0, y, 0, y + c.h); gg.addColorStop(0, hv ? '#3a2c16' : '#241a0d'); gg.addColorStop(1, '#0c0804');
+        A.roundRect(ctx, c.x, y, c.w, c.h, UI.r);
+        var gg = ctx.createLinearGradient(0, y, 0, y + c.h); gg.addColorStop(0, hv ? UI.pnlHi[0] : UI.pnl[0]); gg.addColorStop(1, hv ? UI.pnlHi[1] : UI.pnl[1]);
         ctx.fillStyle = gg; ctx.shadowColor = hv ? col.a : 'rgba(0,0,0,.7)'; ctx.shadowBlur = hv ? 30 : 14; ctx.fill(); ctx.shadowBlur = 0;
-        ctx.lineWidth = hv ? 3 : 2; ctx.strokeStyle = hv ? col.a : col.b; ctx.stroke();
+        ctx.lineWidth = 2; ctx.strokeStyle = hv ? col.a : UI.edge; ctx.stroke();
         var fs = c.row ? clamp(c.h * 0.2, 14, 22) : clamp(c.w * 0.085, 15, 24), pulse = 1 + 0.05 * Math.sin(tt * 3 + i);
         if (c.row) {
           var gx = c.x + c.h * 0.55, gy = y + c.h / 2; gem(gx, gy, c.h * 0.3 * pulse, i);
@@ -1298,7 +1311,7 @@
           gem(c.x + c.w / 2, y + c.h * 0.2, c.w * 0.16 * pulse, i);
           G.txt(name, c.x + c.w / 2, y + c.h * 0.4, { size: fs, weight: 900, fill: col.a, stroke: '#2a1802', sw: 3, spacing: 2 });
           G.txt(T.handColorSub, c.x + c.w / 2, y + c.h * 0.4 + fs * 1.5, { size: Math.max(10, fs * 0.58), family: G.TEXT, weight: 700, fill: '#cdb98a' });
-          ring(c.x + c.w / 2, y + c.h * 0.71, Math.min(c.w * 0.2, c.h * 0.17), i);
+          ring(c.x + c.w / 2, y + c.h * 0.745, Math.min(c.w * 0.2, c.h * 0.15), i);
           G.txt('[' + (i + 1) + ']', c.x + c.w / 2, y + c.h * 0.93, { size: Math.max(11, fs * 0.6), family: G.TEXT, weight: 800, fill: 'rgba(255,241,184,.7)' });
         }
       });
@@ -1324,7 +1337,7 @@
           if (sel < 0) hover = h;
           if (type === 'down' && h >= 0 && sel < 0) { sel = h; Sfx.shield(); FX.spark(cards[h].x + cards[h].w / 2, cards[h].y + cards[h].h / 2, 24, HCOL[h].a, 300); G.sleep(0.35).then(function () { fin(h); }); }
         };
-        G.say(T.handColorHint);
+        G.say(G.h >= 520 ? T.handColorHint : '');   // paysage de téléphone : la bulle recouvrirait la première carte
         G.sleep(20).then(function () { if (sel < 0) sel = Math.floor(Math.random() * 3); fin(sel); });   // sans réponse : couleur au hasard (les trois sont équivalentes)
       });
     }
@@ -1642,14 +1655,7 @@
       if (t > 1.0) {
         var ba = clamp((t - 1.0) / 0.4, 0, 1), bp = 1 + Math.sin(t * 5) * 0.035 + (hover ? 0.05 : 0), bx = btn.x + btn.w / 2, by = btn.y + btn.h / 2;
         ctx.save(); ctx.globalAlpha = ba; ctx.translate(bx, by + (1 - ba) * 20); ctx.scale(bp, bp);
-        A.roundRect(ctx, -btn.w / 2, -btn.h / 2, btn.w, btn.h, btn.h / 2);
-        var bg = ctx.createLinearGradient(0, -btn.h / 2, 0, btn.h / 2); bg.addColorStop(0, '#ffe9a0'); bg.addColorStop(0.5, '#f0b73c'); bg.addColorStop(1, '#a36a12');
-        ctx.fillStyle = bg; ctx.shadowColor = 'rgba(255,216,106,' + (0.55 + Math.sin(t * 5) * 0.25) + ')'; ctx.shadowBlur = 34 + Math.sin(t * 5) * 12; ctx.fill(); ctx.shadowBlur = 0;
-        ctx.lineWidth = 3; ctx.strokeStyle = '#fff6d0'; ctx.stroke();
-        var lfs = clamp(btn.h * 0.36, 14, 28); ctx.font = '900 ' + lfs + 'px ' + G.TITLE; if (ctx.letterSpacing !== undefined) ctx.letterSpacing = '3px';
-        while (lfs > 11 && ctx.measureText(T.launchBonus).width > btn.w * 0.82) { lfs -= 1; ctx.font = '900 ' + lfs + 'px ' + G.TITLE; }
-        if (ctx.letterSpacing !== undefined) ctx.letterSpacing = '0px';
-        G.txt(T.launchBonus, 0, 1, { size: lfs, weight: 900, fill: '#3a2203', spacing: 3 });
+        goButton(btn.w, btn.h, T.launchBonus, 0.55 + Math.sin(t * 5) * 0.25);
         ctx.restore();
       }
     };

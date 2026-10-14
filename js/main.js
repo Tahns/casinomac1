@@ -13,7 +13,7 @@
   var SAVE_VER = 2;           // v1 = ancien jeu en « crédits » (mises 10 à 5000, solde 10 000)
   var r2 = G.r2;
   var AUTO_STEPS = [0, 10, 25, 50, 100, Infinity];
-  var SAVE_KEY = 'hoa_save_v1';
+  var SAVE_KEY = 'anubis_save_v1', OLD_SAVE_KEY = 'hoa_save_v1';   // ancienne clé lue une fois pour ne pas perdre les soldes
 
   var S = { pending: 0, balance: START_BAL, bi: BET_DEFAULT, cur: '', curSet: false, lastWin: 0, autoIdx: 0, auto: 0, stopOnBonus: false, busy: false, hist: [], reduced: false, mode: 'std', buyOn: true, limit: 0, quality: 'auto', limitHit: false };
   var SESS = { start: Date.now(), spins: 0, wag: 0, won: 0, lastCheck: Date.now() };
@@ -22,10 +22,10 @@
 
   function load() {
     try {
-      var d = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null');
+      var d = JSON.parse(localStorage.getItem(SAVE_KEY) || localStorage.getItem(OLD_SAVE_KEY) || 'null');
       if (d) {
         // ancienne sauvegarde (crédits, sans « v ») : solde, mise, gain en attente et limite repartent des valeurs par défaut
-        if (d.lang) I18N.setLang(d.lang);
+        if (d.lang && !I18N.fromUrl) I18N.setLang(d.lang);   // ?lang= dans l'URL prime sur la sauvegarde
         if (d.cur === 'EUR' || d.cur === 'USD') { S.cur = d.cur; S.curSet = true; }
         if (d.v >= SAVE_VER) {
           if (typeof d.balance === 'number' && isFinite(d.balance) && d.balance >= 0) S.balance = r2(d.balance);
@@ -49,9 +49,9 @@
       }
     } catch (e) {}
     // mouvement réduit : suit le réglage du système tant que le joueur n'a rien choisi
-    try { if (!localStorage.getItem(SAVE_KEY) && root.matchMedia && root.matchMedia('(prefers-reduced-motion: reduce)').matches) { S.reduced = true; FX.reduced = true; } } catch (e) {}
+    try { if (!localStorage.getItem(SAVE_KEY) && !localStorage.getItem(OLD_SAVE_KEY) && root.matchMedia && root.matchMedia('(prefers-reduced-motion: reduce)').matches) { S.reduced = true; FX.reduced = true; } } catch (e) {}
     if (!(S.balance >= BETS[0])) S.balance = START_BAL;
-    if (!S.cur) S.cur = I18N.lang() === 'fr' ? 'EUR' : 'USD';   // pas encore choisie : suit la langue
+    if (!S.cur) S.cur = I18N.defaultCurrency();   // pas encore choisie : suit la langue
     G.currency = S.cur;
   }
   function save() {
@@ -62,10 +62,21 @@
 
   /* ---------- HUD ---------- */
   G.bet = BETS[S.bi];
-  // fenêtres modales : le focus entre dans la fenêtre, y reste (Tab) et revient au bouton d'origine à la fermeture
-  var lastFocus = null;
-  function showModal() { if ($('modal').hidden) lastFocus = document.activeElement; $('modal').hidden = false; var f = $('modalClose'); if (f) f.focus(); }
-  function hideModal() { $('modal').hidden = true; if (lastFocus && lastFocus.focus && document.contains(lastFocus)) { try { lastFocus.focus(); } catch (e) {} } lastFocus = null; }
+  // fenêtres modales et mixeur : même ouverture / fermeture courte (.closing ne joue que la sortie ; hidden est posé tout de suite),
+  // le focus entre dans la fenêtre, y reste (Tab) et revient au bouton d'origine à la fermeture
+  var lastFocus = null, closeTimers = {};
+  function openEl(el) { clearTimeout(closeTimers[el.id]); el.classList.remove('closing'); el.hidden = false; }
+  function closeEl(el) {
+    if (el.hidden) return;
+    el.hidden = true; el.classList.add('closing');
+    closeTimers[el.id] = setTimeout(function () { el.classList.remove('closing'); }, 200);
+  }
+  function showModal() {
+    var m = $('modal'); if (m.hidden) lastFocus = document.activeElement;
+    var h = m.querySelector('h2'); if (h) { h.id = 'mTitle'; m.firstElementChild.setAttribute('aria-labelledby', 'mTitle'); }
+    openEl(m); var f = $('modalClose'); if (f) f.focus();
+  }
+  function hideModal() { closeEl($('modal')); if (lastFocus && lastFocus.focus && document.contains(lastFocus)) { try { lastFocus.focus(); } catch (e) {} } lastFocus = null; }
   function bet() { return BETS[S.bi]; }
   function cost() { return r2(bet() * M.MODES[S.mode].cost); }
   G.cost = cost;
@@ -243,7 +254,7 @@
   function refreshMixer() {
     var T = I18N.t();
     if (!$('mixer')) return;
-    $('mxVolL').textContent = T.volumeL; $('mxPitchL').textContent = T.pitchShort;
+    $('mxTitle').textContent = T.sound; $('mxVolL').textContent = T.volumeL; $('mxPitchL').textContent = T.pitchShort;
     $('mxVol').value = Math.round(Sfx.getVolume() * 100); $('mxVolV').textContent = Math.round(Sfx.getVolume() * 100) + '%';
     $('mxTone').value = Math.round(Sfx.getTone() * 100); $('mxToneV').textContent = Math.round(Sfx.getTone() * 100) + '%'; $('mxToneL').textContent = T.toneShort;
     $('mxPitch').value = Sfx.getPitch(); $('mxPitchV').textContent = (Sfx.getPitch() > 0 ? '+' : '') + Sfx.getPitch();
@@ -252,10 +263,11 @@
     $('mxReset').textContent = T.resetL;
     $('btnSound').setAttribute('aria-label', T.mixLabel);
   }
-  function toggleMixer(open) { var m = $('mixer'); open = open == null ? m.hidden : open; m.hidden = !open; $('btnSound').setAttribute('aria-expanded', open ? 'true' : 'false'); if (open) refreshMixer(); }
+  function toggleMixer(open) { var m = $('mixer'); open = open == null ? m.hidden : open; if (open) { openEl(m); refreshMixer(); $('mxClose').focus(); } else closeEl(m); $('btnSound').setAttribute('aria-expanded', open ? 'true' : 'false'); }
   $('btnSound').addEventListener('click', function (e) { e.stopPropagation(); Sfx.unlock(); toggleMixer(); });
   document.addEventListener('click', function (e) { if (!$('mixer').hidden && !$('mixer').contains(e.target) && e.target !== $('btnSound') && !$('btnSound').contains(e.target)) toggleMixer(false); });
   document.addEventListener('keydown', function (e) { if (e.code === 'Escape' && !$('mixer').hidden) { toggleMixer(false); $('btnSound').focus(); } });
+  $('mxClose').addEventListener('click', function () { toggleMixer(false); $('btnSound').focus(); });
   $('mxVol').addEventListener('input', function () { Sfx.unlock(); Sfx.setVolume(this.value / 100); $('mxVolV').textContent = this.value + '%'; save(); });
   $('mxVol').addEventListener('change', function () { Sfx.coin(1); });
   $('mxTone').addEventListener('input', function () { Sfx.unlock(); Sfx.setTone(this.value / 100); $('mxToneV').textContent = this.value + '%'; save(); });
@@ -273,11 +285,37 @@
   }
   $('btnCur').addEventListener('click', function () { Sfx.click(); setCurrency(S.cur === 'EUR' ? 'USD' : 'EUR'); });
   function applyLang() {
-    $('btnLang').textContent = I18N.lang().toUpperCase() === 'FR' ? 'EN' : 'FR';
-    I18N.apply(); if (!S.curSet) { S.cur = I18N.lang() === 'fr' ? 'EUR' : 'USD'; G.currency = S.cur; } shown.bal = shown.win = -1; updateHud(); setMoney($('win'), winNow); shown.win = winNow; $('btnCur').textContent = G.sym(); $('btnCur').setAttribute('aria-label', I18N.t().currencyL + ' : ' + S.cur); setSpinBtn(); refreshMixer(); say(S.busy ? '' : I18N.t().ready);
+    I18N.setLang(I18N.lang());   // (re)pose dir, lang et polices de repli du canvas
+    $('btnLang').textContent = I18N.lang().toUpperCase(); $('btnLang').setAttribute('aria-label', I18N.t().language);
+    I18N.apply(); if (!S.curSet) { S.cur = I18N.defaultCurrency(); G.currency = S.cur; } shown.bal = shown.win = -1; updateHud(); setMoney($('win'), winNow); shown.win = winNow; $('btnCur').textContent = G.sym(); $('btnCur').setAttribute('aria-label', I18N.t().currencyL + ' : ' + S.cur); setSpinBtn(); refreshMixer(); say(S.busy ? '' : I18N.t().ready);
     if (G.wheel.build && G.w) G.wheel.build();
   }
-  $('btnLang').addEventListener('click', function () { I18N.setLang(I18N.lang() === 'fr' ? 'en' : 'fr'); applyLang(); save(); });
+  // sélecteur de langue : menu déroulant des 16 langues Stake (noms natifs), fermé par un clic ailleurs ou Échap
+  var langMenu = null;
+  function closeLangMenu() { if (langMenu) { langMenu.remove(); langMenu = null; $('btnLang').setAttribute('aria-expanded', 'false'); } }
+  function openLangMenu() {
+    closeLangMenu();
+    langMenu = document.createElement('div'); langMenu.id = 'langMenu'; langMenu.setAttribute('role', 'listbox'); langMenu.setAttribute('aria-label', I18N.t().language);
+    I18N.langs.forEach(function (l) {
+      var b = document.createElement('button'); b.type = 'button'; b.setAttribute('role', 'option'); b.setAttribute('lang', l[0]); b.setAttribute('data-l', l[0]);
+      b.setAttribute('aria-selected', l[0] === I18N.lang() ? 'true' : 'false'); b.textContent = l[1];
+      b.addEventListener('click', function (e) { e.stopPropagation(); Sfx.click(); I18N.setLang(l[0]); applyLang(); save(); closeLangMenu(); $('btnLang').focus(); });
+      langMenu.appendChild(b);
+    });
+    document.body.appendChild(langMenu); $('btnLang').setAttribute('aria-expanded', 'true');
+    var r = $('btnLang').getBoundingClientRect(), mw = langMenu.offsetWidth, x = Math.min(Math.max(8, r.left), innerWidth - mw - 8);
+    langMenu.style.left = x + 'px'; langMenu.style.top = (r.bottom + 6) + 'px';
+    var cur = langMenu.querySelector('[aria-selected=true]'); if (cur) cur.focus();
+  }
+  $('btnLang').setAttribute('aria-haspopup', 'listbox'); $('btnLang').setAttribute('aria-expanded', 'false');
+  $('btnLang').addEventListener('click', function (e) { e.stopPropagation(); Sfx.unlock(); if (langMenu) closeLangMenu(); else openLangMenu(); });
+  document.addEventListener('click', function (e) { if (langMenu && !langMenu.contains(e.target)) closeLangMenu(); });
+  document.addEventListener('keydown', function (e) {
+    if (!langMenu) return;
+    if (e.code === 'Escape') { closeLangMenu(); $('btnLang').focus(); return; }
+    var items = Array.prototype.slice.call(langMenu.querySelectorAll('button')), i = items.indexOf(document.activeElement);
+    if (e.code === 'ArrowDown' || e.code === 'ArrowUp') { e.preventDefault(); items[(i + (e.code === 'ArrowDown' ? 1 : items.length - 1)) % items.length].focus(); }
+  });
   G.onWheelTap = function () { if (S.busy && G.wheel.spinning) G.speed = 3.2; };
 
   document.addEventListener('click', function (e) { var b = e.target.closest && e.target.closest('button'); if (b && e.detail > 0 && b.id !== 'modalClose' && !b.closest('#modal')) b.blur(); });
@@ -311,8 +349,8 @@
   function openBuy() {
     if (S.busy || !S.buyOn) return;
     var T = I18N.t(), b = bet();
-    $('modalBody').innerHTML = '<h2>' + T.buyTitle + '</h2><p style="color:var(--dim)">' + T.buySub + '</p><div class="buyGrid" id="buyGrid"></div>' +
-      '<p style="margin-top:14px;font-size:12px;color:var(--dim)">' + T.buyRtp + ' · ' + T.bet + ' ' + G.money(b) + '</p>';
+    $('modalBody').innerHTML = '<h2>' + T.buyTitle + '</h2><p class="sub">' + T.buySub + '</p><div class="buyGrid" id="buyGrid"></div>' +
+      '<p class="sub" style="margin-top:14px;font-size:12px">' + T.buyRtp + ' · ' + T.bet + ' ' + G.money(b) + '</p>';
     var grid = $('buyGrid');
     BUY_ORDER.forEach(function (k) {
       var price = r2(b * M.BUY[k].price), name = k === 'hand' ? T.kindsLong.hand : T.kindsLong[k];
@@ -320,7 +358,7 @@
       card.appendChild(buyIcon(k));
       var h = document.createElement('h4'); h.textContent = name; card.appendChild(h);
       var d = document.createElement('small'); d.textContent = T.buyDesc[k]; card.appendChild(d);
-      var pr = document.createElement('div'); pr.className = 'pr'; pr.textContent = G.money(price) + '  (×' + M.BUY[k].price + ')'; card.appendChild(pr);
+      var pr = document.createElement('div'); pr.className = 'pr'; pr.textContent = G.money(price); var mu = document.createElement('i'); mu.textContent = '(×' + M.BUY[k].price + ')'; pr.appendChild(mu); card.appendChild(pr);
       var go = document.createElement('div'); go.className = 'go'; go.textContent = card.disabled ? T.buyNoFunds : T.buyNow; card.appendChild(go);
       card.onclick = function () { hideModal(); Sfx.unlock(); play(k); };
       grid.appendChild(card);
@@ -332,8 +370,8 @@
   /* ---------- jeu responsable ---------- */
   function net() { return r2(SESS.won - SESS.wag); }
   function showMsg(title, body, btns) {
-    $('modalBody').innerHTML = '<h2>' + title + '</h2><p>' + body + '</p><div class="chips" id="msgBtns" style="margin-top:14px"></div>';
-    btns.forEach(function (b) { var e = document.createElement('button'); e.type = 'button'; e.textContent = b[0]; e.onclick = function () { hideModal(); if (b[1]) b[1](); }; $('msgBtns').appendChild(e); });
+    $('modalBody').innerHTML = '<h2>' + title + '</h2><p>' + body + '</p><div class="acts" id="msgBtns"></div>';
+    btns.forEach(function (b, i) { var e = document.createElement('button'); e.type = 'button'; e.className = i ? 'chip' : 'btn-go'; e.textContent = b[0]; e.onclick = function () { hideModal(); if (b[1]) b[1](); }; $('msgBtns').appendChild(e); });
     showModal();
   }
   function openLimit() { var T = I18N.t(); showMsg(T.limitTitle, T.limitMsg, [[T.settings, openInfo]]); }
@@ -360,7 +398,7 @@
       rows += '<tr><td><span class="sw" style="background:' + G.kindColor(id) + '"></span>' + T.kinds[id] + disc + '</td><td class="n">' + def.count + ' / ' + M.N + '</td><td>' + pays + '</td></tr>';
     });
     $('modalBody').innerHTML =
-      '<h2>' + T.infoTitle + '</h2><p style="color:var(--dim)">' + T.demo + '</p>' +
+      '<h2>' + T.infoTitle + '</h2><p class="sub">' + T.demo + '</p>' +
       '<div class="kv"><div><label>' + T.rtp + '</label><b>' + STATS.rtp + '% <small style="font-size:11px;color:var(--turq)">· ORACLE+ ' + STATS.rtpPlus + '%</small></b></div><div><label>' + T.maxWin + '</label><b>' + G.fmt(M.MAX_WIN) + '×</b></div>' +
       '<div><label>' + T.hitRate + '</label><b>' + STATS.hit + '%</b></div><div><label>' + T.bonusFreq + '</label><b>1 / ' + STATS.bonusEvery + '</b></div><div><label>' + T.volat + '</label><b>' + T.volatV + '</b></div></div>' +
       '<h3>' + T.infoTitle.split('&')[0].trim() + '</h3>' + T.rules.map(function (r) { return '<p>• ' + r + '</p>'; }).join('') + '<p>• ' + T.rulesPlus + '</p>' + (S.buyOn ? '<p>• ' + T.buyTitle + ' : ' + BUY_ORDER.map(function (k) { return (k === 'hand' ? T.kindsLong.hand : T.kindsLong[k]) + ' ×' + M.BUY[k].price; }).join(' · ') + '</p>' : '') +
@@ -369,9 +407,6 @@
       '<div class="kv"><div><label>' + T.sessTime + '</label><b>' + Math.round((Date.now() - SESS.start) / 60000) + ' min</b></div><div><label>' + T.sessSpins + '</label><b>' + SESS.spins + '</b></div>' +
       '<div><label>' + T.sessWag + '</label><b>' + G.money(SESS.wag) + '</b></div><div><label>' + T.sessWon + '</label><b>' + G.money(SESS.won) + '</b></div><div><label>' + T.sessNet + '</label><b>' + G.money(net(), true) + '</b></div></div>' +
       '<h3>' + T.settings + '</h3>' +
-      '<div class="opt"><span>' + T.volumeL + '</span><div class="rng"><input id="optVol" type="range" min="0" max="100" step="5" value="' + Math.round(Sfx.getVolume() * 100) + '"><b id="optVolV">' + Math.round(Sfx.getVolume() * 100) + '%</b></div></div>' +
-      '<div class="opt"><span>' + T.pitchL + '</span><div class="rng"><input id="optPitch" type="range" min="-12" max="12" step="1" value="' + Sfx.getPitch() + '"><b id="optPitchV">' + (Sfx.getPitch() > 0 ? '+' : '') + Sfx.getPitch() + '</b></div></div>' +
-      '<div class="opt"><span>' + T.musicL + '</span><div class="chips"><button id="optMusic" class="' + (Sfx.isMusic() ? 'on' : '') + '" type="button">' + (Sfx.isMusic() ? T.on : T.off) + '</button></div></div>' +
       '<div class="opt"><span>' + T.currencyL + '</span><div class="chips" id="optCur"></div></div>' +
       '<div class="opt"><span>' + T.lossLimit + '</span><div class="chips" id="optLimit"></div></div>' +
       '<div class="opt"><span>' + T.qualityL + '</span><div class="chips" id="optQ"></div></div>' +
@@ -407,11 +442,6 @@
     });
     $('optBuy').onclick = function () { S.buyOn = !S.buyOn; save(); setSpinBtn(); openInfo(); };
     $('optStop').onclick = function () { S.stopOnBonus = !S.stopOnBonus; save(); openInfo(); };
-    $('optVol').oninput = function () { var v = +this.value; Sfx.unlock(); Sfx.setVolume(v / 100); $('optVolV').textContent = v + '%'; save(); };
-    $('optVol').onchange = function () { Sfx.coin(1); };
-    $('optPitch').oninput = function () { var v = +this.value; Sfx.unlock(); Sfx.setPitch(v); $('optPitchV').textContent = (v > 0 ? '+' : '') + v; save(); };
-    $('optPitch').onchange = function () { Sfx.coin(1); Sfx.chime(4); };
-    $('optMusic').onclick = function () { Sfx.unlock(); Sfx.setMusic(!Sfx.isMusic()); save(); openInfo(); };
     $('optRed').onclick = function () { S.reduced = !S.reduced; FX.reduced = S.reduced; save(); openInfo(); };
     $('optReset').onclick = function () { if (S.busy) return; S.balance = START_BAL; shown.bal = -1; updateHud(); save(); };
     showModal(); Sfx.click();
@@ -439,7 +469,7 @@
   (function () {
     var sp = $('splash');
     if (!sp || navigator.webdriver || /[?&](debug|nosplash)/.test(location.search)) { if (sp) sp.remove(); return; }
-    var T = I18N.t(), port = root.innerHeight > root.innerWidth, src = (root.HOA_IMG || {})[port ? 'splashp' : 'splash'];
+    var T = I18N.t(), port = root.innerHeight > root.innerWidth, src = (root.ANUBIS_IMG || {})[port ? 'splashp' : 'splash'];
     if (src) sp.style.backgroundImage = 'url(' + src + ')';
     $('spSub').textContent = T.splashSub; $('spBtn').textContent = T.splashEnter; $('spDemo').textContent = T.splashDemo;
     sp.hidden = false;

@@ -2,13 +2,13 @@
  * Selectable in the mixer (top bar): natural / vivid / golden / cinema. Persisted in localStorage. */
 (function (root) {
   'use strict';
-  var KEY = 'hoa_grade', PRESETS = {
+  var KEY = 'anubis_grade', OLD_KEY = 'hoa_grade', PRESETS = {
     natural: '',
     vivid: 'saturate(1.28) contrast(1.08) brightness(1.05)',
     gold: 'sepia(.14) saturate(1.32) contrast(1.07) brightness(1.04)',
     cine: 'contrast(1.16) saturate(1.12) brightness(1.03) hue-rotate(-3deg)'
   }, ORDER = ['natural', 'vivid', 'gold', 'cine'], cur = 'vivid';
-  try { var s = localStorage.getItem(KEY); if (s && PRESETS.hasOwnProperty(s)) cur = s; } catch (e) {}
+  try { var s = localStorage.getItem(KEY) || localStorage.getItem(OLD_KEY); if (s && PRESETS.hasOwnProperty(s)) cur = s; } catch (e) {}
   function $(id) { return document.getElementById(id); }
   function apply() {
     var f = PRESETS[cur] || '';
@@ -30,7 +30,7 @@
       b.addEventListener('click', function () { cur = k; try { localStorage.setItem(KEY, k); } catch (e) {} apply(); });
       grid.appendChild(b);
     });
-    var first = mixer.firstElementChild; mixer.insertBefore(row, first);   // en tête du mixeur
+    mixer.insertBefore(row, mixer.querySelector('.mx-row'));   // en tête des réglages, sous le titre
     labels(); apply();
     new MutationObserver(labels).observe(mixer, { attributes: true });
     var lb = $('btnLang'); if (lb) lb.addEventListener('click', function () { setTimeout(labels, 0); });

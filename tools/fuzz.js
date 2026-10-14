@@ -192,7 +192,7 @@ async function oneRound(p, ep, errs, url) {
     if (S.pending !== 0) P.push('gain en attente non nul ' + S.pending);
     if (Math.abs(Math.round(S.balance * 100) - S.balance * 100) > 1e-6) P.push('solde hors centime ' + S.balance);
     if (S.balance < 0) P.push('solde négatif ' + S.balance);
-    var sv = JSON.parse(localStorage.getItem('hoa_save_v1') || 'null'); if (!sv || sv.pending !== 0 || sv.balance !== S.balance) P.push('sauvegarde incohérente ' + JSON.stringify(sv && { p: sv.pending, b: sv.balance }) + ' vs solde ' + S.balance);
+    var sv = JSON.parse(localStorage.getItem('anubis_save_v1') || 'null'); if (!sv || sv.pending !== 0 || sv.balance !== S.balance) P.push('sauvegarde incohérente ' + JSON.stringify(sv && { p: sv.pending, b: sv.balance }) + ' vs solde ' + S.balance);
     var L = window.__ledger(); L.bad.forEach(function (x) { P.push(x); });
     return { P: P, L: L, bal: S.balance, turbo: G.turbo, hb: window.__rounds.some(window.__hasBonus), nr: window.__rounds.length, hold: G.timers.length, tw: G.tweens.length }; })()`);
   inv.P.forEach(function (m) { fail(ep, m); });
@@ -249,13 +249,13 @@ async function perturb(p, url, ep) {
   note('perturbation ' + k);
   if (k === 'reload') {
     // avant de recharger : le gain en attente enregistré doit correspondre au tour en cours (choix du joueur compris)
-    var st = await ev(p, `(function(){ var e = window.__rounds[window.__rounds.length - 1], sv = JSON.parse(localStorage.getItem('hoa_save_v1') || 'null'); return { busy: G.S.busy, sv: sv && { p: sv.pending, b: sv.balance }, exp: e && G.S.busy ? window.__payout(e) : null, after: e ? e.after : null, led: window.__ledger() }; })()`);
+    var st = await ev(p, `(function(){ var e = window.__rounds[window.__rounds.length - 1], sv = JSON.parse(localStorage.getItem('anubis_save_v1') || 'null'); return { busy: G.S.busy, sv: sv && { p: sv.pending, b: sv.balance }, exp: e && G.S.busy ? window.__payout(e) : null, after: e ? e.after : null, led: window.__ledger() }; })()`);
     if (st.busy && st.exp != null) {
       if (Math.abs(st.sv.p - st.exp) > 1e-9) fail(ep, 'gain en attente enregistré ' + st.sv.p + ' ≠ gain du tour en cours ' + st.exp);
       if (Math.abs(st.sv.b - st.after) > 1e-9) fail(ep, 'solde enregistré ' + st.sv.b + ' ≠ solde après mise ' + st.after);
     }
     await p.reload(); totals.reloads++; await p.waitForTimeout(500); await p.evaluate(HOOKS);
-    var af = await ev(p, "({b:G.S.balance,busy:G.S.busy,sv:JSON.parse(localStorage.getItem('hoa_save_v1')),sc:!!G.scene,fade:G.fade})");
+    var af = await ev(p, "({b:G.S.balance,busy:G.S.busy,sv:JSON.parse(localStorage.getItem('anubis_save_v1')),sc:!!G.scene,fade:G.fade})");
     if (st.busy && st.sv && Math.abs(af.b - (st.sv.b + st.sv.p)) > 1e-9) fail(ep, 'après rechargement : solde ' + af.b + ' ≠ ' + st.sv.b + ' + ' + st.sv.p);
     if (af.sv && af.sv.pending !== 0) fail(ep, 'gain en attente non remis à zéro après rechargement');
     if (af.busy || af.sc) fail(ep, 'état de tour restant après rechargement');
