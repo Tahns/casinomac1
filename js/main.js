@@ -754,7 +754,7 @@
   root.addEventListener('pagehide', function () { saveSess(); });
 
   /* ---------- démarrage ---------- */
-  load(); G.quality = S.quality; if (S.quality === 'low') FX.lite = true; I18N.apply(); refreshSound(); applyLang();
+  load(); G.quality = S.quality; if (S.quality === 'low') { FX.lite = true; if (root.Grade) root.Grade.lite(true); } I18N.apply(); refreshSound(); applyLang();
   updateHud(); setWin(0); setSpinBtn(); renderHistory();
   if (S.resumed) { say(I18N.t().resumed + ' ' + G.money(S.resumed, true)); save(); }
   if (LIVE) { startRgs(); tabStart(); }

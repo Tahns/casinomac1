@@ -7,11 +7,11 @@
     vivid: 'saturate(1.28) contrast(1.08) brightness(1.05)',
     gold: 'sepia(.14) saturate(1.32) contrast(1.07) brightness(1.04)',
     cine: 'contrast(1.16) saturate(1.12) brightness(1.03) hue-rotate(-3deg)'
-  }, ORDER = ['natural', 'vivid', 'gold', 'cine'], cur = 'vivid';
+  }, ORDER = ['natural', 'vivid', 'gold', 'cine'], cur = 'vivid', lite = false;   // lite : qualité basse, aucun filtre (coût GPU d'un filtre sur un élément plein écran)
   try { var s = localStorage.getItem(KEY) || localStorage.getItem(OLD_KEY); if (s && PRESETS.hasOwnProperty(s)) cur = s; } catch (e) {}
   function $(id) { return document.getElementById(id); }
   function apply() {
-    var f = PRESETS[cur] || '';
+    var f = lite ? '' : PRESETS[cur] || '';
     ['stage', 'ui'].forEach(function (id) { var el = $(id); if (el) el.style.filter = f || 'none'; });
     var m = $('mxGrade'); if (m) Array.prototype.forEach.call(m.querySelectorAll('button'), function (b) { b.classList.toggle('on', b.getAttribute('data-g') === cur); });
   }
@@ -35,6 +35,6 @@
     new MutationObserver(labels).observe(mixer, { attributes: true });
     var lb = $('btnLang'); if (lb) lb.addEventListener('click', function () { setTimeout(labels, 0); });
   }
-  root.Grade = { set: function (k) { if (PRESETS.hasOwnProperty(k)) { cur = k; apply(); } }, get: function () { return cur; } };
+  root.Grade = { set: function (k) { if (PRESETS.hasOwnProperty(k)) { cur = k; apply(); } }, get: function () { return cur; }, lite: function (on) { on = !!on; if (on !== lite) { lite = on; apply(); } } };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function () { build(); apply(); }); else { build(); apply(); }
 })(window);
