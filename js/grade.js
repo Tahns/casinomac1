@@ -30,7 +30,7 @@
       b.addEventListener('click', function () { cur = k; try { localStorage.setItem(KEY, k); } catch (e) {} apply(); });
       grid.appendChild(b);
     });
-    var first = mixer.firstElementChild; mixer.insertBefore(row, first);   // en tête du mixeur
+    mixer.insertBefore(row, mixer.querySelector('.mx-row'));   // en tête des réglages, sous le titre
     labels(); apply();
     new MutationObserver(labels).observe(mixer, { attributes: true });
     var lb = $('btnLang'); if (lb) lb.addEventListener('click', function () { setTimeout(labels, 0); });
