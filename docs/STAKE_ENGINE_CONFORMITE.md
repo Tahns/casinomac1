@@ -118,14 +118,89 @@ Ce qui est **risqué** : la combinaison précise de plusieurs mécaniques proche
 **P1 — avant la bêta**
 5. Brancher le front au RGS (authenticate, play, end-round, reprise de round), supprimer solde et RNG locaux, gérer les codes d'erreur.
 6. Devises, niveaux de mise et langues issus du RGS ; variante sociale (XGC/XSC).
-7. Renommer les fichiers et modes qui contiennent encore « hand » ; retirer toute trace de « Hand of Anubis » du dépôt public.
+7. Renommer les fichiers et modes qui contiennent encore « hand » ; retirer toute trace de « Hand of Anubis » du dépôt public. **Fait pour les fichiers, préfixes et textes** (voir « État après corrections ») ; l'identifiant interne `hand` reste.
 8. Conserver les preuves de génération des images, ajouter les fichiers OFL, lire les conditions Higgsfield.
 
 **P2 — avant publication**
 9. Prévoir des drapeaux désactivant achat de bonus, turbo et auto-play par marché.
-10. Remplacer ou modifier le Bouclier Ankh si l'expiration des brevets d'anti-terminateur n'est pas confirmée.
+10. Remplacer ou modifier le Bouclier Ankh si l'expiration des brevets d'anti-terminateur n'est pas confirmée. **Fait** : voir « Contournements (design-around) ».
 11. Déposer la marque « Anubis Unchained » si la recherche est favorable.
 12. Tests de bout en bout sur appareil réel (son et fluidité jamais vérifiés, cf. ANALYSE §7).
+
+## État après corrections
+
+Date : 2026-10-14. **Le jeu n'est toujours pas conforme ni soumissible à Stake Engine** : ce qui suit corrige ce qui l'était dans ce dépôt, rien de plus.
+
+### Corrigé dans ce dépôt
+
+| Point (ligne de la checklist) | Correction | Vérification |
+|---|---|---|
+| Restes de « Hand of Anubis » (marques, plan P1 n°7) | `img/hand.webp` et `img/ic_hand.jpg` renommés en `img/fury.webp` et `img/ic_fury.jpg` ; `HOA_IMG` devient `ANUBIS_IMG` ; `HOA_BIG` devient `ANUBIS_BIG` ; clés de sauvegarde `anubis_save_v1` et `anubis_grade` (les anciennes clés `hoa_save_v1` et `hoa_grade` sont encore LUES, pour ne pas perdre les soldes) ; mode `buy-hand` devenu `buy-fury` dans `tools/simulate.js` et le README. **L'identifiant interne `hand` est conservé** (math, scènes, clés i18n `hand*`, tests) : le renommer touche `handScene` et des dizaines d'endroits, pour aucun gain visible | aucun texte visible ni nom de fichier ne contient « Hand of Anubis » (il ne reste que les notes historiques de `docs/`) |
+| Multiplicateurs entiers (ligne 9) | `M.SCALE = 100`, `M.toInt(x)`, `M.fromInt(n)`, `M.isExact(x)` dans `js/math.js`. Tous les gains (0,25 ; 0,5 ; 0,65 ; 0,79 ; moyenne des 5 colonnes de la Crypte = somme ÷ 5 ; boosts et paliers entiers) sont des multiples exacts de 0,01 : **la conversion est exacte, aucun arrondi, aucun effet sur le RTP**. Les coûts (1,1 ; 9,24 ; 10,31 ; 12,37 ; 27,28) le sont aussi | `tools/check.js` : 1000 tours par mode, 0 gain inexact |
+| Fichiers books / lookup / `index.json` (lignes 4, 8, 10) | `tools/stake-export.js` (Node, sans dépendance) écrit dans `tools/out/` (ignoré par git) un `index.json` à 6 modes (`std`, `plus`, `buy_scarab`, `buy_weigh`, `buy_vault`, `buy_fury`, avec `cost` et `is_buybonus`), des `books_<mode>.jsonl.zst` (zstd via `zlib.zstdCompressSync` de Node 22 ; repli en `.jsonl` brut si absent) et des `lookUpTable_<mode>_0.csv` (n°, poids, `payoutMultiplier` entier). **C'est une démonstration du format** : 1000 books tirés au hasard, poids égaux à 1, aucune optimisation d'RTP (le RTP d'un échantillon de 1000 books est sans valeur) | `node tools/stake-export.js` : 0 anomalie |
+| Choix du joueur pré-résolus (lignes 5 à 7) | Stratégie documentée en tête de `tools/stake-export.js` : **Pesée** : le book donne seulement `playerWins` et `playerMult` pour le choix du joueur (50/50, choix décoratif) ; **Fureur** : les trois couleurs sont symétriques, le book est écrit pour « la couleur du joueur » (index 0) et le front renomme les couleurs par rotation ; **Chambre du Trésor** : l'ordre des jetons est déjà tiré d'avance, la tuile touchée est neutre ; **profil Prudent / Équilibré / Audacieux** : non symétrique, le book joue l'Équilibré et le choix ne peut pas rester réel (il faudrait un mode Stake par profil, ou retirer le choix) | revue du code ; **le front n'est pas encore adapté à ces books** |
+| Langues (ligne 18) | **Anglais par défaut** (premier lancement, sans sauvegarde ni `?lang=`, et pour tout code inconnu). **16 traductions complètes** : ar, de, en, es, fi, fr, hi, id, ja, ko, pl, pt, ru, tr, vi, zh. Sélecteur de langue (menu déroulant au bouton de langue). Arabe en `dir="rtl"` sur le document (HUD et canvas gardent leur structure d'origine). Polices système de repli pour ar, hi, ja, ko, zh (aucun fichier ajouté). Les noms WIN / BIG WIN / EXTRA WIN / MEGA WIN restent en anglais dans toutes les langues ; les noms de bonus sont traduits ou transcrits | `tools/i18n-check.js` : parité des clés, types, longueurs de listes et marqueurs `{x}` pour les 16 langues, textes courts et longs bornés, `dir` ; captures Chromium vérifiées en ar, de, ja, ru, vi |
+| Paramètres de lancement (ligne 2) | `?lang=` est appliqué ; `sessionID`, `rgs_url`, `device`, `social` sont **lus** dans `window.LAUNCH` (`js/i18n.js`) mais pas encore utilisés | capture avec `?lang=xx&sessionID=...&social=true` |
+
+### Reste à faire (rien de ceci n'est fait)
+
+1. **Porter les maths et le RNG dans le math-sdk Python** (≥ 3.12) : un book par résultat, lookup table, optimisation (Rust/Cargo), 6 modes, plafond de gain et sa distribution. Les books de `tools/stake-export.js` ne valent que comme modèle de format ; leurs événements sont ceux du jeu, pas ceux d'un `gamestate` du SDK.
+2. **Écrire le client RGS** (structure ci-dessous) et retirer du jeu solde, RNG (`crypto.getRandomValues`), sauvegarde `localStorage` du solde et reprise de round locale.
+3. **Solde, devise, niveaux de mise, limites fournis par l'API** : le jeu code encore € / $, des mises de 0,20 à 1 000 et une limite de perte locale ; les 19 devises et les devises sociales (XGC, XSC) viennent de l'authentification.
+4. **Adapter le front aux books** : Pesée et Fureur lisent le résultat du book (voir la stratégie ci-dessus), roue et Plinko lisent angle d'arrêt et chemins dans les événements, plus aucun tirage côté client.
+5. **Réaligner les RTP** des 6 modes (écart actuel 0,9 point contre 0,5 cité par une source tierce), mesurer la fréquence du gain max, lire les directives d'approbation Stake.
+6. Variante sociale (`social=true` : « BET » devient « SPIN », sans vocabulaire de pari), codes d'erreur (`ERR_*`), fin de round, drapeaux par marché (achat de bonus, turbo, auto-play).
+7. Tout le volet juridique (P0 n°1 et 2 : conditions Stake, recherche d'antériorité et de marques, droits des images), non traité par du code.
+
+### Structure d'un futur client RGS (non écrit)
+
+Fichier prévu : `js/rgs.js`, chargé avant `js/main.js`. Il lit `window.LAUNCH` (déjà rempli) et n'est actif que si `LAUNCH.sessionID` et `LAUNCH.rgs_url` existent ; sinon le jeu reste en démo locale.
+
+```
+RGS.authenticate(sessionID)      POST {rgs_url}/wallet/authenticate -> { balance, currency, config: { minBet, maxBet, stepBet, betLevels, jurisdiction }, round? }
+                                  si round actif : reprendre ses événements, puis end-round
+RGS.play(mode, amount)           POST {rgs_url}/wallet/play         -> { round: { events[], payoutMultiplier, active }, balance }
+RGS.endRound()                   POST {rgs_url}/wallet/end-round    (après l'animation du gain, y compris après un bonus acheté)
+RGS.balance()                    POST {rgs_url}/wallet/balance
+RGS.event(id)                    POST {rgs_url}/bet/event           (progression dans un round à plusieurs étapes)
+unités : montants entiers à 6 décimales (1 000 000 = 1 unité) ; payoutMultiplier entier à l'échelle M.SCALE
+erreurs : ERR_IPB, ERR_IS, ERR_ATE, ERR_GLE, ERR_LOC, ERR_GEN, ERR_MAINTENANCE -> écrans dédiés, sans perte de round
+```
+
+Branchement dans `js/main.js` : `M.playRound(rng)` est remplacé par `RGS.play(...)`, dont les `events[]` sont convertis par un adaptateur en l'objet de tour déjà consommé par les scènes (`spins[]`, `bonus`, `pay`). Les noms exacts des endpoints et des champs doivent être revérifiés sur `RGS.md` avant d'écrire le code : ce schéma est un plan, pas une spécification lue ligne à ligne.
+
+## Contournements (design-around)
+
+Date : 2026-10-14. Objectif : réduire la ressemblance des mécaniques et du vocabulaire avec des mécaniques brevetées ou des jeux existants, **sans changer l'espérance (EV) de chaque bonus ni le RTP**. Les RTP « avant / après » sont des calculs **exacts** (`node tools/rtp-exact.js`, aucun tirage ; règle du dépôt : jamais plus de 1000 tours simulés, `tools/cap.js`). **Ce n'est pas un avis juridique** : modifier une règle ne prouve pas qu'on sort du champ des revendications, et aucune revendication n'a été lue.
+
+### Résumé des changements
+
+| # | Mécanique | Avant | Après | Pourquoi | Effet sur le RTP (exact) |
+|---|---|---|---|---|---|
+| 1 | Chambre du Trésor (pick-me) | Jeton **Ankh/Bouclier** qui annule la **malédiction** (le « terminateur » et son « anti-terminateur ») | Plus aucun jeton qui annule, absorbe ou retarde la fin. L'Ankh devient une **clé d'or : +2 coffres à ouvrir** (10 au plus ; 7 au départ). La malédiction devient un **sceau** qui referme la chambre : le joueur **garde son total**. Sceptre ×2 et prime « chambre vidée » +5× inchangés | Le couple terminateur / anti-terminateur est le cœur des familles US7326114, US6632141, US6843722 (statut d'expiration **non confirmé**). La clé n'oppose rien au sceau : elle ne fait qu'allonger la sélection | Espérance par profil inchangée : prudent 10,632×, équilibré 10,633×, audacieux 10,630×. Poids du sceau recalés (calcul exact, `tools/tune-vault.js`) : 39 → 34,79 ; 72,7 → 66,19 ; 67 → 64,94 (poids de la clé : 4 / 3 / 1, ceux de l'ancien Ankh). Prix d'achat **inchangé** (12,37×) : RTP achat 96,02 % avant et après ; écart-type 43,0× → 43,2× |
+| 2 | Bonus secret (ex-Crypte d'Anubis) | 5 colonnes verticales, 9 blocs (crânes, crânes épiques, crânes d'Anubis, glace qui fige, broyeur), gain = moyenne des colonnes : très proche de « Hand of Anubis » (Hacksaw Gaming) | **Sanctuaire des Marées** : grille **3×3** de tablettes, 9 tablettes révélées une à une. Types : TABLETTE (valeur × marée courante, ajoutée à l'offrande), MARÉE (multiplie la marée, **seulement pour les tablettes suivantes**), ÉCLIPSE (multiplie l'offrande déjà accumulée), POUSSIÈRE. Gain = offrande finale (plancher ×1), plafonné à 25 000× | Aucune colonne, aucun bloc fixe, ni glace, ni broyeur, ni crâne ; autre disposition, autres règles de gain, autre vocabulaire et autres visuels | EV exacte 10,2142× (bonus remplacé : 10,2143×) ; écart-type exact 61,1× (avant : 79,4× mesuré). L'ancienne EV n'était connue que par mesure (10,13×) ; elle est maintenant **calculée exactement** (`cryptMoments`, `tools/tune-crypt.js`). RTP Standard 96,19 % → **96,21 %**, Oracle+ 96,13 % → **96,14 %** (+0,02 point, dans la tolérance de ±0,05) |
+| 3 | Oracle | Une case (un type de case) boostée **annoncée avec son multiplicateur avant le tour** (« ×25 sur Trésor »), proche d'un « top slot » | Le type de case est toujours désigné, mais la **valeur du boost reste scellée (« ? »)** jusqu'à l'arrêt de la roue ; elle est révélée à l'arrêt, que la case soit atteinte ou non (la pastille affiche « ORACLE ×? → CASE », puis « ORACLE ×N → CASE ») | **Décision : garder la mécanique, changer l'annonce** (changer la nature du boost aurait obligé à recalibrer tout le jeu : ORACLE_BOOST et MODES.plus sont intégrés au RTP). Le multiplicateur n'est plus annoncé avant la manche. **Risque résiduel** : l'idée « une case est mise en avant avant le tour » reste proche, voir ci-dessous | Aucun : mêmes tables, mêmes probabilités (Standard 96,21 %, Oracle+ 96,14 %) |
+| 4 | Vocabulaire | « Plinko », « Pachinko », « top slot » dans le code et les commentaires ; fonction audio `lightning` | « Cascade de chevilles » / « mur de lumières » ; `Sfx.thunder` ; commentaire de l'Oracle réécrit | « Plinko » est le nom d'un jeu et d'une marque connus. Les noms **visibles** du jeu étaient déjà propres (Chute des Scarabées, Pesée du Cœur, Chambre du Trésor, Fureur d'Anubis, Oracle) | Aucun |
+
+Textes et aides mis à jour dans les **16 langues** (clés `vaultSeal`, `vaultKey`, `vaultLeft`, `cryptPool`, `cryptTide`, `cryptPick`, `cryptHint`, etc.), sons (`Sfx.sealShut`, `Sfx.keyGet`), scènes (`vaultScene` : plus d'animation de bouclier, compteur « COFFRES : n » ; `cryptScene` : grille 3×3 et jauge de marée), tests (`tools/check.js` : blocs « Trésor » et « Sanctuaire », espérance exacte comparée au bonus remplacé ; `tools/rtp-exact.js` : énumération exacte du Trésor avec clés, moments exacts du Sanctuaire).
+
+### Détail du Sanctuaire des Marées
+
+Les 9 tablettes sont indépendantes ; le joueur touche celles qu'il veut dans l'ordre qu'il veut, la k-ième touchée révèle la k-ième entrée du script (tout est tiré d'avance, comme les autres bonus : le choix de la tablette est décoratif et ne change aucune probabilité). Poids : poussière 64, tablette 22, marée 8, éclipse 6 ; tablette : ×1 (55,09), ×2 (30), ×3 (12), ×5 (5), ×10 (2), ×25 (0,5), ×100 (0,1), ×300 (0,02) ; marée ×2/×3/×5/×10 (60/25/10/5) ; éclipse ×2/×3 (85/15). Plafond de 25 000× inchangé ; son effet sur l'EV est négligeable et ignoré par le calcul exact.
+
+### Nommage : audit
+
+Recherche dans `js/`, `css/`, `index.html`, `tools/`, `README.md` des noms Crazy Time, Coin Flip, Lightning, Megaways, Hand of Anubis, Book of Dead, Gates of Olympus, Sweet Bonanza, Plinko, Pachinko, top slot : **plus aucune occurrence** (les restes de « Hand of Anubis » dans l'historique de `docs/ANALYSE.md` et `docs/CONCURRENTS.md` sont de la documentation interne, à ne pas publier). Noms visibles à valider en recherche de marques : « Anubis Unchained », « Fureur d'Anubis », « Chute des Scarabées », « Pesée du Cœur », « Chambre du Trésor », « Sanctuaire des Marées », « Oracle » / « Oracle+ », « Jugement divin ». « Ankh » (case de relance gratuite) est un symbole égyptien courant, mais « Ankh of Anubis » est un titre de Play'n GO : à faire vérifier.
+
+### Ce qui reste à vérifier par un conseil en propriété industrielle
+
+1. **Statut des brevets** de la famille terminateur / anti-terminateur (US7326114, US6632141, US6843722, US6582307, US7314409, US6511375) : dates de dépôt, expiration, frais de maintien, pays. Si tous sont expirés, le changement n° 1 est inutile mais sans coût. Les **revendications n'ont pas été lues** : le sceau reste un élément qui met fin à la sélection, et il faut vérifier qu'une revendication large (« objet de fin de sélection » seul) ne le couvre pas.
+2. **Pick-me avec jetons qui allongent la sélection** (clé d'or : +2 choix) : vérifier l'absence de brevet sur les « choix supplémentaires » dans un jeu à sélection masquée.
+3. **Oracle** : le « top slot » d'Evolution (Crazy Time) et la demande US20240119797 (indicateur sur un segment déclenchant un second prix) sont les références. Le changement retire le multiplicateur annoncé, mais la désignation d'un type de case avant le tour demeure : à faire jauger. Plan B si le risque est jugé trop fort : remplacer le boost par une « bénédiction » d'un autre type (relance gratuite d'une case, boost de la prochaine case de bonus seulement), ce qui demande un nouveau calage complet du RTP.
+4. **Sanctuaire des Marées** : aucune recherche de brevet spécifique n'a été faite sur « grille de tablettes + multiplicateur cumulatif + multiplicateur d'accumulation ». Les brevets IGT et Aristocrat sur les multiplicateurs (US9401071, US8152616) visent des lignes de paiement, que le jeu n'a pas. À faire inclure dans la recherche d'antériorité, avec Hacksaw Gaming, Evolution Malta, Play'n GO, IGT, Everi, Aristocrat comme titulaires.
+5. **Cascade de chevilles** (scarabées entre des chevilles) : le principe de la loi binomiale n'est pas appropriable en soi ; les familles « Pachinko stand-alone and bonusing game » (US6220593 et suivantes) sont probablement expirées (non vérifié).
+6. **Marques** : recherche d'antériorité sur les noms visibles listés plus haut, dans les classes 9, 28 et 41, et dans chaque pays visé.
+7. **Textes** : les traductions des 14 langues ajoutées ont été écrites sans relecture par des locuteurs natifs.
 
 ## 5. Sources
 

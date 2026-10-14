@@ -13,7 +13,7 @@
   var SAVE_VER = 2;           // v1 = ancien jeu en « crédits » (mises 10 à 5000, solde 10 000)
   var r2 = G.r2;
   var AUTO_STEPS = [0, 10, 25, 50, 100, Infinity];
-  var SAVE_KEY = 'hoa_save_v1';
+  var SAVE_KEY = 'anubis_save_v1', OLD_SAVE_KEY = 'hoa_save_v1';   // ancienne clé lue une fois pour ne pas perdre les soldes
   var REPLAY = !!(root.Replay && root.Replay.active);   // mode replay (js/replay.js) : aucune sauvegarde lue ni écrite, pas d'écran d'accueil
 
   var S = { pending: 0, balance: START_BAL, bi: BET_DEFAULT, cur: '', curSet: false, lastWin: 0, autoIdx: 0, auto: 0, stopOnBonus: false, busy: false, hist: [], reduced: false, mode: 'std', buyOn: true, limit: 0, quality: 'auto', limitHit: false };
@@ -24,10 +24,10 @@
   function load() {
     if (REPLAY) return;
     try {
-      var d = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null');
+      var d = JSON.parse(localStorage.getItem(SAVE_KEY) || localStorage.getItem(OLD_SAVE_KEY) || 'null');
       if (d) {
         // ancienne sauvegarde (crédits, sans « v ») : solde, mise, gain en attente et limite repartent des valeurs par défaut
-        if (d.lang) I18N.setLang(d.lang);
+        if (d.lang && !I18N.fromUrl) I18N.setLang(d.lang);   // ?lang= dans l'URL prime sur la sauvegarde
         if (d.cur === 'EUR' || d.cur === 'USD') { S.cur = d.cur; S.curSet = true; }
         if (d.v >= SAVE_VER) {
           if (typeof d.balance === 'number' && isFinite(d.balance) && d.balance >= 0) S.balance = r2(d.balance);
@@ -51,9 +51,9 @@
       }
     } catch (e) {}
     // mouvement réduit : suit le réglage du système tant que le joueur n'a rien choisi
-    try { if (!localStorage.getItem(SAVE_KEY) && root.matchMedia && root.matchMedia('(prefers-reduced-motion: reduce)').matches) { S.reduced = true; FX.reduced = true; } } catch (e) {}
+    try { if (!localStorage.getItem(SAVE_KEY) && !localStorage.getItem(OLD_SAVE_KEY) && root.matchMedia && root.matchMedia('(prefers-reduced-motion: reduce)').matches) { S.reduced = true; FX.reduced = true; } } catch (e) {}
     if (!(S.balance >= BETS[0])) S.balance = START_BAL;
-    if (!S.cur) S.cur = I18N.lang() === 'fr' ? 'EUR' : 'USD';   // pas encore choisie : suit la langue
+    if (!S.cur) S.cur = I18N.defaultCurrency();   // pas encore choisie : suit la langue
     G.currency = S.cur;
   }
   function save() {
@@ -174,11 +174,12 @@
     try { for (var i = 0; i < round.spins.length; i++) {
       var sp = round.spins[i];
       if (!buyKind && sp.oracle) {
-        $('oracleText').textContent = T.oracleOn + ' ×' + sp.oracle.boost + ' → ' + T.kinds[sp.oracle.kind].replace('\n', ' ');
+        $('oracleText').textContent = T.oracleOn + ' ×? → ' + T.kinds[sp.oracle.kind].replace('\n', ' ');   // valeur scellée jusqu'à l'arrêt de la roue
         $('oracle').hidden = false;
         await G.wheel.showOracle(sp.oracle);
       }
       if (!buyKind) await G.wheel.spinTo(sp);
+      if (!buyKind && sp.oracle) { $('oracleText').textContent = T.oracleOn + ' ×' + sp.oracle.boost + ' → ' + T.kinds[sp.oracle.kind].replace('\n', ' '); await G.wheel.revealOracle(); }
       G.speed = spd();
       var def = M.KINDS[sp.kind] || { bonus: true };
       if (def.respin) {
@@ -288,11 +289,37 @@
   }
   $('btnCur').addEventListener('click', function () { Sfx.click(); setCurrency(S.cur === 'EUR' ? 'USD' : 'EUR'); });
   function applyLang() {
-    $('btnLang').textContent = I18N.lang().toUpperCase() === 'FR' ? 'EN' : 'FR';
-    I18N.apply(); if (!S.curSet) { S.cur = I18N.lang() === 'fr' ? 'EUR' : 'USD'; G.currency = S.cur; } shown.bal = shown.win = -1; updateHud(); setMoney($('win'), winNow); shown.win = winNow; $('btnCur').textContent = G.sym(); $('btnCur').setAttribute('aria-label', I18N.t().currencyL + ' : ' + S.cur); setSpinBtn(); refreshMixer(); say(S.busy ? '' : I18N.t().ready);
+    I18N.setLang(I18N.lang());   // (re)pose dir, lang et polices de repli du canvas
+    $('btnLang').textContent = I18N.lang().toUpperCase(); $('btnLang').setAttribute('aria-label', I18N.t().language);
+    I18N.apply(); if (!S.curSet) { S.cur = I18N.defaultCurrency(); G.currency = S.cur; } shown.bal = shown.win = -1; updateHud(); setMoney($('win'), winNow); shown.win = winNow; $('btnCur').textContent = G.sym(); $('btnCur').setAttribute('aria-label', I18N.t().currencyL + ' : ' + S.cur); setSpinBtn(); refreshMixer(); say(S.busy ? '' : I18N.t().ready);
     if (G.wheel.build && G.w) G.wheel.build();
   }
-  $('btnLang').addEventListener('click', function () { I18N.setLang(I18N.lang() === 'fr' ? 'en' : 'fr'); applyLang(); save(); });
+  // sélecteur de langue : menu déroulant des 16 langues Stake (noms natifs), fermé par un clic ailleurs ou Échap
+  var langMenu = null;
+  function closeLangMenu() { if (langMenu) { langMenu.remove(); langMenu = null; $('btnLang').setAttribute('aria-expanded', 'false'); } }
+  function openLangMenu() {
+    closeLangMenu();
+    langMenu = document.createElement('div'); langMenu.id = 'langMenu'; langMenu.setAttribute('role', 'listbox'); langMenu.setAttribute('aria-label', I18N.t().language);
+    I18N.langs.forEach(function (l) {
+      var b = document.createElement('button'); b.type = 'button'; b.setAttribute('role', 'option'); b.setAttribute('lang', l[0]); b.setAttribute('data-l', l[0]);
+      b.setAttribute('aria-selected', l[0] === I18N.lang() ? 'true' : 'false'); b.textContent = l[1];
+      b.addEventListener('click', function (e) { e.stopPropagation(); Sfx.click(); I18N.setLang(l[0]); applyLang(); save(); closeLangMenu(); $('btnLang').focus(); });
+      langMenu.appendChild(b);
+    });
+    document.body.appendChild(langMenu); $('btnLang').setAttribute('aria-expanded', 'true');
+    var r = $('btnLang').getBoundingClientRect(), mw = langMenu.offsetWidth, x = Math.min(Math.max(8, r.left), innerWidth - mw - 8);
+    langMenu.style.left = x + 'px'; langMenu.style.top = (r.bottom + 6) + 'px';
+    var cur = langMenu.querySelector('[aria-selected=true]'); if (cur) cur.focus();
+  }
+  $('btnLang').setAttribute('aria-haspopup', 'listbox'); $('btnLang').setAttribute('aria-expanded', 'false');
+  $('btnLang').addEventListener('click', function (e) { e.stopPropagation(); Sfx.unlock(); if (langMenu) closeLangMenu(); else openLangMenu(); });
+  document.addEventListener('click', function (e) { if (langMenu && !langMenu.contains(e.target)) closeLangMenu(); });
+  document.addEventListener('keydown', function (e) {
+    if (!langMenu) return;
+    if (e.code === 'Escape') { closeLangMenu(); $('btnLang').focus(); return; }
+    var items = Array.prototype.slice.call(langMenu.querySelectorAll('button')), i = items.indexOf(document.activeElement);
+    if (e.code === 'ArrowDown' || e.code === 'ArrowUp') { e.preventDefault(); items[(i + (e.code === 'ArrowDown' ? 1 : items.length - 1)) % items.length].focus(); }
+  });
   G.onWheelTap = function () { if (S.busy && G.wheel.spinning) G.speed = 3.2; };
 
   document.addEventListener('click', function (e) { var b = e.target.closest && e.target.closest('button'); if (b && e.detail > 0 && b.id !== 'modalClose' && !b.closest('#modal')) b.blur(); });
@@ -448,7 +475,7 @@
   (function () {
     var sp = $('splash');
     if (!sp || REPLAY || navigator.webdriver || /[?&](debug|nosplash)/.test(location.search)) { if (sp) sp.remove(); return; }
-    var T = I18N.t(), port = root.innerHeight > root.innerWidth, src = (root.HOA_IMG || {})[port ? 'splashp' : 'splash'];
+    var T = I18N.t(), port = root.innerHeight > root.innerWidth, src = (root.ANUBIS_IMG || {})[port ? 'splashp' : 'splash'];
     if (src) sp.style.backgroundImage = 'url(' + src + ')';
     $('spSub').textContent = T.splashSub; $('spBtn').textContent = T.splashEnter; $('spDemo').textContent = T.splashDemo;
     sp.hidden = false;
