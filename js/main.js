@@ -643,7 +643,7 @@
     var desc = T.buyDesc; // mêmes descriptions que le menu d'achat : une seule source, une seule vérité
     ['m0', 'm025', 'm05', 'm1', 'm2', 'm3', 'ankh', 'scarab', 'weigh', 'vault'].forEach(function (id) {
       var def = M.KINDS[id], pays = def.bonus ? desc[id] : def.respin ? T.respinLabel : (def.mult ? def.mult + '×' : T.noWin);
-      var fq = id === 'm05' ? 0.5 : id === 'm025' ? 0.25 : 0, disc = fq ? ' <svg width="15" height="15" viewBox="-8 -8 16 16" style="vertical-align:-3px;margin-left:4px"><circle r="7" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M0 0V-6A6 6 0 ' + (fq > 0.5 ? 1 : 0) + ' 1 ' + (6 * Math.sin(2 * Math.PI * fq)).toFixed(2) + ' ' + (-6 * Math.cos(2 * Math.PI * fq)).toFixed(2) + 'Z" fill="currentColor"/></svg>' : '';
+      var fq = id === 'm05' ? 0.5 : id === 'm025' ? 0.3 : 0, disc = fq ? ' <svg width="15" height="15" viewBox="-8 -8 16 16" style="vertical-align:-3px;margin-left:4px"><circle r="7" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M0 0V-6A6 6 0 ' + (fq > 0.5 ? 1 : 0) + ' 1 ' + (6 * Math.sin(2 * Math.PI * fq)).toFixed(2) + ' ' + (-6 * Math.cos(2 * Math.PI * fq)).toFixed(2) + 'Z" fill="currentColor"/></svg>' : '';
       rows += '<tr><td><span class="sw" style="background:' + G.kindColor(id) + '"></span>' + T.kinds[id] + disc + '</td><td class="n">' + def.count + ' / ' + M.N + '</td><td>' + pays + '</td></tr>';
     });
     $('modalBody').innerHTML =

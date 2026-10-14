@@ -1,7 +1,7 @@
 """Contrôles de format d'une bibliothèque générée — reprise des vérifications de utils/rgs_verification.py du math-sdk.
 
   - index.json : forme stricte { "modes": [ { name, cost, events, weights } ] }, fichiers présents ;
-  - lookup : trois entiers non signés par ligne, payout multiple de 10 (si payout_step = 10) et >= 10 s'il n'est pas nul ;
+  - lookup : trois entiers non signés par ligne, payout multiple de 10 et >= 10 s'il n'est pas nul ;
   - books : id, events, payoutMultiplier présents, payoutMultiplier == colonne 3 de la lookup (même suite d'entiers), <= plafond ;
   - chaque book commence par roundStart et finit par finalWin dont `amount` == payoutMultiplier.
 Renvoie la liste des anomalies (vide = conforme).
@@ -67,8 +67,8 @@ def verify_library(publish_dir, payout_step=None, books_by_mode=None):
                 payout = int(parts[2])
                 if payout > 0 and payout < 10:
                     bad.append("%s : payout non nul < 10" % m["name"])
-                if step > 1 and payout % step:
-                    bad.append("%s : payout %d non multiple de %d" % (m["name"], payout, step))
+                if payout % 10:   # règle du SDK, quel que soit le pas d'arrondi choisi
+                    bad.append("%s : payout %d non multiple de 10" % (m["name"], payout))
                 pay.append(payout)
         if books_by_mode is not None and m["name"] in books_by_mode:
             books = iter(books_by_mode[m["name"]])

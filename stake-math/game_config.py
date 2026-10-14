@@ -16,8 +16,10 @@ SCALE = 100                      # M.SCALE : payoutMultiplier entier, 100 = 1,00
 WINCAP = 25000                   # M.MAX_WIN (x la mise)
 WINCAP_INT = WINCAP * SCALE      # 2 500 000
 MAX_CHAIN = 6                    # Ankh enchaînés au plus
-# Le vérificateur du SDK (utils/rgs_verification.py) exige des payouts multiples de 10 (donc 0,10 x) : voir PAYOUT_STEP
-PAYOUT_STEP = 10
+# Le vérificateur du SDK (utils/rgs_verification.py) exige des payouts multiples de 10 (donc 0,10 x). Depuis que TOUS les gains du jeu sont des
+# multiples de 0,1 x (js/math.js : 0,25 -> 0,3 ; Scarabées 0,6 / 0,9...), le pas 1 est conforme : aucun arrondi. Le pas 10 reste disponible
+# (run.py --step 10) comme garde-fou : il arrondirait le total au multiple de 10 le plus proche, sans effet tant que les gains sont des dixièmes.
+PAYOUT_STEP = 1
 
 
 def S(x):
@@ -38,7 +40,7 @@ RTP_TARGET = 0.962               # RTP cible de TOUS les modes (l'optimiseur de 
 # id -> (mult en x la mise, nombre de cases, bonus ?, relance ?)
 KINDS = {
     "m0":     {"mult": 0.0,  "count": 34, "bonus": False, "respin": False},
-    "m025":   {"mult": 0.25, "count": 5,  "bonus": False, "respin": False},
+    "m025":   {"mult": 0.3,  "count": 5,  "bonus": False, "respin": False},
     "m05":    {"mult": 0.5,  "count": 7,  "bonus": False, "respin": False},
     "m1":     {"mult": 1.0,  "count": 6,  "bonus": False, "respin": False},
     "m2":     {"mult": 2.0,  "count": 3,  "bonus": False, "respin": False},
@@ -103,8 +105,8 @@ N = len(LAYOUT)                  # 64
 # ---------------------------------------------------------------------------------------------------------------------
 # Modes de mise (cost = débit en multiples de la mise)
 # ---------------------------------------------------------------------------------------------------------------------
-MODES = {"std": {"cost": 1.0, "oracle": 0.31}, "plus": {"cost": 1.1, "oracle": 0.72}}
-BUY = {"scarab": 9.24, "weigh": 10.31, "vault": 12.37, "hand": 27.28}   # « hand » = Fureur d'Anubis (identifiant interne conservé)
+MODES = {"std": {"cost": 1.0, "oracle": 0.29}, "plus": {"cost": 1.1, "oracle": 0.698}}
+BUY = {"scarab": 9.26, "weigh": 10.31, "vault": 12.37, "hand": 27.30}   # « hand » = Fureur d'Anubis (identifiant interne conservé)
 BUY_NAMES = {"scarab": "buy_scarab", "weigh": "buy_weigh", "vault": "buy_vault", "hand": "buy_fury"}
 BUY_KIND_OF = {v: k for k, v in BUY_NAMES.items()}
 MODE_ORDER = ["std", "plus", "buy_scarab", "buy_weigh", "buy_vault", "buy_fury"]
@@ -124,9 +126,9 @@ ORACLE_BOOST = {
 SCARAB_ROWS = 8
 SCARAB_BALLS = 3
 SCARAB_PROFILES = {
-    "safe": [22, 7, 3.5, 1.9, 0.9, 1.9, 3.5, 7, 22],
-    "std":  [100, 10, 2.5, 0.65, 0.79, 0.65, 2.5, 10, 100],
-    "bold": [230, 3.5, 1, 0.25, 0.4, 0.25, 1, 3.5, 230],
+    "safe": [23, 7, 3.5, 1.9, 0.9, 1.9, 3.5, 7, 23],
+    "std":  [100, 10, 2.5, 0.6, 0.9, 0.6, 2.5, 10, 100],
+    "bold": [230, 3.7, 1, 0.3, 0.3, 0.3, 1, 3.7, 230],
 }
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -191,6 +193,11 @@ HAND_MIN_N_INT = S(HAND_MIN_N)
 VAULT_FINISH_INT = S(VAULT_FINISH)
 CRYPT_BIG_INT = int(CRYPT_BIG * SCALE)
 BOOST_INT = ORACLE_BOOST   # les boosts sont des entiers sans unité (x2, x3, ... x100) : aucune conversion
+
+
+def is_tenth(x):
+    """x est un multiple de 0,1 (exigence du vérificateur du SDK, à l'échelle 100)."""
+    return abs(x * 10 - round(x * 10)) < 1e-6 * max(1, abs(x * 10))
 
 
 def is_exact(x):

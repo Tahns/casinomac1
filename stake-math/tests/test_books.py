@@ -77,6 +77,14 @@ class TestFormat(unittest.TestCase):
             self.assertEqual(rc, 0)
             self.assertEqual(verify.verify_library(os.path.join(tmp, "publish_files"), payout_step=step), [])
 
+    def test_sans_arrondi_payouts_multiples_de_10(self):
+        # pas 1 (défaut) : le payout est le total EXACT, et il est déjà un multiple de 10 pour tous les modes
+        tmp, _ = lib(1)
+        for mode in C.MODE_ORDER:
+            for b in load_books(tmp, mode):
+                self.assertEqual(b["payoutMultiplier"] % 10, 0)
+                self.assertEqual(b["events"][-1]["exact"], b["payoutMultiplier"])
+
     def test_index_json_forme_stricte(self):
         tmp, _ = lib(10)
         idx = read_json(os.path.join(tmp, "publish_files", "index.json"))
@@ -86,7 +94,7 @@ class TestFormat(unittest.TestCase):
             self.assertEqual(sorted(m), ["cost", "events", "name", "weights"])
             self.assertTrue(m["events"].startswith("books_%s.jsonl" % m["name"]))
             self.assertEqual(m["weights"], "lookUpTable_%s_0.csv" % m["name"])
-        self.assertEqual([m["cost"] for m in idx["modes"]], [1.0, 1.1, 9.24, 10.31, 12.37, 27.28])
+        self.assertEqual([m["cost"] for m in idx["modes"]], [1.0, 1.1, 9.26, 10.31, 12.37, 27.3])
 
     def test_lookup_trois_entiers_non_signes(self):
         tmp, _ = lib(10)

@@ -351,8 +351,8 @@
       f.save(); f.rotate(am);
       var big = M.KINDS[k].bonus || k === 'ankh', fr = I18N.decimalComma();
       if (!big && (k === 'm05' || k === 'm025')) {
-        // disque solaire de Râ : à moitié (0,5×) ou au quart (0,25×) rempli — se lit d'un coup d'œil, sans chiffre
-        var rd = Math.min(chord(RC) * 0.36, R * 0.07), fq = k === 'm05' ? 0.5 : 0.25;
+        // disque solaire de Râ : à moitié (0,5×) ou aux trois dixièmes (0,3×) rempli — se lit d'un coup d'œil, sans chiffre
+        var rd = Math.min(chord(RC) * 0.36, R * 0.07), fq = k === 'm05' ? 0.5 : 0.3;
         f.save(); f.rotate(Math.PI / 2); f.translate(0, -RC);
         f.beginPath(); f.arc(0, 0, rd, 0, TAU); f.fillStyle = 'rgba(0,0,0,.4)'; f.fill();
         f.shadowColor = 'rgba(0,0,0,.55)'; f.shadowBlur = 3;
@@ -360,9 +360,9 @@
         f.beginPath(); f.arc(0, 0, rd, 0, TAU); f.lineWidth = Math.max(1.2, rd * 0.2); f.strokeStyle = v.tx; f.stroke();
         f.shadowBlur = 0; f.restore();
       } else if (!big) {
-        var lab = k === 'm0' ? '0' : ({ m025: fr ? '0,25' : '0.25', m05: fr ? '0,5' : '0.5', m1: '1', m2: '2', m3: '3' })[k];
+        var lab = k === 'm0' ? '0' : ({ m025: fr ? '0,3' : '0.3', m05: fr ? '0,5' : '0.5', m1: '1', m2: '2', m3: '3' })[k];
         var frac = k === 'm025' || k === 'm05';
-        // fractions : écrites le long du rayon (assez de place pour « 0,25 »), entiers : debout comme les logos
+        // fractions : écrites le long du rayon (assez de place pour « 0,3 »), entiers : debout comme les logos
         var fs = R * (k === 'm0' ? 0.1 : frac ? 0.12 : 0.15) * G.NUM_K;
         f.font = '700 ' + fs + 'px ' + G.NUM;
         var tm = f.measureText(lab), tl = tm.actualBoundingBoxLeft, tr = tm.actualBoundingBoxRight, ta = tm.actualBoundingBoxAscent, td = tm.actualBoundingBoxDescent;

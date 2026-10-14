@@ -1,7 +1,7 @@
 """(a) Moments EXACTS : le port Python de tools/rtp-exact.js donne les mêmes nombres, et le moteur de jeu est cohérent avec eux.
 
 Aucune simulation : calcul exact (énumération, récurrences) seulement. Les valeurs de référence viennent de tools/export-parity.js
-(sortie de rtp-exact.js au moment de l'export) et de la documentation du dépôt : RTP Standard 96,21 %, Oracle+ 96,14 %, achats ~ 96 %.
+(sortie de rtp-exact.js au moment de l'export) et de la documentation du dépôt : RTP Standard 96,21 %, Oracle+ 96,10 %, achats ~ 96,0 %.
 """
 import itertools
 import os
@@ -28,11 +28,11 @@ def close(a, b, tol=1e-9):
 class TestMomentsExacts(unittest.TestCase):
     def test_rtp_documentes(self):
         self.assertAlmostEqual(RES["std"]["mean"] * 100, 96.21, places=2)
-        self.assertAlmostEqual(RES["plus"]["mean"] * 100, 96.14, places=2)
-        want = {"scarab": 95.96, "weigh": 96.00, "vault": 96.02, "hand": 96.02}
+        self.assertAlmostEqual(RES["plus"]["mean"] * 100, 96.10, places=2)
+        want = {"scarab": 96.02, "weigh": 96.02, "vault": 96.03, "hand": 96.01}
         for k, v in want.items():
             self.assertAlmostEqual(RES["buy"][k]["rtp"] * 100, v, places=2, msg=k)
-        self.assertAlmostEqual(RES["std"]["sd"], 16.36, places=2)
+        self.assertAlmostEqual(RES["std"]["sd"], 16.11, places=2)
         self.assertAlmostEqual(RES["std"]["hit"] * 100, 42.6, places=1)
         self.assertAlmostEqual(RES["bonusEvery"], 20.0, places=6)
 
@@ -97,8 +97,8 @@ class TestMoteurContreExact(unittest.TestCase):
             total += s["pay"]
             cnt += 1
         self.assertEqual(cnt, 57)   # 64 cases - 4 Ankh - 3 bonus
-        # somme des multiplicateurs non nuls : 5x0,25 + 7x0,5 + 6x1 + 3x2 + 2x3 = 22,75 x
-        self.assertEqual(total, 2275)
+        # somme des multiplicateurs non nuls : 5x0,3 + 7x0,5 + 6x1 + 3x2 + 2x3 = 23 x (tous des dixièmes)
+        self.assertEqual(total, 2300)
 
     def test_scarabee_une_bille_enumeree(self):
         # les 256 chemins d'une bille, pondérés 1/256 : espérance et variance égales aux formules du calcul exact
