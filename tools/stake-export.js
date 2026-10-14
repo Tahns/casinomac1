@@ -70,6 +70,9 @@ function bookEvents(round) {
   return ev;
 }
 
+module.exports = { bookEvents: bookEvents };   // utilisé par tools/mock-rgs.js ; la génération des fichiers ne tourne qu'en exécution directe
+if (require.main !== module) return;
+
 var MODES = [
   { name: 'std', cost: M.MODES.std.cost, play: function (r) { return M.playRound(r, 'std'); } },
   { name: 'plus', cost: M.MODES.plus.cost, play: function (r) { return M.playRound(r, 'plus'); } }

@@ -868,6 +868,41 @@
   } catch (e) {}
   root.LAUNCH = launch;
 
+  // Textes du client RGS (erreurs du serveur, confirmations d'achat et d'autoplay) : bloc séparé du dictionnaire D ;
+  // FR et EN traduits, les autres langues retombent sur l'anglais (I18N.rgs()) — à traduire avec le reste des 16 langues.
+  var RGS_TXT = {
+    fr: {
+      connecting: 'Connexion au serveur de jeu…', retry: 'Réessayer', confirm: 'Confirmer', cancel: 'Annuler',
+      errUrl: 'Connexion impossible : l\'adresse du serveur de jeu (rgs_url) ou la session est absente ou invalide. Relancez le jeu depuis le site.',
+      errAuth: 'Connexion au serveur de jeu impossible. Vérifiez votre connexion puis relancez le jeu.',
+      errVal: 'Requête refusée : session expirée ou mise invalide. Relancez le jeu depuis le site.',
+      errIpb: 'Solde insuffisant pour cette mise.',
+      errGle: 'Limite de jeu atteinte : cette mise est refusée.',
+      errAct: 'Le serveur est occupé. Réessayez dans un instant.',
+      errGen: 'Erreur du serveur de jeu. Réessayez dans un instant.',
+      errNet: 'Réseau indisponible ou réponse invalide. Votre mise n\'a peut-être pas été prise en compte : vérifiez votre solde.',
+      errBook: 'Résultat du tour illisible. Contactez l\'assistance.',
+      buyConfirm: 'Acheter {name} pour {price} ?', buyConfirmTitle: 'CONFIRMER L\'ACHAT',
+      autoTitle: 'JEU AUTOMATIQUE', autoSub: 'Choisissez le nombre de tours et les conditions d\'arrêt, puis confirmez.',
+      autoRounds: 'Nombre de tours', autoStopWin: 'Arrêt sur un gain d\'au moins', autoStart: 'Démarrer', autoCost: 'Coût par tour'
+    },
+    en: {
+      connecting: 'Connecting to the game server…', retry: 'Retry', confirm: 'Confirm', cancel: 'Cancel',
+      errUrl: 'Cannot connect: the game server address (rgs_url) or the session is missing or invalid. Please relaunch the game from the site.',
+      errAuth: 'Cannot reach the game server. Check your connection and relaunch the game.',
+      errVal: 'Request refused: the session has expired or the bet is invalid. Please relaunch the game from the site.',
+      errIpb: 'Insufficient balance for this bet.',
+      errGle: 'Gambling limit reached: this bet is refused.',
+      errAct: 'The server is busy. Please try again in a moment.',
+      errGen: 'Game server error. Please try again in a moment.',
+      errNet: 'Network unavailable or invalid response. Your bet may not have been taken into account: check your balance.',
+      errBook: 'The round result could not be read. Please contact support.',
+      buyConfirm: 'Buy {name} for {price}?', buyConfirmTitle: 'CONFIRM PURCHASE',
+      autoTitle: 'AUTOPLAY', autoSub: 'Choose the number of rounds and the stop conditions, then confirm.',
+      autoRounds: 'Number of rounds', autoStopWin: 'Stop on a win of at least', autoStart: 'Start', autoCost: 'Cost per round'
+    }
+  };
+
   var lang = DEFAULT_LANG;
   function info(l) { for (var i = 0; i < LANGS.length; i++) if (LANGS[i][0] === l) return LANGS[i]; return LANGS[0]; }
   function setLang(l) {
@@ -884,6 +919,7 @@
     setLang: setLang,
     lang: function () { return lang; },
     t: function () { return D[lang]; },
+    rgs: function () { return RGS_TXT[lang] || RGS_TXT.en; },
     langs: LANGS, fallback: FALLBACK, norm: norm, fromUrl: launch.lang,
     locale: function () { return info(lang)[2]; },          // format des nombres
     currencyAfter: function () { return !!AFTER[lang]; },   // « 1 234,50 € » (true) ou « $1,234.50 » (false)

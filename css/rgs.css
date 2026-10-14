@@ -1,0 +1,4 @@
+/* Blocage de connexion RGS : plein écran, rien n'est jouable derrière */
+#rgsBlock{position:fixed;inset:0;z-index:40;display:grid;place-items:center;padding:16px;background:rgba(5,4,3,.94);pointer-events:auto}
+#rgsBlock[hidden]{display:none}
+#rgsBlock .sheet{max-width:520px}
