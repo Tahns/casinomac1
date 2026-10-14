@@ -296,7 +296,7 @@
 
     // ambiance très douce : nappe de ré mineur (sinus filtrés), respiration lente, rares cloches lointaines. Aucun bourdon, aucun battement.
     startAmbient: function () {
-      if (!musicOn || !ensure() || ambNodes) return;
+      if (!musicOn || !ensure() || ambNodes || theme) return;   // jamais d'ambiance par-dessus un thème de bonus (changement de hauteur / musique en plein bonus)
       var t0 = ctx.currentTime, nodes = [], g = ctx.createGain(), f = ctx.createBiquadFilter(), lfo = ctx.createOscillator(), lg = ctx.createGain(), br = ctx.createOscillator(), brg = ctx.createGain();
       f.type = 'lowpass'; f.frequency.value = 650; f.Q.value = 0.4;
       lfo.frequency.value = 0.045; lg.gain.value = 140; lfo.connect(lg); lg.connect(f.frequency);
@@ -362,9 +362,9 @@
       if (!ensure()) return; var T = THEMES[kind]; if (!T) return;
       stopTheme(); ambWas = !!ambNodes; A.stopAmbient(); themeLevel = 0;
       var tm = theme = { kind: kind, step: 0, alive: true, timer: null }, ms = 60000 / T.bpm / 2;
-      tm.timer = setInterval(function () { if (!tm.alive || muted || document.hidden) return; try { T.step(tm.step++, themeLevel); } catch (e) {} }, ms);
+      tm.timer = setInterval(function () { if (!tm.alive || muted || !musicOn || document.hidden) return; try { T.step(tm.step++, themeLevel); } catch (e) {} }, ms);
     },
-    stopBonusTheme: function () { stopTheme(); if (ambWas && musicOn && !muted) setTimeout(function () { if (!theme) A.startAmbient(); }, 900); },
+    stopBonusTheme: function () { stopTheme(); if (musicOn && !muted) setTimeout(function () { if (!theme) A.startAmbient(); }, 900); },
     bonusUp: function () { themeLevel = Math.min(4, themeLevel + 1); },
     bonusLevel: function (n) { themeLevel = Math.max(0, Math.min(4, n | 0)); },
     swell: function (dur, v, d, f0, f1) { swell(dur, v, d, f0, f1); },

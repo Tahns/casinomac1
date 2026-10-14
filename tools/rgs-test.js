@@ -399,6 +399,33 @@ var FINISH = `(async()=>{ G.turbo=true; G.speed=1.6; var g=0; while(G.S.busy&&g<
   ok(!ipb.busy && /insuffisant/i.test(ipb.msg) && ipb.bal === 0, 'ERR_IPB : message « ' + ipb.msg + ' », solde resynchronisé (/wallet/balance), jeu non bloqué');
   await done(s);
 
+  // ---- deux onglets de jeu en mode RGS : le second est bloqué derrière un message, « Jouer ici » reprend la main ----
+  var mt = mockRgs.create(), st1 = await open(mt), pgB = await st1.ctx.newPage();
+  pgB.on('pageerror', function (e) { allErrs.push(e.message); });
+  await pgB.goto(gurl + '?debug&lang=fr&sessionID=' + mt.state.sessionID + '&rgs_url=' + encodeURIComponent('http://localhost:' + mt.server.address().port)); await pgB.waitForTimeout(800);
+  var tabA = await st1.p.evaluate("!!(document.getElementById('tabBlock') && !document.getElementById('tabBlock').hidden)");
+  var tabB = await pgB.evaluate("!!(document.getElementById('tabBlock') && !document.getElementById('tabBlock').hidden)");
+  ok(!tabA && tabB, 'deux onglets RGS : le premier joue, le second est bloqué par un avertissement');
+  await pgB.evaluate('G.play()'); await pgB.waitForTimeout(150);
+  ok(plays(mt).length === 0 && !(await pgB.evaluate('G.S.busy')), 'onglet inactif : aucune mise envoyée');
+  await clk(pgB, '#tabBlockB'); await pgB.waitForTimeout(300); await st1.p.waitForTimeout(300);
+  ok(await pgB.evaluate("document.getElementById('tabBlock').hidden") && await st1.p.evaluate("!document.getElementById('tabBlock').hidden"), '« Jouer ici » : la main passe au second onglet, le premier se bloque');
+  await pgB.close(); await st1.p.waitForTimeout(300);
+  ok(await st1.p.evaluate("document.getElementById('tabBlock').hidden"), 'onglet actif fermé : l\'autre se débloque tout seul');
+  await done(st1);
+
+  // ---- ERR_GLE : plafond de jeu du serveur -> message, plus de mise un moment, mémorisé après rechargement ----
+  var mg = mockRgs.create(); mg.set({ gle: true }); s = await open(mg);
+  await clk(s.p, '#spin'); await s.p.waitForTimeout(900);
+  var gl = await s.p.evaluate('({busy:G.S.busy, gle:G.S.gle>0})');
+  ok(!gl.busy && gl.gle && plays(mg).length === 1, 'ERR_GLE : jeu non bloqué, plafond mémorisé');
+  await s.p.evaluate("document.getElementById('modalClose').click()");
+  mg.set({ gle: false }); await clk(s.p, '#spin'); await s.p.waitForTimeout(400);
+  ok(plays(mg).length === 1 && await s.p.evaluate("!document.getElementById('modal').hidden"), 'ERR_GLE : aucune nouvelle mise pendant l\'attente (message affiché)');
+  await s.p.reload(); await s.p.waitForTimeout(800);
+  ok(await s.p.evaluate('G.S.gle > 0'), 'ERR_GLE : toujours en vigueur après rechargement');
+  await done(s);
+
   ok(allErrs.length === 0, 'aucune erreur de page' + (allErrs.length ? ' : ' + allErrs.slice(0, 3).join(' | ') : ''));
   await b.close(); server.close();
   console.log(fails ? '\n' + fails + ' échec(s)' : '\ntout est bon');
