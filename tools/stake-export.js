@@ -16,6 +16,7 @@
 //  - Toutes les valeurs « de gain » des événements sont des ENTIERS à l'échelle 100 (win, runningTotal, token numérique, offering, gain,
 //    finishBonus, mults, number, playerMult, amount, cost, maxWin, pay). Les FACTEURS (boost, tier, bandMult, tide, value d'une tablette,
 //    jetons 'scepter' ×2) restent des nombres bruts (×N = N).
+//  - Chaque événement porte `seq` (compteur 0.., ordre de lecture) et `type` ; `wheelStop.index` est la case de la roue, pas le compteur.
 //  - Le coût d'un mode : roundStart.cost en entier ×100 (110 = ×1,1) ; index.json garde le multiple décimal (1.1) comme le SDK.
 //    Le RGS débite mise × coût. Les 6 modes : std (1), plus (1,1 : Oracle+), buy_scarab (9,24), buy_weigh (10,31), buy_vault (12,37),
 //    buy_fury (27,28). À l'achat il n'y a ni oracle ni wheelStop : roundStart.mode == 'buy' et un seul bonusStart (bought:true).
@@ -58,9 +59,10 @@
 //               furyEnd       { color:c, win, pay }   win = gain plafonné (25 000×) ; pay = gain du dernier lancer avant plafond ;
 //                               win identique pour les trois couleurs
 //     crypt     sanctuaryTablet { tablet:1..9, tablet_type:'dust'|'tab'|'tide'|'eclipse', value, tideBefore, tide, offeringBefore, gain, offering }
+//                 (value : pour tab, entier x100 = gain de base avant marée ; pour tide / eclipse, facteur brut)
 //               sanctuaryEnd    { offering, tide, capped, win }   win = min(max(offering, 100), 2 500 000)
 //   spinWin       { spin, win, respin }   win = gain du tour AVEC boost, avant plafond du round ; respin:true pour une relance Ankh (win 0)
-//  finalWin     { amount, capped }       amount == payoutMultiplier ; capped:true si la somme des spinWin dépasse 25 000×
+//  finalWin     { amount, capped }       amount == payoutMultiplier ; capped:true si la somme des spinWin atteint 25 000× (>=)
 //
 // VÉRIFICATION : verify(book) (exportée) recalcule tout depuis les règles de math.js, SANS utiliser le front, et rend la liste des écarts
 // (vide = book valide). C'est l'oracle de test du portage Python (stake-math/) : mêmes règles, mêmes valeurs.
@@ -108,7 +110,7 @@ function bonusEvents(kind, b) {
       ev.push({ type: 'furyEnd', color: c, win: I(b.total), pay: I(b.spins[b.spins.length - 1].pay) });
     }
   } else if (kind === 'crypt') {
-    b.steps.forEach(function (st, k) { ev.push({ type: 'sanctuaryTablet', tablet: k + 1, tablet_type: st.t, value: st.v, tideBefore: st.tideBefore, tide: st.tide, offeringBefore: I(st.poolBefore), gain: I(st.gain), offering: I(st.pool) }); });
+    b.steps.forEach(function (st, k) { ev.push({ type: 'sanctuaryTablet', tablet: k + 1, tablet_type: st.t, value: st.t === 'tab' ? I(st.v) : st.v, tideBefore: st.tideBefore, tide: st.tide, offeringBefore: I(st.poolBefore), gain: I(st.gain), offering: I(st.pool) }); });
     ev.push({ type: 'sanctuaryEnd', offering: I(b.pool), tide: b.tide, capped: !!b.capped, win: I(b.total) });
   }
   return ev;
@@ -130,7 +132,8 @@ function bookEvents(round) {
     }
     ev.push({ type: 'spinWin', spin: n, win: I(s.pay), respin: s.kind === 'ankh' });
   });
-  ev.push({ type: 'finalWin', amount: I(round.total), capped: !!round.capped });
+  ev.push({ type: 'finalWin', amount: I(round.total), capped: !!round.capped || round.total >= M.MAX_WIN });
+  ev.forEach(function (e, i) { e.seq = i; });   // compteur d'événements (ordre de lecture) ; wheelStop.index reste la case de la roue
   return ev;
 }
 function makeBook(id, round) { return { id: id, events: bookEvents(round), payoutMultiplier: I(round.total) }; }
@@ -185,7 +188,7 @@ function verify(book) {
     if (kind === 'crypt') {
       var tabs = list.filter(function (e) { return e.type === 'sanctuaryTablet'; }), se = list.filter(function (e) { return e.type === 'sanctuaryEnd'; })[0];
       if (tabs.length !== M.CRYPT_CELLS || !se) { err('Sanctuaire incomplet'); return null; }
-      var r = M.cryptReplay(tabs.map(function (e) { return { t: e.tablet_type, v: e.value }; }));
+      var r = M.cryptReplay(tabs.map(function (e) { return { t: e.tablet_type, v: e.tablet_type === 'tab' ? e.value / S : e.value }; }));
       tabs.forEach(function (e, k) { var st = r.steps[k]; if (e.tide !== st.tide || e.tideBefore !== st.tideBefore || e.offering !== I(st.pool) || e.offeringBefore !== I(st.poolBefore) || e.gain !== I(st.gain)) err('sanctuaryTablet ' + (k + 1)); });
       if (se.win !== I(r.total) || se.offering !== I(r.pool) || se.capped !== r.capped) err('sanctuaryEnd');
       return se.win;
@@ -247,7 +250,7 @@ function verify(book) {
   }
   if (!fin) { err('finalWin absent'); return bad; }
   var total = Math.min(sum, CAP);
-  if (fin.amount !== total || fin.capped !== (sum > CAP) || book.payoutMultiplier !== total) err('total ' + total + ' ≠ finalWin ' + fin.amount + ' / book ' + book.payoutMultiplier);
+  if (fin.amount !== total || fin.capped !== (sum >= CAP) || book.payoutMultiplier !== total) err('total ' + total + ' ≠ finalWin ' + fin.amount + ' / book ' + book.payoutMultiplier);
   return bad;
 }
 

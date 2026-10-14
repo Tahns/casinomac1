@@ -164,7 +164,7 @@
         return { picks: picks, ended: ve.ended, bonusFinish: f(ve.finishBonus), total: f(ve.win), profile: 'std' };
       }
       if (kind === 'crypt') {
-        var steps = of(list, 'sanctuaryTablet').map(function (e) { return { t: e.tablet_type, v: e.value, poolBefore: f(e.offeringBefore), tideBefore: e.tideBefore, gain: f(e.gain), pool: f(e.offering), tide: e.tide }; });
+        var steps = of(list, 'sanctuaryTablet').map(function (e) { return { t: e.tablet_type, v: e.tablet_type === 'tab' ? f(e.value) : e.value, poolBefore: f(e.offeringBefore), tideBefore: e.tideBefore, gain: f(e.gain), pool: f(e.offering), tide: e.tide }; });
         var se = of(list, 'sanctuaryEnd')[0];
         if (!se) throw bookError('sanctuaryEnd');
         return { drops: steps.map(function (st) { return { t: st.t, v: st.v }; }), steps: steps, pool: f(se.offering), tide: se.tide, capped: !!se.capped, total: f(se.win), profile: 'crypt' };
