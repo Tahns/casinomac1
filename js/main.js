@@ -43,9 +43,15 @@
     if (!soc && !u && root.CUR.isSocial(c)) c = I18N.defaultCurrency();
     return c;
   }
+  function limitLive(n) { var kb = BETS[0] > 0 ? BETS[0] / BASE_BETS[0] : 1; return n ? Math.max(BETS[0] || 0, G.rc(n * kb)) : 0; }
   // niveaux de mise, solde de départ et plafonds de perte de la démo, adaptés à la devise (k = taux indicatif de CUR)
   function applyScale(k) {
-    if (LIVE) { if (S.bi >= BETS.length) S.bi = Math.max(0, BETS.length - 1); G.bet = BETS[S.bi]; return; }   // mode RGS : niveaux de mise et solde viennent du serveur, jamais d'un taux indicatif
+    if (LIVE) {   // mode RGS : niveaux de mise et solde viennent du serveur, jamais d'un taux indicatif
+      if (S.bi >= BETS.length) S.bi = Math.max(0, BETS.length - 1); G.bet = BETS[S.bi];
+      // [E2] plafonds de perte mis à l'échelle de la devise du RGS, d'après ses niveaux de mise (la plus petite mise vaut 0,20 en unités de base)
+      LIMITS = LIMIT_BASE.map(function (n) { return limitLive(n); }); S.limit = limitLive(S.limitB);
+      return;
+    }
     BETS.length = 0; BASE_BETS.forEach(function (b) { BETS.push(r2(b * k)); });
     START_BAL = r2(START_BASE * k);
     LIMITS = LIMIT_BASE.map(function (n) { return r2(n * k); });
@@ -404,6 +410,7 @@
       BETS.length = 0; lv.forEach(function (v) { BETS.push(RG.fromMicro(v)); });
       ix = rd ? lv.indexOf(rd.amount) : nearest(lv, cfg.defaultBetLevel);   // round actif : sa mise ; sinon defaultBetLevel
       S.bi = Math.max(0, ix); G.bet = BETS[S.bi];
+      applyScale(1); checkLimit();   // plafonds de perte recalculés d'après les niveaux de mise du RGS
       S.balance = G.r6(RG.fromMicro(a.balance.amount));
       S.blocked = false; shown.bal = -1; applyLang(); updateHud(); setSpinBtn(); say(I18N.t().ready);
       if (rd) {
@@ -721,7 +728,7 @@
     if (!!d.reduced !== S.reduced) { S.reduced = !!d.reduced; FX.reduced = S.reduced; }
     if (typeof d.sobV2 === 'boolean') S.stopOnBonus = d.sobV2;
     if (typeof d.buyOn === 'boolean') S.buyOn = d.buyOn;
-    if (LIMIT_BASE.indexOf(d.limit) >= 0 && d.limit !== S.limitB) { S.limitB = d.limit; S.limit = r2(d.limit * root.CUR.rate(S.cur)); checkLimit(); }
+    if (LIMIT_BASE.indexOf(d.limit) >= 0 && d.limit !== S.limitB) { S.limitB = d.limit; S.limit = LIVE ? limitLive(d.limit) : r2(d.limit * root.CUR.rate(S.cur)); checkLimit(); }
     if (!LIVE && typeof d.balance === 'number' && isFinite(d.balance) && d.balance >= 0) {
       var ob = G.rc(d.balance * root.CUR.rate(S.cur) / root.CUR.rate(root.CUR.known(d.balCur) ? d.balCur : 'EUR')), dl = r2(ob - S.synced);
       S.synced = ob;

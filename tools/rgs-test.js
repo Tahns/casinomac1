@@ -433,6 +433,12 @@ var FINISH = `(async()=>{ G.turbo=true; G.speed=1.6; var g=0; while(G.S.busy&&g<
   var mj = mockRgs.create({ seed: 61, currency: 'JPY', balance: 100000 * MICRO, betLevels: [100, 200, 500, 1000].map(function (x) { return x * MICRO; }), defaultBetLevel: 100 * MICRO }); s = await open(mj, '');
   var jp = await s.p.evaluate("({cur:G.currency, bal:document.getElementById('bal').textContent, bet:document.getElementById('bet').textContent, bets:G.BETS.slice()})");
   ok(jp.cur === 'JPY' && /¥/.test(jp.bal) && jp.bets.join() === '100,200,500,1000', 'JPY : devise du RGS, niveaux de mise du RGS conservés (aucune conversion locale) : ' + jp.bal + ' / ' + jp.bet);
+  // [E2] plafonds de perte à l'échelle de la devise du RGS (plus petite mise 100 ¥ = 0,20 en unités de base : ×500) : jamais « ¥20 / ¥50 » pour une mise de ¥200
+  await clk(s.p, '#btnInfo'); await s.p.waitForTimeout(200);
+  var lim = await s.p.evaluate("Array.prototype.map.call(document.querySelectorAll('#optLimit button'), function(b){ return b.textContent.replace(/[^0-9]/g, ''); })");
+  ok(lim.slice(1).join() === '10000,25000,50000,125000,250000' && /^\D*$/.test(lim[0]), '[E2] JPY : plafonds de perte mis à l\'échelle des niveaux de mise du RGS (' + lim.join(' / ') + ')');
+  await s.p.evaluate("document.querySelectorAll('#optLimit button')[1].click()"); await s.p.waitForTimeout(150);
+  ok((await s.p.evaluate('G.S.limit')) === 10000, '[E2] JPY : plafond choisi appliqué à S.limit (10 000 ¥)');
   await done(s);
 
   // ---- erreurs du RGS : ERR_IPB -> message, pas de blocage ----
