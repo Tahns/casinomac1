@@ -14,14 +14,22 @@ Méthode : serveur statique + Playwright (Chromium), `?debug`, `G.showBigWin`, `
 
 Captures avant/après : générées localement (scratchpad de session), non versionnées.
 
-## Constatés, non corrigés
-- Crypte en paysage téléphone : la pastille d'état reste à gauche et peut toucher la légende (pas de marge verticale disponible à 390 px de haut).
-- Pastille d'état DOM visible par-dessus l'overlay de gain (« TOURNEZ LA ROUE ») : cosmétique, à masquer pendant `G.winOv`.
-- Performance : `resize` rappelle `layout()` (fond, roue, bruit) à chaque évènement sans anti-rebond ; filtres CSS de couleur sur `#stage` et `#ui` coûteux en GPU ; gradients radiaux recréés à chaque frame dans `drawBackdrop`. Non mesurés ni optimisés faute de temps (mesures FPS et fuite après 200 tours non faites).
-- Détecteur de fuite d'état canvas (save/restore, shadowBlur, composite) écrit (`leak.js`, scratchpad) mais non exploité.
+## Corrigés (2e passe)
+| # | Défaut | Correction |
+|---|---|---|
+| 7 | Crypte en paysage téléphone (« Sanctuaire des Marées ») : la pastille d'état chevauchait la légende ; Chute des scarabées : elle recouvrait la case ×100 | Pastille limitée à la marge libre à gauche du plateau (`50vw - 52vh`), et sous le logo pour la Crypte (`pillTop`) |
+| 8 | Pastille d'état DOM par-dessus l'overlay de gain | Masquée pendant `G.winOv` (classe `winov`) |
+| 9 | Perf : `layout()` à chaque évènement `resize` | Anti-rebond de 90 ms (resize et rotation) |
+| 10 | Perf : une dizaine de dégradés recréés par image dans `drawBackdrop` | Disques dégradés mis en cache et posés par `scale` + `globalAlpha`, remplissages bornés. Rendu identique (écart ≤ 4/255), 9,8 → 7,6 ms/appel en 1280x720 (rendu logiciel), 3,6 → 2,4 ms en 390x844 |
+| 11 | Perf : filtre CSS de couleur sur `#stage` / `#ui` coûteux | Coupé en qualité « basse » et à la 1re dégradation automatique (`Grade.lite`) ; sans filtre ≈ +12 % d'images/s en rendu logiciel |
+| 12 | aria-labels `#stage`, `#history`, `#oracle`, boutons Fermer / montant en dur | Traduits (bloc i18n `ui`, FR / EN) et posés à chaque changement de langue |
 
-## Non vérifié
-EN/$, 4 filtres, `prefers-reduced-motion`, navigation clavier des fenêtres, contrastes au-delà de `tools/contrast.js` (passe), focus visible, aria-labels (`#history`, `#oracle`, `#stage` en dur FR), mixeur sur petits écrans.
+Fuite mémoire : 60 tours en ultra, compteurs (timers, tweens, DOM, canvas, objets) et tas stables après ramasse-miettes. Resize / rotation / langue pendant les bonus : aucune erreur. Captures regardées : 844x390 (Crypte, Scarabées, Pesée, Trésor), 390x844, 1280x720 (Fureur, Crypte).
+
+## Constatés, non corrigés
+- Les remplissages plein écran du fond (vignette, rayons) restent le plus gros coût en rendu logiciel ; une mise en cache supplémentaire changerait l'éclairage des bords (écart visuel), non faite.
+- Texte du canvas d'une scène de bonus : reste dans la langue d'ouverture si la langue change en plein bonus (cosmétique).
+- `prefers-reduced-motion`, navigation clavier des fenêtres (piégeage de Tab existant) et focus visible : code relu, pas de nouvelle capture dédiée ; mixeur sur petit écran et filtres EN/$ : `layout.js` et `e2e.js` verts.
 
 ## Validation
-`tools/check.js`, `i18n-check.js`, `contrast.js` : ok. `tools/layout.js` : 10 tailles ok. `e2e.js` non relancé (simulations).
+`tools/check.js`, `i18n-check.js`, `contrast.js` : ok. `tools/layout.js` : 10 tailles ok. `e2e.js`, `session-test.js`, `rgs-test.js`, `social-check.js`, `fuzz.js` verts (moins de 1000 tours au total).

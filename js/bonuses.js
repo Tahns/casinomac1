@@ -1390,7 +1390,7 @@
 
   function cryptScene(sp, bet) {
     var T = I18N.t(), data = sp.bonus, steps = data.steps, NR = M.CRYPT_ROWS, NCOL = M.CRYPT_COLS, NN = M.CRYPT_CELLS, B = bf(sp);
-    var S = newScene(T.cryptIntro), g = {}; S.bgImg = 'vault'; S.dim = 0.86; S.showTotal = false;
+    var S = newScene(T.cryptIntro), g = {}; S.bgImg = 'vault'; S.dim = 0.86; S.showTotal = false; S.pillTop = true;   // paysage téléphone : la pastille d'état quitte le bas (légende)
     var cells = [], floats = [], hover = -1, waiting = false, pickRes = null, queued = -1, tideShown = 1, tideFrom = 1, eclipse = 0, entry = 0, count = 0, ripple = 0, shake = 0;
     for (var i0 = 0; i0 < NN; i0++) cells.push({ state: 'closed', u: 0, t: null, v: 0, tide: 1, pop: 0, tens: 0, gl: i0 % 3, dim: false });
     S.layout = function () {

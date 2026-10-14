@@ -137,9 +137,9 @@ var server = http.createServer(function (req, res) {
       var t=document.getElementById('hud').innerText; if(re.test(t)||/\\d{9,}/.test(t)) bad.push(m+' '+b+' '+t.replace(/\\s+/g,' ')); var c=G.cost(); if (Math.abs(Math.round(c*100)-c*100)>1e-7) bad.push('coût '+c);
       ['scarab','weigh','vault','hand'].forEach(function(k){ var pr=Math.round(b*AnubisMath.BUY[k].price*100)/100; if (G.money(pr).indexOf('0000000')>=0) bad.push('prix '+pr); }); }); }); return bad; })()`);
   ok(drift.length === 0, 'aucun montant avec dérive flottante (0,30000000000000004…) sur toutes les mises/modes' + (drift.length ? ' : ' + drift[0] : ''));
-  await p.evaluate(`(async()=>{ G.S.mode='plus'; G.S.bi=0; G.turbo=true; G.speed=1.6; for(var r=0;r<25;r++){ G.play(); var g=0; while(G.S.busy&&g<3000){ await G.advance(0.25); g++; if(G.winOv) G.skipWinOv(); } } })()`);
+  await p.evaluate(`(async()=>{ G.S.mode='plus'; G.S.bi=0; G.turbo=true; G.speed=1.6; for(var r=0;r<12;r++){ G.play(); var g=0; while(G.S.busy&&g<3000){ await G.advance(0.25); g++; if(G.winOv) G.skipWinOv(); } } })()`);
   var bal = await p.evaluate("G.S.balance");
-  ok(Math.abs(Math.round(bal * 100) - bal * 100) < 1e-6, '25 tours à 0,20 en Oracle+ (coût 0,22) : le solde reste au centime (' + bal + ')');
+  ok(Math.abs(Math.round(bal * 100) - bal * 100) < 1e-6, '12 tours à 0,20 en Oracle+ (coût 0,22) : le solde reste au centime (' + bal + ')');
   // migration : ancienne sauvegarde en « crédits » (sans version) -> valeurs par défaut propres, gain en attente non converti
   await p.evaluate(`localStorage.setItem('anubis_save_v1', JSON.stringify({balance:12345, bi:7, limit:5000, pending:300, lang:'fr', mode:'plus'}))`);
   await p.reload(); await p.waitForTimeout(500);

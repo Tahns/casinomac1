@@ -12,7 +12,7 @@
 <link rel="stylesheet" href="css/replay.css">
 </head>
 <body>
-<canvas id="stage" role="img" aria-label="Anubis Unchained, roue du jugement"></canvas>
+<canvas id="stage" role="img" aria-label="Anubis Unchained, the wheel of judgement"></canvas>
 
 <div id="ui">
   <header id="top">
@@ -28,24 +28,24 @@
     </div>
   </header>
   <div id="mixer" hidden role="dialog" aria-labelledby="mxTitle">
-    <h2 id="mxTitle">Son</h2><button class="x" id="mxClose" type="button" aria-label="Fermer">×</button>
+    <h2 id="mxTitle">Son</h2><button class="x" id="mxClose" type="button" aria-label="Close">×</button>
     <div class="mx-row"><label for="mxVol" id="mxVolL">Volume</label><input id="mxVol" type="range" min="0" max="100" step="5"><b id="mxVolV"></b></div>
     <div class="mx-row"><label for="mxTone" id="mxToneL">Aigus</label><input id="mxTone" type="range" min="0" max="100" step="5"><b id="mxToneV"></b></div>
     <div class="mx-row"><label for="mxPitch" id="mxPitchL">Hauteur</label><input id="mxPitch" type="range" min="-12" max="12" step="1"><b id="mxPitchV"></b></div>
     <div class="mx-row mx-btns"><button id="mxMute" type="button" class="chip"></button><button id="mxMusic" type="button" class="chip"></button><button id="mxReset" type="button" class="chip"></button></div>
   </div>
 
-  <div id="oracle" class="pill" hidden><svg><use href="#i-eye" width="100%" height="100%"/></svg><span id="oracleText"></span></div>
+  <div id="oracle" class="pill" role="status" aria-label="Oracle boost" hidden><svg><use href="#i-eye" width="100%" height="100%"/></svg><span id="oracleText"></span></div>
   <div id="status" role="status" aria-live="polite"><span id="statusText"></span></div>
 
-  <div id="history" aria-label="Historique"></div>
+  <div id="history" role="group" aria-label="Recent rounds"></div>
 
   <footer id="hud">
     <div class="stat" id="statBal"><label data-i="balance">SOLDE</label><b id="bal">0</b></div>
     <div class="betbox">
-      <button class="step" id="betDn" type="button" aria-label="-">−</button>
+      <button class="step" id="betDn" type="button" aria-label="Decrease amount">−</button>
       <div class="betval"><label data-i="bet">MISE</label><b id="bet">0</b><small id="betCost"></small></div>
-      <button class="step" id="betUp" type="button" aria-label="+">+</button>
+      <button class="step" id="betUp" type="button" aria-label="Increase amount">+</button>
     </div>
     <button id="spin" type="button" aria-label="Spin">
       <span class="ring"></span>
@@ -63,7 +63,7 @@
 
   <div id="modal" hidden>
     <div class="sheet" role="dialog" aria-modal="true">
-      <button class="x" id="modalClose" type="button" aria-label="Fermer">×</button>
+      <button class="x" id="modalClose" type="button" aria-label="Close">×</button>
       <div id="modalBody"></div>
     </div>
   </div>

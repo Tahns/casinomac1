@@ -42,6 +42,7 @@ label{font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--di
 #status{position:absolute;left:0;right:0;bottom:calc(var(--hud-h,110px) + 8px);display:flex;justify-content:center;pointer-events:none}
 #statusText{padding:7px 18px;border-radius:99px;font:700 clamp(11px,1.6vw,14px) var(--f-title);letter-spacing:.2em;text-transform:uppercase;color:var(--gold-hi);background:linear-gradient(180deg,rgba(20,14,8,.78),rgba(8,6,4,.78));border:1px solid var(--line);text-shadow:0 1px 4px #000;transition:opacity .25s;max-width:92vw;text-align:center}
 #statusText:empty{opacity:0}
+#status{transition:opacity .18s}html.winov #status{opacity:0}   /* pas de pastille d'état par-dessus l'overlay de gain */
 .pill{position:absolute;top:max(60px,calc(env(safe-area-inset-top) + 56px));left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:10px;padding:8px 18px 8px 12px;border-radius:99px;pointer-events:none;
   background:linear-gradient(180deg,#3a2a12,#1a1208);border:1px solid var(--gold);box-shadow:0 0 28px rgba(230,185,74,.45),inset 0 1px 0 rgba(255,241,184,.4);font:900 clamp(13px,2vw,17px) var(--f-title);letter-spacing:.12em;color:var(--gold-hi);white-space:nowrap;animation:pillIn .5s cubic-bezier(.2,1.4,.4,1)}
 .pill[hidden]{display:none}
@@ -130,7 +131,8 @@ label{font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--di
   .toggles{grid-template-columns:auto auto;gap:4px}.tgl.plus,.tgl.buy{grid-column:auto}.tgl{padding:4px 9px;font-size:9px;gap:6px}
   #history{display:none}
   #status{justify-content:flex-start;padding-left:12px;bottom:calc(var(--hud-h,80px) + 4px)}
-  #statusText{max-width:30vw;white-space:normal;text-align:left;font-size:10px;padding:4px 10px;letter-spacing:.12em}
+  #statusText{max-width:max(96px,calc(50vw - 52vh - 16px));white-space:normal;text-align:left;font-size:10px;padding:4px 10px;letter-spacing:.12em}   /* ne dépasse pas la marge libre à gauche du plateau des bonus */
+  html.pilltop #status{bottom:auto;top:58px}   /* Crypte : la légende occupe tout le bas, la pastille passe sous le logo */
   .pill{top:34px;font-size:12px;padding:5px 12px 5px 8px}
 }
 

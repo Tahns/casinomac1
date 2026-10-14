@@ -155,7 +155,7 @@
   }
 
   function buildBackdrop() {
-    var w = G.w, h = G.h, dpr = G.dpr;
+    var w = G.w, h = G.h, dpr = G.dpr; BG = null;
     bg.width = Math.round(w * dpr); bg.height = Math.round(h * dpr);
     var f = bg.getContext('2d'); f.setTransform(dpr, 0, 0, dpr, 0, 0);
     var g = f.createLinearGradient(0, 0, 0, h);
@@ -206,39 +206,50 @@
     f.fillStyle = v; f.fillRect(0, 0, w, h);
   }
 
+  // Dégradés du fond : construits une fois (unités ou géométrie de la mise en page), jamais à chaque image ; l'opacité variable passe par globalAlpha.
+  var UG = {}, BG = null;
+  function unitGrad(key, r0, stops) {   // disque dégradé de rayon 1 centré en (0,0), placé par translate + scale
+    var g = UG[key]; if (g) return g;
+    g = ctx.createRadialGradient(0, 0, r0, 0, 0, 1);
+    stops.forEach(function (st) { g.addColorStop(st[0], st[1]); });
+    return UG[key] = g;
+  }
+  function backdropGrads() {   // dégradés qui dépendent de la taille de l'écran : recréés seulement après buildBackdrop
+    if (BG) return BG;
+    var w = G.w, h = G.h, vg = ctx.createLinearGradient(0, 0, 0, h * 0.6), vv = ctx.createRadialGradient(w / 2, h * 0.5, Math.min(w, h) * 0.35, w / 2, h * 0.5, Math.max(w, h) * 0.8);
+    vg.addColorStop(0, 'rgba(96,34,170,1)'); vg.addColorStop(1, 'rgba(96,34,170,0)');
+    vv.addColorStop(0, 'rgba(18,6,36,0)'); vv.addColorStop(1, 'rgba(34,10,70,.55)');
+    return BG = { vg: vg, vv: vv };
+  }
+  function blob(g, x, y, rx, ry, alpha) {   // remplit le dégradé unité g en (x, y), rayons rx / ry
+    ctx.save(); ctx.translate(x, y); ctx.scale(rx, ry); ctx.globalAlpha = alpha; ctx.fillStyle = g; ctx.fillRect(-1, -1, 2, 2); ctx.restore();
+  }
   function drawBackdrop(dim, img) {
-    var w = G.w, h = G.h, t = G.t;
+    var w = G.w, h = G.h, t = G.t, bgG = backdropGrads();
     ctx.drawImage(bg, 0, 0, w, h);
     if (img && ART[img]) { ctx.globalAlpha = Math.min(1, dim * 1.2 + 0.2); cover(ctx, ART[img], w, h); ctx.globalAlpha = 1; ctx.fillStyle = 'rgba(0,0,0,.4)'; ctx.fillRect(0, 0, w, h); }
     // rayons rotatifs derrière la roue
     A.rays(ctx, G.cx, G.cy, Math.max(w, h) * 0.9, 16, t * 0.05, '#ffd86a', 0.05 * (1 - dim * 0.6));
-    var gl = ctx.createRadialGradient(G.cx, G.cy, G.R * 0.4, G.cx, G.cy, G.R * 1.9);
-    gl.addColorStop(0, 'rgba(255,200,90,' + 0.20 * (1 - dim * 0.5) + ')'); gl.addColorStop(1, 'rgba(255,200,90,0)');
-    ctx.fillStyle = gl; ctx.fillRect(0, 0, w, h);
+    blob(unitGrad('glow', 0.4 / 1.9, [[0, 'rgba(255,200,90,1)'], [1, 'rgba(255,200,90,0)']]), G.cx, G.cy, G.R * 1.9, G.R * 1.9, 0.20 * (1 - dim * 0.5));
     // braseros + yeux des gardiens
     if (G.guard) {
       [-1, 1].forEach(function (sd) {
         var x = G.cx + sd * G.guard.x, fl = 0.85 + Math.sin(t * 9 + sd) * 0.1 + Math.sin(t * 23) * 0.05, bw = G.R * 0.16;
-        var fg = ctx.createRadialGradient(x, G.guard.bowlY - bw * 0.7, 0, x, G.guard.bowlY - bw * 0.7, bw * 2.4 * fl);
-        fg.addColorStop(0, 'rgba(255,240,170,.95)'); fg.addColorStop(0.3, 'rgba(255,170,50,.55)'); fg.addColorStop(1, 'rgba(255,100,20,0)');
-        ctx.fillStyle = fg; ctx.beginPath(); ctx.arc(x, G.guard.bowlY - bw * 0.7, bw * 2.4 * fl, 0, TAU); ctx.fill();
+        blob(unitGrad('brazier', 0, [[0, 'rgba(255,240,170,.95)'], [0.3, 'rgba(255,170,50,.55)'], [1, 'rgba(255,100,20,0)']]), x, G.guard.bowlY - bw * 0.7, bw * 2.4 * fl, bw * 2.4 * fl, 1);
         ctx.fillStyle = 'rgba(255,225,120,.95)';
         ctx.beginPath(); ctx.moveTo(x - bw * 0.5, G.guard.bowlY); ctx.quadraticCurveTo(x - bw * 0.4, G.guard.bowlY - bw * 1.7 * fl, x + Math.sin(t * 7 + sd) * bw * 0.2, G.guard.bowlY - bw * 2.1 * fl);
         ctx.quadraticCurveTo(x + bw * 0.5, G.guard.bowlY - bw * 1.5 * fl, x + bw * 0.5, G.guard.bowlY); ctx.fill();
         var s = G.guard.s, ey = G.guard.top - G.R * 0.22 + s * 0.1;
         [-1, 1].forEach(function (e) {
           var ex = x + e * s * 0.31, p = 0.55 + 0.45 * Math.sin(t * 2.2 + sd);
-          var eg = ctx.createRadialGradient(ex, ey, 0, ex, ey, s * 0.28);
-          eg.addColorStop(0, 'rgba(255,255,255,' + p + ')'); eg.addColorStop(0.3, 'rgba(111,240,221,' + p + ')'); eg.addColorStop(1, 'rgba(24,181,164,0)');
-          ctx.fillStyle = eg; ctx.beginPath(); ctx.arc(ex, ey, s * 0.28, 0, TAU); ctx.fill();
+          blob(unitGrad('eye', 0, [[0, 'rgba(255,255,255,1)'], [0.3, 'rgba(111,240,221,1)'], [1, 'rgba(24,181,164,0)']]), ex, ey, s * 0.28, s * 0.28, p);
         });
       });
     }
     // brume : deux nappes qui dérivent à des profondeurs différentes
     if (!FX.lite) [[0.0, 0.62, 0.9, 26], [0.5, 0.78, 0.7, -42]].forEach(function (fg, n) {
       var fx = ((t * 0.012 * (n ? -1 : 1) + fg[0]) % 1) * w * 1.6 - w * 0.3 + G.par.x * fg[3], fy = h * fg[1];
-      var fgr = ctx.createRadialGradient(fx, fy, 0, fx, fy, w * 0.45); fgr.addColorStop(0, 'rgba(255,214,140,' + 0.07 * fg[2] + ')'); fgr.addColorStop(1, 'rgba(255,214,140,0)');
-      ctx.save(); ctx.translate(0, fy); ctx.scale(1, 0.35); ctx.translate(0, -fy); ctx.fillStyle = fgr; ctx.fillRect(0, 0, w, h * 2.2); ctx.restore();
+      blob(unitGrad('fog', 0, [[0, 'rgba(255,214,140,1)'], [1, 'rgba(255,214,140,0)']]), fx, fy, w * 0.45, w * 0.45 * 0.35, 0.07 * fg[2]);
     });
     // poussière d'or
     ctx.fillStyle = '#ffd86a';
@@ -251,10 +262,8 @@
     // étalonnage « Anubis Unchained » : ombres violettes en haut, lueur turquoise du sol, braises qui montent
     var fk = 0.92 + Math.sin(t * 7.3) * 0.045 + Math.sin(t * 17.1) * 0.03;
     ctx.save(); ctx.globalCompositeOperation = 'screen';
-    var vg1 = ctx.createLinearGradient(0, 0, 0, h * 0.6); vg1.addColorStop(0, 'rgba(96,34,170,' + 0.34 * (1 - dim * 0.4) + ')'); vg1.addColorStop(1, 'rgba(96,34,170,0)');
-    ctx.fillStyle = vg1; ctx.fillRect(0, 0, w, h);
-    var tg = ctx.createRadialGradient(G.cx, h * 1.02, 0, G.cx, h * 1.02, Math.max(w, h) * 0.55); tg.addColorStop(0, 'rgba(32,210,190,' + 0.09 * fk + ')'); tg.addColorStop(1, 'rgba(32,210,190,0)');
-    ctx.fillStyle = tg; ctx.fillRect(0, 0, w, h);
+    ctx.globalAlpha = 0.34 * (1 - dim * 0.4); ctx.fillStyle = bgG.vg; ctx.fillRect(0, 0, w, h * 0.6); ctx.globalAlpha = 1;
+    blob(unitGrad('teal', 0, [[0, 'rgba(32,210,190,1)'], [1, 'rgba(32,210,190,0)']]), G.cx, h * 1.02, Math.max(w, h) * 0.55, Math.max(w, h) * 0.55, 0.09 * fk);
     ctx.restore();
     if (!FX.lite) {
       for (var ej = 0; ej < embers.length; ej++) {
@@ -264,8 +273,7 @@
       }
       ctx.shadowBlur = 0; ctx.globalAlpha = 1;
     }
-    var vv = ctx.createRadialGradient(w / 2, h * 0.5, Math.min(w, h) * 0.35, w / 2, h * 0.5, Math.max(w, h) * 0.8); vv.addColorStop(0, 'rgba(18,6,36,0)'); vv.addColorStop(1, 'rgba(34,10,70,.55)');
-    ctx.fillStyle = vv; ctx.fillRect(0, 0, w, h);
+    ctx.fillStyle = bgG.vv; ctx.fillRect(0, 0, w, h);
     if (dim) { ctx.fillStyle = 'rgba(0,0,0,' + dim + ')'; ctx.fillRect(0, 0, w, h); }
   }
   G.drawBackdrop = drawBackdrop;
@@ -944,7 +952,7 @@
   }
 
   /* ================================ BOUCLE ================================ */
-  var last = 0;
+  var last = 0, winOvOn = false, pillTopOn = false;
   function tick(dt) {
     G.t += dt;
     var sdt = dt * G.speed, i;
@@ -976,9 +984,10 @@
       perf.stage++;
       if (perf.stage === 1 && G.dpr > 1) { G.autoLow = true; layout(); }
       else { FX.lite = true; perf.stage = 2; }
+      if (root.Grade) root.Grade.lite(true);   // le filtre de couleur CSS plein écran est le premier à sauter
     }
   }
-  G.setQuality = function (q) { G.quality = q; G.autoLow = false; perf.stage = 0; FX.lite = (q === 'low'); layout(); };
+  G.setQuality = function (q) { G.quality = q; G.autoLow = false; perf.stage = 0; FX.lite = (q === 'low'); if (root.Grade) root.Grade.lite(q === 'low'); layout(); };
   function frame(ts) {
     root.requestAnimationFrame(frame);   // replanifié d'abord : une exception dans un dessin ne fige plus le jeu
     var rawDt = (ts - last) / 1000 || 0.016;
@@ -1002,6 +1011,8 @@
     if (!ovTop) FX.draw(ctx);
     ctx.restore();
     drawWinOv();
+    var wo = !!G.winOv, pt = !!(sc && sc.pillTop); if (wo !== winOvOn) { winOvOn = wo; document.documentElement.classList.toggle('winov', wo); }
+    if (pt !== pillTopOn) { pillTopOn = pt; document.documentElement.classList.toggle('pilltop', pt); }   // la pastille d'état DOM se masque pendant l'overlay de gain
     if (ovTop) { ctx.save(); ctx.translate(so[0], so[1]); FX.draw(ctx); ctx.restore(); }
     drawEmerge();
     FX.drawFlash(ctx, G.w, G.h);
@@ -1012,7 +1023,11 @@
   G.setFade = function (to, dur) { var from = G.fade; return G.tween(dur, function (u) { G.fade = from + (to - from) * u; }, null); };
   G.setScene = function (s) { G.scene = s; if (s && s.layout) s.layout(); };
   G.layout = layout;
-  G.start = function () { layout(); root.addEventListener('resize', layout); root.requestAnimationFrame(frame); };
+  // redimensionnement / rotation : une seule remise en page quand le flux d'événements s'arrête (déplacer le bord d'une fenêtre en envoie des dizaines,
+  // et chaque layout() reconstruit fond, roue et grain de pierre)
+  var rsT = 0;
+  function onResize() { clearTimeout(rsT); rsT = setTimeout(layout, 90); }
+  G.start = function () { layout(); root.addEventListener('resize', onResize); root.addEventListener('orientationchange', onResize); root.requestAnimationFrame(frame); };
   G.relayout = layout;
 
   /* parallaxe : la caméra bouge un peu avec le pointeur / l'inclinaison du téléphone, sinon un balancement lent */
