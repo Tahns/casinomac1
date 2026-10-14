@@ -315,19 +315,22 @@ label{font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--di
   #statusText{font-size:8px;padding:2px 8px;max-width:34vw;letter-spacing:.08em}
   #hud{grid-template-columns:minmax(0,1fr) minmax(0,1.5fr) auto minmax(0,1.9fr) minmax(0,1fr);gap:3px;padding:8px 13px calc(2px + var(--safe-b))}
   #hud::before{border-width:6px 12px;border-image-width:6px 12px}
-  .stat,.betbox{min-width:0;padding:8px 5px 3px}.stat label{font-size:5px;letter-spacing:.12em}.stat b{font-size:11px}
+  .stat,.betbox{min-width:0;padding:8px 5px 3px}.stat label{font-size:8px;letter-spacing:.04em}.stat b{font-size:11px}
   .betbox{padding:9px 9px 3px;gap:2px}.betbox .step{width:17px;height:17px;font-size:12px;margin-top:0}.betval b{font-size:12px}
-  .betval label{font-size:5px}
-  #spin{width:42px!important}#spin .spin-t{font-size:5px;bottom:22%}#spin .ring{display:none}
+  .betval label{font-size:8px;letter-spacing:.04em}
+  #spin{width:46px!important}#spin .spin-t{font-size:8px;bottom:20%;letter-spacing:0}#spin .ring{display:none}
   .toggles{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:2px 2px}.tgl.plus,.tgl.buy{grid-column:1/-1}
-  .tgl{height:15px;font-size:6.5px;letter-spacing:.06em;border-width:0 9px;border-image-width:0 9px;gap:0}.tgl i{display:none}
+  .tgl{height:16px;font-size:8px;letter-spacing:.03em;border-width:0 9px;border-image-width:0 9px;gap:0}.tgl i{display:none}
   .autoCount{font-size:9px}
   .sheet{border-width:10px 16px;border-image-width:10px 16px;max-height:100%;padding:6px 6px 8px}
   .sheet h2{font-size:12px}.sheet h3{margin:10px 0 4px;font-size:9px}.sheet p,.opt,.sheet table{font-size:10px;line-height:1.35}
+  .sheet p{margin:3px 0}.sheet p.sub{padding-right:34px}   /* [195] le texte d'introduction ne passe pas sous le bouton × */
+  .opt{padding:3px 0;gap:2px 8px}.acts{margin-top:6px}
+  #modalBody:has(#apGo)>p.sub:first-of-type{display:none}   /* AUTO : seule l'explication générale est masquée, les réglages et « Démarrer » restent */   /* panneau AUTO compact : « Démarrer » visible sans défilement */
   .x{width:30px;height:30px;font-size:16px}
   :root{--tap:28px}
-  .buyGrid{grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;margin-top:6px}.buyCard{padding:12px 4px 14px;gap:2px}.buyCard canvas{display:none}.buyCard h4{font-size:7px;min-height:18px}.buyCard small{display:none}.buyCard .pr{font-size:10px}.buyCard .go{min-height:20px;font-size:7px;padding:0 6px}
-  .chips button,.chip{min-height:30px;padding:0 9px;font-size:9px}
+  .buyGrid{grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;margin-top:6px}.buyCard{padding:12px 4px 14px;gap:2px}.buyCard canvas{display:none}.buyCard h4{font-size:8px;min-height:20px}.buyCard small{display:none}.buyCard .pr{font-size:10px}.buyCard .go{min-height:20px;font-size:8px;padding:0 6px}
+  .chips button,.chip{min-height:24px;padding:0 8px;font-size:9px}.btn-go{min-height:24px;padding:0 14px;font-size:9px}
   #mixer{top:40px;width:min(380px,calc(100vw - 16px));max-height:calc(100dvh - 46px)}
   #mixer h2{min-height:22px;font-size:12px}.mx-row{min-height:24px;font-size:10px}.mx-row input[type=range]{height:24px}.mx-btns{padding-top:2px}.mx-chips .chip{font-size:9px}
   .kv{grid-template-columns:repeat(2,minmax(0,1fr));gap:4px}.kv div{padding:4px 8px}.kv b{font-size:12px}

@@ -4,6 +4,7 @@ var http = require('http'), fs = require('fs'), path = require('path');
 var pw = require(process.env.PLAYWRIGHT_CORE || 'playwright-core'), root = path.join(__dirname, '..');
 var MIME = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.woff2': 'font/woff2' };
 var SIZES = [[1024, 576], [400, 225], [800, 450], [425, 812], [360, 640], [390, 844], [768, 1024], [844, 390], [667, 375], [740, 360], [1024, 768], [1440, 810], [1920, 1080], [2560, 1080]];
+if (process.env.LAYOUT_ONLY) SIZES = SIZES.filter(function (z) { return process.env.LAYOUT_ONLY.split(',').indexOf(z[0] + 'x' + z[1]) >= 0; });   // ex. LAYOUT_ONLY=400x225
 var server = http.createServer(function (req, res) {
   var f = path.join(root, decodeURIComponent(req.url.split('?')[0]).replace(/^\/$/, '/index.html'));
   if (f.indexOf(root) !== 0 || !fs.existsSync(f)) { res.writeHead(404); return res.end(); }
@@ -39,6 +40,34 @@ var server = http.createServer(function (req, res) {
     var betOk = await p.evaluate(`(async function(){ G.setCurrency('EUR', false); G.S.busy=false; G.S.bi=2; G.S.mode='std'; G.S.balance=1000; G.updateHud(); var b0=G.S.balance; G.turbo=true; document.getElementById('spin').click(); await new Promise(function(r){setTimeout(r,150)}); var ok=G.S.balance<b0; return ok; })()`);
     if (process.env.SHOTS) { await p.waitForTimeout(1200); await p.screenshot({ path: path.join(process.env.SHOTS, w + 'x' + h + '.png') }); }
     var pr = [];
+    // [195] fenêtre flottante 400×225 : polices du HUD >= 8 px, « Démarrer » (autoplay) visible sans défilement, texte d'introduction de l'achat hors du bouton ×
+    // (aussi dans les langues aux libellés longs : rien ne déborde de sa plaque)
+    var tinyProblems = [];
+    if (tiny) {
+      var MINPX = 8;
+      var tinyChk = `(async function(){ var bad=[], lang0=I18N.lang();
+        function leaves(){ var o=[]; document.querySelectorAll('#hud *, #top *, #status *').forEach(function(e){ if(!e.children.length && e.textContent.trim() && e.offsetParent!==null){ var r=e.getBoundingClientRect(); if(r.width>0&&r.height>0) o.push(e); } }); return o; }
+        var LANGS=['en','fr','de','ru','vi','fi','pt','tr','id','pl','es'];
+        for (var li=0; li<LANGS.length; li++) { I18N.setLang(LANGS[li]); G.applyLang(); await new Promise(function(r){setTimeout(r,60)});
+          leaves().forEach(function(e){ var z=parseFloat(getComputedStyle(e).zoom)||1, px=parseFloat(getComputedStyle(e).fontSize)*z; if(px<${MINPX}-0.01) bad.push(LANGS[li]+' police '+px.toFixed(1)+'px : '+(e.id||e.className||e.tagName)+' « '+e.textContent.trim().slice(0,12)+' »'); });
+          document.querySelectorAll('#hud label, .tgl, #spin .spin-t').forEach(function(e){ if(e.offsetParent===null) return; var cs=getComputedStyle(e), rg=document.createRange(); rg.selectNodeContents(e); var t=rg.getBoundingClientRect(), bx=e.getBoundingClientRect(), bl=parseFloat(cs.borderLeftWidth)||0, br=parseFloat(cs.borderRightWidth)||0; if(t.left<bx.left+bl-1 || t.right>bx.right-br+1) bad.push(LANGS[li]+' libellé qui déborde de sa plaque : '+e.textContent.trim().slice(0,14)); });
+        }
+        I18N.setLang('en'); G.applyLang(); G.S.busy=false; G.S.balance=1000; G.updateHud();
+        for (var ai=0; ai<LANGS.length; ai++) { I18N.setLang(LANGS[ai]); G.applyLang(); G.S.busy=false; G.S.balance=1000; G.updateHud();
+          document.getElementById('btnAuto').click(); await new Promise(function(r){setTimeout(r,350)});
+          var go=document.getElementById('apGo').getBoundingClientRect(), sh=document.querySelector('.sheet'), sr=sh.getBoundingClientRect();
+          if (go.bottom>innerHeight-1 || go.bottom>sr.bottom-8 || go.top<0 || sh.scrollTop!==0 || sh.scrollHeight>sh.clientHeight+1) bad.push(LANGS[ai]+' : « Démarrer » pas visible sans défilement (bas '+Math.round(go.bottom)+' / '+innerHeight+', fenêtre '+Math.round(sr.bottom)+', contenu '+sh.scrollHeight+' > '+sh.clientHeight+')');
+          document.querySelectorAll('#modalBody button').forEach(function(b){ if(b.offsetParent!==null){ var q=b.getBoundingClientRect(); if(q.bottom>innerHeight||q.right>innerWidth) bad.push(LANGS[ai]+' : bouton du panneau AUTO hors écran : '+b.textContent); } });
+          document.getElementById('modalClose').click(); await new Promise(function(r){setTimeout(r,350)}); }
+        I18N.setLang('en'); G.applyLang();
+        document.getElementById('btnBuy').click(); await new Promise(function(r){setTimeout(r,400)});
+        var x=document.getElementById('modalClose').getBoundingClientRect();
+        document.querySelectorAll('#modalBody h2, #modalBody p.sub').forEach(function(e){ var range=document.createRange(); range.selectNodeContents(e); Array.prototype.forEach.call(range.getClientRects(),function(q){ if(q.width>0 && q.right>x.left+1 && q.left<x.right && q.bottom>x.top+1 && q.top<x.bottom-1) bad.push('texte sous le bouton × : '+e.textContent.slice(0,24)); }); });
+        document.getElementById('modalClose').click(); await new Promise(function(r){setTimeout(r,300)});
+        return bad; })()`;
+      tinyProblems = await p.evaluate(tinyChk).catch(function (e) { return ['exception ' + e.message]; });
+    }
+    if (tinyProblems.length) pr.push('popout S : ' + tinyProblems.slice(0, 6).join(' | '));
     if (ctl.length) pr.push('contrôles : ' + ctl.join(' | '));
     if (!betOk) pr.push('la mise ne part pas');
     if (scr.sh || scr.sw || scr.st || scr.sx) pr.push('la page défile');
