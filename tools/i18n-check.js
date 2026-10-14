@@ -6,7 +6,7 @@ function ok(c, m) { if (!c) { fails++; console.log('ÉCHEC  ' + m); } else conso
 var sandbox = { window: {}, document: { documentElement: {}, querySelectorAll: function () { return []; } } };
 vm.createContext(sandbox);
 // i18n.js expose window.I18N ; on récupère les deux dictionnaires en les interrogeant
-vm.runInContext(fs.readFileSync(path.join(root, 'js/i18n.js'), 'utf8').replace('root.I18N = {', 'root.I18N = { _D: D,'), sandbox);
+vm.runInContext(fs.readFileSync(path.join(root, 'js/i18n.js'), 'utf8').replace('root.I18N = {', 'root.I18N = { _D: D, _B: B,'), sandbox);
 sandbox.root = sandbox.window;
 var D = sandbox.window.I18N && sandbox.window.I18N._D;
 ok(!!D && D.fr && D.en, 'dictionnaires fr et en chargés');
@@ -55,6 +55,15 @@ var weighMax = Math.max.apply(null, [].concat.apply([], Object.keys(M.WEIGH_PROF
   ok(rulesTxt.indexOf('×' + tierMax) >= 0 && rulesTxt.indexOf('(' + M.HAND_MIN_N + ')') >= 0 && bandXs.every(function (x) { return rulesTxt.indexOf('×' + x) >= 0; }), l + ' : les règles de la Fureur citent palier max ×' + tierMax + ', plus petit nombre (' + M.HAND_MIN_N + ') et les bandes ×' + bandXs.join(', ×'));
   ok(M.HAND_SEGS.every(function (sg) { return !sg.b || d.bandName[sg.b]; }) && ['turq', 'gold', 'ruby'].every(function (c) { return d.handColorName[c]; }), l + ' : noms de bandes et de couleurs présents');
 });
+// blocs séparés (règles détaillées, replay) : FR et EN ont les mêmes clés ; avertissement général complet ; aucune clé vide ; repli sur l'anglais
+var B = sandbox.window.I18N._B, bd = [];
+Object.keys(B).forEach(function (name) { walk(B[name].fr, B[name].en, name, bd); walk(B[name].en, B[name].fr, name, bd); });
+ok(bd.length === 0, 'blocs rules / replay : mêmes clés en FR et EN' + (bd.length ? ' : ' + bd.slice(0, 4).join(' | ') : ''));
+['en', 'fr'].forEach(function (l) {
+  var d = B.rules[l].disc;
+  ok(['TM and © 2026 Engine', 'Remote Game Server', 'reload the game', 'internet connection', 'expected return', 'Malfunction voids'].every(function (x) { return B.rules.en.disc.indexOf(x) >= 0; }) && /2026 Engine/.test(d), l + ' : l\'avertissement général est complet');
+});
+ok(!/paytable|pay table/i.test(JSON.stringify(B)), 'aucun « paytable » dans les nouveaux textes (mode social)');
 var mainSrc = fs.readFileSync(path.join(root, 'js/main.js'), 'utf8');
 
 // seuils d'animation de gain : les règles (FR/EN) doivent citer les mêmes seuils que G.WIN_TIERS et les 4 noms demandés doivent exister

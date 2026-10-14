@@ -1,0 +1,87 @@
+/* ANUBIS UNCHAINED — règles détaillées (fenêtre Infos) : RTP et gain max par mode, formation des gains, valeurs des bonus,
+ * relances / re-déclenchements, guide des boutons et avertissement général. Les textes viennent du bloc « rules » de i18n.js
+ * (repli sur l'anglais), tous les chiffres de math.js (valeurs, chances) et de js/stats.js (RTP exacts, généré par tools/gen-stats.js). */
+(function (root) {
+  'use strict';
+  var M = root.AnubisMath;
+  function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+  function fr() { return root.I18N.lang() === 'fr'; }
+  function num(x, d) {   // nombre à la locale de la langue : 1 234,5 (fr) / 1,234.5 (en), au plus d décimales
+    return Number(x).toLocaleString(fr() ? 'fr-FR' : 'en-US', { minimumFractionDigits: 0, maximumFractionDigits: d == null ? 2 : d }).replace(/ /g, ' ');
+  }
+  function pct(x, d) { return num(x, d == null ? 1 : d) + (fr() ? ' %' : '%'); }
+  function fill(s, v) { return String(s).replace(/\{(\w+)\}/g, function (m, k) { return v[k] != null ? v[k] : m; }); }
+  function sum(tab) { var s = 0; tab.forEach(function (t) { s += t[1]; }); return s; }
+  function uniq(a) { return a.filter(function (x, i) { return a.indexOf(x) === i; }); }
+  function sortNum(a) { return a.slice().sort(function (x, y) { return x - y; }); }
+  function list(a) { return a.map(function (x) { return num(x); }).join(' / '); }
+  function table(head, rows, cls) {
+    return '<div class="tw"><table' + (cls ? ' class="' + cls + '"' : '') + '><tr>' + head.map(function (h) { return '<th>' + h + '</th>'; }).join('') + '</tr>' +
+      rows.map(function (r) { return '<tr>' + r.map(function (c, i) { return '<td' + (i ? ' class="n"' : '') + '>' + c + '</td>'; }).join('') + '</tr>'; }).join('') + '</table></div>';
+  }
+  function p(t) { return '<p>' + t + '</p>'; }
+  function h3(t) { return '<h3>' + esc(t) + '</h3>'; }
+
+  function html() {
+    var R = root.I18N.block('rules'), T = root.I18N.t(), S = root.HOA_STATS || {}, G = root.G, k;
+    var KN = function (id) { return String(T.kinds[id]).replace('\n', ' '); };
+    var maxW = num(M.MAX_WIN, 0), plusCost = M.MODES.plus.cost;
+    var numKinds = Object.keys(M.KINDS).filter(function (id) { return M.KINDS[id].mult > 0; }).map(function (id) { return M.KINDS[id].mult; });
+    var segs = M.HAND_SEGS, bandTxt = [], dbl = segs.filter(function (s) { return s.d != null; }).length;
+    segs.forEach(function (s) { if (s.b) { var t = T.bandName[s.b] + ' ×' + s.x; if (bandTxt.indexOf(t) < 0) bandTxt.push(t); } });
+    var v = {
+      p: num(M.MODES.std.oracle * 100, 0), pp: num(M.MODES.plus.oracle * 100, 0), c: num(plusCost), m: maxW, h: num(M.HAND_UPGRADE * 100, 0), s: num(M.SECRET_UPGRADE * 100, 0),
+      n: M.N, one: M.KINDS.scarab.count, nums: list(sortNum(numKinds)), chain: M.MAX_CHAIN || 6,
+      kinds: uniq(M.ORACLE_KIND_W.map(function (t) { return t[0]; })).map(KN).join(', '),
+      rows: M.SCARAB_ROWS, picks: M.VAULT_MAX_PICKS, fin: M.VAULT_FINISH || 5,
+      tier: Math.pow(2, M.HAND_MAX_CHAIN), min: M.HAND_MIN_N, segs: segs.length, dbl: dbl, dblc: dbl / M.HAND_COLORS.length,
+      bands: bandTxt.join(', '), spin: T.spin, stop: T.stop, auto: T.auto, turbo: T.turbo, buy: T.buyBtn, plus: T.oraclePlus,
+      autos: (G && G.AUTO_STEPS ? G.AUTO_STEPS : [10, 25, 50, 100, Infinity]).filter(function (x) { return x > 0; }).map(function (x) { return isFinite(x) ? x : '∞'; }).join(', ')
+    };
+    var wheelNums = sortNum(uniq(segs.filter(function (s) { return s.n; }).map(function (s) { return s.n; })));
+    v.hnums = list(wheelNums);
+    var f = function (s) { return fill(s, v); };
+    var out = '';
+
+    /* modes : coût, RTP, gain max */
+    var rtp = function (x) { return x == null ? '—' : Number(x).toLocaleString(fr() ? 'fr-FR' : 'en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + (fr() ? '\u00a0%' : '%'); };
+    var buyNames = { scarab: T.kindsLong.scarab, weigh: T.kindsLong.weigh, vault: T.kindsLong.vault, hand: T.kindsLong.hand };
+    var rowsM = [
+      ['<b>' + esc(R.modeStd) + '</b><small>' + esc(f(R.modeStdD)) + '</small>', '×' + num(M.MODES.std.cost), rtp(S.std && S.std.rtp), maxW + '×'],
+      ['<b>' + esc(R.modePlus) + '</b><small>' + esc(f(R.modePlusD)) + '</small>', '×' + num(plusCost), rtp(S.plus && S.plus.rtp), maxW + '×']
+    ];
+    ['vault', 'scarab', 'weigh', 'hand'].forEach(function (id) {
+      rowsM.push(['<b>' + esc(buyNames[id]) + '</b><small>' + esc(R['buy' + id.charAt(0).toUpperCase() + id.slice(1) + 'D']) + '</small>', '×' + num(M.BUY[id].price), rtp(S.buy && S.buy[id] && S.buy[id].rtp), maxW + '×']);
+    });
+    out += h3(R.modesH) + table([R.colMode, R.colCost, R.colRtp, R.colMax], rowsM, 'modes') + p(f(R.modesNote));
+
+    /* formation des gains */
+    out += h3(R.howH) + R.how.map(function (t) { return p('• ' + esc(f(t))); }).join('');
+    var tb = M.ORACLE_BOOST, sn = sum(tb.num), sb = sum(tb.bonus), boosts = uniq(tb.num.map(function (t) { return t[0]; }).concat(tb.bonus.map(function (t) { return t[0]; })));
+    boosts = sortNum(boosts);
+    var chance = function (tab, b) { var w = 0; tab.forEach(function (t) { if (t[0] === b) w = t[1]; }); return w ? pct(w / sum(tab) * 100, 1) : '—'; };
+    out += h3(R.oracleH) + p(esc(R.oracleNote)) + table([R.colBoost, R.colNumCase, R.colBonusCase], boosts.map(function (b) { return ['×' + num(b), chance(tb.num, b), chance(tb.bonus, b)]; }));
+
+    /* bonus : déclenchement et valeurs */
+    out += h3(R.bonusH);
+    var sv = M.SCARAB_PROFILES.std, binom = [1, 8, 28, 56, 70, 56, 28, 8, 1];
+    out += '<h4 class="rh">' + esc(R.scarabH) + '</h4>' + p(esc(f(R.scarabP))) +
+      table(sv.map(function (x, i) { return '#' + (i + 1); }), [sv.map(function (x) { return '×' + num(x); }), binom.map(function (b) { return pct(b / 256 * 100, 1); })]);
+    var wp = M.WEIGH_PROFILES.std, ws = sum(wp);
+    out += '<h4 class="rh">' + esc(R.weighH) + '</h4>' + p(esc(f(R.weighP))) + table([R.colValue, R.colChance], wp.map(function (t) { return ['×' + num(t[0][0]) + ' / ×' + num(t[0][1]), pct(t[1] / ws * 100, 1)]; }));
+    var vp = M.VAULT_PROFILES.std, vw = sum(vp.tokens) + vp.curse;
+    out += '<h4 class="rh">' + esc(R.vaultH) + '</h4>' + p(esc(f(R.vaultP))) + table([R.colValue, R.colChance], vp.tokens.map(function (t) {
+      var lab = t[0] === 'scepter' ? R.tokScepter : t[0] === 'ankh' ? R.tokAnkh : '+' + num(t[0]) + '×';
+      return [esc(lab), pct(t[1] / vw * 100, 2)];
+    }).concat([[esc(R.tokCurse), pct(vp.curse / vw * 100, 1)]]));
+    out += '<h4 class="rh">' + esc(R.handH) + '</h4>' + p(esc(f(R.handP)));
+    out += '<h4 class="rh">' + esc(R.cryptH) + '</h4>' + p(esc(f(R.cryptP)));
+
+    /* relances et re-déclenchements, boutons, avertissement */
+    out += h3(R.retrigH) + R.retrig.map(function (t) { return p('• ' + esc(f(t))); }).join('');
+    out += h3(R.btnH) + '<dl class="guide">' + R.btn.map(function (b) { return '<dt>' + esc(f(b[0])) + '</dt><dd>' + esc(f(b[1])) + '</dd>'; }).join('') + '</dl>';
+    out += h3(R.discH) + '<p class="disc">' + esc(R.disc) + '</p>';
+    return out;
+  }
+  root.Rules = { html: html };
+})(window);

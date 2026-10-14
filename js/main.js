@@ -14,6 +14,7 @@
   var r2 = G.r2;
   var AUTO_STEPS = [0, 10, 25, 50, 100, Infinity];
   var SAVE_KEY = 'hoa_save_v1';
+  var REPLAY = !!(root.Replay && root.Replay.active);   // mode replay (js/replay.js) : aucune sauvegarde lue ni écrite, pas d'écran d'accueil
 
   var S = { pending: 0, balance: START_BAL, bi: BET_DEFAULT, cur: '', curSet: false, lastWin: 0, autoIdx: 0, auto: 0, stopOnBonus: false, busy: false, hist: [], reduced: false, mode: 'std', buyOn: true, limit: 0, quality: 'auto', limitHit: false };
   var SESS = { start: Date.now(), spins: 0, wag: 0, won: 0, lastCheck: Date.now() };
@@ -21,6 +22,7 @@
   var rng = M.cryptoRng();
 
   function load() {
+    if (REPLAY) return;
     try {
       var d = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null');
       if (d) {
@@ -55,6 +57,7 @@
     G.currency = S.cur;
   }
   function save() {
+    if (REPLAY) return;
     try {
       localStorage.setItem(SAVE_KEY, JSON.stringify({ v: SAVE_VER, cur: S.curSet ? S.cur : '', pending: S.pending, balance: S.balance, bi: S.bi, lang: I18N.lang(), muted: Sfx.isMuted(), pitch: Sfx.getPitch(), vol: Sfx.getVolume(), tone: Sfx.getTone(), music: Sfx.isMusic(), turbo: G.turbo, ultra: !!G.ultra, sobV2: S.stopOnBonus, reduced: S.reduced, hist: S.hist, mode: S.mode, buyOn: S.buyOn, limit: S.limit, quality: S.quality }));
     } catch (e) {}
@@ -377,6 +380,8 @@
       '<div><label>' + T.hitRate + '</label><b>' + STATS.hit + '%</b></div><div><label>' + T.bonusFreq + '</label><b>1 / ' + STATS.bonusEvery + '</b></div><div><label>' + T.volat + '</label><b>' + T.volatV + '</b></div></div>' +
       '<h3>' + T.infoTitle.split('&')[0].trim() + '</h3>' + T.rules.map(function (r) { return '<p>• ' + r + '</p>'; }).join('') + '<p>• ' + T.rulesPlus + '</p>' + (S.buyOn ? '<p>• ' + T.buyTitle + ' : ' + BUY_ORDER.map(function (k) { return (k === 'hand' ? T.kindsLong.hand : T.kindsLong[k]) + ' ×' + M.BUY[k].price; }).join(' · ') + '</p>' : '') +
       '<h3>' + T.tableCols[0] + '</h3><table><tr><th>' + T.tableCols[0] + '</th><th>' + T.tableCols[1] + '</th><th>' + T.tableCols[2] + '</th></tr>' + rows + '</table>' +
+      (root.Rules ? root.Rules.html() : '') +   // js/rules.js : modes (RTP, gain max), valeurs des bonus, relances, guide des boutons, avertissement
+
       '<h3>' + T.session + '</h3>' +
       '<div class="kv"><div><label>' + T.sessTime + '</label><b>' + Math.round((Date.now() - SESS.start) / 60000) + ' min</b></div><div><label>' + T.sessSpins + '</label><b>' + SESS.spins + '</b></div>' +
       '<div><label>' + T.sessWag + '</label><b>' + G.money(SESS.wag) + '</b></div><div><label>' + T.sessWon + '</label><b>' + G.money(SESS.won) + '</b></div><div><label>' + T.sessNet + '</label><b>' + G.money(net(), true) + '</b></div></div>' +
@@ -436,13 +441,13 @@
     setTimeout(startGame, 3000); // filet de sécurité : ne jamais bloquer le jeu sur une police
   } else startGame();
   // utilitaires de test (?debug)
-  G.S = S; G.play = play; G.updateHud = updateHud; G.setWin = setWin; G.BETS = BETS; G.setCurrency = setCurrency;
+  G.AUTO_STEPS = AUTO_STEPS; G.S = S; G.play = play; G.updateHud = updateHud; G.setWin = setWin; G.BETS = BETS; G.setCurrency = setCurrency;
   if (/[?&]debug/.test(location.search)) { G.debug = true; }
 
   /* ---------- écran d'accueil : ambiance + déverrouillage de l'audio ---------- */
   (function () {
     var sp = $('splash');
-    if (!sp || navigator.webdriver || /[?&](debug|nosplash)/.test(location.search)) { if (sp) sp.remove(); return; }
+    if (!sp || REPLAY || navigator.webdriver || /[?&](debug|nosplash)/.test(location.search)) { if (sp) sp.remove(); return; }
     var T = I18N.t(), port = root.innerHeight > root.innerWidth, src = (root.HOA_IMG || {})[port ? 'splashp' : 'splash'];
     if (src) sp.style.backgroundImage = 'url(' + src + ')';
     $('spSub').textContent = T.splashSub; $('spBtn').textContent = T.splashEnter; $('spDemo').textContent = T.splashDemo;

@@ -56,7 +56,7 @@
     ctx.globalAlpha = 1;
   }
 
-  function quick() { return G.turbo || (G.S && G.S.auto > 0); }   // turbo / auto-play : aucune attente du joueur
+  function quick() { return G.turbo || G.replay || (G.S && G.S.auto > 0); }   // G.replay : mode replay, le tour se joue seul   // turbo / auto-play : aucune attente du joueur
 
   // codes visuels communs aux menus dessinés (mêmes valeurs que css/style.css : --edge, --pnl, --go)
   var UI = { r: 14, edge: '#b8861e', pnl: ['#221a10', '#100c08'], pnlHi: ['#3a2c16', '#171109'], go: ['#fff1b8', '#e6b94a', '#c9962a'], goInk: '#140a00', goRim: '#fff1b8' };
@@ -629,7 +629,7 @@
       await boostIntro(S, sp);
       await G.sleep(q ? 0.5 : 1.6);
       // 1. choix de la plume ou du coeur (les multiplicateurs sont cachés)
-      pick = q ? (Math.random() < 0.5 ? 0 : 1) : await choose();
+      pick = data.fixedPick != null ? data.fixedPick : q ? (Math.random() < 0.5 ? 0 : 1) : await choose();   // fixedPick : choix enregistré (replay)
       choosing = false; commit(pick);
       if (q) { Sfx.shield(); var pq = platePt(pick); FX.ring(pq.x, pq.y, '#6ff0dd', g.pan * 1.6, 0.6); }
       G.tween(0.4, function (u) { cardA = 1 - u; }, null);
