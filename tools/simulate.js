@@ -1,4 +1,4 @@
-// node tools/simulate.js [nbTours=1000 (plafonné à 1000, HOA_BIG=1 pour lever)] [seed=1]
+// node tools/simulate.js [nbTours=1000 (plafonné à 1000, ANUBIS_BIG=1 pour lever)] [seed=1]
 // Mesure RTP, taux de gain, volatilité et répartition par case. Sert à valider/tuner js/math.js.
 var M = require('../js/math.js');
 var n = require('./cap')(parseInt(process.argv[2] || '1000', 10));
@@ -6,6 +6,7 @@ var seed = parseInt(process.argv[3] || '1', 10);
 var mode = process.argv[4] || 'std';
 var rng = M.mulberry32(seed);
 var BUYK = mode.indexOf('buy-') === 0 ? mode.slice(4) : null;
+if (BUYK === 'fury') BUYK = 'hand';   // identifiant interne conservé (Fureur d'Anubis)
 var COST = BUYK ? M.BUY[BUYK].price : (M.MODES[mode] || M.MODES.std).cost;
 
 var sum = 0, sum2 = 0, hits = 0, maxWin = 0, capped = 0;

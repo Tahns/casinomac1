@@ -196,5 +196,10 @@ Object.keys(M.BUY).forEach(function (k) {
   var nb = cap(1000000), v = rtp(function () { return M.playBuy(r1, k); }, M.BUY[k].price, nb);
   ok(Math.abs(v - 96) < tol(EXR.buy[k].sdRel, nb), 'RTP achat ' + k + ' simulé ≈ ' + v.toFixed(2) + ' % (test de fumée, tolérance ± ' + tol(EXR.buy[k].sdRel, nb).toFixed(0) + ')');
 });
+// 6. échelle entière Stake : chaque gain d'un tour (et chaque coût) doit être un multiple exact de 0,01 (≤ 1000 tours par mode)
+var rI = M.mulberry32(77), inexact = 0, nI = cap(1000), sumInt = 0, sumFl = 0;
+['std', 'plus'].forEach(function (m) { for (var i = 0; i < nI; i++) { var rr = M.playRound(rI, m); rr.spins.forEach(function (sp) { if (!M.isExact(sp.pay)) inexact++; }); if (!M.isExact(rr.total)) inexact++; sumInt += M.toInt(rr.total); sumFl += rr.total; } });
+Object.keys(M.BUY).forEach(function (k) { if (!M.isExact(M.BUY[k].price)) inexact++; for (var i = 0; i < nI; i++) { var rr = M.playBuy(rI, k); if (!M.isExact(rr.total)) inexact++; sumInt += M.toInt(rr.total); sumFl += rr.total; } });
+ok(M.SCALE === 100 && inexact === 0 && Math.abs(sumInt / M.SCALE - sumFl) < 1e-6 * Math.max(1, sumFl), 'échelle entière ×' + M.SCALE + ' : tous les gains de ' + nI + ' tours par mode sont des multiples exacts de 0,01 (non exacts : ' + inexact + ')');
 console.log(fails ? '\n' + fails + ' échec(s)' : '\ntout est bon');
 process.exit(fails ? 1 : 0);

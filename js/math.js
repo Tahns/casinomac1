@@ -307,6 +307,15 @@
     return { drops: drops, steps: r.steps, tops: r.tops, fixed: r.fixed, cols: r.cols, sum: r.sum, capped: r.capped, total: r.total, profile: 'crypt' };
   }
 
+  /* ---------- Échelle entière (format Stake : payoutMultiplier entier) ---------- */
+  // Stake exige des multiplicateurs entiers à échelle fixe (exemple de la doc : 1150 = 11,5×). On choisit 100 = 1× (un centième de mise).
+  // Toutes les valeurs du jeu (0,25 ; 0,5 ; 0,65 ; 0,79 ; moyenne des 5 colonnes de la Crypte = somme/5 ; boosts et paliers entiers) sont des
+  // multiples de 0,01 : la conversion est EXACTE, sans écart de RTP. isExact() le vérifie ; seule la somme en flottant demande un arrondi.
+  var SCALE = 100;
+  function toInt(x) { return Math.round(x * SCALE); }
+  function fromInt(n) { return n / SCALE; }
+  function isExact(x) { return Math.abs(x * SCALE - Math.round(x * SCALE)) < 1e-6 * Math.max(1, Math.abs(x * SCALE)); }
+
   /* ---------- Un tour complet ---------- */
   function rollOracle(rng, chance) {
     if (rng() >= chance) return null;
@@ -392,6 +401,7 @@
     WEIGH_PAIRS: WEIGH_PAIRS, weighGain: weighGain, VAULT_TILES: VAULT_TILES, VAULT_MAX_PICKS: VAULT_MAX_PICKS,
     CRYPT_COLS: CRYPT_COLS, CRYPT_CAP: CRYPT_CAP, CRYPT_BLOCKS: CRYPT_BLOCKS, CRYPT_START: CRYPT_START, CRYPT_STACK: CRYPT_STACK, CRYPT_TYPES: CRYPT_TYPES, CRYPT_VALUES: CRYPT_VALUES, SECRET_UPGRADE: SECRET_UPGRADE, cryptReplay: cryptReplay,
     HAND_SEGS: HAND_SEGS, HAND_COLORS: HAND_COLORS, HAND_MAX_CHAIN: HAND_MAX_CHAIN, HAND_MIN_N: HAND_MIN_N, handOptions: handOptions, handRecalc: handRecalc, HAND_UPGRADE: HAND_UPGRADE, ORACLE_CHANCE: ORACLE_CHANCE,
+    SCALE: SCALE, toInt: toInt, fromInt: fromInt, isExact: isExact,
     mulberry32: mulberry32, cryptoRng: cryptoRng,
     playRound: playRound, playSpin: playSpin,
     _bonus: { scarab: scarab, weigh: weigh, vault: vault, hand: hand, crypt: crypt }

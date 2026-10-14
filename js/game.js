@@ -23,9 +23,10 @@
   // familles de police : une seule source pour tout le canvas (miroir des variables CSS --f-title / --f-num / --f-text)
   // titres et lettrage : capitales romaines gravées (Cinzel) ; chiffres : Philosopher gras, chiffres alignés et lisibles en petit
   // (le « 1 » de Cinzel ressemble à un I) ; textes courants : Philosopher
-  G.TITLE = 'Cinzel, "Trajan Pro", Georgia, serif';
-  G.NUM = 'Philosopher, Cinzel, Georgia, serif';
-  G.TEXT = 'Philosopher, Georgia, serif';
+  G.TITLE0 = 'Cinzel, "Trajan Pro", Georgia, serif'; G.NUM0 = 'Philosopher, Cinzel, Georgia, serif';   // bases ; I18N.setLang y ajoute les polices de repli (ar, hi, ja, ko, zh)
+  G.TITLE = G.TITLE0;
+  G.NUM = G.NUM0;
+  G.TEXT0 = 'Philosopher, Georgia, serif'; G.TEXT = G.TEXT0;
   G.NUM_K = 1.12; // Philosopher a une hauteur de chiffre plus faible qu’Oswald : compensation pour garder les chiffres lisibles en petit
   G.FONT_LOADS = ['600 20px Cinzel', '700 20px Cinzel', '900 20px Cinzel', '400 20px Philosopher', '700 20px Philosopher'];
   var isNum = G.isNum = function (s) { return /^[+×x\d\s.,\u00a0\u202f\u20ac$\-]+$/.test(String(s)) && /\d/.test(String(s)); };
@@ -34,7 +35,7 @@
     var num = !o.family && isNum(s);
     ctx.font = (num ? 700 : (o.weight || 800)) + ' ' + (o.size || 20) * (num ? G.NUM_K : 1) + 'px ' + (num ? G.NUM : (o.family || G.TITLE));
     ctx.textAlign = o.align || 'center'; ctx.textBaseline = o.base || 'middle';
-    if (o.spacing && ctx.letterSpacing !== undefined) ctx.letterSpacing = o.spacing + 'px';
+    if (o.spacing && ctx.letterSpacing !== undefined && !I18N.joined()) ctx.letterSpacing = o.spacing + 'px';   // jamais d'espacement entre lettres liées (arabe, hindi)
     if (o.shadow) { ctx.shadowColor = o.shadow; ctx.shadowBlur = o.blur || 12; }
     if (o.stroke) { ctx.lineWidth = o.sw || Math.max(2, (o.size || 20) * 0.12); ctx.strokeStyle = o.stroke; ctx.lineJoin = 'round'; ctx.strokeText(s, x, y); }
     ctx.fillStyle = o.fill || '#fff1b8'; ctx.fillText(s, x, y);
@@ -50,7 +51,7 @@
   };
   G.fmt = function (n) {
     var a = Math.abs(n);
-    return n.toLocaleString(I18N.lang() === 'fr' ? 'fr-FR' : 'en-US', { minimumFractionDigits: a % 1 ? 2 : 0, maximumFractionDigits: 2 });
+    return n.toLocaleString(I18N.locale(), { minimumFractionDigits: a % 1 ? 2 : 0, maximumFractionDigits: 2 });
   };
 
   // argent : toujours 2 décimales, symbole de la devise choisie (FR : « 1 234,50 € », EN : « $1,234.50 »), jamais de flottant brut
@@ -58,10 +59,10 @@
   G.sym = function () { return G.currency === 'USD' ? '$' : '\u20ac'; };
   G.r2 = function (n) { return Math.round(n * 100 + (n < 0 ? -1e-9 : 1e-9)) / 100; };
   G.money = function (n, signed) {
-    n = G.r2(n); var fr = I18N.lang() === 'fr', a = Math.abs(n);
-    var num = a.toLocaleString(fr ? 'fr-FR' : 'en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).replace(/\u202f/g, '\u00a0');
+    n = G.r2(n); var after = I18N.currencyAfter(), a = Math.abs(n);
+    var num = a.toLocaleString(I18N.locale(), { minimumFractionDigits: 2, maximumFractionDigits: 2 }).replace(/\u202f/g, '\u00a0');
     var sg = n < 0 ? '-' : (signed && n > 0 ? '+' : '');
-    return fr ? sg + num + '\u00a0' + G.sym() : sg + G.sym() + num;
+    return after ? sg + num + '\u00a0' + G.sym() : sg + G.sym() + num;
   };
 
   /* ---------- mise en page ---------- */
@@ -118,8 +119,8 @@
   }
 
   var ART = G.art = {};
-  Object.keys(window.HOA_IMG || {}).forEach(function (k) {
-    var im = new Image(); im.onload = function () { ART[k] = im; if (k === 'key' && G.w) buildBackdrop(); if ((k === 'gold' || k.indexOf('ic_') === 0) && G.w && W.build) W.build(); }; im.src = window.HOA_IMG[k];
+  Object.keys(window.ANUBIS_IMG || {}).forEach(function (k) {
+    var im = new Image(); im.onload = function () { ART[k] = im; if (k === 'key' && G.w) buildBackdrop(); if ((k === 'gold' || k.indexOf('ic_') === 0) && G.w && W.build) W.build(); }; im.src = window.ANUBIS_IMG[k];
   });
   // logo de bonus illustré (fond noir fondu en 'screen') ; renvoie false si l'image manque
   // le fond noir devient transparent (alpha = canal max) : le logo se pose sur n'importe quel fond
@@ -347,7 +348,7 @@
       wedge(f, i, ri, ro); f.lineWidth = Math.max(1, R * 0.006); f.strokeStyle = 'rgba(255,214,110,.75)'; f.stroke();
       // contenu : tout est centré dans la case (axe radial) et borné par la largeur réelle du secteur
       f.save(); f.rotate(am);
-      var big = M.KINDS[k].bonus || k === 'ankh', fr = I18N.lang() === 'fr';
+      var big = M.KINDS[k].bonus || k === 'ankh', fr = I18N.decimalComma();
       if (!big && (k === 'm05' || k === 'm025')) {
         // disque solaire de Râ : à moitié (0,5×) ou au quart (0,25×) rempli — se lit d'un coup d'œil, sans chiffre
         var rd = Math.min(chord(RC) * 0.36, R * 0.07), fq = k === 'm05' ? 0.5 : 0.25;

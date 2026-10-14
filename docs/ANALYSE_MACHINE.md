@@ -33,7 +33,7 @@ Règle reçue : **aucune simulation au-dessus de 100 000 tours, puis au-dessus d
 |---|---|
 | `node tools/simulate.js 12000000 21 std` | RTP, taux de gain, répartition par case, distribution |
 | `node tools/simulate.js 12000000 21 plus` | idem en Oracle+ (mise ×1,1) |
-| `node tools/simulate.js 3000000 5 buy-<scarab|weigh|vault|hand>` | RTP et volatilité à l'achat |
+| `node tools/simulate.js 3000000 5 buy-<scarab|weigh|vault|fury>` | RTP et volatilité à l'achat |
 | `node tools/tune.js` (1 000 000 tirages par bonus) | espérance isolée de chaque bonus, secret compris |
 | `node tools/tune-profiles.js` (4 000 000, graine 1) | égalité d'espérance des profils prudent / équilibré / audacieux |
 | Script d'analyse complémentaire (hors dépôt, 4 000 000 tours, graine 99, + 4 000 marches aléatoires par mode) | séries sans gain, écart entre bonus, paliers de gros gain, durée estimée, temps pour doubler / perdre |
