@@ -22,14 +22,14 @@ lancé ici ; aucun test, aucune simulation ne dépasse 1000 tours (`cap.py`).
 | `write_data.py`, `verify.py` | Écriture de `library/…` et contrôle de format (repris de `utils/rgs_verification.py`) |
 | `run.py` | Point d'entrée (≤ 1000 books par mode ; `HOA_BIG=1` pour une production) |
 | `rng.py`, `cap.py` | `mulberry32` identique au JS, tirages imposés ; plafond de 1000 |
-| `tests/` | 51 tests `unittest` (parité JS, moments exacts, statistiques, format, événements) |
+| `tests/` | 54 tests `unittest` (parité JS, moments exacts, statistiques, format, événements) |
 | `../tools/export-parity.js` | Produit `tests/parity_draws.json` (tirages JS + gains JS, ≤ 1000 tours au total) |
 
 ```bash
-python3 -m unittest discover -s stake-math/tests          # 51 tests, ~1 s
+python3 -m unittest discover -s stake-math/tests          # 54 tests, ~1 s
 python3 stake-math/exact.py                              # RTP exact de chaque mode (aucun tirage)
 python3 stake-math/run.py                                # 1000 books par mode dans stake-math/library/ (ignoré par git)
-python3 stake-math/run.py --books 200 --modes std,buy_fury --step 1
+python3 stake-math/run.py --books 200 --modes std,buy_fury
 node tools/export-parity.js                              # régénère les tirages de parité (≤ 1000 tours au total)
 ```
 
@@ -41,30 +41,28 @@ compresser les books ; sans aucun d'eux, `run.py` écrit des `.jsonl` bruts et l
 
 | Mode | Coût (× mise) | RTP exact | Taux de gain | Écart-type (× mise) |
 |---|---|---|---|---|
-| `std` | 1 | 96,21 % | 42,6 % | 16,4 |
-| `plus` (Oracle+) | 1,1 | 96,14 % | 42,6 % | 18,9 |
-| `buy_scarab` | 9,24 | 95,96 % | 100 % | 4,03 × le prix |
-| `buy_weigh` | 10,31 | 96,00 % | 54,0 % | 6,72 × le prix |
-| `buy_vault` | 12,37 | 96,02 % | 100 % | 3,49 × le prix |
-| `buy_fury` | 27,28 | 96,02 % | 100 % | 4,37 × le prix |
+| `std` | 1 | 96,21 % | 42,6 % | 16,1 |
+| `plus` (Oracle+) | 1,1 | 96,10 % | 42,6 % | 18,8 |
+| `buy_scarab` | 9,26 | 96,02 % | 100 % | 4,03 × le prix |
+| `buy_weigh` | 10,31 | 96,02 % | 54,0 % | 6,72 × le prix |
+| `buy_vault` | 12,37 | 96,03 % | 100 % | 3,49 × le prix |
+| `buy_fury` | 27,30 | 96,01 % | 100 % | 4,37 × le prix |
 
 RTP cible déclaré : **96,2 %** pour tous les modes (`BetMode.rtp`). Les RTP exacts ci-dessus sont ceux des lois NON optimisées (écart maximal entre modes
-0,25 point, sous les 0,5 point de la source tierce) ; l'optimiseur les ramène à la cible en réglant les poids. Gain maximal : **25 000 ×**
+0,2 point, sous les 0,5 point de la source tierce) ; l'optimiseur les ramène à la cible en réglant les poids. Gain maximal : **25 000 ×**
 (`wincap`), identique dans tous les modes.
 
-## Échelle entière, et un défaut trouvé dans la doc du dépôt
+## Échelle entière et pas de 0,1×
 
-Les gains sont des entiers à l'échelle 100 (100 = 1,00 ×), comme `M.SCALE` : la conversion de toutes les valeurs du jeu est exacte. **Mais** le
-vérificateur officiel (`utils/rgs_verification.py`, relu et exécuté sur nos fichiers) exige que chaque `payoutMultiplier` soit un **multiple de 10**
-(0,10 ×) et que le plus petit gain non nul vaille au moins 10. Les valeurs 0,25 ×, 0,65 ×, 0,79 × (et des totaux qui en découlent) ne le sont pas. Le portage
-tranche ainsi (`--step`, défaut 10) :
-
-- `payoutMultiplier` et colonne 3 de la lookup = total du tour arrondi au multiple de 10 le plus proche (moitié vers le haut), jamais nul pour un gain non nul ;
-  `finalWin.amount` vaut ce `payoutMultiplier`, et `finalWin.exact` le total exact ; les `spinWin.win` et les gains de bonus restent exacts (échelle 100).
-  Le front doit afficher `finalWin.amount` (c'est ce que le RGS paie).
-- Effet : surtout +0,05 × sur les cases 0,25 × (≈ +0,4 point de RTP brut en `std`), que l'optimiseur absorbe puisqu'il travaille sur les payouts arrondis.
-- `--step 1` garde les payouts exacts (parité bit à bit avec le JS) mais **échoue** au vérificateur du SDK (constaté). Pour un jeu sans arrondi, il faudrait
-  changer les tables de `js/math.js` (0,25 → 0,3 ; 0,65 / 0,79 → valeurs multiples de 0,1) : décision de conception, non prise ici, `js/math.js` n'est pas modifié.
+Les gains sont des entiers à l'échelle 100 (100 = 1,00 ×, `M.SCALE`), comme le SDK (`payoutMultiplier = round(gain × 100)`, et l'optimiseur divise par 100). Le vérificateur
+officiel (`utils/rgs_verification.py`) exige en plus des `payoutMultiplier` **multiples de 10** (0,10 ×), non nuls ≥ 10. Plutôt que d'arrondir, les valeurs du jeu ont été
+changées à la source (`js/math.js` et ce dossier) : **tous les gains possibles d'un tour sont des multiples exacts de 0,1 ×**. Changements : case 0,25 × → **0,3 ×**
+(identifiant interne `m025` conservé), Scarabées Équilibré 0,65 / 0,79 → **0,6 / 0,9**, Prudent 22 → 23 (bords), Audacieux 0,25 / 0,4 / 3,5 → **0,3 / 0,3 / 3,7** (espérances des
+trois profils égales à 0,1 % près), chance de l'Oracle 0,31 → **0,29** (Standard) et 0,72 → **0,698** (Oracle+), prix d'achat Scarabées 9,24 → **9,26** et Fureur 27,28 → **27,30**
+(les prix sont des coûts, pas des gains). Résultat exact : Standard 96,21 %, Oracle+ 96,10 %, achats 96,01 à 96,03 %.
+`M.SCALE` reste 100 (passer à 10 casserait l'accord avec l'optimiseur et le front). `--step` (défaut **1** : aucun arrondi) ; `--step 10` arrondit le total au multiple de 10 comme
+garde-fou ; le vérificateur de `verify.py` contrôle toujours le multiple de 10. Constaté : les fichiers générés avec le pas 1 passent `verify_lookup_format`,
+`verify_books_and_payout_mults` et `compare_payout_values` du SDK officiel.
 
 ## Format des events
 
@@ -93,7 +91,7 @@ révèle l'Oracle, joue le bonus d'après ses événements, affiche `spinWin`, e
 (÷ 100, × la mise) et le déclare au RGS. Les achats (`buy_*`) n'ont ni `oracle` ni `wheelStop`. `js/rgs.js` (`bookToRound`) lit déjà les noms et champs
 communs ; les noms qui changent par rapport à `tools/stake-export.js` sont : `seq` (nouveau), `weighReveal.plates`/`bookPick` (nouveaux), `furySpin.doubleColour`
 (nouveau). **À corriger côté front** : la branche `crypt` de `bookToRound` lit encore `cryptDrop` (`block_type`, `column`), un format de l'ancienne « Crypte » ;
-le Sanctuaire des Marées s'écrit `sanctuaryTablet` (`tablet_type`, `value`) comme dans `tools/stake-export.js`.
+le Sanctuaire des Marées s'écrit `sanctuaryTablet` (`tablet_type`, `value` ; valeur d'une tablette `tab` et `offering` à l'échelle 100). Corrigé : `RGS.bookToRound` lit désormais `sanctuaryTablet`, et `tools/stake-export.js` écrit les mêmes unités que ce dossier.
 
 ## Choix du joueur : pré-résolus dans les books
 
@@ -125,7 +123,7 @@ identique dans les deux langages (`test_gain_maximal_meme_chemin_dans_les_deux_l
   la Pesée et un scarabée énumérés par le moteur retrouvent les formules exactes.
 - `tests/test_parity.py` : 922 tours / tirages joués par `js/math.js` (6 modes × 100, 5 bonus × 60, chaînes imposées, 6 scripts de gain maximal) ; Python rejoue les mêmes tirages
   et doit retrouver mêmes gains entiers, mêmes cases, mêmes boosts, et consommer exactement les mêmes tirages. Un test relance Node avec une autre graine (≈ 230 tours).
-- `tests/test_stats.py` : RTP dans [90 %, 96,7 %] et à moins de 0,5 point de 96,2 % ; écart entre modes ≤ 0,5 point (0,25 constaté) ; taux de gain ≥ 1/20 ; critère `wincap` dans
+- `tests/test_stats.py` : RTP dans [90 %, 96,7 %] et à moins de 0,5 point de 96,2 % ; écart entre modes ≤ 0,5 point (0,2 constaté) ; taux de gain ≥ 1/20 ; critère `wincap` dans
   chaque mode et dans la distribution cible ; un book à 2 500 000 par mode.
 - `tests/test_books.py` : format (`index.json` strict, lookup de 3 entiers, payout égal au book), événements cohérents (somme des gains, Trésor, Fureur, Pesée, Scarabées, Sanctuaire).
 - Les fichiers produits ont aussi été passés dans `verify_lookup_format`, `verify_books_and_payout_mults` et `compare_payout_values` du SDK officiel (100 books par mode : conformes avec `--step 10`, refusés avec `--step 1`).
@@ -147,5 +145,5 @@ identique dans les deux langages (`test_gain_maximal_meme_chemin_dans_les_deux_l
 
 - Table de production optimisée ; optimiseur Rust jamais lancé ; RTP final non mesuré sur la table optimisée.
 - Intégration comme `GameState` du SDK (`create_books`, `generate_configs`, `upload`) : les fichiers sont produits de façon autonome, au même format et aux mêmes chemins.
-- Un mode par profil (Prudent / Audacieux) pour conserver ce choix ; décision sur l'arrondi au pas de 10 (voir plus haut).
+- Un mode par profil (Prudent / Audacieux) pour conserver ce choix.
 - Adaptation du front aux nouveaux events (autre chantier) ; essais contre un vrai RGS.

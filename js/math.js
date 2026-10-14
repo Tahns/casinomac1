@@ -41,7 +41,7 @@
   // kind: identifiant ; mult: gain direct (cases « nombre ») ; count: nombre de cases sur la roue
   var KINDS = {
     m0:    { id: 'm0',    mult: 0,   count: 34, tier: 0 },
-    m025:  { id: 'm025',  mult: 0.25,count: 5,  tier: 1 },
+    m025:  { id: 'm025',  mult: 0.3, count: 5,  tier: 1 },   // identifiant historique « 0,25 » conservé ; la valeur est 0,3× (tous les gains sont des multiples de 0,1×)
     m05:   { id: 'm05',   mult: 0.5, count: 7,  tier: 1 },
     m1:    { id: 'm1',    mult: 1,   count: 6,  tier: 2 },
     m2:    { id: 'm2',    mult: 2,   count: 3,  tier: 3 },
@@ -90,7 +90,7 @@
   var N = LAYOUT.length;
 
   /* ---------- Oracle (bénédiction scellée avant le tour : la valeur n'est révélée qu'à l'arrêt de la roue) ---------- */
-  var MODES = { std: { cost: 1, oracle: 0.31 }, plus: { cost: 1.1, oracle: 0.72 } };
+  var MODES = { std: { cost: 1, oracle: 0.29 }, plus: { cost: 1.1, oracle: 0.698 } };
   var ORACLE_CHANCE = MODES.std.oracle;
   var ORACLE_KIND_W = [['m05', 3], ['m1', 4], ['m2', 3], ['m3', 2], ['scarab', 3], ['weigh', 3], ['vault', 3]];
   var ORACLE_BOOST = {
@@ -103,9 +103,9 @@
   var SCARAB_BALLS = 3;
   // Trois profils de même espérance : le joueur choisit sa volatilité avant le bonus.
   var SCARAB_PROFILES = {
-    safe:  [22, 7, 3.5, 1.9, 0.9, 1.9, 3.5, 7, 22],
-    std:   [100, 10, 2.5, 0.65, 0.79, 0.65, 2.5, 10, 100],
-    bold:  [230, 3.5, 1, 0.25, 0.4, 0.25, 1, 3.5, 230]
+    safe:  [23, 7, 3.5, 1.9, 0.9, 1.9, 3.5, 7, 23],
+    std:   [100, 10, 2.5, 0.6, 0.9, 0.6, 2.5, 10, 100],
+    bold:  [230, 3.7, 1, 0.3, 0.3, 0.3, 1, 3.7, 230]
   };
   var SCARAB_VALUES = SCARAB_PROFILES.std;
   function scarab(rng, prof) {
@@ -280,12 +280,15 @@
   }
 
   /* ---------- Échelle entière (format Stake : payoutMultiplier entier) ---------- */
-  // Stake exige des multiplicateurs entiers à échelle fixe (exemple de la doc : 1150 = 11,5×). On choisit 100 = 1× (un centième de mise).
-  // Toutes les valeurs du jeu (0,25 ; 0,5 ; 0,65 ; 0,79 ; tablettes, marées et éclipses du Sanctuaire = entiers ; boosts et paliers entiers) sont des
-  // multiples de 0,01 : la conversion est EXACTE, sans écart de RTP. isExact() le vérifie ; seule la somme en flottant demande un arrondi.
+  // Stake exige des multiplicateurs entiers à échelle fixe (exemple de la doc : 1150 = 11,5×) ; son SDK écrit payoutMultiplier = round(gain × 100) et son
+  // vérificateur (utils/rgs_verification.py) veut des payouts MULTIPLES DE 10, donc de 0,10×. On garde l'échelle 100 = 1× (celle du SDK : l'optimiseur divise par 100)
+  // et TOUS les gains possibles d'un tour sont des multiples exacts de 0,1× : cases de la roue (0,3 ; 0,5 ; 1 ; 2 ; 3), valeurs des bonus (Scarabées 0,6 ; 0,9 ;
+  // 2,5…), tablettes, marées et éclipses du Sanctuaire = entiers, boosts et paliers entiers. Aucun arrondi du total : isTenth() le vérifie (tools/check.js).
+  // (Les prix d'achat sont des coûts, pas des gains : ils ne sont pas concernés.)
   var SCALE = 100;
   function toInt(x) { return Math.round(x * SCALE); }
   function fromInt(n) { return n / SCALE; }
+  function isTenth(x) { var t = x * 10; return Math.abs(t - Math.round(t)) < 1e-6 * Math.max(1, Math.abs(t)); }
   function isExact(x) { return Math.abs(x * SCALE - Math.round(x * SCALE)) < 1e-6 * Math.max(1, Math.abs(x * SCALE)); }
 
   /* ---------- Un tour complet ---------- */
@@ -354,7 +357,7 @@
   /* ---------- Achat de bonus ---------- */
   // Prix en x la mise, calés par le calcul exact pour un RTP ≈ 96 % (tools/rtp-exact.js), recoupés par tools/simulate.js <n> <graine> buy-<bonus>.
   // La Fureur d'Anubis peut toujours saisir un bonus acheté (même probabilité que sur la roue), sans boost Oracle.
-  var BUY = { scarab: { price: 9.24 }, weigh: { price: 10.31 }, vault: { price: 12.37 }, hand: { price: 27.28 } };
+  var BUY = { scarab: { price: 9.26 }, weigh: { price: 10.31 }, vault: { price: 12.37 }, hand: { price: 27.30 } };
   function playBuy(rng, kind) {
     var b, upgraded = false;
     var opts = null;
@@ -373,7 +376,7 @@
     WEIGH_PAIRS: WEIGH_PAIRS, weighGain: weighGain, VAULT_TILES: VAULT_TILES, VAULT_MAX_PICKS: VAULT_MAX_PICKS, VAULT_BASE_PICKS: VAULT_BASE_PICKS, VAULT_KEY_PICKS: VAULT_KEY_PICKS, VAULT_PICK_CAP: VAULT_PICK_CAP, VAULT_FINISH: VAULT_FINISH,
     CRYPT_CELLS: CRYPT_CELLS, CRYPT_ROWS: CRYPT_ROWS, CRYPT_COLS: CRYPT_COLS, CRYPT_START: CRYPT_START, CRYPT_TYPES: CRYPT_TYPES, CRYPT_VALUES: CRYPT_VALUES, SECRET_UPGRADE: SECRET_UPGRADE, cryptReplay: cryptReplay,
     HAND_SEGS: HAND_SEGS, HAND_COLORS: HAND_COLORS, HAND_MAX_CHAIN: HAND_MAX_CHAIN, HAND_MIN_N: HAND_MIN_N, handOptions: handOptions, handRecalc: handRecalc, HAND_UPGRADE: HAND_UPGRADE, ORACLE_CHANCE: ORACLE_CHANCE,
-    SCALE: SCALE, toInt: toInt, fromInt: fromInt, isExact: isExact,
+    SCALE: SCALE, toInt: toInt, fromInt: fromInt, isExact: isExact, isTenth: isTenth,
     mulberry32: mulberry32, cryptoRng: cryptoRng,
     playRound: playRound, playSpin: playSpin,
     _bonus: { scarab: scarab, weigh: weigh, vault: vault, hand: hand, crypt: crypt }

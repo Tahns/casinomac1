@@ -138,10 +138,10 @@
         var ve = list.filter(function (e) { return e.type === 'vaultEnd'; })[0] || { ended: 'cleared', finishBonus: 0, win: 0 };
         return { picks: picks, ended: ve.ended, bonusFinish: f(ve.finishBonus), total: f(ve.win), profile: profile };
       }
-      if (kind === 'crypt') {
-        var drops = list.filter(function (e) { return e.type === 'cryptDrop'; }).map(function (e) { return { t: e.block_type, c: e.column, v: e.value }; });
+      if (kind === 'crypt') {   // Sanctuaire des Marées : tablettes sanctuaryTablet (tablet_type, value ; value d'une tablette « tab » à l'échelle M.SCALE), rejouées par M.cryptReplay
+        var drops = list.filter(function (e) { return e.type === 'sanctuaryTablet'; }).map(function (e) { return { t: e.tablet_type, v: e.tablet_type === 'tab' ? f(e.value) : e.value }; });
         var r = M.cryptReplay(drops);
-        return { drops: drops, steps: r.steps, tops: r.tops, fixed: r.fixed, cols: r.cols, sum: r.sum, capped: r.capped, total: r.total, profile: 'crypt' };
+        return { drops: drops, steps: r.steps, pool: r.pool, tide: r.tide, capped: r.capped, total: r.total, profile: 'crypt' };
       }
       if (kind === 'hand') {
         var hs = [], cur = null, end = list.filter(function (e) { return e.type === 'furyEnd'; })[0] || { win: 0 };

@@ -48,8 +48,8 @@ function bonusEvents(kind, b, src) {
     });
     ev.push({ type: 'furyEnd', win: I(b.total) });
   } else if (kind === 'crypt') {
-    b.steps.forEach(function (st, k) { ev.push({ type: 'sanctuaryTablet', tablet: k + 1, tablet_type: st.t, value: st.v, tideBefore: st.tideBefore, offering: st.pool, tide: st.tide }); });
-    ev.push({ type: 'sanctuaryEnd', offering: b.pool, tide: b.tide, win: I(b.total) });
+    b.steps.forEach(function (st, k) { ev.push({ type: 'sanctuaryTablet', tablet: k + 1, tablet_type: st.t, value: st.t === 'tab' ? I(st.v) : st.v, tideBefore: st.tideBefore, offering: I(st.pool), tide: st.tide }); });
+    ev.push({ type: 'sanctuaryEnd', offering: I(b.pool), tide: b.tide, win: I(b.total) });
   }
   return ev;
 }

@@ -3,7 +3,7 @@
 
     python3 stake-math/run.py                          # 1000 books par mode (plafond), dans stake-math/library/
     python3 stake-math/run.py --books 200 --modes std,buy_fury
-    python3 stake-math/run.py --step 1                 # payouts exacts (parité) au lieu de multiples de 10
+    python3 stake-math/run.py --step 10                # garde-fou : arrondit le total d'un tour au multiple de 10 (sans effet : les gains sont des dixièmes)
     HOA_BIG=1 python3 stake-math/run.py --books 1000000   # VRAIE production : seulement lancée par l'utilisateur
 
 PLAFOND : sans HOA_BIG=1 (ou ANUBIS_BIG=1), jamais plus de 1000 books par mode, quel que soit --books. Ce que ce script écrit avec le
@@ -33,7 +33,7 @@ def main(argv=None):
     ap.add_argument("--seed", type=int, default=2026)
     ap.add_argument("--out", default=os.path.join(HERE, "library"), help="dossier library/ de sortie")
     ap.add_argument("--step", type=int, default=C.PAYOUT_STEP, choices=(1, 10),
-                    help="pas des payouts : 10 = exigence de utils/rgs_verification.py (défaut), 1 = exact (parité avec le JS)")
+                    help="pas d'arrondi du total : 1 = exact, sans arrondi (défaut ; conforme car tous les gains sont des multiples de 0,1) ; 10 = arrondi au multiple de 10")
     ap.add_argument("--prepare-optimizer", action="store_true", help="écrit aussi optimization_files/setup_<mode>.toml pour l'optimiseur Rust")
     args = ap.parse_args(argv)
 
