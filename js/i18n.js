@@ -835,6 +835,120 @@
       volumeL: '音量', pitchShort: '音调', gradeTitle: '色彩', gradeNatural: '自然', gradeVivid: '鲜艳', gradeGold: '金色', gradeCine: '电影', toneShort: '高音', soundOn: '声音: 开', soundOff: '声音: 关', musicShort: '氛围', resetL: '重置', mixLabel: '声音设置', pitchL: '音效音调 (半音)', musicL: '背景氛围', autoOpts: '自动旋转次数', off: '关', on: '开', close: '关闭', currencyL: '货币', resetBal: '重置余额', noWin: '无奖金', handLabel: '阿努比斯之怒'
     }
   };
+  /* ---------- blocs de textes séparés (règles détaillées, replay) ----------
+     Chaque bloc a une entrée par langue ; une clé absente d'une langue retombe sur l'anglais (I18N.block). Ajouter une langue = ajouter une entrée ici.
+     Marqueurs {x} remplacés par js/rules.js ; les chiffres viennent de math.js (aucun nombre de jeu écrit à la main dans ces textes). */
+  var B = {
+    replay: {
+      en: {
+        badge: 'REPLAY', start: 'PLAY', again: 'PLAY AGAIN', playing: 'PLAYING…', loading: 'Loading the replay…',
+        errLoad: 'Could not load this replay.', errParams: 'Missing replay parameters (game, version, mode, event, rgs_url).', errFormat: 'This replay has an unknown format.',
+        errNet: 'Network error: check the connection and reload.', bet: 'BET', betSocial: 'PLAY AMOUNT', realCost: 'REAL COST', costMult: 'Cost', result: 'WIN', noWin: 'No win',
+        modeStd: 'STANDARD', modePlus: 'ORACLE+', modeBonus: 'BONUS'
+      },
+      fr: {
+        badge: 'REPLAY', start: 'LECTURE', again: 'REJOUER', playing: 'EN COURS…', loading: 'Chargement du replay…',
+        errLoad: 'Impossible de charger ce replay.', errParams: 'Paramètres du replay manquants (game, version, mode, event, rgs_url).', errFormat: 'Ce replay a un format inconnu.',
+        errNet: 'Erreur réseau : vérifiez la connexion et rechargez.', bet: 'MISE', betSocial: 'MONTANT JOUÉ', realCost: 'COÛT RÉEL', costMult: 'Coût', result: 'GAIN', noWin: 'Pas de gain',
+        modeStd: 'STANDARD', modePlus: 'ORACLE+', modeBonus: 'BONUS'
+      }
+    },
+    rules: {
+      en: {
+        modesH: 'Modes, cost, RTP and max win', colMode: 'Mode', colCost: 'Cost', colRtp: 'RTP', colMax: 'Max win', colChance: 'Chance', colValue: 'Value', colBoost: 'Boost', colNumCase: 'Number segment', colBonusCase: 'Bonus segment',
+        modeStd: 'Standard', modePlus: 'ORACLE+', tokScepter: 'SCEPTER ×2 (on the total so far)', tokKey: 'GOLDEN KEY (+{keys} chests to open)', tokSeal: 'SEAL (closes the vault)',
+        modeStdD: 'One spin of the wheel of judgement. The Oracle shows up on about {p}% of the spins.',
+        modePlusD: 'Costs ×{c} the selected amount. The Oracle shows up on about {pp}% of the spins, so boosts land more often. Same RTP.',
+        buyScarabD: 'Opens the Scarab Drop bonus directly, without the wheel.', buyWeighD: 'Opens the Weighing of the Heart bonus directly, without the wheel.',
+        buyVaultD: 'Opens the Treasure Vault bonus directly, without the wheel.', buyHandD: 'Opens the Fury of Anubis directly: the giant wheel is spun at once.',
+        modesNote: 'RTP is the expected return over a very large number of plays (exact calculation, not a promise for a single session). Max win is a multiple of the selected amount, not of the mode cost, and is capped at {m}× in every mode. Cost is a multiple of the selected amount and is shown before you confirm. The Fury of Anubis can still take over a directly opened bonus ({h}% of the time), as on the wheel.',
+        howH: 'How wins are formed',
+        how: [
+          'There are no paylines, ways or symbols to line up. Each spin stops on one of the {n} segments of the wheel. The win is the value of that segment × the selected amount.',
+          'Number segments win their value (×{nums}). Dust segments win nothing. ANKH gives a free respin: the wheel turns again at no cost, up to {chain} times in a row, and the round ends on a non-ANKH segment. Wins of chained spins add up.',
+          'Bonus segments (Scarabs, Weighing, Vault) trigger the matching bonus: the win is the bonus result × the selected amount. Each of the three takes {one} of the {n} segments.',
+          'Oracle: before the spin it picks one segment kind ({kinds}) and gives it a boost. The value of the boost stays sealed (shown as ×?) until the wheel stops. If the wheel stops on that kind, the segment value (or the bonus result) is multiplied by the boost. The Oracle does nothing if the wheel stops elsewhere.',
+          'The total win of a round is capped at {m}× the selected amount: when the cap is reached the round ends and the win is limited to it. The win animations (WIN, BIG WIN, EXTRA WIN, MEGA WIN, DIVINE JUDGEMENT) depend on the round total ÷ the cost of the mode; they never change the amount won.'
+        ],
+        oracleH: 'Oracle boosts', oracleNote: 'Chance of each boost when the Oracle picks a segment kind.',
+        bonusH: 'Bonus rounds: triggers and values',
+        scarabH: 'Scarab Drop', scarabP: 'Triggered by the Scarabs segment ({one} of {n}) or opened directly. Three scarabs fall through {rows} rows of pegs and each one wins the value of the slot where it lands (× the Oracle boost if it applies). Slot values from left to right, with the chance of each slot:',
+        weighH: 'Weighing of the Heart', weighP: 'Triggered by the Weighing segment ({one} of {n}) or opened directly. Two pans each show a multiplier. You pick the feather or the heart; the heavier pan wins its multiplier, the lighter pan wins nothing: one chance in two. The pair of multipliers is drawn with these chances:',
+        vaultH: 'Treasure Vault', vaultP: 'Triggered by the Vault segment ({one} of {n}) or opened directly. Open chests one after the other: {picks} to start with. Each chest holds a value added to the total, or a SCEPTER (×2 on the total so far), or a GOLDEN KEY (+{keys} more chests to open, up to {cap} in all), or the SEAL, which closes the vault and keeps the total so far. Nothing cancels or delays the seal; a key only lengthens the selection. The first two chests never hold a seal. Opening every allowed chest adds a bonus of +{fin}×. Chest contents and chances (after the first two chests):',
+        handH: 'Fury of Anubis', handP: 'Any bonus can be taken over by the Fury ({h}% of the time on the wheel and for directly opened bonuses; always for the Fury mode). Choose a colour (turquoise, gold or ruby: same odds), then spin the giant wheel of {segs} segments. A number: win = number × tier. DOUBLE in your colour: every number is doubled (tier ×2, ×4, ×8 up to ×{tier}) and you spin again. DOUBLE in another colour: the chain stops and the smallest number ({min}) × tier is won. A band launches a bonus: bonus win × band multiplier × tier. Numbers on the giant wheel: ×{hnums}. DOUBLE segments: {dbl} ({dblc} per colour). Bands: {bands}. The tier stops growing at ×{tier} (DOUBLE segments then stop counting).',
+        cryptH: 'Sanctuary of the Tides (hidden bonus)', cDust: 'DUST (nothing)', cTab: 'TABLET (+ value × current tide)', cTide: 'TIDE (× the tide)', cEclipse: 'ECLIPSE (× the offering)', cryptP: 'A won bonus can be replaced by the Sanctuary of the Tides ({s}% of the time, never for a directly opened bonus). Touch the {tiles} tablets of a 3×3 grid in any order; the order does not change the odds. The offering starts at 0 and the tide at ×1. Each tablet is one of: TABLET (adds its value × the current tide to the offering), TIDE (multiplies the tide, only for the tablets revealed after it), ECLIPSE (multiplies the offering already gathered) or DUST (nothing). The win is the final offering × the selected amount (at least ×1 if no tablet appears), capped at {m}×. Tablet kinds:',
+        retrigH: 'Bonuses, respins and re-triggers',
+        retrig: [
+          'There are no free spins to re-trigger: each bonus is played once per trigger and its result is added to the round. No bonus can trigger another bonus: a band of the Fury launches a bonus that never leads back to the Fury.',
+          'The only repeat feature is the ANKH respin (see above). Bonus segments, the Oracle and the Fury have the same odds in every mode.',
+          'If the connection drops during a round, reload the game: the round already decided is finished and its win is settled.'
+        ],
+        btnH: 'Buttons and controls',
+        btn: [
+          ['− / +', 'Lower or raise the selected amount (keys ↓ / ↑). Locked while a round is running.'],
+          ['{spin}', 'Starts a round with the selected amount (Space or Enter also works). During automatic play it becomes {stop}.'],
+          ['{auto}', 'Choose the number of automatic rounds ({autos}); the game then plays them one after the other until the number is reached, you press {stop}, a limit is reached or the balance is too low. The option “Stop autoplay on bonus” is in Info.'],
+          ['{turbo}', 'Faster rounds: press once for TURBO, twice for ULTRA (almost instant result), a third time to turn it off. A bonus always plays at a calmer pace.'],
+          ['{buy}', 'Opens the menu of directly opened bonuses. Each card shows its cost; choosing a card starts that bonus.'],
+          ['{plus}', 'Switches ORACLE+ on or off for the next rounds: cost ×{c}, the Oracle appears far more often. The cost is shown under the amount.'],
+          ['Sound (speaker)', 'Opens the sound panel: volume, treble, pitch, music ambience, colour grading and a switch that mutes every sound.'],
+          ['i (Info)', 'Opens these rules and the settings: display unit, loss limit, graphics quality, reduced effects, autoplay options, direct bonus access on/off, reset the balance.'],
+          ['FR / EN', 'Switches the language of the game.'],
+          ['€ / $', 'Switches the amounts between euro and dollar display (same numeric value).'],
+          ['×', 'Closes the open window (Escape also works).'],
+          ['Tap / Space', 'In a bonus: starts the bonus, drops the scarab or block, picks a chest, a card or a colour. In a win animation: tap to skip it.']
+        ],
+        discH: 'Important', disc: 'Malfunction voids all wins and plays. A consistent internet connection is required. In the event of a disconnection, reload the game to finish any uncompleted rounds. The expected return is calculated over many plays. The game display is not representative of any physical device and is for illustrative purposes only. Winnings are settled according to the amount received from the Remote Game Server and not from events within the web browser. TM and © 2026 Engine.'
+      },
+      fr: {
+        modesH: 'Modes, coût, RTP et gain max', colMode: 'Mode', colCost: 'Coût', colRtp: 'RTP', colMax: 'Gain max', colChance: 'Chance', colValue: 'Valeur', colBoost: 'Boost', colNumCase: 'Case nombre', colBonusCase: 'Case bonus',
+        modeStd: 'Standard', modePlus: 'ORACLE+', tokScepter: 'SCEPTRE ×2 (sur le total déjà gagné)', tokKey: 'CLÉ D\'OR (+{keys} coffres à ouvrir)', tokSeal: 'SCEAU (referme la chambre)',
+        modeStdD: 'Un tour de la roue du jugement. L\'Oracle apparaît sur environ {p} % des tours.',
+        modePlusD: 'Coûte ×{c} le montant sélectionné. L\'Oracle apparaît sur environ {pp} % des tours : les boosts tombent plus souvent. Même RTP.',
+        buyScarabD: 'Ouvre directement le bonus Chute des Scarabées, sans passer par la roue.', buyWeighD: 'Ouvre directement le bonus Pesée du Cœur, sans passer par la roue.',
+        buyVaultD: 'Ouvre directement le bonus Chambre du Trésor, sans passer par la roue.', buyHandD: 'Ouvre directement la Fureur d\'Anubis : la roue géante est lancée tout de suite.',
+        modesNote: 'Le RTP est le retour moyen attendu sur un très grand nombre de parties (calcul exact, pas une promesse pour une séance). Le gain max est un multiple du montant sélectionné, et non du coût du mode ; il est plafonné à {m}× dans tous les modes. Le coût est un multiple du montant sélectionné et s\'affiche avant de confirmer. La Fureur d\'Anubis peut saisir un bonus ouvert directement ({h} % des fois), comme sur la roue.',
+        howH: 'Comment se forment les gains',
+        how: [
+          'Il n\'y a ni ligne de gain, ni combinaison, ni symboles à aligner. Chaque tour s\'arrête sur l\'une des {n} cases de la roue. Le gain est la valeur de cette case × le montant sélectionné.',
+          'Les cases à nombre gagnent leur valeur (×{nums}). Les cases Poussière ne gagnent rien. ANKH offre une relance gratuite : la roue tourne à nouveau sans frais, jusqu\'à {chain} fois d\'affilée, et le tour se termine sur une case autre qu\'ANKH. Les gains des relances s\'additionnent.',
+          'Les cases bonus (Scarabées, Pesée, Trésor) déclenchent le bonus correspondant : le gain est le résultat du bonus × le montant sélectionné. Chacune des trois occupe {one} case sur {n}.',
+          'Oracle : avant le tour, il désigne un type de case ({kinds}) et lui offre un boost. La valeur du boost reste scellée (affichée ×?) jusqu\'à l\'arrêt de la roue. Si la roue s\'arrête sur ce type de case, la valeur de la case (ou le résultat du bonus) est multipliée par le boost. L\'Oracle ne fait rien si la roue s\'arrête ailleurs.',
+          'Le gain total d\'un tour est plafonné à {m}× le montant sélectionné : une fois le plafond atteint, le tour s\'arrête et le gain est limité à ce plafond. Les animations de gain (WIN, BIG WIN, EXTRA WIN, MEGA WIN, JUGEMENT DIVIN) dépendent du total du tour ÷ le coût du mode ; elles ne changent jamais le montant gagné.'
+        ],
+        oracleH: 'Boosts de l\'Oracle', oracleNote: 'Chance de chaque boost quand l\'Oracle désigne un type de case.',
+        bonusH: 'Bonus : déclenchement et valeurs',
+        scarabH: 'Chute des Scarabées', scarabP: 'Déclenchée par la case Scarabées ({one} case sur {n}) ou ouverte directement. Trois scarabées tombent à travers {rows} rangées de picots ; chacun gagne la valeur de la case où il atterrit (× le boost de l\'Oracle s\'il s\'applique). Valeurs des cases de gauche à droite, avec la chance de chacune :',
+        weighH: 'Pesée du Cœur', weighP: 'Déclenchée par la case Pesée ({one} case sur {n}) ou ouverte directement. Deux plateaux affichent chacun un multiplicateur. Vous choisissez la plume ou le cœur ; le plateau le plus lourd gagne son multiplicateur, le plus léger ne gagne rien : une chance sur deux. La paire de multiplicateurs est tirée avec ces chances :',
+        vaultH: 'Chambre du Trésor', vaultP: 'Déclenchée par la case Trésor ({one} case sur {n}) ou ouverte directement. Ouvrez des coffres l\'un après l\'autre : {picks} au départ. Chaque coffre contient une valeur qui s\'ajoute au total, ou un SCEPTRE (×2 sur le total déjà gagné), ou une CLÉ D\'OR (+{keys} coffres à ouvrir, {cap} au plus en tout), ou le SCEAU, qui referme la chambre en gardant le total déjà gagné. Rien n\'annule ni ne retarde le sceau ; la clé ne fait qu\'allonger la sélection. Les deux premiers coffres ne contiennent jamais de sceau. Ouvrir tous les coffres permis ajoute une prime de +{fin}×. Contenu des coffres et chances (après les deux premiers coffres) :',
+        handH: 'Fureur d\'Anubis', handP: 'Tout bonus peut être saisi par la Fureur ({h} % des fois sur la roue et pour les bonus ouverts directement ; toujours pour le mode Fureur). Choisissez une couleur (turquoise, or ou rubis : mêmes chances) puis lancez la roue géante de {segs} cases. Un nombre : gain = nombre × palier. DOUBLE de votre couleur : tous les nombres sont doublés (palier ×2, ×4, ×8 jusqu\'à ×{tier}) et vous relancez. DOUBLE d\'une autre couleur : la chaîne s\'arrête et on gagne le plus petit nombre ({min}) × palier. Une bande lance un bonus : gain du bonus × multiplicateur de la bande × palier. Nombres de la roue géante : ×{hnums}. Cases DOUBLE : {dbl} ({dblc} par couleur). Bandes : {bands}. Le palier ne dépasse pas ×{tier} (les cases DOUBLE ne comptent plus ensuite).',
+        cryptH: 'Sanctuaire des Marées (bonus caché)', cDust: 'POUSSIÈRE (rien)', cTab: 'TABLETTE (+ valeur × marée courante)', cTide: 'MARÉE (× la marée)', cEclipse: 'ÉCLIPSE (× l\'offrande)', cryptP: 'Un bonus gagné peut être remplacé par le Sanctuaire des Marées ({s} % des fois, jamais pour un bonus ouvert directement). Touchez les {tiles} tablettes d\'une grille 3×3 dans l\'ordre de votre choix ; l\'ordre ne change pas les chances. L\'offrande démarre à 0 et la marée à ×1. Chaque tablette est : TABLETTE (ajoute sa valeur × la marée courante à l\'offrande), MARÉE (multiplie la marée, seulement pour les tablettes révélées après elle), ÉCLIPSE (multiplie l\'offrande déjà accumulée) ou POUSSIÈRE (rien). Le gain est l\'offrande finale × le montant sélectionné (au moins ×1 si aucune tablette n\'apparaît), plafonné à {m}×. Types de tablettes :',
+        retrigH: 'Bonus, relances et re-déclenchements',
+        retrig: [
+          'Il n\'y a pas de tours gratuits à re-déclencher : chaque bonus se joue une fois par déclenchement et son résultat s\'ajoute au tour. Aucun bonus ne peut en déclencher un autre : une bande de la Fureur lance un bonus qui ne ramène jamais à la Fureur.',
+          'La seule fonction qui se répète est la relance ANKH (voir plus haut). Les cases bonus, l\'Oracle et la Fureur ont les mêmes chances dans tous les modes.',
+          'Si la connexion est coupée pendant un tour, rechargez le jeu : le tour déjà décidé est terminé et son gain réglé.'
+        ],
+        btnH: 'Boutons et commandes',
+        btn: [
+          ['− / +', 'Diminue ou augmente le montant sélectionné (touches ↓ / ↑). Verrouillés pendant un tour.'],
+          ['{spin}', 'Lance un tour avec le montant sélectionné (Espace ou Entrée aussi). Pendant le jeu automatique il devient {stop}.'],
+          ['{auto}', 'Choisissez le nombre de tours automatiques ({autos}) ; le jeu les enchaîne jusqu\'à ce que le nombre soit atteint, que vous appuyiez sur {stop}, qu\'une limite soit atteinte ou que le solde soit insuffisant. L\'option « Stopper l\'auto sur bonus » est dans Infos.'],
+          ['{turbo}', 'Tours plus rapides : un appui pour TURBO, deux pour ULTRA (résultat quasi instantané), trois pour l\'arrêter. Un bonus se joue toujours à un rythme plus calme.'],
+          ['{buy}', 'Ouvre le menu des bonus ouverts directement. Chaque carte affiche son coût ; choisir une carte lance ce bonus.'],
+          ['{plus}', 'Active ou coupe ORACLE+ pour les tours suivants : coût ×{c}, l\'Oracle apparaît bien plus souvent. Le coût s\'affiche sous le montant.'],
+          ['Son (haut-parleur)', 'Ouvre le panneau du son : volume, aigus, hauteur, ambiance musicale, couleurs et un interrupteur qui coupe tous les sons.'],
+          ['i (Infos)', 'Ouvre ces règles et les réglages : devise, limite de perte, qualité graphique, effets réduits, options de l\'auto, accès direct aux bonus oui/non, réinitialisation du solde.'],
+          ['FR / EN', 'Change la langue du jeu.'],
+          ['€ / $', 'Passe l\'affichage des montants de l\'euro au dollar (même valeur numérique).'],
+          ['×', 'Ferme la fenêtre ouverte (Échap aussi).'],
+          ['Toucher / Espace', 'Dans un bonus : lance le bonus, lâche le scarabée ou le bloc, choisit un coffre, une carte ou une couleur. Pendant une animation de gain : passe l\'animation.']
+        ],
+        discH: 'Important', disc: 'Un dysfonctionnement annule tous les gains et toutes les parties. Une connexion internet stable est nécessaire. En cas de déconnexion, rechargez le jeu pour terminer les tours inachevés. Le retour attendu est calculé sur un grand nombre de parties. L\'affichage du jeu ne représente aucun appareil physique et sert uniquement d\'illustration. Les gains sont réglés selon le montant reçu du serveur de jeu distant (Remote Game Server) et non d\'après les événements du navigateur. TM et © 2026 Engine.'
+      }
+    }
+  };
+  var lang = 'fr';
 
   /* ---------- Langues Stake : les 16 codes acceptés par le RGS (paramètre ?lang=). Défaut : anglais. ---------- */
   var LANGS = [
@@ -920,6 +1034,13 @@
     lang: function () { return lang; },
     t: function () { return D[lang]; },
     rgs: function () { return RGS_TXT[lang] || RGS_TXT.en; },
+    // bloc de textes séparé (« rules », « replay ») : langue courante, clé par clé repliée sur l'anglais
+    block: function (name) {
+      var b = B[name] || {}, en = b.en || {}, cur = b[lang] || {}, out = {}, k;
+      for (k in en) out[k] = en[k];
+      for (k in cur) out[k] = cur[k];
+      return out;
+    },
     langs: LANGS, fallback: FALLBACK, norm: norm, fromUrl: launch.lang,
     locale: function () { return info(lang)[2]; },          // format des nombres
     currencyAfter: function () { return !!AFTER[lang]; },   // « 1 234,50 € » (true) ou « $1,234.50 » (false)

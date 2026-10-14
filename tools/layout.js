@@ -3,7 +3,7 @@
 var http = require('http'), fs = require('fs'), path = require('path');
 var pw = require(process.env.PLAYWRIGHT_CORE || 'playwright-core'), root = path.join(__dirname, '..');
 var MIME = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.woff2': 'font/woff2' };
-var SIZES = [[360, 640], [390, 844], [768, 1024], [844, 390], [667, 375], [740, 360], [1024, 768], [1440, 810], [1920, 1080], [2560, 1080]];
+var SIZES = [[1024, 576], [400, 225], [800, 450], [425, 812], [360, 640], [390, 844], [768, 1024], [844, 390], [667, 375], [740, 360], [1024, 768], [1440, 810], [1920, 1080], [2560, 1080]];
 var server = http.createServer(function (req, res) {
   var f = path.join(root, decodeURIComponent(req.url.split('?')[0]).replace(/^\/$/, '/index.html'));
   if (f.indexOf(root) !== 0 || !fs.existsSync(f)) { res.writeHead(404); return res.end(); }
@@ -14,13 +14,14 @@ var server = http.createServer(function (req, res) {
   var url = 'http://localhost:' + server.address().port + '/index.html?debug', fails = 0;
   var b = await pw.chromium.launch({ executablePath: process.env.CHROMIUM || undefined, args: ['--no-sandbox', '--use-gl=swiftshader'] });
   for (var i = 0; i < SIZES.length; i++) {
-    var w = SIZES[i][0], h = SIZES[i][1], land = h < 520 && w > h;
+    var w = SIZES[i][0], h = SIZES[i][1], land = h < 520 && w > h, tiny = h <= 240;
     var p = await b.newPage({ viewport: { width: w, height: h } }), errs = [];
     p.on('pageerror', function (e) { errs.push(e.message); });
     await p.goto(url); await p.waitForTimeout(500);
     var m = await p.evaluate(`(function(){ var hud=document.getElementById('hud').getBoundingClientRect();
       return { R:G.R, top:G.cy-1.2*G.R, bot:G.cy+1.1*G.R, left:G.cx-1.1*G.R, right:G.cx+1.1*G.R, hudTop:hud.top, hudH:hud.height, sw:document.documentElement.scrollWidth, iw:innerWidth }; })()`);
     // montants extrêmes (gain max × plus grosse mise = 25 000 000,00) en € $ CA$ MX$ ¥ SC GC Rp ₫, en FR et en EN : rien ne déborde de sa plaque
+    var scr = await p.evaluate(`(function(){ var d=document.documentElement; return { sh:d.scrollHeight>innerHeight||document.body.scrollHeight>innerHeight, sw:d.scrollWidth>innerWidth, st:(scrollTo(0,50),scrollY), sx:(scrollTo(50,0),scrollX) }; })()`);
     var ov = await p.evaluate(`(function(){ var out=[]; G.S.busy=false; G.S.bi=G.BETS.length-1; G.S.balance=25000000; G.S.mode='plus';
       [['fr','EUR'],['en','USD'],['en','CAD'],['en','MXN'],['en','JPY'],['en','XSC'],['fr','XGC'],['en','IDR'],['fr','VND']].forEach(function(lc){ I18N.setLang(lc[0]); G.setCurrency(lc[1]); G.S.bi=G.BETS.length-1; G.S.balance=25000000; G.updateHud(); G.setWin(25000000);
         ['bal','bet','win'].forEach(function(id){ var e=document.getElementById(id), pr=e.closest('.stat,.betval'), r=e.getBoundingClientRect(), q=(id==='bet'?e.closest('.betbox'):pr).getBoundingClientRect();
@@ -33,14 +34,21 @@ var server = http.createServer(function (req, res) {
         var s=G.scene; if(!s) { bad.push(k+':pas de scène'); continue; }
         var gg=0; while(G.scene && gg<400){ await G.advance(0.5); gg++; if(G.winOv) G.skipWinOv(); if(G.scene&&G.scene.tap) G.scene.tap(); } if(G.scene) bad.push(k+':bloquée'); }
       return bad; })()`).catch(function (e) { return ['exception ' + e.message]; });
+    // chaque contrôle est dans l'écran, non recouvert, et un clic réel sur « tourner » débite bien une mise
+    var ctl = await p.evaluate(`(function(){ var bad=[]; ['betDn','betUp','spin','btnTurbo','btnAuto','btnBuy','btnPlus','btnLang','btnCur','btnSound','btnInfo'].forEach(function(id){ var e=document.getElementById(id); if(!e||e.hidden) return; var r=e.getBoundingClientRect(); if(r.width<8||r.height<8||r.left<-1||r.top<-1||r.right>innerWidth+1||r.bottom>innerHeight+1){ bad.push(id+' hors écran '+Math.round(r.left)+','+Math.round(r.top)+','+Math.round(r.right)+','+Math.round(r.bottom)); return; } var t=document.elementFromPoint(r.left+r.width/2,r.top+r.height/2); if(t!==e&&!e.contains(t)) bad.push(id+' recouvert par '+(t&&(t.id||t.className||t.tagName))); }); return bad; })()`);
+    var betOk = await p.evaluate(`(async function(){ G.S.busy=false; G.S.bi=2; G.S.mode='std'; G.S.balance=1000; G.updateHud(); var b0=G.S.balance; G.turbo=true; document.getElementById('spin').click(); await new Promise(function(r){setTimeout(r,150)}); var ok=G.S.balance<b0; return ok; })()`);
+    if (process.env.SHOTS) { await p.waitForTimeout(1200); await p.screenshot({ path: path.join(process.env.SHOTS, w + 'x' + h + '.png') }); }
     var pr = [];
+    if (ctl.length) pr.push('contrôles : ' + ctl.join(' | '));
+    if (!betOk) pr.push('la mise ne part pas');
+    if (scr.sh || scr.sw || scr.st || scr.sx) pr.push('la page défile');
     if (sc0.length) pr.push('montant qui déborde : ' + sc0.join(' | '));
     if (m.bot > m.hudTop + 1) pr.push('roue sous le HUD (' + Math.round(m.bot) + ' > ' + Math.round(m.hudTop) + ')');
     if (m.top < 0) pr.push('roue coupée en haut');
     if (m.left < 0 || m.right > w) pr.push('roue coupée sur les côtés');
     if (m.sw > m.iw) pr.push('défilement horizontal');
-    if (m.hudH > h * (land ? 0.25 : 0.45)) pr.push('HUD trop haut (' + Math.round(m.hudH) + ' px sur ' + h + ')');
-    if (m.R < (land ? 100 : 120)) pr.push('roue trop petite (R=' + Math.round(m.R) + ')');
+    if (m.hudH > h * (tiny ? 0.5 : land ? 0.25 : 0.45)) pr.push('HUD trop haut (' + Math.round(m.hudH) + ' px sur ' + h + ')');
+    if (m.R < (tiny ? 40 : land ? 100 : 120)) pr.push('roue trop petite (R=' + Math.round(m.R) + ')');
     if (sc.length) pr.push('bonus : ' + sc.join(', '));
     if (errs.length) pr.push('erreur: ' + errs[0]);
     if (pr.length) fails++;

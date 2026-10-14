@@ -81,11 +81,12 @@
     document.documentElement.style.setProperty('--hud-h', hudH + 'px');
     G.compact = G.h < 520;                       // paysage de téléphone : tout est resserré
     var land = G.compact && G.w > G.h;
-    var topH = land ? 38 : G.w < 760 ? 52 : 62;
-    var availH = G.h - hudH - topH - (land ? 12 : 38);
+    var tiny = G.h < 260;                         // fenêtre flottante 400×225 : barre haute et HUD miniaturisés
+    var topH = tiny ? 30 : land ? 38 : G.w < 760 ? 52 : 62;
+    var availH = G.h - hudH - topH - (tiny ? 9 : land ? 12 : 38);
     var R = Math.min(G.w * 0.455, availH * 0.5) / 1.1;
     if (G.w < 760 && !land) R = Math.min(G.w * 0.46 / 1.08, availH * 0.5 / 1.08);
-    G.R = Math.max(land ? 60 : 90, R);
+    G.R = Math.max(tiny ? 36 : land ? 60 : 90, R);
     G.cx = G.w / 2; G.cy = topH + availH / 2 + 6;
     FX.floorY = G.h - hudH - 10;
     buildLamps(); buildBackdrop(); if (G.wheel) G.wheel.build();

@@ -303,6 +303,43 @@ label{font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--di
 /* tablette portrait (761-900 px) : HUD sur deux rangées comme le téléphone, mais resserré au centre pour ne pas étirer les plaques */
 @media (min-width:761px) and (max-width:900px) and (min-height:521px){#hud{padding-left:clamp(22px,13vw,110px);padding-right:clamp(22px,13vw,110px)}}
 
+/* ======================= fenêtre flottante 400×225 (popout S) : tout se miniaturise, rien ne déborde ======================= */
+@media (max-height:260px){
+  #top{padding:max(9px,calc(env(safe-area-inset-top) + 6px)) 8px 0}
+  .brand .b-big{font-size:14px;letter-spacing:.06em}.brand .b-small{display:none}
+  .top-right{gap:4px}.ibtn{width:26px;height:26px;font-size:11px}.ibtn svg{width:15px;height:15px}#btnCur{font-size:12px}
+  .pill{top:30px;font-size:10px;padding:3px 9px 3px 6px;gap:5px}.pill svg{width:22px;height:11px}
+  #status{bottom:calc(var(--hud-h,64px) + 2px)}
+  #statusText{font-size:8px;padding:2px 8px;max-width:34vw;letter-spacing:.08em}
+  #hud{grid-template-columns:minmax(0,1fr) minmax(0,1.5fr) auto minmax(0,1.9fr) minmax(0,1fr);gap:3px;padding:8px 13px calc(2px + var(--safe-b))}
+  #hud::before{border-width:6px 12px;border-image-width:6px 12px}
+  .stat,.betbox{min-width:0;padding:8px 5px 3px}.stat label{font-size:5px;letter-spacing:.12em}.stat b{font-size:11px}
+  .betbox{padding:9px 9px 3px;gap:2px}.betbox .step{width:17px;height:17px;font-size:12px;margin-top:0}.betval b{font-size:12px}
+  .betval label{font-size:5px}
+  #spin{width:42px!important}#spin .spin-t{font-size:5px;bottom:22%}#spin .ring{display:none}
+  .toggles{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:2px 2px}.tgl.plus,.tgl.buy{grid-column:1/-1}
+  .tgl{height:15px;font-size:6.5px;letter-spacing:.06em;border-width:0 9px;border-image-width:0 9px;gap:0}.tgl i{display:none}
+  .autoCount{font-size:9px}
+  .sheet{border-width:10px 16px;border-image-width:10px 16px;max-height:100%;padding:6px 6px 8px}
+  .sheet h2{font-size:12px}.sheet h3{margin:10px 0 4px;font-size:9px}.sheet p,.opt,.sheet table{font-size:10px;line-height:1.35}
+  .x{width:30px;height:30px;font-size:16px}
+  :root{--tap:28px}
+  .buyGrid{grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;margin-top:6px}.buyCard{padding:12px 4px 14px;gap:2px}.buyCard canvas{display:none}.buyCard h4{font-size:7px;min-height:18px}.buyCard small{display:none}.buyCard .pr{font-size:10px}.buyCard .go{min-height:20px;font-size:7px;padding:0 6px}
+  .chips button,.chip{min-height:30px;padding:0 9px;font-size:9px}
+  #mixer{top:40px;width:min(380px,calc(100vw - 16px));max-height:calc(100dvh - 46px)}
+  #mixer h2{min-height:22px;font-size:12px}.mx-row{min-height:24px;font-size:10px}.mx-row input[type=range]{height:24px}.mx-btns{padding-top:2px}.mx-chips .chip{font-size:9px}
+  .kv{grid-template-columns:repeat(2,minmax(0,1fr));gap:4px}.kv div{padding:4px 8px}.kv b{font-size:12px}
+}
+
+/* règles détaillées (js/rules.js) : tableaux défilants, guide des boutons, avertissement */
+.sheet h4.rh{margin:14px 0 4px;font:800 13px var(--f-text);letter-spacing:.12em;color:var(--gold-hi)}
+.sheet .tw{overflow-x:auto;margin:6px 0 10px}
+.sheet table.modes small{display:block;margin-top:2px;font-size:11px;line-height:1.35;color:var(--dim)}
+.sheet table.modes td:first-child{min-width:160px}
+.sheet .guide{margin:6px 0;display:grid;grid-template-columns:minmax(80px,max-content) 1fr;gap:6px 14px;font-size:13px;line-height:1.45}
+.sheet .guide dt{font-weight:800;color:var(--gold-hi)}.sheet .guide dd{margin:0}
+.sheet p.disc{padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#0f0b07;font-size:12px;color:var(--dim)}
+@media (max-width:520px){.sheet .guide{grid-template-columns:1fr;gap:0}.sheet .guide dd{margin:0 0 8px}}
 /* bande de réglages du son : fixe sous la barre haute (portrait / écrans hauts), popover en paysage téléphone */
 #mixer.docked{top:calc(max(26px,env(safe-area-inset-top) + 22px) + 46px);left:10px;right:10px;width:auto;display:grid;grid-template-columns:repeat(3,1fr);gap:4px 12px;padding:5px 12px 6px;border-radius:14px;z-index:5}
 #mixer.docked[hidden]{display:none}
