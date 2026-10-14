@@ -6,7 +6,7 @@ function ok(c, m) { if (!c) { fails++; console.log('ÉCHEC  ' + m); } else conso
 var sandbox = { window: {}, document: { documentElement: {}, querySelectorAll: function () { return []; } } };
 vm.createContext(sandbox);
 // i18n.js expose window.I18N ; on récupère les deux dictionnaires en les interrogeant
-vm.runInContext(fs.readFileSync(path.join(root, 'js/i18n.js'), 'utf8').replace('root.I18N = {', 'root.I18N = { _D: D, _B: B,'), sandbox);
+vm.runInContext(fs.readFileSync(path.join(root, 'js/i18n.js'), 'utf8').replace('root.I18N = {', 'root.I18N = { _D: D, _B: B, _X: X, _R: RGS_TXT,'), sandbox);
 sandbox.root = sandbox.window;
 var D = sandbox.window.I18N && sandbox.window.I18N._D;
 var CODES = ['ar', 'de', 'en', 'es', 'fi', 'fr', 'hi', 'id', 'ja', 'ko', 'pl', 'pt', 'ru', 'tr', 'vi', 'zh'];
@@ -89,6 +89,49 @@ ok(bd.length === 0, 'blocs rules / replay : mêmes clés en FR et EN' + (bd.leng
   ok(['TM and © 2026 Engine', 'Remote Game Server', 'reload the game', 'internet connection', 'expected return', 'Malfunction voids'].every(function (x) { return B.rules.en.disc.indexOf(x) >= 0; }) && /2026 Engine/.test(d), l + ' : l\'avertissement général est complet');
 });
 ok(!/paytable|pay table/i.test(JSON.stringify(B)), 'aucun « paytable » dans les nouveaux textes (mode social)');
+// --- 14 langues sans relecteur natif : blocs « rules » / « replay » / textes du RGS complets (mêmes clés, types, longueurs, marqueurs {x} que l'anglais), cohérence terminologique ---
+var X = sandbox.window.I18N._X, R0 = sandbox.window.I18N._R, I = sandbox.window.I18N, extra = [];
+function allStrings(v, f, p) { if (typeof v === 'string') f(v, p); else if (Array.isArray(v)) v.forEach(function (x, i) { allStrings(x, f, p + '[' + i + ']'); }); else if (v && typeof v === 'object') Object.keys(v).forEach(function (k) { allStrings(v[k], f, p + '.' + k); }); }
+CODES.filter(function (c) { return c !== 'en' && c !== 'fr'; }).forEach(function (c) {
+  var dd = [];
+  ['rules', 'replay'].forEach(function (n) { var cur = X[n][c]; if (!cur) { dd.push(n + ' absent'); return; } walk(B[n].en, cur, n, dd); walk(cur, B[n].en, n, dd); });
+  if (!X.rgs[c]) dd.push('rgs absent'); else { walk(R0.en, X.rgs[c], 'rgs', dd); walk(X.rgs[c], R0.en, 'rgs', dd); }
+  ok(dd.length === 0, c + ' : blocs rules, replay et textes RGS complets (mêmes clés, types, longueurs, marqueurs {x} que l\'anglais)' + (dd.length ? ' : ' + dd.slice(0, 5).join(' | ') : ''));
+  if (!X.rules[c] || !X.replay[c] || !X.rgs[c]) return;
+  // titres des bonus dans les règles = noms des bonus du dictionnaire (cohérence terminologique) ; le ou les mots-clés ne diffèrent que par la casse
+  var Rr = X.rules[c], d = D[c], bad = [];
+  [['scarabH', 'scarabIntro'], ['weighH', 'weighIntro'], ['vaultH', 'vaultIntro'], ['handH', 'handIntro']].forEach(function (p) { if (Rr && Rr[p[0]].toLocaleLowerCase(c) !== d[p[1]].toLocaleLowerCase(c)) bad.push(p[0] + ' ≠ ' + p[1] + ' (' + Rr[p[0]] + ' / ' + d[p[1]] + ')'); });
+  if (Rr && Rr.cryptH.toLocaleLowerCase(c).indexOf(d.cryptIntro.toLocaleLowerCase(c)) !== 0) bad.push('cryptH ≠ cryptIntro (' + Rr.cryptH + ' / ' + d.cryptIntro + ')');
+  ok(bad.length === 0, c + ' : titres des bonus des règles = noms du dictionnaire' + (bad.length ? ' : ' + bad.join(' | ') : ''));
+  // textes de bande / couleur / tablette cités par les règles = mêmes mots que le dictionnaire
+  var ct = d.cryptLeg.map(function (x) { return x.toLocaleLowerCase(c); }), cr = [Rr.cTab, Rr.cTide, Rr.cEclipse, Rr.cDust].map(function (x, i) { return x.toLocaleLowerCase(c).indexOf(ct[i === 3 ? 3 : i]) === 0; });
+  ok(cr.every(Boolean), c + ' : légendes des tablettes (TABLETTE, MARÉE, ÉCLIPSE, POUSSIÈRE) = dictionnaire' + (cr.every(Boolean) ? '' : ' : ' + cr.join()));
+  // typographie : NFC (diacritiques vietnamiens composés), pas de double espace, pas d'espace en bout, parenthèses et guillemets équilibrés, pas de « ... » ni de guillemets droits dans les phrases
+  var ty = [];
+  [[Rr, 'rules'], [X.replay[c], 'replay'], [X.rgs[c], 'rgs'], [D[c], 'D'], [(sandbox.window.I18N_SOCIAL || {})[c] || {}, 'social']].forEach(function (pr) {
+    allStrings(pr[0], function (t, p) {
+      if (t !== t.normalize('NFC')) ty.push(pr[1] + p + ' non NFC');
+      if (/ {2,}/.test(t.replace(/ {2}(?=[+×{])/g, ' ')) ) ty.push(pr[1] + p + ' double espace');
+      if (/\s$/.test(t)) ty.push(pr[1] + p + ' espace final');
+      if ((t.match(/\(/g) || []).length !== (t.match(/\)/g) || []).length) ty.push(pr[1] + p + ' parenthèses déséquilibrées');
+      if (/\.\.\./.test(t)) ty.push(pr[1] + p + ' « ... » au lieu de « … »');
+      if (/ [,.;!?]( |$)/.test(t) && c !== 'fr') ty.push(pr[1] + p + ' espace avant ponctuation');
+    }, '');
+  });
+  ok(ty.length === 0, c + ' : typographie (NFC, espaces, parenthèses, « … »)' + (ty.length ? ' : ' + ty.slice(0, 5).join(' | ') : ''));
+  // noms localisés des paliers (optionnels) : 4 textes courts, tous différents de l'anglais, qui tiennent sur le canvas
+  I.setLang('en');
+});
+// noms localisés des paliers (optionnels) : 4 textes courts (5e facultatif pour le palier ultime resté en anglais), tous différents de l'anglais, qui tiennent sur le canvas ; les règles (courtes et détaillées) citent alors les mêmes noms
+CODES.filter(function (c) { return c !== 'en'; }).forEach(function (c) {
+  var tl = X.tiers[c];
+  ok(Array.isArray(tl) && (tl.length === 4 || tl.length === 5) && tl.every(function (n) { return typeof n === 'string' && n.trim() && n.length <= 24; }) && tl.every(function (n, i) { return i > 3 || n !== D.en.tiers[i]; }) && (tl.length === 5 || D[c].tiers[4] !== D.en.tiers[4]), c + ' : noms localisés des paliers WIN / BIG WIN / EXTRA WIN / MEGA WIN présents (4 textes ≤ 24 caractères' + (D[c].tiers[4] === D.en.tiers[4] ? ', + palier ultime' : '') + ')');
+  I.setLang(c); I.setLocalTiers(true); var Tl = I.t(), rl = Tl.rules.join(' '), hw = I.block('rules').how.join(' '); I.setLocalTiers(false);
+  ok(tl && tl.every(function (n) { return rl.indexOf(n) >= 0; }) && tl.slice(0, 4).every(function (n) { return hw.indexOf(n) >= 0; }) && Tl.tiers.every(function (n, i) { return n === (i < tl.length ? tl[i] : D[c].tiers[i]); }), c + ' : avec les paliers localisés, les règles (courtes et détaillées) et l\'écran citent les mêmes noms');
+  I.setLang('en');
+});
+ok(I.localTiers() === false && I.t().tiers[0] === 'WIN', 'paliers localisés désactivés par défaut (WIN, BIG WIN… restent en anglais)');
+I.setLang('xx'); ok(I.lang() === 'en', 'langue inconnue : repli sûr sur l\'anglais'); I.setLocalTiers(true); delete X.tiers.de0; var saveDe = X.tiers.de; delete X.tiers.de; I.setLang('de'); ok(I.t().tiers[0] === 'WIN' && I.t().tiers[4] === D.de.tiers[4], 'paliers localisés : repli sûr sur l\'anglais quand la langue n\'a pas de noms'); X.tiers.de = ['', 'x', 'y', 'z']; ok(I.t().tiers[0] === 'WIN', 'paliers localisés : un nom vide est refusé (repli anglais)'); X.tiers.de = saveDe; I.setLocalTiers(false); I.setLang('en');
 var mainSrc = fs.readFileSync(path.join(root, 'js/main.js'), 'utf8');
 
 // seuils d'animation de gain : les règles (FR/EN) doivent citer les mêmes seuils que G.WIN_TIERS et les 4 noms demandés doivent exister
