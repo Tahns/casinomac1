@@ -9,7 +9,10 @@ var M = require('../js/math.js');
 var cap = require('./cap');
 var exp = require('./stake-export');
 
-var PER_MODE = cap(100), MICRO = 1000000;
+// ANUBIS_POOL=n : n books par mode (au lieu de 100), pool PARTAGÉ par toutes les instances du processus (un seul tirage de 6 × n books, quel que soit le nombre de create())
+var PER_MODE = process.env.ANUBIS_POOL ? Math.max(1, Math.min(cap(100), parseInt(process.env.ANUBIS_POOL, 10) || 1)) : cap(100), MICRO = 1000000;
+var SHARED = process.env.ANUBIS_POOL ? {} : null;
+var DRAWS = 0, ROUNDS = 0;   // books tirés dans ce processus (pour le budget de tirages des tests)
 var MODES = [
   { name: 'std', cost: M.MODES.std.cost, play: function (r) { return M.playRound(r, 'std'); } },
   { name: 'plus', cost: M.MODES.plus.cost, play: function (r) { return M.playRound(r, 'plus'); } }
@@ -26,14 +29,14 @@ function makePool(seed) {
       var round = m.play(rng);
       list.push({ id: i + 1, events: exp.bookEvents(round), payoutMultiplier: M.toInt(round.total) });
     }
-    pool[m.name] = list;
+    pool[m.name] = list; DRAWS += list.length;
   });
   return pool;
 }
 
 function create(opts) {
   opts = opts || {};
-  var pool = makePool(opts.seed || 2026), pickRng = M.mulberry32((opts.seed || 2026) + 99);
+  var pool = SHARED ? (SHARED.p = SHARED.p || makePool(opts.seed || 2026)) : makePool(opts.seed || 2026), pickRng = M.mulberry32((opts.seed || 2026) + 99);
   var st = {
     sessionID: opts.sessionID || 'test-session',
     balance: opts.balance != null ? opts.balance : 1000 * MICRO,
@@ -93,6 +96,7 @@ function create(opts) {
         var cost = Math.round(body.amount * md.cost);
         if (st.balance < cost) return err(res, 400, 'ERR_IPB', 'solde insuffisant');
         st.balance -= cost;
+        ROUNDS++;
         var bk = pickBook(md.name), pm = bk.payoutMultiplier / M.SCALE;
         var r = { betID: Date.now() + '-' + bk.id, amount: body.amount, payout: Math.round(body.amount * pm), payoutMultiplier: pm, active: pm > 0, mode: md.name, state: bk.events };
         if (r.active) st.active = r;   // un round gagnant reste ouvert jusqu'à /wallet/end-round ; un 0x est clos par le RGS
@@ -122,7 +126,7 @@ function create(opts) {
   };
 }
 
-module.exports = { create: create };
+module.exports = { create: create, draws: function () { return DRAWS; }, rounds: function () { return ROUNDS; } };
 if (require.main === module) {
   var mock = create();
   mock.listen(parseInt(process.argv[2] || '8787', 10)).then(function (p) {
