@@ -16,6 +16,7 @@
   var START_BASE = 1000, START_BAL = START_BASE;
   var SAVE_VER = 2;           // v1 = ancien jeu en « crédits » (mises 10 à 5000, solde 10 000)
   var r2 = G.r2;
+  var rr = function (n) { return LIVE ? G.r6(n) : r2(n); };   // montants du RGS : précision du serveur (micro-unités), démo locale : centimes
   var AUTO_STEPS = [0, 10, 25, 50, 100, Infinity];
   var SAVE_KEY = 'anubis_save_v1', OLD_SAVE_KEY = 'hoa_save_v1';   // ancienne clé lue une fois pour ne pas perdre les soldes
   var REPLAY = !!(root.Replay && root.Replay.active);   // mode replay (js/replay.js) : aucune sauvegarde lue ni écrite, pas d'écran d'accueil
@@ -37,6 +38,7 @@
   }
   // niveaux de mise, solde de départ et plafonds de perte de la démo, adaptés à la devise (k = taux indicatif de CUR)
   function applyScale(k) {
+    if (LIVE) { if (S.bi >= BETS.length) S.bi = Math.max(0, BETS.length - 1); G.bet = BETS[S.bi]; return; }   // mode RGS : niveaux de mise et solde viennent du serveur, jamais d'un taux indicatif
     BETS.length = 0; BASE_BETS.forEach(function (b) { BETS.push(r2(b * k)); });
     START_BAL = r2(START_BASE * k);
     LIMITS = LIMIT_BASE.map(function (n) { return r2(n * k); });
@@ -187,7 +189,7 @@
     if (S.busy || S.blocked) return;
     var T = I18N.t(), b = resume ? resume.bet : bet();
     var priceMult = buyKind ? M.BUY[buyKind].price : resume ? M.MODES[resume.mode].cost : M.MODES[S.mode].cost;
-    var c = r2(b * priceMult);   // coût réel du mode = mise x coût du mode (barre d'espace, autoplay et achats passent tous par ici)
+    var c = rr(b * priceMult);   // coût réel du mode = mise x coût du mode (barre d'espace, autoplay et achats passent tous par ici)
     if (!resume) {
       if (S.limitHit) { openLimit(); return; }
       if (S.balance < c) { say(T.noFunds); Sfx.curse(); stopAuto(); return; }   // jamais de requête /wallet/play sans le solde pour le coût réel
@@ -196,14 +198,14 @@
     S.busy = true; G.speed = spd();
     var round, srv = null, hadBonus = false;
     if (LIVE) {
-      setWin(0, false); setSpinBtn(); say(T.spinning);
+      setWin(0, false); setSpinBtn(); say(resume ? I18N.rgs().resuming : T.spinning);
       if (S.pendingEnd && !(await finishRound())) { S.busy = false; stopAuto(); updateHud(); setSpinBtn(); return; }   // un gain précédent n'a pas pu être encaissé
       try {
         srv = RG.readRound(resume ? resume.round : null);
         if (!resume) {
           var res = await RG.play(b, RG.modeName(S.mode, buyKind));
-          srv = RG.readRound(res.round); S.balance = r2(RG.fromMicro(res.balance.amount));
-          SESS.spins++; SESS.wag = r2(SESS.wag + c); updateHud(true);
+          srv = RG.readRound(res.round); S.balance = G.r6(RG.fromMicro(res.balance.amount));
+          SESS.spins++; SESS.wag = rr(SESS.wag + c); updateHud(true);
         }
         if (!srv.events.length) throw Object.assign(new Error('book'), { code: 'ERR_BOOK' });
         round = RG.bookToRound(srv.events, M);
@@ -217,7 +219,7 @@
       S.pending = r2(Math.min(round.total, M.MAX_WIN) * b); save();
     }
     G.wheel.clearHighlight(); G.wheel.clearOracle();
-    say(T.spinning);
+    say(resume ? I18N.rgs().resuming : T.spinning);
     var total = 0;
     // si le joueur choisit un autre profil de bonus, le gain en attente est recalculé et sauvegardé tout de suite
     G.onBonusChoice = function () { if (LIVE) return; var t = 0; round.spins.forEach(function (x) { t += x.pay; }); S.pending = r2(Math.min(t, M.MAX_WIN) * b); save(); };
@@ -260,18 +262,22 @@
       if (root.console) console.error(err);
       total = 0; round.spins.forEach(function (x) { total += x.pay; }); G.scene = null; G.eg = null; G.winOv = null; G.fade = 0; G.setScene(null);
     }
-    total = LIVE ? srv.mult : Math.min(total, M.MAX_WIN);   // en mode RGS le gain fait foi : payoutMultiplier du serveur
-    var amount = r2(total * b);
+    total = LIVE ? srv.mult : Math.min(total, M.MAX_WIN);   // en mode RGS le gain fait foi : payoutMultiplier du serveur, jamais recalculé par le jeu
+    var amount = LIVE ? (srv.payout != null ? srv.payout : G.r6(total * b)) : r2(total * b);   // montant RGS (micro-unités) ; démo : centimes
+    // cohérence : somme des événements, finalWin et payoutMultiplier doivent concorder ; sinon erreur affichée, montant du RGS crédité
+    var mismatch = LIVE && (round.issues.length > 0 || Math.abs(round.sum - srv.mult) > 1e-6 || Math.abs(round.total - srv.mult) > 1e-6);
+    if (mismatch) { stopAuto(); if (root.console) console.error('RGS book', srv.mult, round.sum, round.total, round.issues); }
     G.wheel.clearOracle(); $('oracle').hidden = true;
     if (amount > 0) {
       var tier = tierOf(total / priceMult);
       if (tier >= 0) await G.showBigWin(total, amount, tier);
       if (LIVE) { S.pendingEnd = true; await finishRound(); }   // round ouvert (gain > 0) : /wallet/end-round, jamais pour un 0x
       else S.balance = r2(S.balance + amount);
-      S.lastWin = amount; SESS.won = r2(SESS.won + amount);
+      S.lastWin = amount; SESS.won = rr(SESS.won + amount);
       setWin(amount, true); updateHud(true);
       say(T.winLine + ' ×' + G.fmt(total) + '  ·  ' + G.money(amount, true));
     } else { setWin(0); say(T.ready); }
+    if (mismatch) showMsg(I18N.t().brandTop + ' UNCHAINED', I18N.rgs().errSum, [[I18N.rgs().confirm]]);
     pushHistory(total, hadBonus);
     G.wheel.clearHighlight();
     S.pending = 0; S.busy = false; G.speed = spd();
@@ -289,28 +295,34 @@
   /* ---------- mode RGS : encaissement, erreurs, démarrage ---------- */
   // /wallet/end-round : uniquement pour un round ouvert (gain > 0). Renvoie true si le gain est encaissé.
   async function finishRound() {
-    try { var r = await RG.endRound(); S.balance = r2(RG.fromMicro(r.balance.amount)); S.pendingEnd = false; updateHud(true); return true; }
+    try { var r = await RG.endRound(); S.balance = G.r6(RG.fromMicro(r.balance.amount)); S.pendingEnd = false; updateHud(true); return true; }
     catch (e) { rgsFail(e); return false; }
   }
+  // texte de chaque code d'erreur (bloc « rgs » de js/i18n.js) ; ERR_IS / ERR_ATE / ERR_LOC / ERR_MAINTENANCE : la session est inutilisable -> écran de blocage
+  var ERR_KEY = { ERR_VAL: 'errVal', ERR_IPB: 'errIpb', ERR_GLE: 'errGle', ERR_ACT: 'errAct', ERR_GEN: 'errGen', ERR_BOOK: 'errBook', ERR_URL: 'errUrl', ERR_IS: 'errIs', ERR_ATE: 'errAte', ERR_LOC: 'errLoc', ERR_MAINTENANCE: 'errMaint' };
+  var ERR_FATAL = { ERR_IS: 1, ERR_ATE: 1, ERR_LOC: 1, ERR_MAINTENANCE: 1 };
+  var ERR_BLOCK = { ERR_URL: 1, ERR_VAL: 1, ERR_IS: 1, ERR_ATE: 1, ERR_LOC: 1, ERR_MAINTENANCE: 1 };   // codes qui ont un texte propre sur l'écran de blocage
   // message clair selon le code d'erreur du RGS ; ERR_IPB / ERR_GLE : on resynchronise le solde (/wallet/balance)
   function rgsFail(e) {
-    var T = I18N.rgs(), code = e && e.code || 'ERR_NET', key = { ERR_VAL: 'errVal', ERR_IPB: 'errIpb', ERR_GLE: 'errGle', ERR_ACT: 'errAct', ERR_GEN: 'errGen', ERR_BOOK: 'errBook', ERR_URL: 'errUrl' }[code] || 'errNet';
+    var T = I18N.rgs(), code = e && e.code || 'ERR_NET', key = ERR_KEY[code] || 'errNet';
     if (root.console) console.error('RGS', code, e && e.message);
+    if (ERR_FATAL[code]) { blockGame(code); return; }
     if (code === 'ERR_IPB') { say(T.errIpb); Sfx.curse(); }
     else say(T[key]);
-    if (code === 'ERR_IPB' || code === 'ERR_GLE' || code === 'ERR_NET') RG.balance().then(function (r) { S.balance = r2(RG.fromMicro(r.balance.amount)); updateHud(true); }, function () {});
+    if (code === 'ERR_IPB' || code === 'ERR_GLE' || code === 'ERR_NET') RG.balance().then(function (r) { S.balance = G.r6(RG.fromMicro(r.balance.amount)); updateHud(true); }, function () {});
     if (code !== 'ERR_IPB') showMsg(I18N.t().brandTop + ' UNCHAINED', T[key], [[T.confirm]]);
   }
   // blocage total : aucune mise possible tant que la connexion n'est pas établie (pas de repli local)
   function blockGame(code) {
-    var T = I18N.rgs(), key = { ERR_URL: 'errUrl', ERR_VAL: 'errVal' }[code] || 'errAuth', el = $('rgsBlock');
-    S.blocked = true; setSpinBtn();
+    var T = I18N.rgs(), key = ERR_BLOCK[code] ? ERR_KEY[code] : 'errAuth', el = $('rgsBlock');
+    S.blocked = true; S.auto = 0; setSpinBtn();
     if (!el) {
       el = document.createElement('div'); el.id = 'rgsBlock'; el.setAttribute('role', 'alertdialog'); el.setAttribute('aria-live', 'assertive');
       el.innerHTML = '<div class="sheet"><h2 id="rgsBlockT"></h2><p id="rgsBlockM"></p><div class="acts"><button type="button" class="btn-go" id="rgsBlockB"></button></div></div>';
       document.body.appendChild(el);
       $('rgsBlockB').addEventListener('click', function () { root.location.reload(); });
     }
+    el.setAttribute('data-code', code || ''); hideModal();
     $('rgsBlockT').textContent = I18N.t().brandTop + ' UNCHAINED'; $('rgsBlockM').textContent = T[key]; $('rgsBlockB').textContent = T.retry;
     el.hidden = false; say(T[key]);
   }
@@ -326,7 +338,8 @@
   function startRgs() {
     var P = RG.params, T = I18N.t();
     S.blocked = true; S.balance = 0;
-    if (P.currency === 'EUR' || P.currency === 'USD') { S.cur = P.currency; S.curSet = true; G.currency = P.currency; }
+    if (P.social && root.SOCIAL) root.SOCIAL.set(true);                          // ?social=true : textes et jetons du mode social dès le départ
+    if (P.currency) { setCurrency(P.currency, true); S.curLocked = true; curButton(); }     // ?currency= : devise imposée (la réponse d'authentification prime ensuite)
     applyLang(); T = I18N.t();
     if (RG.error) { blockGame(RG.error); return; }
     say(I18N.rgs().connecting);
@@ -334,19 +347,22 @@
       var cfg = a.config, lv = betLevelsFrom(cfg), rd = a.round && a.round.active ? a.round : null, ix;
       if (rd && !(rd.amount > 0)) rd = null;
       if (rd && lv.indexOf(rd.amount) < 0) { lv.push(rd.amount); lv.sort(function (x, y) { return x - y; }); }   // la mise du round repris reste sélectionnable
+      // mode social : config.jurisdiction.socialCasino (SOCIAL.set recalcule textes et devise) ; devise : celle du solde du RGS, imposée au joueur
+      if (root.SOCIAL) root.SOCIAL.set(!!(cfg.jurisdiction && cfg.jurisdiction.socialCasino) || P.social);
+      var cur = root.CUR.norm(a.balance.currency);
+      if (cur) G.setCurrency(cur, true);
+      G.lockCurrency(true);
       BETS.length = 0; lv.forEach(function (v) { BETS.push(RG.fromMicro(v)); });
       ix = rd ? lv.indexOf(rd.amount) : nearest(lv, cfg.defaultBetLevel);   // round actif : sa mise ; sinon defaultBetLevel
-      S.bi = Math.max(0, ix);
-      S.balance = r2(RG.fromMicro(a.balance.amount));
-      var cur = String(a.balance.currency || '').toUpperCase();
-      if (cur === 'EUR' || cur === 'USD') { S.cur = cur; S.curSet = true; G.currency = cur; }
+      S.bi = Math.max(0, ix); G.bet = BETS[S.bi];
+      S.balance = G.r6(RG.fromMicro(a.balance.amount));
       S.blocked = false; shown.bal = -1; applyLang(); updateHud(); setSpinBtn(); say(I18N.t().ready);
       if (rd) {
         var pm = RG.parseMode(rd.mode); if (!pm.buy && pm.mode === 'plus') S.mode = 'plus';
         S.resume = { round: rd, bet: RG.fromMicro(rd.amount), mode: pm.mode, buy: pm.buy, mult: Number(rd.payoutMultiplier) || 0 };
         resumeRound();
       }
-    }, function (e) { blockGame(e && e.code === 'ERR_VAL' ? 'ERR_VAL' : 'ERR_AUTH'); });
+    }, function (e) { blockGame(e && ERR_BLOCK[e.code] ? e.code : 'ERR_AUTH'); });
   }
   // reprise d'un round ouvert : on le rejoue (la mise est déjà débitée), puis /wallet/end-round s'il paie
   function resumeRound() {
@@ -440,7 +456,7 @@
   }
   function setCurrency(c, explicit) {
     c = root.CUR.norm(c); if (!c) return;
-    var ratio = root.CUR.rate(c) / root.CUR.rate(G.currency), changed = c !== G.currency;
+    var ratio = LIVE ? 1 : root.CUR.rate(c) / root.CUR.rate(G.currency), changed = c !== G.currency;
     S.cur = c; if (explicit !== false) S.curSet = true; G.currency = c;
     if (changed && ratio !== 1) {
       S.balance = G.rc(S.balance * ratio); SESS.wag = G.rc(SESS.wag * ratio); SESS.won = G.rc(SESS.won * ratio); S.lastWin = G.rc(S.lastWin * ratio); winNow = G.rc(winNow * ratio);
