@@ -110,9 +110,9 @@
     return { events: ev, mult: mult, amount: RGS.fromMicro(Number(round && round.amount) || 0), payout: pay, active: !!(round && round.active), mode: round && round.mode };
   };
 
-  /* ---------- adaptateur book v2 -> tour du jeu ----------
-   * Format : voir l'en-tête de tools/stake-export.js (contrat DÉFINITIF). Aucun gain n'est recalculé ici : chaque valeur vient d'un événement ;
-   * round.issues liste les incohérences relevées (somme des tours, finalWin, roue) — le jeu les signale et crédite le montant du RGS. */
+  // ---------- adaptateur book v2 -> tour du jeu ----------
+  // Format : voir l'en-tête de tools/stake-export.js (contrat DÉFINITIF). Aucun gain n'est recalculé ici : chaque valeur vient d'un événement ;
+  // round.issues liste les incohérences relevées (somme des tours, finalWin, roue) — le jeu les signale et crédite le montant du RGS.
   function bookError(msg) { var e = new Error(msg); e.code = 'ERR_BOOK'; return e; }
   var TOL = 1e-6;
   function bookToRound(events, M) {
@@ -188,7 +188,7 @@
           if (kind === 'crypt' || bstart.secret) { spin.secret = true; spin.profile = 'crypt'; }
         }
         spin.base = spin.bonus.total;
-        if (Math.abs(spin.base * (spin.boost || 1) - spin.pay) > TOL) issues.push('spin ' + (spins.length + 1) + ' : bonus ' + spin.base * (spin.boost || 1) + ' ≠ spinWin ' + spin.pay);
+        if (Math.abs(spin.base * (spin.boost || 1) - spin.pay) > TOL) issues.push('spin ' + (spins.length + 1) + ': bonus ' + spin.base * (spin.boost || 1) + ' != spinWin ' + spin.pay);
         if (spin.index < 0) spin.kind = bstart.kind || (kind === 'crypt' ? 'vault' : kind);   // achat : la scène lit sp.kind
       }
       spins.push(spin); spin = null; bev = null; bstart = null;
@@ -197,13 +197,13 @@
       switch (e.type) {
         case 'roundStart':
           rs = e;
-          if (e.v !== 2) throw bookError('format de book ' + e.v + ' (v2 attendu)');
-          if (e.cells !== M.N) throw bookError('roue de ' + e.cells + ' cases (' + M.N + ' attendues)');
+          if (e.v !== 2) throw bookError('book format ' + e.v + ' (v2 expected)');
+          if (e.cells !== M.N) throw bookError('wheel of ' + e.cells + ' cells (' + M.N + ' expected)');
           break;
         case 'oracle': oracle = { kind: e.kind, boost: e.boost }; break;
         case 'wheelStop':
           spin = blank(); spin.oracle = oracle; oracle = null; spin.index = e.index; spin.kind = e.kind; spin.boost = e.boost || 1;
-          if (M.LAYOUT[e.index] !== e.kind) issues.push('roue : case ' + e.index + ' = ' + M.LAYOUT[e.index] + ' ≠ ' + e.kind);
+          if (M.LAYOUT[e.index] !== e.kind) issues.push('wheel: cell ' + e.index + ' = ' + M.LAYOUT[e.index] + ' != ' + e.kind);
           break;
         case 'bonusStart': if (!spin) spin = blank(); bstart = e; bev = []; break;
         case 'spinWin': closeSpin(e); break;
@@ -212,12 +212,12 @@
         default: if (bev) bev.push(e);
       }
     });
-    if (!rs) throw bookError('roundStart absent');
-    if (!fin) throw bookError('finalWin absent');
+    if (!rs) throw bookError('roundStart missing');
+    if (!fin) throw bookError('finalWin missing');
     var sum = 0; spins.forEach(function (s) { sum += s.pay; });
     sum = Math.min(Math.round(sum * S) / S, M.MAX_WIN);
     var total = f(fin.amount);
-    if (Math.abs(total - sum) > TOL) issues.push('finalWin ' + total + ' ≠ somme des tours ' + sum);
+    if (Math.abs(total - sum) > TOL) issues.push('finalWin ' + total + ' != sum of spins ' + sum);
     return { spins: spins, total: total, sum: sum, capped: !!fin.capped, cost: f(rs.cost), mode: rs.mode, issues: issues, version: 2 };
   }
   RGS.bookToRound = bookToRound;
