@@ -1187,6 +1187,7 @@
   X.tiers.ar = ['ربح', 'ربح كبير', 'ربح إضافي', 'ربح ضخم', 'الحكم الإلهي'];
   X.replay.ar = {
     badge: 'إعادة', start: 'تشغيل', again: 'تشغيل مجدداً', playing: 'جارٍ التشغيل…', loading: 'جارٍ تحميل الإعادة…',
+    errSum: 'أحداث الإعادة لا تطابق المبلغ المعلن من الخادم: يُعرض مبلغ الخادم.',
     errLoad: 'تعذّر تحميل هذه الإعادة.', errParams: 'معاملات الإعادة ناقصة (game, version, mode, event, rgs_url).', errFormat: 'هذه الإعادة بصيغة غير معروفة.',
     errNet: 'خطأ في الشبكة: تحقق من الاتصال وأعد التحميل.', bet: 'الرهان', betSocial: 'مبلغ اللعب', realCost: 'التكلفة الفعلية', costMult: 'التكلفة', result: 'الربح', noWin: 'لا ربح',
     modeStd: 'قياسي', modePlus: 'العرّاف+', modeBonus: 'بونص'
@@ -1202,6 +1203,12 @@
     errGen: 'خطأ في خادم اللعبة. يرجى المحاولة بعد قليل.',
     errNet: 'الشبكة غير متاحة أو الاستجابة غير صالحة. ربما لم يُحتسب رهانك: تحقق من رصيدك.',
     errBook: 'تعذّرت قراءة نتيجة الجولة. يرجى التواصل مع الدعم.',
+    errIs: 'الجلسة غير صالحة أو منتهية. يرجى إعادة تشغيل اللعبة من الموقع.',
+    errAte: 'انتهت صلاحية المصادقة. يرجى إعادة تشغيل اللعبة من الموقع لتسجيل الدخول من جديد.',
+    errLoc: 'هذه اللعبة غير متاحة في موقعك.',
+    errMaint: 'الصيانة جارية. يرجى المحاولة بعد بضع دقائق.',
+    errSum: 'النتيجة المعروضة لا تطابق المبلغ الصادر عن خادم اللعبة: يُطبَّق مبلغ الخادم.',
+    resuming: 'استئناف الجولة الجارية…',
     buyConfirm: 'شراء {name} مقابل {price}؟', buyConfirmTitle: 'تأكيد الشراء',
     autoTitle: 'لعب تلقائي', autoSub: 'اختر عدد الجولات وشروط الإيقاف ثم أكّد.',
     autoRounds: 'عدد الجولات', autoStopWin: 'أوقف عند ربح لا يقل عن', autoStart: 'ابدأ', autoCost: 'التكلفة لكل جولة'
@@ -1291,6 +1298,7 @@
   X.tiers.de = ['GEWINN', 'GROSSER GEWINN', 'EXTRA-GEWINN', 'MEGA-GEWINN'];
   X.replay.de = {
     badge: 'REPLAY', start: 'ABSPIELEN', again: 'ERNEUT ABSPIELEN', playing: 'LÄUFT…', loading: 'Replay wird geladen…',
+    errSum: 'Die Ereignisse des Replays stimmen nicht mit dem vom Server gemeldeten Betrag überein: Der Serverbetrag wird angezeigt.',
     errLoad: 'Dieser Replay konnte nicht geladen werden.', errParams: 'Replay-Parameter fehlen (game, version, mode, event, rgs_url).', errFormat: 'Dieser Replay hat ein unbekanntes Format.',
     errNet: 'Netzwerkfehler: Verbindung prüfen und neu laden.', bet: 'EINSATZ', betSocial: 'SPIELBETRAG', realCost: 'TATSÄCHLICHE KOSTEN', costMult: 'Kosten', result: 'GEWINN', noWin: 'Kein Gewinn',
     modeStd: 'STANDARD', modePlus: 'ORAKEL+', modeBonus: 'BONUS'
@@ -1306,6 +1314,12 @@
     errGen: 'Fehler des Spielservers. Bitte versuche es gleich noch einmal.',
     errNet: 'Netzwerk nicht verfügbar oder ungültige Antwort. Dein Einsatz wurde möglicherweise nicht berücksichtigt: Prüfe dein Guthaben.',
     errBook: 'Das Rundenergebnis konnte nicht gelesen werden. Bitte wende dich an den Support.',
+    errIs: 'Ungültige oder abgelaufene Sitzung. Bitte starte das Spiel erneut über die Seite.',
+    errAte: 'Authentifizierung abgelaufen. Bitte starte das Spiel erneut über die Seite, um dich neu anzumelden.',
+    errLoc: 'Dieses Spiel ist an deinem Standort nicht verfügbar.',
+    errMaint: 'Wartungsarbeiten laufen. Bitte versuche es in einigen Minuten erneut.',
+    errSum: 'Das angezeigte Ergebnis stimmt nicht mit dem Betrag des Spielservers überein: Der Serverbetrag wird übernommen.',
+    resuming: 'Laufende Runde wird fortgesetzt…',
     buyConfirm: '{name} für {price} kaufen?', buyConfirmTitle: 'KAUF BESTÄTIGEN',
     autoTitle: 'AUTOSPIEL', autoSub: 'Wähle die Anzahl der Runden und die Stoppbedingungen, dann bestätige.',
     autoRounds: 'Anzahl der Runden', autoStopWin: 'Stopp bei einem Gewinn ab', autoStart: 'Start', autoCost: 'Kosten pro Runde'
@@ -1396,6 +1410,7 @@
   X.tiers.es = ['PREMIO', 'GRAN PREMIO', 'PREMIO EXTRA', 'MEGA PREMIO'];
   X.replay.es = {
     badge: 'REPETICIÓN', start: 'REPRODUCIR', again: 'REPRODUCIR DE NUEVO', playing: 'EN CURSO…', loading: 'Cargando la repetición…',
+    errSum: 'Los eventos de la repetición no coinciden con el importe anunciado por el servidor: se muestra el importe del servidor.',
     errLoad: 'No se pudo cargar esta repetición.', errParams: 'Faltan parámetros de la repetición (game, version, mode, event, rgs_url).', errFormat: 'Esta repetición tiene un formato desconocido.',
     errNet: 'Error de red: comprueba la conexión y vuelve a cargar.', bet: 'APUESTA', betSocial: 'IMPORTE DE JUEGO', realCost: 'COSTE REAL', costMult: 'Coste', result: 'PREMIO', noWin: 'Sin premio',
     modeStd: 'ESTÁNDAR', modePlus: 'ORÁCULO+', modeBonus: 'BONUS'
@@ -1411,6 +1426,12 @@
     errGen: 'Error del servidor de juego. Inténtalo de nuevo en un momento.',
     errNet: 'Red no disponible o respuesta no válida. Es posible que tu apuesta no se haya tenido en cuenta: comprueba tu saldo.',
     errBook: 'No se pudo leer el resultado de la ronda. Ponte en contacto con el soporte.',
+    errIs: 'Sesión no válida o caducada. Vuelve a iniciar el juego desde el sitio.',
+    errAte: 'La autenticación ha caducado. Vuelve a iniciar el juego desde el sitio para identificarte de nuevo.',
+    errLoc: 'Este juego no está disponible desde tu ubicación.',
+    errMaint: 'Mantenimiento en curso. Inténtalo de nuevo en unos minutos.',
+    errSum: 'El resultado mostrado no coincide con el importe del servidor de juego: se aplica el importe del servidor.',
+    resuming: 'Reanudando la ronda en curso…',
     buyConfirm: '¿Comprar {name} por {price}?', buyConfirmTitle: 'CONFIRMAR COMPRA',
     autoTitle: 'JUEGO AUTOMÁTICO', autoSub: 'Elige el número de rondas y las condiciones de parada, y confirma.',
     autoRounds: 'Número de rondas', autoStopWin: 'Parar con un premio de al menos', autoStart: 'Iniciar', autoCost: 'Coste por ronda'
@@ -1500,6 +1521,7 @@
   X.tiers.fi = ['VOITTO', 'ISO VOITTO', 'EXTRA-VOITTO', 'MEGAVOITTO'];
   X.replay.fi = {
     badge: 'TOISTO', start: 'TOISTA', again: 'TOISTA UUDELLEEN', playing: 'TOISTETAAN…', loading: 'Ladataan toistoa…',
+    errSum: 'Toiston tapahtumat eivät vastaa palvelimen ilmoittamaa summaa: näytetään palvelimen summa.',
     errLoad: 'Tämän toiston lataus epäonnistui.', errParams: 'Toiston parametreja puuttuu (game, version, mode, event, rgs_url).', errFormat: 'Tämän toiston muoto on tuntematon.',
     errNet: 'Verkkovirhe: tarkista yhteys ja lataa uudelleen.', bet: 'PANOS', betSocial: 'PELISUMMA', realCost: 'TODELLINEN HINTA', costMult: 'Hinta', result: 'VOITTO', noWin: 'Ei voittoa',
     modeStd: 'NORMAALI', modePlus: 'ORAAKKELI+', modeBonus: 'BONUS'
@@ -1515,6 +1537,12 @@
     errGen: 'Pelipalvelimen virhe. Yritä hetken kuluttua uudelleen.',
     errNet: 'Verkko ei ole käytettävissä tai vastaus on virheellinen. Panostasi ei ehkä ole otettu huomioon: tarkista saldosi.',
     errBook: 'Kierroksen tulosta ei voitu lukea. Ota yhteyttä tukeen.',
+    errIs: 'Virheellinen tai vanhentunut istunto. Käynnistä peli uudelleen sivustolta.',
+    errAte: 'Tunnistautuminen on vanhentunut. Käynnistä peli uudelleen sivustolta kirjautuaksesi uudelleen.',
+    errLoc: 'Tämä peli ei ole saatavilla sijainnissasi.',
+    errMaint: 'Huolto käynnissä. Yritä uudelleen muutaman minuutin kuluttua.',
+    errSum: 'Näytetty tulos ei vastaa pelipalvelimen summaa: palvelimen summa otetaan käyttöön.',
+    resuming: 'Käynnissä olevaa kierrosta jatketaan…',
     buyConfirm: 'Ostetaanko {name} hintaan {price}?', buyConfirmTitle: 'VAHVISTA OSTO',
     autoTitle: 'AUTOMAATTIPELI', autoSub: 'Valitse kierrosten määrä ja pysäytysehdot ja vahvista sitten.',
     autoRounds: 'Kierrosten määrä', autoStopWin: 'Pysäytä vähintään tällä voitolla', autoStart: 'Aloita', autoCost: 'Hinta kierrosta kohti'
@@ -1603,6 +1631,7 @@
   X.tiers.id = ['MENANG', 'MENANG BESAR', 'MENANG EKSTRA', 'MENANG MEGA'];
   X.replay.id = {
     badge: 'REPLAY', start: 'PUTAR', again: 'PUTAR LAGI', playing: 'BERJALAN…', loading: 'Memuat replay…',
+    errSum: 'Peristiwa replay tidak sesuai dengan jumlah yang diumumkan server: jumlah server ditampilkan.',
     errLoad: 'Replay ini tidak dapat dimuat.', errParams: 'Parameter replay tidak lengkap (game, version, mode, event, rgs_url).', errFormat: 'Replay ini memiliki format yang tidak dikenal.',
     errNet: 'Kesalahan jaringan: periksa koneksi lalu muat ulang.', bet: 'TARUHAN', betSocial: 'JUMLAH MAIN', realCost: 'BIAYA SEBENARNYA', costMult: 'Biaya', result: 'MENANG', noWin: 'Tidak menang',
     modeStd: 'STANDAR', modePlus: 'ORAKEL+', modeBonus: 'BONUS'
@@ -1618,6 +1647,12 @@
     errGen: 'Kesalahan server permainan. Silakan coba lagi sebentar lagi.',
     errNet: 'Jaringan tidak tersedia atau respons tidak valid. Taruhanmu mungkin belum diperhitungkan: periksa saldomu.',
     errBook: 'Hasil ronde tidak dapat dibaca. Silakan hubungi dukungan.',
+    errIs: 'Sesi tidak valid atau telah berakhir. Silakan jalankan ulang permainan dari situs.',
+    errAte: 'Autentikasi telah berakhir. Silakan jalankan ulang permainan dari situs untuk masuk kembali.',
+    errLoc: 'Permainan ini tidak tersedia dari lokasi Anda.',
+    errMaint: 'Pemeliharaan sedang berlangsung. Silakan coba lagi dalam beberapa menit.',
+    errSum: 'Hasil yang ditampilkan tidak sesuai dengan jumlah dari server permainan: jumlah server diterapkan.',
+    resuming: 'Melanjutkan ronde yang sedang berjalan…',
     buyConfirm: 'Beli {name} seharga {price}?', buyConfirmTitle: 'KONFIRMASI PEMBELIAN',
     autoTitle: 'MAIN OTOMATIS', autoSub: 'Pilih jumlah ronde dan kondisi berhenti, lalu konfirmasi.',
     autoRounds: 'Jumlah ronde', autoStopWin: 'Berhenti pada kemenangan minimal', autoStart: 'Mulai', autoCost: 'Biaya per ronde'
@@ -1707,6 +1742,7 @@
   X.tiers.pl = ['WYGRANA', 'DUŻA WYGRANA', 'EXTRA WYGRANA', 'MEGA WYGRANA'];
   X.replay.pl = {
     badge: 'POWTÓRKA', start: 'ODTWÓRZ', again: 'ODTWÓRZ PONOWNIE', playing: 'TRWA…', loading: 'Wczytywanie powtórki…',
+    errSum: 'Zdarzenia powtórki nie zgadzają się z kwotą podaną przez serwer: wyświetlana jest kwota serwera.',
     errLoad: 'Nie udało się wczytać tej powtórki.', errParams: 'Brak parametrów powtórki (game, version, mode, event, rgs_url).', errFormat: 'Ta powtórka ma nieznany format.',
     errNet: 'Błąd sieci: sprawdź połączenie i wczytaj ponownie.', bet: 'ZAKŁAD', betSocial: 'KWOTA GRY', realCost: 'RZECZYWISTY KOSZT', costMult: 'Koszt', result: 'WYGRANA', noWin: 'Brak wygranej',
     modeStd: 'STANDARD', modePlus: 'WYROCZNIA+', modeBonus: 'BONUS'
@@ -1722,6 +1758,12 @@
     errGen: 'Błąd serwera gry. Spróbuj ponownie za chwilę.',
     errNet: 'Sieć niedostępna lub nieprawidłowa odpowiedź. Twój zakład mógł nie zostać uwzględniony: sprawdź saldo.',
     errBook: 'Nie można odczytać wyniku rundy. Skontaktuj się z pomocą techniczną.',
+    errIs: 'Nieprawidłowa lub wygasła sesja. Uruchom grę ponownie ze strony.',
+    errAte: 'Uwierzytelnienie wygasło. Uruchom grę ponownie ze strony, aby zalogować się ponownie.',
+    errLoc: 'Ta gra nie jest dostępna w Twojej lokalizacji.',
+    errMaint: 'Trwają prace konserwacyjne. Spróbuj ponownie za kilka minut.',
+    errSum: 'Wyświetlony wynik nie zgadza się z kwotą z serwera gry: stosowana jest kwota serwera.',
+    resuming: 'Wznawianie trwającej rundy…',
     buyConfirm: 'Kupić {name} za {price}?', buyConfirmTitle: 'POTWIERDŹ ZAKUP',
     autoTitle: 'GRA AUTOMATYCZNA', autoSub: 'Wybierz liczbę rund i warunki zatrzymania, a następnie potwierdź.',
     autoRounds: 'Liczba rund', autoStopWin: 'Zatrzymaj przy wygranej co najmniej', autoStart: 'Start', autoCost: 'Koszt rundy'
@@ -1811,6 +1853,7 @@
   X.tiers.pt = ['GANHO', 'GRANDE GANHO', 'GANHO EXTRA', 'MEGA GANHO'];
   X.replay.pt = {
     badge: 'REPLAY', start: 'REPRODUZIR', again: 'REPRODUZIR DE NOVO', playing: 'EM ANDAMENTO…', loading: 'Carregando o replay…',
+    errSum: 'Os eventos do replay não correspondem ao valor anunciado pelo servidor: o valor do servidor é exibido.',
     errLoad: 'Não foi possível carregar este replay.', errParams: 'Faltam parâmetros do replay (game, version, mode, event, rgs_url).', errFormat: 'Este replay tem um formato desconhecido.',
     errNet: 'Erro de rede: verifique a conexão e recarregue.', bet: 'APOSTA', betSocial: 'VALOR JOGADO', realCost: 'CUSTO REAL', costMult: 'Custo', result: 'GANHO', noWin: 'Sem ganho',
     modeStd: 'PADRÃO', modePlus: 'ORÁCULO+', modeBonus: 'BÔNUS'
@@ -1826,6 +1869,12 @@
     errGen: 'Erro do servidor de jogo. Tente novamente em instantes.',
     errNet: 'Rede indisponível ou resposta inválida. Sua aposta pode não ter sido considerada: verifique seu saldo.',
     errBook: 'Não foi possível ler o resultado da rodada. Entre em contato com o suporte.',
+    errIs: 'Sessão inválida ou expirada. Reinicie o jogo a partir do site.',
+    errAte: 'A autenticação expirou. Reinicie o jogo a partir do site para entrar novamente.',
+    errLoc: 'Este jogo não está disponível na sua localização.',
+    errMaint: 'Manutenção em andamento. Tente novamente em alguns minutos.',
+    errSum: 'O resultado exibido não corresponde ao valor do servidor do jogo: o valor do servidor é aplicado.',
+    resuming: 'Retomando a rodada em andamento…',
     buyConfirm: 'Comprar {name} por {price}?', buyConfirmTitle: 'CONFIRMAR COMPRA',
     autoTitle: 'JOGO AUTOMÁTICO', autoSub: 'Escolha o número de rodadas e as condições de parada e confirme.',
     autoRounds: 'Número de rodadas', autoStopWin: 'Parar com um ganho de pelo menos', autoStart: 'Iniciar', autoCost: 'Custo por rodada'
@@ -1915,6 +1964,7 @@
   X.tiers.ru = ['ВЫИГРЫШ', 'БОЛЬШОЙ ВЫИГРЫШ', 'ЭКСТРА ВЫИГРЫШ', 'МЕГА ВЫИГРЫШ'];
   X.replay.ru = {
     badge: 'ПОВТОР', start: 'ВОСПРОИЗВЕСТИ', again: 'ЕЩЁ РАЗ', playing: 'ИДЁТ…', loading: 'Загрузка повтора…',
+    errSum: 'События повтора не совпадают с суммой, объявленной сервером: показана сумма сервера.',
     errLoad: 'Не удалось загрузить этот повтор.', errParams: 'Не хватает параметров повтора (game, version, mode, event, rgs_url).', errFormat: 'У этого повтора неизвестный формат.',
     errNet: 'Ошибка сети: проверьте соединение и перезагрузите.', bet: 'СТАВКА', betSocial: 'СУММА ИГРЫ', realCost: 'РЕАЛЬНАЯ СТОИМОСТЬ', costMult: 'Стоимость', result: 'ВЫИГРЫШ', noWin: 'Нет выигрыша',
     modeStd: 'СТАНДАРТ', modePlus: 'ОРАКУЛ+', modeBonus: 'БОНУС'
@@ -1930,6 +1980,12 @@
     errGen: 'Ошибка игрового сервера. Повторите попытку через мгновение.',
     errNet: 'Сеть недоступна или ответ недействителен. Ваша ставка могла не быть учтена: проверьте баланс.',
     errBook: 'Не удалось прочитать результат раунда. Обратитесь в поддержку.',
+    errIs: 'Сессия недействительна или истекла. Перезапустите игру с сайта.',
+    errAte: 'Срок аутентификации истёк. Перезапустите игру с сайта, чтобы войти снова.',
+    errLoc: 'Эта игра недоступна в вашем регионе.',
+    errMaint: 'Идут технические работы. Повторите попытку через несколько минут.',
+    errSum: 'Показанный результат не совпадает с суммой игрового сервера: применяется сумма сервера.',
+    resuming: 'Продолжаем текущий раунд…',
     buyConfirm: 'Купить {name} за {price}?', buyConfirmTitle: 'ПОДТВЕРДИТЕ ПОКУПКУ',
     autoTitle: 'АВТОИГРА', autoSub: 'Выберите число раундов и условия остановки, затем подтвердите.',
     autoRounds: 'Число раундов', autoStopWin: 'Остановить при выигрыше от', autoStart: 'Старт', autoCost: 'Стоимость раунда'
@@ -2018,6 +2074,7 @@
   X.tiers.tr = ['KAZANÇ', 'BÜYÜK KAZANÇ', 'EKSTRA KAZANÇ', 'MEGA KAZANÇ'];
   X.replay.tr = {
     badge: 'TEKRAR', start: 'OYNAT', again: 'TEKRAR OYNAT', playing: 'OYNATILIYOR…', loading: 'Tekrar yükleniyor…',
+    errSum: 'Tekrar olayları sunucunun bildirdiği tutarla eşleşmiyor: sunucu tutarı gösterilir.',
     errLoad: 'Bu tekrar yüklenemedi.', errParams: 'Tekrar parametreleri eksik (game, version, mode, event, rgs_url).', errFormat: 'Bu tekrarın biçimi bilinmiyor.',
     errNet: 'Ağ hatası: bağlantını kontrol et ve yeniden yükle.', bet: 'BAHİS', betSocial: 'OYUN TUTARI', realCost: 'GERÇEK MALİYET', costMult: 'Maliyet', result: 'KAZANÇ', noWin: 'Kazanç yok',
     modeStd: 'STANDART', modePlus: 'KEHANET+', modeBonus: 'BONUS'
@@ -2033,6 +2090,12 @@
     errGen: 'Oyun sunucusu hatası. Lütfen birazdan tekrar dene.',
     errNet: 'Ağ kullanılamıyor veya geçersiz yanıt. Bahsin dikkate alınmamış olabilir: bakiyeni kontrol et.',
     errBook: 'Turun sonucu okunamadı. Lütfen destek ile iletişime geç.',
+    errIs: 'Oturum geçersiz veya süresi dolmuş. Lütfen oyunu siteden yeniden başlatın.',
+    errAte: 'Kimlik doğrulamanın süresi doldu. Yeniden giriş yapmak için lütfen oyunu siteden yeniden başlatın.',
+    errLoc: 'Bu oyun bulunduğunuz konumda kullanılamıyor.',
+    errMaint: 'Bakım çalışması sürüyor. Lütfen birkaç dakika sonra tekrar deneyin.',
+    errSum: 'Gösterilen sonuç oyun sunucusunun tutarıyla eşleşmiyor: sunucu tutarı uygulanır.',
+    resuming: 'Devam eden tur sürdürülüyor…',
     buyConfirm: '{name} {price} karşılığında satın alınsın mı?', buyConfirmTitle: 'SATIN ALMAYI ONAYLA',
     autoTitle: 'OTOMATİK OYUN', autoSub: 'Tur sayısını ve durdurma koşullarını seç, sonra onayla.',
     autoRounds: 'Tur sayısı', autoStopWin: 'En az şu kazançta dur', autoStart: 'Başlat', autoCost: 'Tur başına maliyet'
@@ -2122,6 +2185,7 @@
   X.tiers.vi = ['THẮNG', 'THẮNG LỚN', 'THẮNG CỰC LỚN', 'THẮNG SIÊU LỚN'];
   X.replay.vi = {
     badge: 'XEM LẠI', start: 'PHÁT', again: 'PHÁT LẠI', playing: 'ĐANG PHÁT…', loading: 'Đang tải bản xem lại…',
+    errSum: 'Các sự kiện của bản xem lại không khớp với giá trị máy chủ công bố: hiển thị giá trị của máy chủ.',
     errLoad: 'Không thể tải bản xem lại này.', errParams: 'Thiếu tham số của bản xem lại (game, version, mode, event, rgs_url).', errFormat: 'Bản xem lại này có định dạng không xác định.',
     errNet: 'Lỗi mạng: hãy kiểm tra kết nối rồi tải lại.', bet: 'CƯỢC', betSocial: 'MỨC CHƠI', realCost: 'CHI PHÍ THỰC', costMult: 'Chi phí', result: 'THẮNG', noWin: 'Không thắng',
     modeStd: 'TIÊU CHUẨN', modePlus: 'THẦN LỜI+', modeBonus: 'BONUS'
@@ -2137,6 +2201,12 @@
     errGen: 'Lỗi máy chủ trò chơi. Hãy thử lại sau giây lát.',
     errNet: 'Mạng không khả dụng hoặc phản hồi không hợp lệ. Mức cược của bạn có thể chưa được ghi nhận: hãy kiểm tra số dư.',
     errBook: 'Không thể đọc kết quả của ván. Hãy liên hệ bộ phận hỗ trợ.',
+    errIs: 'Phiên không hợp lệ hoặc đã hết hạn. Vui lòng khởi động lại trò chơi từ trang web.',
+    errAte: 'Xác thực đã hết hạn. Vui lòng khởi động lại trò chơi từ trang web để đăng nhập lại.',
+    errLoc: 'Trò chơi này không khả dụng tại vị trí của bạn.',
+    errMaint: 'Đang bảo trì. Vui lòng thử lại sau vài phút.',
+    errSum: 'Kết quả hiển thị không khớp với giá trị từ máy chủ trò chơi: áp dụng giá trị của máy chủ.',
+    resuming: 'Đang tiếp tục ván đang diễn ra…',
     buyConfirm: 'Mua {name} với giá {price}?', buyConfirmTitle: 'XÁC NHẬN MUA',
     autoTitle: 'CHƠI TỰ ĐỘNG', autoSub: 'Chọn số ván và điều kiện dừng, rồi xác nhận.',
     autoRounds: 'Số ván', autoStopWin: 'Dừng khi thắng tối thiểu', autoStart: 'Bắt đầu', autoCost: 'Chi phí mỗi ván'
