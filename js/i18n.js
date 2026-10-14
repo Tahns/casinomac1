@@ -823,6 +823,17 @@
      Chaque bloc a une entrée par langue ; une clé absente d'une langue retombe sur l'anglais (I18N.block). Ajouter une langue = ajouter une entrée ici.
      Marqueurs {x} remplacés par js/rules.js ; les chiffres viennent de math.js (aucun nombre de jeu écrit à la main dans ces textes). */
   var B = {
+    // libellés d'accessibilité (lecteurs d'écran) et message « jeu ouvert dans un autre onglet » (mode RGS)
+    ui: {
+      en: {
+        stage: 'Anubis Unchained, the wheel of judgement', history: 'Recent rounds', oracle: 'Oracle boost', close: 'Close', amountDn: 'Decrease amount', amountUp: 'Increase amount',
+        tabTitle: 'GAME OPEN IN ANOTHER TAB', tabMsg: 'Anubis Unchained is already open in another tab or window. Only one tab can play at a time, so that the balance stays consistent.', tabHere: 'Play here'
+      },
+      fr: {
+        stage: 'Anubis Unchained, la roue du jugement', history: 'Derniers tours', oracle: 'Boost de l\'Oracle', close: 'Fermer', amountDn: 'Diminuer le montant', amountUp: 'Augmenter le montant',
+        tabTitle: 'JEU OUVERT DANS UN AUTRE ONGLET', tabMsg: 'Anubis Unchained est déjà ouvert dans un autre onglet ou une autre fenêtre. Un seul onglet peut jouer à la fois, pour que le solde reste cohérent.', tabHere: 'Jouer ici'
+      }
+    },
     replay: {
       en: {
         badge: 'REPLAY', start: 'PLAY', again: 'PLAY AGAIN', playing: 'PLAYING…', loading: 'Loading the replay…',

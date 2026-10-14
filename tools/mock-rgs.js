@@ -83,6 +83,7 @@ function create(opts) {
       if (url === '/wallet/play') {
         var md = MODES.filter(function (x) { return x.name === body.mode; })[0];
         if (!md || !(body.amount > 0) || st.betLevels.indexOf(body.amount) < 0) return err(res, 400, 'ERR_VAL', 'mise ou mode invalide');
+        if (st.gle) return err(res, 400, 'ERR_GLE', 'limite de jeu atteinte');   // st.gle = true : plafond de jeu du serveur
         if (st.active) return err(res, 400, 'ERR_VAL', 'un round est déjà ouvert');
         var cost = Math.round(body.amount * md.cost);
         if (st.balance < cost) return err(res, 400, 'ERR_IPB', 'solde insuffisant');
