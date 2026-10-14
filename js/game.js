@@ -752,7 +752,7 @@
       ctx.fillStyle = bg; ctx.beginPath(); ctx.moveTo(ex, ey - size * 0.02); ctx.lineTo(ex + p[1] * bl * 0.5, ey - bl * 0.5); ctx.lineTo(ex + p[1] * bl * 0.5, ey - bl * 0.1); ctx.lineTo(ex, ey + size * 0.02); ctx.closePath(); ctx.fill();
     });
     // 5) particules du thème
-    var spName = { scarab: 'scarab', weigh: 'weigh', crypt: 'skull' }[k];
+    var spName = { scarab: 'scarab', weigh: 'weigh', crypt: 'amulet' }[k];
     if (spName) for (i = 0; i < e.parts.length; i++) { var q = e.parts[i]; spr(spName, q.x, q.y, q.s, q.r + (k === 'scarab' ? Math.sin(q.l * 20) * 0.25 : Math.sin(q.l * 2 + (q.sw || 0)) * 0.4), clamp(1 - (q.l - 1.4) / 0.8, 0, 1) * (1 - fadeOut)); }
     if (k === 'weigh') { var fy = -size * 0.4 + (H_ * 0.55 + size * 0.4) * G.ease.out3(clamp((u - 0.25) / 0.45, 0, 1)); spr('weigh', cx + Math.sin(e.t * 2.4) * size * 0.08, fy, size * 0.5, Math.sin(e.t * 2.4) * 0.3, clamp((u - 0.25) / 0.1, 0, 1) * (1 - fadeOut)); }
   }

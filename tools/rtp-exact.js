@@ -1,10 +1,27 @@
 // node tools/rtp-exact.js — RTP, écart-type, taux de gain et prix d'achat calculés EXACTEMENT (aucun tirage), à partir des tables de js/math.js.
 // Pourquoi : à très haute volatilité (écart-type ≈ 16), 2 M de tours ne donnent le RTP qu'à ± 2 points ; le calcul exact (moments d'ordre 1 et 2) est la
 // référence, la simulation (tools/simulate.js) sert à la recouper. Hypothèses : gains non plafonnés (le plafond n'est atteint qu'aux achats de la Fureur,
-// effet < 0,01 pt) ; la Crypte (bonus secret) est une moyenne de colonnes non calculable en forme close : on prend ses moments mesurés (CRYPT_MEASURED,
-// 2 M de scripts, tools/tune.js), égaux à l'espérance du bonus qu'elle remplace à ± 0,1× près (effet < 0,03 pt de RTP).
+// effet < 0,01 pt) ; le Sanctuaire des Marées (bonus secret) est calculé EXACTEMENT lui aussi (cryptMoments : récurrence sur les moments
+// de l'offrande P et de la marée T, les 9 tablettes étant indépendantes) ; seul son plafond à MAX_WIN est ignoré (probabilité négligeable).
 var M = require('../js/math.js');
-var CRYPT_MEASURED = { ev: 10.13, sd: 79.4 };
+function typeProbs() { var W = 0, o = {}; M.CRYPT_TYPES.forEach(function (t) { W += t[1]; }); M.CRYPT_TYPES.forEach(function (t) { o[t[0]] = t[1] / W; }); return o; }
+function cryptMoments() {   // [E[gain], E[gain²]] : état (P, T) -> moments m = [P², PT, T², P, T]
+  var pr = typeProbs(), vm = {};
+  ['tab', 'tide', 'eclipse'].forEach(function (k) { vm[k] = wmom(M.CRYPT_VALUES[k]); });
+  var m = [0, 0, 1, 0, 1], i;   // offrande de départ 0 (plancher ×1 si aucune tablette : voir cryptReplay), marée ×1
+  for (i = 0; i < M.CRYPT_CELLS; i++) {
+    var a = m[0], b = m[1], c = m[2], p = m[3], t = m[4], v1 = vm.tab[0], v2 = vm.tab[1], k1 = vm.tide[0], k2 = vm.tide[1], e1 = vm.eclipse[0], e2 = vm.eclipse[1];
+    m = [
+      pr.dust * a + pr.tab * (a + 2 * v1 * b + v2 * c) + pr.tide * a + pr.eclipse * e2 * a,
+      pr.dust * b + pr.tab * (b + v1 * c) + pr.tide * k1 * b + pr.eclipse * e1 * b,
+      pr.dust * c + pr.tab * c + pr.tide * k2 * c + pr.eclipse * c,
+      pr.dust * p + pr.tab * (p + v1 * t) + pr.tide * p + pr.eclipse * e1 * p,
+      pr.dust * t + pr.tab * t + pr.tide * k1 * t + pr.eclipse * t
+    ];
+  }
+  var q = Math.pow(1 - pr.tab, M.CRYPT_CELLS);   // aucune tablette : offrande 0, relevée au plancher ×1
+  return [m[3] + q, m[0] + q];
+}
 
 function wmom(tab) { var s = 0, a = 0, b = 0; tab.forEach(function (t) { s += t[1]; }); tab.forEach(function (t) { a += t[1] * t[0]; b += t[1] * t[0] * t[0]; }); return [a / s, b / s]; }
 function scarab(prof) {
@@ -67,7 +84,7 @@ function compute() {
   // bonus gagné sur la roue = (1-s)·[(1-h)·bonus profil Équilibré + h·Fureur] + s·Crypte
   var rep = {}, rep1 = 0;
   ['scarab', 'weigh', 'vault'].forEach(function (k) { rep[k] = [(1 - h) * BON[k].std[0] + h * H[0], (1 - h) * BON[k].std[1] + h * H[1]]; rep1 += rep[k][0] / 3; });
-  var C = [CRYPT_MEASURED.ev, CRYPT_MEASURED.sd * CRYPT_MEASURED.sd + CRYPT_MEASURED.ev * CRYPT_MEASURED.ev];
+  var C = cryptMoments();
   function onWheel(k) { return [(1 - s) * rep[k][0] + s * C[0], (1 - s) * rep[k][1] + s * C[1]]; }
   var Nn = M.N - M.KINDS.ankh.count, W = 0;   // le tour se termine sur une case non-Ankh (les relances sont gratuites et ne paient rien)
   M.ORACLE_KIND_W.forEach(function (t) { W += t[1]; });
@@ -93,6 +110,7 @@ function compute() {
 }
 module.exports = compute;
 module.exports.vaultOf = vaultOf;
+module.exports.cryptMoments = cryptMoments;
 
 if (require.main === module) {
   var r = compute();

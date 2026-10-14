@@ -15,7 +15,7 @@
       noFunds: 'Solde insuffisant', oracleSpeaks: 'L\'Oracle parle…', oracleOn: 'ORACLE', ankhRespin: 'ANKH — RELANCE GRATUITE !',
       dust: 'La poussière retourne à la poussière…', winLine: 'Gain', respinLabel: 'RELANCE',
       kinds: { m0: 'POUSSIÈRE', m025: '0,25×', m05: '0,5×', m1: '1×', m2: '2×', m3: '3×', ankh: 'ANKH', scarab: 'SCARABÉES', weigh: 'PESÉE', vault: 'TRÉSOR' },
-      kindsLong: { scarab: 'Chute des Scarabées', weigh: 'Pesée du Cœur', vault: 'Chambre du Trésor', hand: 'Fureur d\'Anubis', crypt: 'Crypte d\'Anubis' },
+      kindsLong: { scarab: 'Chute des Scarabées', weigh: 'Pesée du Cœur', vault: 'Chambre du Trésor', hand: 'Fureur d\'Anubis', crypt: 'Sanctuaire des Marées' },
       tiers: ['WIN', 'BIG WIN', 'EXTRA WIN', 'MEGA WIN', 'JUGEMENT DIVIN'],
       scarabSub: 'Trois scarabées traversent les ténèbres. Chacun rapporte la case où il tombe.', scarabIntro: 'CHUTE DES SCARABÉES',
       weighIntro: 'PESÉE DU CŒUR', weighSub: 'Plume de Maât ou cœur ? Le plateau le plus lourd gagne son multiplicateur, le plus léger n\'a rien.', feather: 'PLUME', featherOf: 'DE MAÂT', heart: 'CŒUR', heartOf: 'DE VOTRE ÂME', weighRoll: 'Les multiplicateurs se révèlent…', weighWon: 'GAGNÉ', weighLost: 'PERDU', sayRight: 'Votre plateau est le plus lourd : ×{m} !', sayWrong: 'L\'autre plateau est plus lourd : pas de gain', weighing: 'Les dieux pèsent votre âme…',
@@ -47,10 +47,10 @@
         '??? Un bonus secret se cache parfois derrière un bonus gagné… extrêmement rare. À vous de le découvrir.'
       ],
       secretWord: 'BONUS SECRET', secretUnlocked: 'DÉBLOQUÉ !', secretHint: 'Un bonus caché vient de s\'ouvrir… Touchez le bouton ou appuyez sur Espace',
-      cryptIntro: 'CRYPTE D\'ANUBIS', cryptAvg: 'MOYENNE DES COLONNES', cryptCount: 'BLOC {n} / {m}', cryptFull: 'COLONNE PLEINE', cryptCapped: 'PLAFOND ATTEINT',
-      cryptRule: 'Colonne = haut + blocs fixes · gain = moyenne des 5 colonnes · touchez pour lâcher chaque bloc',
-      cryptLeg: ['+ COLONNE', '+ TOUTES', '× COLONNE', '× TOUTES', 'GLACE', 'BROYEUR'],
-      cryptHint: { skull: 'CRÂNE : ajoute sa valeur au haut de sa colonne. Touchez pour lâcher', epic: 'CRÂNE ÉPIQUE : ajoute sa valeur au haut de TOUTES les colonnes', anubis: 'CRÂNE D\'ANUBIS : multiplie le haut de sa colonne', epicx: 'CRÂNE D\'ANUBIS ÉPIQUE : multiplie le haut de TOUTES les colonnes', ice: 'GLACE : fige le haut en bloc fixe, le haut repart à ×1', crusher: 'BROYEUR : écrase les blocs fixes de la colonne en un seul' },
+      cryptIntro: 'SANCTUAIRE DES MARÉES', cryptPool: 'OFFRANDE', cryptTide: 'MARÉE', cryptCount: 'TABLETTE {n} / {m}', cryptPick: 'Touchez une tablette', cryptCapped: 'PLAFOND ATTEINT',
+      cryptRule: 'Offrande = tablettes × marée du moment · la marée ne touche que les tablettes suivantes · l\'éclipse multiplie l\'offrande',
+      cryptLeg: ['TABLETTE', 'MARÉE', 'ÉCLIPSE', 'POUSSIÈRE'],
+      cryptHint: { tab: 'TABLETTE : sa valeur × la marée s\'ajoute à l\'offrande', tide: 'MARÉE : multiplie la marée, pour les tablettes suivantes seulement', eclipse: 'ÉCLIPSE : multiplie l\'offrande déjà accumulée', dust: 'POUSSIÈRE : rien ne se passe' },
       tableCols: ['Case', 'Sur la roue', 'Gain'], settings: 'RÉGLAGES', language: 'Langue', sound: 'Son', reducedFx: 'Effets réduits', stopBonus: 'Stopper l\'auto sur bonus',
       volumeL: 'Volume', pitchShort: 'Hauteur', gradeTitle: 'Couleurs', gradeNatural: 'Naturel', gradeVivid: 'Éclatant', gradeGold: 'Doré', gradeCine: 'Cinéma', toneShort: 'Aigus', soundOn: 'Son : oui', soundOff: 'Son : non', musicShort: 'Ambiance', resetL: 'Réinitialiser', mixLabel: 'Réglages du son', pitchL: 'Hauteur des sons (demi-tons)', musicL: 'Ambiance musicale', autoOpts: 'Nombre de tours auto', off: 'Non', on: 'Oui', close: 'Fermer', currencyL: 'Devise', resetBal: 'Réinitialiser le solde', noWin: 'Pas de gain', handLabel: 'FUREUR D\'ANUBIS'
     },
@@ -67,7 +67,7 @@
       noFunds: 'Insufficient balance', oracleSpeaks: 'The Oracle speaks…', oracleOn: 'ORACLE', ankhRespin: 'ANKH — FREE RESPIN!',
       dust: 'Dust returns to dust…', winLine: 'Win', respinLabel: 'RESPIN',
       kinds: { m0: 'DUST', m025: '0.25×', m05: '0.5×', m1: '1×', m2: '2×', m3: '3×', ankh: 'ANKH', scarab: 'SCARABS', weigh: 'WEIGHING', vault: 'VAULT' },
-      kindsLong: { scarab: 'Scarab Drop', weigh: 'Weighing of the Heart', vault: 'Treasure Vault', hand: 'Fury of Anubis', crypt: 'Anubis\' Crypt' },
+      kindsLong: { scarab: 'Scarab Drop', weigh: 'Weighing of the Heart', vault: 'Treasure Vault', hand: 'Fury of Anubis', crypt: 'Sanctuary of Tides' },
       tiers: ['WIN', 'BIG WIN', 'EXTRA WIN', 'MEGA WIN', 'DIVINE JUDGEMENT'],
       scarabSub: 'Three scarabs plunge through the dark. Each pays the slot it lands in.', scarabIntro: 'SCARAB DROP',
       weighIntro: 'WEIGHING OF THE HEART', weighSub: 'Feather of Ma\'at or heart? The heavier pan wins its multiplier, the lighter one gets nothing.', feather: 'FEATHER', featherOf: 'OF MA\'AT', heart: 'HEART', heartOf: 'OF YOUR SOUL', weighRoll: 'The multipliers are revealed…', weighWon: 'WON', weighLost: 'LOST', sayRight: 'Your pan is the heavier one: ×{m}!', sayWrong: 'The other pan is heavier: no win', weighing: 'The gods weigh your soul…',
@@ -99,10 +99,10 @@
         '??? A secret bonus sometimes hides behind a won bonus… extremely rare. Find it yourself.'
       ],
       secretWord: 'SECRET BONUS', secretUnlocked: 'UNLOCKED!', secretHint: 'A hidden bonus has opened… Tap the button or press Space',
-      cryptIntro: 'ANUBIS\' CRYPT', cryptAvg: 'COLUMN AVERAGE', cryptCount: 'BLOCK {n} / {m}', cryptFull: 'COLUMN FULL', cryptCapped: 'MAX WIN REACHED',
-      cryptRule: 'Column = top + fixed blocks · win = average of the 5 columns · tap to drop each block',
-      cryptLeg: ['+ COLUMN', '+ ALL', '× COLUMN', '× ALL', 'ICE', 'CRUSHER'],
-      cryptHint: { skull: 'SKULL: adds its value to the top of its column. Tap to drop', epic: 'EPIC SKULL: adds its value to the top of ALL columns', anubis: 'ANUBIS SKULL: multiplies the top of its column', epicx: 'EPIC ANUBIS SKULL: multiplies the top of ALL columns', ice: 'ICE: freezes the top as a fixed block, the top restarts at ×1', crusher: 'CRUSHER: crushes the column\'s fixed blocks into one' },
+      cryptIntro: 'SANCTUARY OF TIDES', cryptPool: 'OFFERING', cryptTide: 'TIDE', cryptCount: 'TABLET {n} / {m}', cryptPick: 'Tap a tablet', cryptCapped: 'MAX WIN REACHED',
+      cryptRule: 'Offering = tablets × current tide · the tide only affects later tablets · the eclipse multiplies the offering',
+      cryptLeg: ['TABLET', 'TIDE', 'ECLIPSE', 'DUST'],
+      cryptHint: { tab: 'TABLET: its value × the tide is added to the offering', tide: 'TIDE: multiplies the tide, for later tablets only', eclipse: 'ECLIPSE: multiplies the offering gathered so far', dust: 'DUST: nothing happens' },
       tableCols: ['Segment', 'On wheel', 'Pays'], settings: 'SETTINGS', language: 'Language', sound: 'Sound', reducedFx: 'Reduced effects', stopBonus: 'Stop autoplay on bonus',
       volumeL: 'Volume', pitchShort: 'Pitch', gradeTitle: 'Colors', gradeNatural: 'Natural', gradeVivid: 'Vivid', gradeGold: 'Golden', gradeCine: 'Cinema', toneShort: 'Treble', soundOn: 'Sound: on', soundOff: 'Sound: off', musicShort: 'Ambience', resetL: 'Reset', mixLabel: 'Sound settings', pitchL: 'Sound pitch (semitones)', musicL: 'Background ambience', autoOpts: 'Autoplay spins', off: 'Off', on: 'On', close: 'Close', currencyL: 'Currency', resetBal: 'Reset balance', noWin: 'No win', handLabel: 'FURY OF ANUBIS'
     }
