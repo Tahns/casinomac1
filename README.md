@@ -5,7 +5,7 @@ Jeu de roue à bonus (démo, crédits fictifs) dans l'univers du jugement d'Anub
 ```bash
 python3 -m http.server 8000      # puis ouvrir http://localhost:8000
 node tools/rtp-exact.js           # RTP, écart-type, taux de gain et prix d'achat EXACTS (très haute volatilité : les simulations de 2 M de tours ne donnent le RTP qu'à ± 2 pts)
-node tools/simulate.js 1000 1 plus  # (plafonné à 1000 tours, HOA_BIG=1 pour lever) RTP, taux de gain, distribution (graine, puis mode std | plus | buy-scarab | buy-weigh | buy-vault | buy-hand)
+node tools/simulate.js 1000 1 plus  # (plafonné à 1000 tours, ANUBIS_BIG=1 pour lever) RTP, taux de gain, distribution (graine, puis mode std | plus | buy-scarab | buy-weigh | buy-vault | buy-fury)
 node tools/tune.js               # espérance de chaque bonus isolé
 node tools/check.js              # invariants des maths (sortie 1 si échec)
 node tools/contrast.js           # contraste WCAG AA des couples texte/fond

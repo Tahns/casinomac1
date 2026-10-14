@@ -59,7 +59,7 @@ var server = http.createServer(function (req, res) {
   var cut = null;
   for (var t = 0; t < 40 && !cut; t++) {
     var r = await p.evaluate(`(async()=>{ G.play(); await G.advance(0.4);
-      var d=JSON.parse(localStorage.getItem('hoa_save_v1')); var out={pending:d.pending,balance:d.balance};
+      var d=JSON.parse(localStorage.getItem('anubis_save_v1')); var out={pending:d.pending,balance:d.balance};
       if(!(d.pending>0)){ var g=0; while(G.S.busy&&g<3000){await G.advance(0.25);g++;if(G.winOv)G.skipWinOv();} } return out; })()`);
     if (r.pending > 0) cut = r;
   }
@@ -68,7 +68,7 @@ var server = http.createServer(function (req, res) {
     await p.reload(); await p.waitForTimeout(600);
     var after = await p.evaluate('G.S.balance');
     ok(Math.abs(after - (cut.balance + cut.pending)) < 0.001, 'après rechargement en plein tour : solde = mise débitée + gain décidé (' + cut.balance + ' + ' + cut.pending + ' = ' + after + ')');
-    var again = await p.evaluate("JSON.parse(localStorage.getItem('hoa_save_v1')).pending");
+    var again = await p.evaluate("JSON.parse(localStorage.getItem('anubis_save_v1')).pending");
     ok(again === 0, "le gain en attente n'est crédité qu'une seule fois");
   }
 
@@ -130,11 +130,11 @@ var server = http.createServer(function (req, res) {
   var bal = await p.evaluate("G.S.balance");
   ok(Math.abs(Math.round(bal * 100) - bal * 100) < 1e-6, '25 tours à 0,20 en Oracle+ (coût 0,22) : le solde reste au centime (' + bal + ')');
   // migration : ancienne sauvegarde en « crédits » (sans version) -> valeurs par défaut propres, gain en attente non converti
-  await p.evaluate(`localStorage.setItem('hoa_save_v1', JSON.stringify({balance:12345, bi:7, limit:5000, pending:300, lang:'fr', mode:'plus'}))`);
+  await p.evaluate(`localStorage.setItem('anubis_save_v1', JSON.stringify({balance:12345, bi:7, limit:5000, pending:300, lang:'fr', mode:'plus'}))`);
   await p.reload(); await p.waitForTimeout(500);
   var mg = await p.evaluate("({bal:G.S.balance,bi:G.S.bi,limit:G.S.limit,res:G.S.resumed||0,txt:document.getElementById('bal').textContent,bet:document.getElementById('bet').textContent})");
   ok(mg.bal === 1000 && mg.bi === 2 && mg.limit === 0 && !mg.res && mg.txt === '1 000,00 €', 'ancienne sauvegarde (crédits) : solde 1 000 €, mise 1,00 €, limite retirée (' + mg.txt + ' / ' + mg.bet + ')');
-  await p.evaluate("localStorage.setItem('hoa_save_v1','{pas du json')"); await p.reload(); await p.waitForTimeout(400);
+  await p.evaluate("localStorage.setItem('anubis_save_v1','{pas du json')"); await p.reload(); await p.waitForTimeout(400);
   ok(await p.evaluate("G.S.balance") === 1000, 'sauvegarde corrompue : valeurs par défaut sans erreur');
   // bouton « réinitialiser le solde » et limite de perte dans la nouvelle échelle
   await p.evaluate("G.S.balance=3.2"); await p.click('#btnInfo'); await p.waitForTimeout(200);

@@ -118,8 +118,8 @@
   }
 
   var ART = G.art = {};
-  Object.keys(window.HOA_IMG || {}).forEach(function (k) {
-    var im = new Image(); im.onload = function () { ART[k] = im; if (k === 'key' && G.w) buildBackdrop(); if ((k === 'gold' || k.indexOf('ic_') === 0) && G.w && W.build) W.build(); }; im.src = window.HOA_IMG[k];
+  Object.keys(window.ANUBIS_IMG || {}).forEach(function (k) {
+    var im = new Image(); im.onload = function () { ART[k] = im; if (k === 'key' && G.w) buildBackdrop(); if ((k === 'gold' || k.indexOf('ic_') === 0) && G.w && W.build) W.build(); }; im.src = window.ANUBIS_IMG[k];
   });
   // logo de bonus illustré (fond noir fondu en 'screen') ; renvoie false si l'image manque
   // le fond noir devient transparent (alpha = canal max) : le logo se pose sur n'importe quel fond

@@ -13,7 +13,7 @@
   var SAVE_VER = 2;           // v1 = ancien jeu en « crédits » (mises 10 à 5000, solde 10 000)
   var r2 = G.r2;
   var AUTO_STEPS = [0, 10, 25, 50, 100, Infinity];
-  var SAVE_KEY = 'hoa_save_v1';
+  var SAVE_KEY = 'anubis_save_v1', OLD_SAVE_KEY = 'hoa_save_v1';   // ancienne clé lue une fois pour ne pas perdre les soldes
 
   var S = { pending: 0, balance: START_BAL, bi: BET_DEFAULT, cur: '', curSet: false, lastWin: 0, autoIdx: 0, auto: 0, stopOnBonus: false, busy: false, hist: [], reduced: false, mode: 'std', buyOn: true, limit: 0, quality: 'auto', limitHit: false };
   var SESS = { start: Date.now(), spins: 0, wag: 0, won: 0, lastCheck: Date.now() };
@@ -22,7 +22,7 @@
 
   function load() {
     try {
-      var d = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null');
+      var d = JSON.parse(localStorage.getItem(SAVE_KEY) || localStorage.getItem(OLD_SAVE_KEY) || 'null');
       if (d) {
         // ancienne sauvegarde (crédits, sans « v ») : solde, mise, gain en attente et limite repartent des valeurs par défaut
         if (d.lang) I18N.setLang(d.lang);
@@ -49,7 +49,7 @@
       }
     } catch (e) {}
     // mouvement réduit : suit le réglage du système tant que le joueur n'a rien choisi
-    try { if (!localStorage.getItem(SAVE_KEY) && root.matchMedia && root.matchMedia('(prefers-reduced-motion: reduce)').matches) { S.reduced = true; FX.reduced = true; } } catch (e) {}
+    try { if (!localStorage.getItem(SAVE_KEY) && !localStorage.getItem(OLD_SAVE_KEY) && root.matchMedia && root.matchMedia('(prefers-reduced-motion: reduce)').matches) { S.reduced = true; FX.reduced = true; } } catch (e) {}
     if (!(S.balance >= BETS[0])) S.balance = START_BAL;
     if (!S.cur) S.cur = I18N.lang() === 'fr' ? 'EUR' : 'USD';   // pas encore choisie : suit la langue
     G.currency = S.cur;
@@ -443,7 +443,7 @@
   (function () {
     var sp = $('splash');
     if (!sp || navigator.webdriver || /[?&](debug|nosplash)/.test(location.search)) { if (sp) sp.remove(); return; }
-    var T = I18N.t(), port = root.innerHeight > root.innerWidth, src = (root.HOA_IMG || {})[port ? 'splashp' : 'splash'];
+    var T = I18N.t(), port = root.innerHeight > root.innerWidth, src = (root.ANUBIS_IMG || {})[port ? 'splashp' : 'splash'];
     if (src) sp.style.backgroundImage = 'url(' + src + ')';
     $('spSub').textContent = T.splashSub; $('spBtn').textContent = T.splashEnter; $('spDemo').textContent = T.splashDemo;
     sp.hidden = false;
