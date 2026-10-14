@@ -961,7 +961,10 @@
     hi: '"Noto Sans Devanagari","Kohinoor Devanagari","Nirmala UI","Mangal","Arial Unicode MS",sans-serif',
     ja: '"Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic","Meiryo","Noto Sans CJK JP","Noto Sans JP",sans-serif',
     ko: '"Apple SD Gothic Neo","Malgun Gothic","Noto Sans CJK KR","Noto Sans KR",sans-serif',
-    zh: '"PingFang SC","Microsoft YaHei","Noto Sans CJK SC","Noto Sans SC","WenQuanYi Micro Hei",sans-serif'
+    zh: '"PingFang SC","Microsoft YaHei","Noto Sans CJK SC","Noto Sans SC","WenQuanYi Micro Hei",sans-serif',
+    // latin étendu, cyrillique, vietnamien : caractères absents des sous-ensembles latins de Cinzel / Philosopher
+    vi: '"Noto Serif","Times New Roman","DejaVu Serif",serif', pl: '"Noto Serif","Times New Roman","DejaVu Serif",serif', tr: '"Noto Serif","Times New Roman","DejaVu Serif",serif',
+    ru: '"Noto Serif","Times New Roman","DejaVu Serif",serif'
   };
   // code reçu (« FR », « pt-BR », « zh_CN »…) -> code Stake géré, ou null s'il est inconnu
   function norm(c) {

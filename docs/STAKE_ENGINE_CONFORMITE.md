@@ -294,3 +294,15 @@ Date : 2026-10-14. Le dépôt officiel `StakeEngine/math-sdk` a été cloné (Gi
 - Pas d'intégration comme `GameState` du SDK (`create_books`, `generate_configs`, `upload`) ; `config.json` du RGS (hachages) non produit.
 - Profils Prudent / Audacieux : pas de mode par profil ; le front doit lire les nouveaux events (`seq`, `weighReveal.plates`, `furySpin.doubleColour` ; la branche Sanctuaire de `RGS.bookToRound` lit encore l'ancien format `cryptDrop`).
 - Pas d'essai contre un vrai RGS ; mêmes réserves légales et d'approbation qu'aux sections précédentes.
+
+## 8. Langues et mode social dans les 16 langues (lignes 18, 19, 77, 78, 225)
+
+Fait dans ce dépôt (détails et niveaux de confiance : `docs/TRADUCTIONS.md`) :
+
+- **16 langues complètes** : dictionnaire, blocs `rules` (règles détaillées), `replay`, `ui`, textes du client RGS et paliers localisés existent pour ar, de, en, es, fi, fr, hi, id, ja, ko, pl, pt, ru, tr, vi, zh. Plus de repli anglais pour les règles, le replay ni les erreurs du RGS. **Traductions non relues par des natifs** (ligne 18 : toujours à valider par marché).
+- **Mode social dans toutes les langues** : `I18N_SOCIAL` a une entrée par langue (clés du dictionnaire, `$rules`, `$replay`, `$rgs`), vocabulaire « play / win / coins / token / get ». Titre de la fenêtre des règles : « Rules & Win table » (casse respectée ; équivalents dans les autres langues).
+- **Contrôle** : `tools/social-words.js` définit, par langue, les équivalents des mots interdits (bet, buy, cash, pay, wager, stake, gamble, deposit, money, currency, credit, fund, withdraw, cost of…), documentés dans le fichier. `tools/social-check.js` les cherche dans tous les textes sociaux, le HTML, et (avec `PLAYWRIGHT_CORE`) dans le DOM et le canvas de 17 combinaisons langue/devise : **aucun mot interdit**. La liste n'est pas officielle (seule la liste anglaise l'est) : à compléter après relecture native.
+- **`<html lang>` et `dir`** posés dès le parsing par un script inline en tête de `index.html` (`?lang=` > sauvegarde locale > `en` ; `dir="rtl"` pour l'arabe), avant le premier rendu.
+- **Paliers** : WIN / BIG WIN / EXTRA WIN / MEGA WIN restent en anglais par défaut ; noms localisés optionnels (`?tiers=local`, `I18N.setLocalTiers(true)`), repli sûr sur l'anglais si un nom manque ; les règles citent alors les mêmes noms. Captures 390×844 en ja, ar, de, ru, vi : les titres tiennent.
+- **Polices** : repli système pour ar, hi, ja, ko, zh ; ajouté pour vi, pl, tr, ru (caractères absents des sous-ensembles latins).
+- Les tests de simulation restent plafonnés à 1000 tours (`tools/cap.js`, y compris deux boucles de `check.js` qui ne l'étaient pas).
