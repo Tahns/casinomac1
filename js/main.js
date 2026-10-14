@@ -613,8 +613,14 @@
     $('buyNo').onclick = function () { hideModal(); };
     $('buyYes').disabled = S.balance < price;
     $('buyYes').onclick = function () { hideModal(); Sfx.unlock(); play(k); };
-    $('buyYes').focus();
+    $('buyNo').focus();   // [31] focus initial sur « Annuler » : un Entrée / Espace qui continue ne peut jamais confirmer un achat
   }
+  // [31] une touche maintenue (e.repeat) ne déclenche jamais une carte d'achat ni la confirmation : seul un appui volontaire compte
+  document.addEventListener('keydown', function (e) {
+    if (!e.repeat || !(e.key === 'Enter' || e.key === ' ' || e.code === 'Space')) return;
+    var t = e.target, id = t && t.id;
+    if (id === 'buyNo' || id === 'buyYes' || (t && t.classList && t.classList.contains('buyCard'))) { e.preventDefault(); e.stopPropagation(); }
+  }, true);
   $('btnBuy').addEventListener('click', openBuy);
 
   /* ---------- jeu responsable ---------- */

@@ -225,6 +225,21 @@ var FINISH = `(async()=>{ G.turbo=true; G.speed=1.6; var g=0; while(G.S.busy&&g<
   // Oracle+ (×1,1) : pas de confirmation, un bascule seulement le mode ; l'espace mise ensuite
   await clk(s.p, '#btnPlus'); await s.p.waitForTimeout(100);
   ok(plays(mb).length === 1 && !(await s.p.evaluate("!document.getElementById('modal').hidden")), '[31] Oracle+ (×1,1) : simple bascule de mode, aucune fenêtre ni requête');
+  // Entrée MAINTENU sur une carte d'achat : la 1re frappe ouvre la confirmation (focus sur « Annuler »), les répétitions ne confirment rien
+  var base31 = plays(mb).length;
+  await clk(s.p, '#btnBuy'); await s.p.waitForTimeout(250);
+  await s.p.evaluate("document.querySelectorAll('.buyCard')[0].focus()");
+  await s.p.keyboard.down('Enter'); await s.p.waitForTimeout(120);
+  var foc = await s.p.evaluate("({conf:!!document.getElementById('buyConfirmTxt'), act:document.activeElement && document.activeElement.id})");
+  ok(foc.conf && foc.act === 'buyNo' && plays(mb).length === base31, '[31] Entrée sur une carte : fenêtre de confirmation, focus initial sur « Annuler » (#buyNo), aucune requête');
+  for (var rep = 0; rep < 6; rep++) { await s.p.keyboard.down('Enter'); await s.p.waitForTimeout(40); }   // répétitions de la touche maintenue (repeat: true)
+  await s.p.keyboard.up('Enter'); await s.p.waitForTimeout(250);
+  var held = await s.p.evaluate("({conf:!!document.getElementById('buyConfirmTxt'), open:!document.getElementById('modal').hidden, busy:G.S.busy})");
+  ok(plays(mb).length === base31 && !held.busy && held.conf && held.open, '[31] Entrée maintenu (6 répétitions) : aucun /wallet/play, la confirmation reste ouverte');
+  // répétition directement sur le bouton « Confirmer » : ignorée (événement envoyé avec repeat: true)
+  var rptYes = await s.p.evaluate("(function(){ var y = document.getElementById('buyYes'); y.focus(); var ev = new KeyboardEvent('keydown', { key: 'Enter', code: 'Enter', repeat: true, bubbles: true, cancelable: true }); y.dispatchEvent(ev); return ev.defaultPrevented; })()");
+  ok(rptYes && plays(mb).length === base31, '[31] keydown répété (e.repeat) sur « Confirmer » : ignoré (defaultPrevented), aucune requête');
+  await clk(s.p, '#buyNo'); await s.p.waitForTimeout(200);
   await done(s);
 
   // ---- tous les modes via le RGS : les books des 6 modes se rejouent sans blocage ----
