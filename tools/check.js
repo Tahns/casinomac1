@@ -6,9 +6,9 @@ function ok(cond, msg) { if (!cond) { fails++; console.log('ÉCHEC  ' + msg); } 
 // 1. roue
 var L = M.LAYOUT, counts = {};
 L.forEach(function (k) { counts[k] = (counts[k] || 0) + 1; });
-ok(L.length === M.N && M.N === 48, 'la roue compte 48 cases');
+ok(L.length === M.N && M.N === 64, 'la roue compte 64 cases');
 ok(Object.keys(M.KINDS).every(function (k) { return counts[k] === M.KINDS[k].count; }), 'chaque case apparaît autant de fois que déclaré');
-ok(L.every(function (k, i) { return k !== L[(i + 1) % L.length]; }), 'jamais deux cases identiques côte à côte (circulaire)');
+ok(L.every(function (k, i) { return k === 'm0' || k !== L[(i + 1) % L.length]; }), 'jamais deux cases identiques côte à côte (circulaire), sauf la poussière « 0 » (plus de la moitié de la roue)');
 ok(M.HAND_SEGS.length === 24, 'la roue de la Fureur d\'Anubis compte 24 cases');
 
 // 2. déterminisme
@@ -68,7 +68,7 @@ var HS = M.HAND_SEGS, dcount = [0, 0, 0], bands = 0, nums = 0;
 HS.forEach(function (s) { if (s.d != null) dcount[s.d]++; else if (s.b) bands++; else nums++; });
 ok(dcount[0] === dcount[1] && dcount[1] === dcount[2] && dcount[0] > 0 && bands >= 3 && HS.every(function (s, i) { return JSON.stringify(s) !== JSON.stringify(HS[(i + 1) % HS.length]); }), 'Fureur : même nombre de DOUBLE par couleur (' + dcount.join('/') + '), ' + bands + ' bandes, ' + nums + ' nombres, pas de voisines identiques');
 ok(HS.every(function (s) { return s.b == null || ['scarab', 'weigh', 'vault'].indexOf(s.b) >= 0; }), 'Fureur : aucune bande ne renvoie vers la Fureur (pas de boucle)');
-var rh = M.mulberry32(77), badH = 0, nH = 400000, evC = [0, 0, 0], upC = [0, 0, 0], wrongC = [0, 0, 0], bandC = [0, 0, 0], maxLvl = 0;
+var rh = M.mulberry32(77), badH = 0, nH = cap(400000), evC = [0, 0, 0], upC = [0, 0, 0], wrongC = [0, 0, 0], bandC = [0, 0, 0], maxLvl = 0;
 for (var hi = 0; hi < nH; hi++) {
   var ho = M.handOptions(rh);
   M.HAND_COLORS.forEach(function (cn, ci) {
@@ -90,9 +90,12 @@ for (var hi = 0; hi < nH; hi++) {
 }
 ok(badH === 0, 'Fureur : invariants des scripts des 3 couleurs sur ' + 3 * nH + ' scripts (anomalies: ' + badH + ', palier max atteint: ×' + Math.pow(2, maxLvl) + ')');
 var evMean = (evC[0] + evC[1] + evC[2]) / 3 / nH;
-ok(evC.every(function (v) { return Math.abs(v / nH / evMean - 1) < 0.03; }), 'Fureur : espérance identique pour les 3 couleurs (' + evC.map(function (v) { return (v / nH).toFixed(2); }).join(' / ') + ')');
-ok(upC.every(function (v) { return Math.abs(v / upC[0] - 1) < 0.05; }) && wrongC.every(function (v) { return Math.abs(v / wrongC[0] - 1) < 0.03; }) && bandC.every(function (v) { return Math.abs(v / bandC[0] - 1) < 0.03; }), 'Fureur : doublements / mauvaise couleur / bandes aussi fréquents pour chaque couleur (' + upC.join('/') + ' · ' + wrongC.join('/') + ' · ' + bandC.join('/') + ')');
-ok(evMean > 23.2 && evMean < 26.2, 'Fureur : espérance du bonus ≈ ' + evMean.toFixed(2) + '× (attendu ≈ 24,7×)');
+// à ≤ 1000 scripts l'erreur d'échantillonnage est grande (écart-type de la Fureur ≈ 120×) : tolérance = 5 écarts-types de la moyenne
+var EX = require('./rtp-exact')(), handTol = 5 * EX.buy.hand.sd / Math.sqrt(nH);
+ok(evC.every(function (v) { return Math.abs(v / nH - EX.buy.hand.mean) < handTol; }), 'Fureur : espérance identique pour les 3 couleurs (' + evC.map(function (v) { return (v / nH).toFixed(2); }).join(' / ') + ')');
+var cntTol = function (a) { return 6 / Math.sqrt(Math.max(1, Math.min.apply(null, a))); };
+ok(upC.every(function (v) { return Math.abs(v / upC[0] - 1) < cntTol(upC); }) && wrongC.every(function (v) { return Math.abs(v / wrongC[0] - 1) < cntTol(wrongC); }) && bandC.every(function (v) { return Math.abs(v / bandC[0] - 1) < cntTol(bandC); }), 'Fureur : doublements / mauvaise couleur / bandes aussi fréquents pour chaque couleur (' + upC.join('/') + ' · ' + wrongC.join('/') + ' · ' + bandC.join('/') + ')');
+ok(Math.abs(evMean - EX.buy.hand.mean) < handTol, 'Fureur : espérance du bonus ≈ ' + evMean.toFixed(2) + '× (exact ' + EX.buy.hand.mean.toFixed(2) + '× ± ' + handTol.toFixed(1) + ', ' + nH + ' scripts)');
 // recalcul après le choix du joueur dans la Pesée imbriquée
 var rw2 = M.mulberry32(5), badR = 0;
 for (var wi = 0; wi < 20000; wi++) { var hh = M._bonus.hand(rw2, 0, [0]); if (hh.spins[0].kind !== 'band') { badR++; continue; } }
@@ -157,8 +160,8 @@ var rs = M.mulberry32(2024), nS = cap(2000000), secrets = 0, bonuses = 0, badS =
   }
 });
 var perRound = secrets / (2 * nS);
-ok(badS === 0 && perRound > 1 / 2000 && perRound < 1 / 100, 'Secret : 1 tour sur ' + (1 / perRound).toFixed(0) + ' (cible 450-550), uniquement à la place d\'un bonus de la roue, sans choix de profil (anomalies: ' + badS + ')');
-ok(Math.abs(secrets / bonuses - M.SECRET_UPGRADE) < 0.03, 'Secret : ' + (secrets / bonuses * 100).toFixed(2) + ' % des bonus gagnés (réglé à ' + M.SECRET_UPGRADE * 100 + ' %) — ' + (1 / (M.SECRET_UPGRADE * 0.0682)).toFixed(0) + ' tours en théorie');
+ok(badS === 0 && perRound > 1 / 2000 && perRound < 1 / 100, 'Secret : 1 tour sur ' + (1 / perRound).toFixed(0) + ' (cible ≈ 500), uniquement à la place d\'un bonus de la roue, sans choix de profil (anomalies: ' + badS + ')');
+ok(Math.abs(secrets / bonuses - M.SECRET_UPGRADE) < 0.03, 'Secret : ' + (secrets / bonuses * 100).toFixed(2) + ' % des bonus gagnés (réglé à ' + M.SECRET_UPGRADE * 100 + ' %) — ' + (1 / (M.SECRET_UPGRADE * 0.05)).toFixed(0) + ' tours en théorie');
 var rbuy = M.mulberry32(8), secBuy = 0; ['scarab', 'weigh', 'vault', 'hand'].forEach(function (k) { for (var i = 0; i < 50000; i++) if (M.playBuy(rbuy, k).spins[0].secret) secBuy++; });
 ok(secBuy === 0, 'Secret : jamais proposé à l\'achat');
 // espérance du secret = espérance moyenne du bonus qu'il remplace (RTP global inchangé)
@@ -168,19 +171,30 @@ for (var ei2 = 0; ei2 < nE; ei2++) {
   ['scarab', 'weigh', 'vault', 'hand'].forEach(function (k) { eR[k] += Math.min(M._bonus[k](rE, k === 'hand' ? 0 : 'std').total, M.MAX_WIN); });
 }
 var replaced = (1 - M.HAND_UPGRADE) * (eR.scarab + eR.weigh + eR.vault) / 3 / nE + M.HAND_UPGRADE * eR.hand / nE;
-ok(Math.abs(eS / nE - replaced) < 0.35, 'Secret : espérance ≈ ' + (eS / nE).toFixed(2) + '× pour ' + replaced.toFixed(2) + '× de bonus remplacé (écart ' + ((eS / nE - replaced) * M.SECRET_UPGRADE * 0.0682 * 100).toFixed(3) + ' pt de RTP)');
+// tolérance = 5 écarts-types de l'écart des moyennes (Crypte ≈ 80×, Fureur ≈ 120×, autres ≈ 15-70×) : à ≤ 1000 tirages, test de fumée ; l'égalité fine est réglée par tools/tune.js
+var secTol = 5 * Math.sqrt(80 * 80 + 60 * 60) / Math.sqrt(nE);
+ok(Math.abs(eS / nE - replaced) < secTol, 'Secret : espérance ≈ ' + (eS / nE).toFixed(2) + '× pour ' + replaced.toFixed(2) + '× de bonus remplacé (± ' + secTol.toFixed(1) + ' ; réglage mesuré sur 2 M de scripts : 10,13× contre 10,2×, soit < 0,03 pt de RTP)');
 
-// 5. RTP grossier, test de fumée : les tests sont plafonnés à 1000 tours (tolérance = 4 écarts-types d'échantillonnage). La valeur précise est mesurée à grande échelle hors test (1 milliard de tours : 96,22 % std ± 0,034, 96,00 % Oracle+ ± 0,039).
+// 5. RTP. Très haute volatilité (écart-type ≈ 16) : 1000 tours ne donnent le RTP qu'à ± 200 points, donc la référence est le calcul EXACT (tools/rtp-exact.js, moments des
+// tables de js/math.js, aucun tirage). La simulation n'est qu'un test de fumée (≤ 1000 tours, tolérance = 4 écarts-types). Mesures de réglage (2 M de tours, hors test) :
+// Standard 97,8 % ± 2,2 (exact 96,19), Oracle+ 97,0 % ± 2,5 (exact 96,13), achats 96,0-96,5 % ± 0,5-0,9.
+var EXR = require('./rtp-exact')();
+ok(EXR.std.mean > 0.960 && EXR.std.mean < 0.9630, 'RTP exact Standard ' + (EXR.std.mean * 100).toFixed(2) + ' % (cible 96,0-96,3)');
+ok(EXR.plus.mean > 0.958 && EXR.plus.mean < 0.9630, 'RTP exact Oracle+ ' + (EXR.plus.mean * 100).toFixed(2) + ' % (cible ≈ 96)');
+ok(EXR.std.sd > 15 && EXR.std.sd < 20 && EXR.plus.sdRel > 15 && EXR.plus.sdRel < 22, 'volatilité très haute : écart-type exact ' + EXR.std.sd.toFixed(1) + '× (Standard), ' + EXR.plus.sdRel.toFixed(1) + '× (Oracle+, rapporté au coût)');
+ok(EXR.std.hit > 0.40 && EXR.std.hit < 0.45 && EXR.bonusEvery > 18, 'taux de gain exact ' + (EXR.std.hit * 100).toFixed(1) + ' % (cible 40-45), bonus 1 tour sur ' + EXR.bonusEvery.toFixed(1));
+Object.keys(EXR.buy).forEach(function (k) { ok(Math.abs(EXR.buy[k].rtp - 0.96) < 0.005, 'RTP exact achat ' + k + ' ' + (EXR.buy[k].rtp * 100).toFixed(2) + ' % (prix ×' + M.BUY[k].price + ')'); });
+ok(M.MAX_WIN === 25000, 'gain maximum 25 000× la mise');
 function tol(sd, n) { return 4 * sd / Math.sqrt(n) * 100; }
 function rtp(f, cost, n) { var s = 0; for (var i = 0; i < n; i++) s += f().total; return s / n / cost * 100; }
 var r1 = M.mulberry32(11), n = cap(2000000);
 var std = rtp(function () { return M.playRound(r1, 'std'); }, 1, n);
 var plus = rtp(function () { return M.playRound(r1, 'plus'); }, M.MODES.plus.cost, n);
-ok(Math.abs(std - 96.2) < tol(5.5, n), 'RTP Standard ≈ ' + std.toFixed(2) + ' % (attendu 96,2 ± ' + tol(5.5, n).toFixed(1) + ', ' + n + ' tours)');
-ok(Math.abs(plus - 96.0) < tol(6.4, n), 'RTP Oracle+ ≈ ' + plus.toFixed(2) + ' % (attendu 96,0 ± ' + tol(6.4, n).toFixed(1) + ', ' + n + ' tours)');
+ok(Math.abs(std - 96.2) < tol(EXR.std.sd, n), 'RTP Standard simulé ≈ ' + std.toFixed(2) + ' % (test de fumée, 96,2 ± ' + tol(EXR.std.sd, n).toFixed(0) + ', ' + n + ' tours)');
+ok(Math.abs(plus - 96.1) < tol(EXR.plus.sdRel, n), 'RTP Oracle+ simulé ≈ ' + plus.toFixed(2) + ' % (test de fumée, 96,1 ± ' + tol(EXR.plus.sdRel, n).toFixed(0) + ', ' + n + ' tours)');
 Object.keys(M.BUY).forEach(function (k) {
-  var v = rtp(function () { return M.playBuy(r1, k); }, M.BUY[k].price, cap(1000000));
-  ok(Math.abs(v - 96.2) < tol(14, cap(1000000)), 'RTP achat ' + k + ' ≈ ' + v.toFixed(2) + ' % (test de fumée, tolérance ± ' + tol(14, cap(1000000)).toFixed(1) + ')');
+  var nb = cap(1000000), v = rtp(function () { return M.playBuy(r1, k); }, M.BUY[k].price, nb);
+  ok(Math.abs(v - 96) < tol(EXR.buy[k].sdRel, nb), 'RTP achat ' + k + ' simulé ≈ ' + v.toFixed(2) + ' % (test de fumée, tolérance ± ' + tol(EXR.buy[k].sdRel, nb).toFixed(0) + ')');
 });
 console.log(fails ? '\n' + fails + ' échec(s)' : '\ntout est bon');
 process.exit(fails ? 1 : 0);

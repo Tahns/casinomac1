@@ -4,8 +4,8 @@
   var M = root.AnubisMath, G = root.G, FX = root.FX, Sfx = root.Sfx;
   function $(id) { return document.getElementById(id); }
 
-  // Statistiques mesurées par tools/simulate.js (48M tours par mode, ±0,1 pt ; Pesée à choix plume/cœur : gain 1 fois sur 2) — affichées dans la table des gains
-  var STATS = { rtp: '96.1', rtpPlus: '96.0', hit: '60.3', bonusEvery: '14.7' };
+  // Statistiques mesurées par tools/simulate.js (RTP exact par calcul des moments + simulation 2 M de tours par mode ; Pesée à choix plume/cœur : gain 1 fois sur 2) — affichées dans la table des gains
+  var STATS = { rtp: '96.2', rtpPlus: '96.1', hit: '42.6', bonusEvery: '20.0' };
   // argent en € ou $ (même valeur numérique) ; tous les montants sont arrondis au centime (r2) à chaque opération
   var BETS = [0.20, 0.50, 1, 2, 5, 10, 20, 50, 100, 200, 500, 1000];
   var BET_DEFAULT = 2;        // 1,00

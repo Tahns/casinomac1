@@ -20,9 +20,9 @@ var server = http.createServer(function (req, res) {
     await p.goto(url); await p.waitForTimeout(500);
     var m = await p.evaluate(`(function(){ var hud=document.getElementById('hud').getBoundingClientRect();
       return { R:G.R, top:G.cy-1.2*G.R, bot:G.cy+1.1*G.R, left:G.cx-1.1*G.R, right:G.cx+1.1*G.R, hudTop:hud.top, hudH:hud.height, sw:document.documentElement.scrollWidth, iw:innerWidth }; })()`);
-    // montants extrêmes (gain max × plus grosse mise = 5 000 000,00) en € et en $, en FR et en EN : rien ne déborde de sa plaque
-    var ov = await p.evaluate(`(function(){ var out=[]; G.S.busy=false; G.S.bi=G.BETS.length-1; G.S.balance=5000000; G.S.mode='plus';
-      [['fr','EUR'],['en','USD']].forEach(function(lc){ I18N.setLang(lc[0]); G.setCurrency(lc[1]); G.updateHud(); G.setWin(5000000);
+    // montants extrêmes (gain max × plus grosse mise = 25 000 000,00) en € et en $, en FR et en EN : rien ne déborde de sa plaque
+    var ov = await p.evaluate(`(function(){ var out=[]; G.S.busy=false; G.S.bi=G.BETS.length-1; G.S.balance=25000000; G.S.mode='plus';
+      [['fr','EUR'],['en','USD']].forEach(function(lc){ I18N.setLang(lc[0]); G.setCurrency(lc[1]); G.updateHud(); G.setWin(25000000);
         ['bal','bet','win'].forEach(function(id){ var e=document.getElementById(id), pr=e.closest('.stat,.betval'), r=e.getBoundingClientRect(), q=(id==='bet'?e.closest('.betbox'):pr).getBoundingClientRect();
           if (e.scrollWidth*(parseFloat(getComputedStyle(e).zoom)||1) > pr.clientWidth+1 || r.left < q.left-1 || r.right > q.right+1 || (id==='bet' && (r.left < document.getElementById('betDn').getBoundingClientRect().right-1 || r.right > document.getElementById('betUp').getBoundingClientRect().left+1))) out.push(lc[0]+':'+id+' '+e.textContent+' '+Math.round(r.left)+'-'+Math.round(r.right)+' entre '+Math.round(document.getElementById('betDn').getBoundingClientRect().right)+' et '+Math.round(document.getElementById('betUp').getBoundingClientRect().left)); }); });
       return out; })()`);

@@ -194,6 +194,30 @@ Le RTP d'achat (95,8 à 96,5 %) est celui du jeu de base à ±0,3 pt : **pas de 
 
 ---
 
+## 1bis. Volatilité très haute (réglage ultérieur, remplace les chiffres de la §1 pour les maths)
+
+Demande du joueur : une machine aussi volatile qu'un jeu de roue en direct à très haute volatilité (écart-type ≈ 15-20×, ≈ 40-45 % de tours gagnants, bonus plus rares mais énormes, plafond relevé), RTP conservé ≈ 96 %. Seul le **niveau de volatilité** est visé, aucune mécanique ni aucun nom n'est repris. Les actions du joueur ne changent pas. Les tableaux des §1.2 à §1.10 décrivent l'ancien profil (écart-type 5,5, 60,3 % de gains, plafond 5 000×).
+
+**Ce qui change dans `js/math.js`**
+- Roue de 64 cases (au lieu de 48) : 34 « 0 » (la poussière peut désormais se toucher), 4 Ankh, 5×0,25 · 7×0,5 · 6×1 · 3×2 · 2×3, et toujours 1 case par bonus. Gain non nul : 42,6 % ; bonus : 1 tour sur 20 (avant 1 / 14,7).
+- Bonus plus gros à espérance égale par profil (Prudent / Équilibré / Audacieux) : Scarabées jusqu'à ×230 par bille (≈ 7,4× pour 3 billes), Pesée jusqu'à ×3000 (≈ 8,5×), Trésor jusqu'à ×1000 avec jetons rares (≈ 10,6×), Fureur : nombres jusqu'à 180, bandes ×3 à ×12 (≈ 26×), Crypte : valeurs jusqu'à ×100 (≈ 10,1×). Oracle : boosts ×2 à ×100 (bonus) / ×50 (nombres).
+- `MAX_WIN` 25 000× ; `CRYPT_COL_CAP` suit (`MAX_WIN × 5`). Secret : 4 % des bonus (1 tour sur ≈ 500).
+- Achats recalés à 96 % : Scarabées ×9,24 · Pesée ×10,31 · Trésor ×12,37 · Fureur ×27,28.
+- Paliers d'annonce `G.WIN_TIERS = [1, 10, 40, 150, 1000]` (fréquences mesurées : BIG ≈ 1 tour sur 80, EXTRA ≈ 1 / 500, MEGA ≈ 1 / 3 000, JUGEMENT DIVIN ≈ 1 / 12 000).
+
+**Méthode.** À cette volatilité, 2 M de tours ne donnent le RTP qu'à ± 2 points (écart-type 16 / √2 M × 1,96). La référence est donc le **calcul exact** `node tools/rtp-exact.js` (moments d'ordre 1 et 2 de chaque bonus, énumération exacte du Trésor, aucun tirage), recoupé par la simulation (9 exécutions de 2 M de tours au plus, exception accordée pour ce seul réglage ; tous les tests restent plafonnés à 1000 tours).
+
+| Mode | RTP exact | RTP simulé (2 M, ±IC 95 %) | Écart-type exact / simulé | Gain non nul | Bonus | Plafond 25 000× atteint (2 M) | Gain max observé |
+|---|---|---|---|---|---|---|---|
+| Standard | 96,19 % | 97,79 % ± 2,23 | 16,6× / 16,1× | 42,6 % | 1 / 19,9 | 0 | 10 000× |
+| Oracle+ (coût ×1,1) | 96,13 % | 96,97 % ± 2,53 | 19,3× / 20,1× | 42,6 % | 1 / 20,0 | 0 | 12 600× |
+| Achat Scarabées (×9,24) | 95,96 % | 96,23 % ± 0,68 | 37× / 45× | 99,8 % | — | 0 | 24 000× |
+| Achat Pesée (×10,31) | 96,00 % | 96,45 % ± 0,93 | 69× / 69× | 53,9 % | — | 0 | 6 000× |
+| Achat Trésor (×12,37) | 96,02 % | 95,80 % ± 0,46 | 43× / 41× | 99,8 % | — | 0 | 12 000× |
+| Achat Fureur (×27,28) | 96,02 % | 95,99 % ± 0,60 | 119× / 119× | 97,7 % | — | 1 | 25 000× |
+
+Notes : la Crypte (bonus secret) n'a pas de forme close ; ses moments (EV 10,13×, écart-type 79×, mesurés sur 400 000 scripts) sont injectés dans le calcul exact, l'écart avec le bonus remplacé (10,2×) pèse moins de 0,03 pt de RTP. Le plafond n'est atteint en pratique que par l'achat de la Fureur (≈ 1 fois sur 2 M) ; en mode de base il faut plus de 2 M de tours pour le voir. Un gros gain (20 000× au pari maximal, 20 000 000,00 €) s'affiche sans débordement en portrait (390 × 844) et en paysage (844 × 390) (`G.showBigWin`, `?debug`).
+
 ## 2. Analyse d'expérience joueur, moment par moment
 
 ### 2.1 Entrée dans le jeu (splash, premier contact)
