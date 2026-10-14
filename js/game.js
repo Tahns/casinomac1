@@ -29,7 +29,7 @@
   G.TEXT0 = 'Philosopher, Georgia, serif'; G.TEXT = G.TEXT0;
   G.NUM_K = 1.12; // Philosopher a une hauteur de chiffre plus faible qu’Oswald : compensation pour garder les chiffres lisibles en petit
   G.FONT_LOADS = ['600 20px Cinzel', '700 20px Cinzel', '900 20px Cinzel', '400 20px Philosopher', '700 20px Philosopher'];
-  var isNum = G.isNum = function (s) { return /^[+×x\d\s.,\u00a0\u202f\u20ac$\-]+$/.test(String(s)) && /\d/.test(String(s)); };
+  var isNum = G.isNum = function (s) { s = root.CUR ? root.CUR.strip(s, G.currency) : String(s); return /^[+×x\d\s.,\u00a0\u202f\u20ac$\-]+$/.test(s) && /\d/.test(s); };
   G.txt = function (s, x, y, o) {
     o = o || {};
     var num = !o.family && isNum(s);
@@ -54,16 +54,16 @@
     return n.toLocaleString(I18N.locale(), { minimumFractionDigits: a % 1 ? 2 : 0, maximumFractionDigits: 2 });
   };
 
-  // argent : toujours 2 décimales, symbole de la devise choisie (FR : « 1 234,50 € », EN : « $1,234.50 »), jamais de flottant brut
+  // argent : symbole, position et décimales de la devise (js/currency.js : $10.00, CA$10.00, ¥10, 10.00 SC…) ; un gain sous-centime garde ses
+  // décimales (valeur exacte du RGS, 6 décimales au plus), jamais de flottant brut
   G.currency = 'EUR';
-  G.sym = function () { return G.currency === 'USD' ? '$' : '\u20ac'; };
+  G.sym = function () { return root.CUR.symbol(G.currency); };
   G.r2 = function (n) { return Math.round(n * 100 + (n < 0 ? -1e-9 : 1e-9)) / 100; };
-  G.money = function (n, signed) {
-    n = G.r2(n); var after = I18N.currencyAfter(), a = Math.abs(n);
-    var num = a.toLocaleString(I18N.locale(), { minimumFractionDigits: 2, maximumFractionDigits: 2 }).replace(/\u202f/g, '\u00a0');
-    var sg = n < 0 ? '-' : (signed && n > 0 ? '+' : '');
-    return after ? sg + num + '\u00a0' + G.sym() : sg + G.sym() + num;
-  };
+  G.r6 = function (n) { return Math.round(n * 1e6 + (n < 0 ? -1e-9 : 1e-9)) / 1e6; };   // précision du RGS (micro-unités)
+  G.rc = function (n) { return root.CUR.round(n, G.currency); };                            // précision de la devise (compteurs animés)
+  G.money = function (n, signed) { return root.CUR.format(n, G.currency, { signed: signed, lang: I18N.lang(), locale: I18N.locale && I18N.locale(), after: I18N.currencyAfter && I18N.currencyAfter() }); };
+  // compteur animé : décimales de la devise pendant le défilement, valeur exacte (sous-centime compris) à l'arrivée
+  G.moneyCount = function (cur, fin) { return cur >= fin ? G.money(G.r6(fin)) : G.money(G.rc(cur)); };
 
   /* ---------- mise en page ---------- */
   var bg = document.createElement('canvas'), frz = document.createElement('canvas');
@@ -852,7 +852,7 @@
     var o = G.winOv; if (!o) return;
     var t = o.tier, W = o.W, c = WC[t], R = FX.reduced, tt = o.t, w = G.w, h = G.h, cx = G.cx, cy = G.cy, u = Math.min(w, h), p = o.p;
     var a = o.closing ? 1 - o.closing : 1, inn = clamp(tt / 0.3, 0, 1), d = o.done ? tt - o.doneAt : -1, i, j;
-    var T = I18N.t(), amt = G.money(Math.round(o.count * 100) / 100), amtMax = G.money(o.amount);
+    var T = I18N.t(), amt = G.moneyCount(o.count, o.amount), amtMax = G.money(o.amount);
     ctx.save(); ctx.globalAlpha = a;
     /* --- WIN : bandeau élégant sur la roue, sans assombrir tout l'écran --- */
     if (t === 0) {

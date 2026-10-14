@@ -7,19 +7,42 @@
 
   // Statistiques mesurées par tools/simulate.js (RTP exact par calcul des moments + simulation 2 M de tours par mode ; Pesée à choix plume/cœur : gain 1 fois sur 2) — affichées dans la table des gains
   var STATS = { rtp: '96.2', rtpPlus: '96.1', hit: '42.6', bonusEvery: '20.0' };
-  // argent en € ou $ (même valeur numérique) ; tous les montants sont arrondis au centime (r2) à chaque opération
-  var BETS = [0.20, 0.50, 1, 2, 5, 10, 20, 50, 100, 200, 500, 1000];
+  // argent de la démo : niveaux de mise, solde de départ et plafonds de perte sont donnés en « unités de base » puis adaptés à la devise
+  // (applyScale : ×1 pour € $ CA$ SC GC, ×100 pour le yen : mises entières de 20 à 100 000…) ; arrondi au centime (r2) à chaque opération.
+  // Avec le RGS, les niveaux viennent de la configuration et sont remplacés sur place (BETS.length = 0 puis push).
+  var BASE_BETS = [0.20, 0.50, 1, 2, 5, 10, 20, 50, 100, 200, 500, 1000];
+  var BETS = BASE_BETS.slice();
   var BET_DEFAULT = 2;        // 1,00
-  var START_BAL = 1000;
+  var START_BASE = 1000, START_BAL = START_BASE;
   var SAVE_VER = 2;           // v1 = ancien jeu en « crédits » (mises 10 à 5000, solde 10 000)
   var r2 = G.r2;
   var AUTO_STEPS = [0, 10, 25, 50, 100, Infinity];
   var SAVE_KEY = 'anubis_save_v1', OLD_SAVE_KEY = 'hoa_save_v1';   // ancienne clé lue une fois pour ne pas perdre les soldes
 
-  var S = { pending: 0, balance: START_BAL, bi: BET_DEFAULT, cur: '', curSet: false, lastWin: 0, autoIdx: 0, auto: 0, stopOnBonus: false, busy: false, hist: [], blocked: false, pendingEnd: false, stopWin: 0, reduced: false, mode: 'std', buyOn: true, limit: 0, quality: 'auto', limitHit: false };
+  var S = { pending: 0, balance: START_BAL, bi: BET_DEFAULT, cur: '', curSet: false, lastWin: 0, autoIdx: 0, auto: 0, stopOnBonus: false, busy: false, hist: [], blocked: false, pendingEnd: false, stopWin: 0, reduced: false, mode: 'std', buyOn: true, limit: 0, limitB: 0, quality: 'auto', limitHit: false, curLocked: false, balCur: 'EUR' };
   var SESS = { start: Date.now(), spins: 0, wag: 0, won: 0, lastCheck: Date.now() };
-  var LIMITS = [0, 20, 50, 100, 250, 500];
+  var LIMIT_BASE = [0, 20, 50, 100, 250, 500], LIMITS = LIMIT_BASE.slice();
   var rng = M.cryptoRng();
+
+  // devise : ?currency= de l'URL (prioritaire, verrouille le sélecteur), sinon le choix du joueur, sinon la langue (démo locale) ;
+  // en mode social : jetons SC / GC uniquement, jamais « $ »
+  function pickCurrency() {
+    var u = root.CUR.fromUrl(), soc = !!(root.SOCIAL && root.SOCIAL.active);
+    if (u) S.curLocked = true;   // le client RGS peut aussi verrouiller (G.lockCurrency)
+    var c = u || (S.curSet && S.cur) || (soc ? 'XSC' : I18N.defaultCurrency());
+    if (soc && !root.CUR.isSocial(c)) c = 'XSC';
+    if (!soc && !u && root.CUR.isSocial(c)) c = I18N.defaultCurrency();
+    return c;
+  }
+  // niveaux de mise, solde de départ et plafonds de perte de la démo, adaptés à la devise (k = taux indicatif de CUR)
+  function applyScale(k) {
+    BETS.length = 0; BASE_BETS.forEach(function (b) { BETS.push(r2(b * k)); });
+    START_BAL = r2(START_BASE * k);
+    LIMITS = LIMIT_BASE.map(function (n) { return r2(n * k); });
+    S.limit = r2(S.limitB * k);
+    if (S.bi >= BETS.length) S.bi = BETS.length - 1;
+    G.bet = BETS[S.bi];
+  }
 
   function load() {
     try {
@@ -27,13 +50,14 @@
       if (d) {
         // ancienne sauvegarde (crédits, sans « v ») : solde, mise, gain en attente et limite repartent des valeurs par défaut
         if (d.lang && !I18N.fromUrl) I18N.setLang(d.lang);   // ?lang= dans l'URL prime sur la sauvegarde
-        if (d.cur === 'EUR' || d.cur === 'USD') { S.cur = d.cur; S.curSet = true; }
+        if (root.CUR.known(d.cur)) { S.cur = d.cur; S.curSet = true; }
+        S.balCur = root.CUR.known(d.balCur) ? d.balCur : 'EUR';   // devise dans laquelle le solde enregistré est exprimé
         if (d.v >= SAVE_VER && !LIVE) {   // en mode RGS : solde, mise et gain en attente viennent du serveur, jamais du stockage local
           if (typeof d.balance === 'number' && isFinite(d.balance) && d.balance >= 0) S.balance = r2(d.balance);
           if (typeof d.bi === 'number' && BETS[d.bi]) S.bi = d.bi;
           // tour interrompu (rechargement en pleine animation) : le résultat était déjà décidé, on le crédite
           if (typeof d.pending === 'number' && d.pending > 0) { S.balance = r2(S.balance + d.pending); S.resumed = r2(d.pending); }
-          if (LIMITS.indexOf(d.limit) >= 0) S.limit = d.limit;
+          if (LIMIT_BASE.indexOf(d.limit) >= 0) S.limitB = d.limit;   // enregistré en unités de base
         }
         if (d.muted) Sfx.setMuted(true);
         if (typeof d.pitch === 'number') Sfx.setPitch(d.pitch);
@@ -52,12 +76,16 @@
     // mouvement réduit : suit le réglage du système tant que le joueur n'a rien choisi
     try { if (!localStorage.getItem(SAVE_KEY) && !localStorage.getItem(OLD_SAVE_KEY) && root.matchMedia && root.matchMedia('(prefers-reduced-motion: reduce)').matches) { S.reduced = true; FX.reduced = true; } } catch (e) {}
     if (!(S.balance >= BETS[0])) S.balance = START_BAL;
-    if (!S.cur) S.cur = I18N.defaultCurrency();   // pas encore choisie : suit la langue
-    G.currency = S.cur;
+    // devise effective, puis solde enregistré converti si elle diffère de celle du dernier enregistrement
+    S.cur = pickCurrency(); G.currency = S.cur;
+    var ratio = root.CUR.rate(S.cur) / root.CUR.rate(S.balCur);
+    applyScale(root.CUR.rate(S.cur));
+    if (ratio !== 1) { S.balance = G.rc(S.balance * ratio); if (S.resumed) S.resumed = G.rc(S.resumed * ratio); }
+    if (!(S.balance >= BETS[0])) S.balance = START_BAL;
   }
   function save() {
     try {
-      localStorage.setItem(SAVE_KEY, JSON.stringify({ v: SAVE_VER, cur: S.curSet ? S.cur : '', pending: LIVE ? 0 : S.pending, balance: LIVE ? START_BAL : S.balance, bi: LIVE ? BET_DEFAULT : S.bi, lang: I18N.lang(), muted: Sfx.isMuted(), pitch: Sfx.getPitch(), vol: Sfx.getVolume(), tone: Sfx.getTone(), music: Sfx.isMusic(), turbo: G.turbo, ultra: !!G.ultra, sobV2: S.stopOnBonus, reduced: S.reduced, hist: S.hist, mode: S.mode, buyOn: S.buyOn, limit: S.limit, quality: S.quality }));
+      localStorage.setItem(SAVE_KEY, JSON.stringify({ v: SAVE_VER, cur: S.curSet ? S.cur : '', balCur: S.cur, pending: LIVE ? 0 : S.pending, balance: LIVE ? START_BAL : S.balance, bi: LIVE ? BET_DEFAULT : S.bi, lang: I18N.lang(), muted: Sfx.isMuted(), pitch: Sfx.getPitch(), vol: Sfx.getVolume(), tone: Sfx.getTone(), music: Sfx.isMusic(), turbo: G.turbo, ultra: !!G.ultra, sobV2: S.stopOnBonus, reduced: S.reduced, hist: S.hist, mode: S.mode, buyOn: S.buyOn, limit: S.limitB, quality: S.quality }));
     } catch (e) {}
   }
 
@@ -88,7 +116,7 @@
   function setMoney(el, v) {
     var t = G.money(v); el.textContent = t;
     var n = t.length, l = n >= 14 ? 3 : n >= 11 ? 2 : n >= 9 ? 1 : 0;
-    if (el.id === 'bet') l = n >= 10 ? 4 : n >= 8 ? 3 : n >= 6 ? 1 : 0;   // la mise a moins de place (entre − et +)
+    if (el.id === 'bet') l = n >= 16 ? 6 : n >= 12 ? 5 : n >= 10 ? 4 : n >= 8 ? 3 : n >= 6 ? 1 : 0;   // la mise a moins de place (entre − et +)
     el.setAttribute('data-l', String(l));
   }
   var shown = { bal: -1, win: -1 }, cnt = { bal: 0, win: 0 };
@@ -99,7 +127,7 @@
     (function step(n) {
       if (me !== cnt[key]) return;
       var u = Math.min(1, (n - t0) / ms), v = from + (to - from) * (1 - Math.pow(1 - u, 3));
-      setMoney(el, r2(v)); shown[key] = v;
+      setMoney(el, u < 1 ? G.rc(v) : to); shown[key] = v;
       if (u < 1) requestAnimationFrame(step); else shown[key] = to;
     })(t0);
   }
@@ -400,17 +428,33 @@
   $('mxMute').addEventListener('click', function () { Sfx.unlock(); Sfx.setMuted(!Sfx.isMuted()); refreshSound(); save(); });
   $('mxMusic').addEventListener('click', function () { Sfx.unlock(); Sfx.setMusic(!Sfx.isMusic()); refreshMixer(); save(); });
   $('mxReset').addEventListener('click', function () { Sfx.setTone(0.3); Sfx.setPitch(0); Sfx.setVolume(1); Sfx.setMuted(false); Sfx.setMusic(true); refreshSound(); save(); Sfx.coin(1); });
-    // devise : suit la langue tant que le joueur n'a rien choisi, puis reste celle qu'il a choisie
+  // devise : change le symbole et convertit solde, mises et plafonds de la démo (ratio des taux indicatifs de CUR)
+  function curButton() {
+    var b = $('btnCur'), sy = G.sym(), t = sy.length > 2 ? S.cur : sy;
+    b.textContent = t; b.setAttribute('data-l', t.length > 2 ? '1' : '0');
+    b.setAttribute('aria-label', I18N.t().currencyL + ' : ' + S.cur);
+    b.style.display = S.curLocked ? 'none' : '';
+  }
   function setCurrency(c, explicit) {
+    c = root.CUR.norm(c); if (!c) return;
+    var ratio = root.CUR.rate(c) / root.CUR.rate(G.currency), changed = c !== G.currency;
     S.cur = c; if (explicit !== false) S.curSet = true; G.currency = c;
-    $('btnCur').textContent = G.sym(); $('btnCur').setAttribute('aria-label', I18N.t().currencyL + ' : ' + c);
+    if (changed && ratio !== 1) {
+      S.balance = G.rc(S.balance * ratio); SESS.wag = G.rc(SESS.wag * ratio); SESS.won = G.rc(SESS.won * ratio); S.lastWin = G.rc(S.lastWin * ratio); winNow = G.rc(winNow * ratio);
+    }
+    applyScale(root.CUR.rate(c));
+    curButton();
     shown.bal = -1; shown.win = -1; updateHud(); setMoney($('win'), winNow); shown.win = winNow; setSpinBtn(); save();
   }
-  $('btnCur').addEventListener('click', function () { Sfx.click(); setCurrency(S.cur === 'EUR' ? 'USD' : 'EUR'); });
+  $('btnCur').addEventListener('click', function () {
+    if (S.busy || S.curLocked) return;
+    var soc = !!(root.SOCIAL && root.SOCIAL.active), L = soc ? root.CUR.SOCIAL_LIST : root.CUR.FEATURED, i = L.indexOf(S.cur);
+    Sfx.click(); setCurrency(L[(i + 1) % L.length]);
+  });
   function applyLang() {
     I18N.setLang(I18N.lang());   // (re)pose dir, lang et polices de repli du canvas
     $('btnLang').textContent = I18N.lang().toUpperCase(); $('btnLang').setAttribute('aria-label', I18N.t().language);
-    I18N.apply(); if (!S.curSet) { S.cur = I18N.defaultCurrency(); G.currency = S.cur; } shown.bal = shown.win = -1; updateHud(); setMoney($('win'), winNow); shown.win = winNow; $('btnCur').textContent = G.sym(); $('btnCur').setAttribute('aria-label', I18N.t().currencyL + ' : ' + S.cur); setSpinBtn(); refreshMixer(); say(S.busy ? '' : I18N.t().ready);
+    I18N.apply(); if (!S.curSet && !S.curLocked) { var pc = pickCurrency(); if (pc !== S.cur) { S.cur = pc; G.currency = pc; applyScale(root.CUR.rate(pc)); } } shown.bal = shown.win = -1; updateHud(); setMoney($('win'), winNow); shown.win = winNow; curButton(); setSpinBtn(); refreshMixer(); say(S.busy ? '' : I18N.t().ready);
     if (G.wheel.build && G.w) G.wheel.build();
   }
   // sélecteur de langue : menu déroulant des 16 langues Stake (noms natifs), fermé par un clic ailleurs ou Échap
@@ -548,15 +592,16 @@
       '<div class="opt"><span>' + T.reducedFx + '</span><div class="chips"><button id="optRed" class="' + (S.reduced ? 'on' : '') + '" type="button">' + (S.reduced ? T.on : T.off) + '</button></div></div>' +
       '<div class="opt"><span>' + T.resetBal + '</span><div class="chips"><button id="optReset" type="button">' + G.money(START_BAL) + '</button></div></div>';
     var ol = $('optLimit');
-    LIMITS.forEach(function (n) {
+    LIMITS.forEach(function (n, li) {
       var bt = document.createElement('button'); bt.type = 'button'; bt.textContent = n ? G.money(n) : T.off; bt.className = S.limit === n ? 'on' : '';
-      bt.onclick = function () { S.limit = n; S.limitHit = n > 0 && -net() >= n; if (!n) S.limitHit = false; save(); openInfo(); };
+      bt.onclick = function () { S.limitB = LIMIT_BASE[li]; S.limit = n; S.limitHit = n > 0 && -net() >= n; if (!n) S.limitHit = false; save(); openInfo(); };
       ol.appendChild(bt);
     });
     var oc = $('optCur');
-    [['EUR', '\u20ac EUR'], ['USD', '$ USD']].forEach(function (c) {
-      var bt = document.createElement('button'); bt.type = 'button'; bt.textContent = c[1]; bt.className = S.cur === c[0] ? 'on' : '';
-      bt.onclick = function () { setCurrency(c[0]); openInfo(); };
+    if (S.curLocked) oc.parentNode.style.display = 'none';   // devise imposée par l'URL / le RGS
+    (root.SOCIAL && root.SOCIAL.active ? root.CUR.SOCIAL_LIST : root.CUR.LIST).forEach(function (c) {
+      var sy = root.CUR.symbol(c), bt = document.createElement('button'); bt.type = 'button'; bt.textContent = sy === c ? c : sy + ' ' + c; bt.className = S.cur === c ? 'on' : '';
+      bt.onclick = function () { if (S.busy) return; setCurrency(c); openInfo(); };
       oc.appendChild(bt);
     });
     var oq = $('optQ');
@@ -588,7 +633,9 @@
     setTimeout(startGame, 3000); // filet de sécurité : ne jamais bloquer le jeu sur une police
   } else startGame();
   // utilitaires de test (?debug)
-  G.S = S; G.play = play; G.updateHud = updateHud; G.setWin = setWin; G.BETS = BETS; G.setCurrency = setCurrency;
+  G.S = S; G.play = play; G.updateHud = updateHud; G.setWin = setWin; G.BETS = BETS; G.setCurrency = setCurrency; G.applyLang = applyLang; G.lockCurrency = function (on) { S.curLocked = on !== false; curButton(); };
+  // mode social activé après coup (config.jurisdiction.socialCasino du RGS) : devise et textes sont recalculés
+  G.onSocial = function () { var c = pickCurrency(); if (c !== S.cur) setCurrency(c, false); applyLang(); };
   if (/[?&]debug/.test(location.search)) { G.debug = true; }
 
   /* ---------- écran d'accueil : ambiance + déverrouillage de l'audio ---------- */

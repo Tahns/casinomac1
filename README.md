@@ -11,6 +11,7 @@ node tools/check.js              # invariants des maths (sortie 1 si échec)
 node tools/contrast.js           # contraste WCAG AA des couples texte/fond
 node tools/i18n-check.js         # 16 langues Stake complètes (clés, marqueurs {x}, longueurs), pas de français en dur, chiffres affichés = maths
 node tools/stake-export.js       # démonstration du format Stake (books .jsonl.zst, lookup CSV, index.json) dans tools/out/, <= 1000 books par mode
+node tools/social-check.js       # mode social (Stake.US) : aucun mot interdit dans tous les textes sociaux, 10.00 SC / GC sans « $ » ; avec PLAYWRIGHT_CORE, scanne aussi le DOM et le canvas (?social=true&currency=XSC)
 PLAYWRIGHT_CORE=... node tools/layout.js # mises en page sur 10 tailles d'écran (portrait, paysage, grand écran)
 PLAYWRIGHT_CORE=/chemin/node_modules/playwright-core node tools/e2e.js   # tests de bout en bout dans Chromium
 PLAYWRIGHT_CORE=... node tools/gestures.js  # joue au hasard les gestes de chaque bonus et profil : jamais de blocage ni d'erreur
@@ -26,6 +27,7 @@ node tools/tune-profiles.js     # espérance des profils Prudent / Équilibré /
 | `js/main.js` | Flux de jeu, HUD, auto-play, table des gains, sauvegarde locale |
 | `js/imgs.js` | Liste des illustrations (remplacée par des data: URI dans le build mono-fichier) |
 | `js/art.js` · `audio.js` · `fx.js` · `i18n.js` | Dessin vectoriel, audio synthétisé, particules, 16 langues (anglais par défaut, `?lang=`) |
+| `js/currency.js` · `js/social.js` | Devises (symbole, position, décimales, gains sous-centime ; `?currency=`) · mode social (`?social=true`, textes de remplacement `I18N_SOCIAL` en bas de `i18n.js`, devises XSC/XGC) |
 | `img/` | Illustrations générées (WebP/JPEG, ≈ 1 Mo) : décors, logos de bonus, médaillon, accueil, cadre et plaques du menu |
 | `tools/build-single.py` | Construit le fichier HTML unique (CSS, polices, JS, images en data: URI) : `python3 -I tools/build-single.py sortie.html` |
 | `fonts/` | Cinzel (lettrage) et Philosopher (chiffres, textes), OFL 1.1, sous-ensemble latin ≈ 90 Ko — détail dans `docs/ANALYSE.md` |

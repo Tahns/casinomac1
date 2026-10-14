@@ -284,9 +284,12 @@ label{font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--di
 .stat b[data-l="2"],.betval b[data-l="2"]{zoom:.78}
 .stat b[data-l="3"],.betval b[data-l="3"]{zoom:.66}
 .betval b[data-l="4"]{zoom:.56}
+.betval b[data-l="5"]{zoom:.47}.betval b[data-l="6"]{zoom:.4}
 /* barre du haut : 5 boutons (langue, devise, son, mixeur, infos) sur téléphone */
 @media (max-width:760px){.top-right{gap:5px}.ibtn{width:33px;height:33px}#btnCur{font-size:15px}}
 @media (max-width:400px){.brand .b-big{font-size:19px}.top-right{gap:4px}.ibtn{width:31px;height:31px}}
+/* devise : symbole long (CA$, MX$, SC, GC, code) dans le bouton rond */
+#btnCur[data-l="1"]{font-size:11px;letter-spacing:-.2px}
 @media (max-width:400px){.betbox{padding-left:20px;padding-right:20px}}
 @media (min-width:761px) and (min-height:521px){.betbox{min-width:clamp(196px,19vw,240px)}}
 

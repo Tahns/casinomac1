@@ -35,7 +35,7 @@
       bandName: { scarab: 'SCARABÉES', weigh: 'PESÉE', vault: 'TRÉSOR' },
       boostApplied: 'BOOST ORACLE', boostIntro: 'BOOST', boostIntroSub: 'toutes les valeurs sont multipliées', tapSkip: 'Touchez pour passer', continueBtn: 'CONTINUER', bonusWin: 'GAIN DU BONUS',
       infoTitle: 'RÈGLES & TABLE DES GAINS', rtp: 'RTP', maxWin: 'Gain max', hitRate: 'Tours gagnants', bonusFreq: 'Bonus', volat: 'Volatilité',
-      volatV: 'Très haute', demo: 'Argent fictif — démo sans argent réel : les montants en € ou $ ne sont pas de vrais euros ni dollars.',
+      volatV: 'Très haute', demo: 'Argent fictif — démo sans argent réel : les montants affichés ne sont pas de vraies sommes.',
       rules: [
         'Une mise, un tour : la roue du jugement décide. Chaque case paie sa valeur × votre mise.',
         'L\'Oracle (≈ 1 tour sur 3) désigne un type de case et lui offre un boost ×2 à ×100, dont la valeur reste scellée (« ? ») jusqu\'à l\'arrêt de la roue. Si la roue s\'y arrête, le boost s\'applique !',
@@ -87,7 +87,7 @@
       bandName: { scarab: 'SCARABS', weigh: 'WEIGHING', vault: 'VAULT' },
       boostApplied: 'ORACLE BOOST', boostIntro: 'BOOST', boostIntroSub: 'every value is multiplied', tapSkip: 'Tap to skip', continueBtn: 'CONTINUE', bonusWin: 'BONUS WIN',
       infoTitle: 'RULES & PAYTABLE', rtp: 'RTP', maxWin: 'Max win', hitRate: 'Hit rate', bonusFreq: 'Bonus', volat: 'Volatility',
-      volatV: 'Very high', demo: 'Play money — demo, the € or $ amounts are not real money.',
+      volatV: 'Very high', demo: 'Play money — demo, the amounts shown are not real money.',
       rules: [
         'One bet, one spin: the wheel of judgement decides. Each segment pays its value × your bet.',
         'The Oracle (≈ 1 spin in 3) picks a type of segment and grants it a ×2 to ×100 boost, its value staying sealed ("?") until the wheel stops. If the wheel lands there, the boost applies!',
@@ -933,4 +933,43 @@
     }
   };
   if (launch.lang) setLang(launch.lang); else setLang(DEFAULT_LANG);
+})(window);
+
+/* ---------- Mode social (?social=true ou config.jurisdiction.socialCasino) : textes de remplacement ----------
+   Bloc séparé, géré par js/social.js : seules les clés citées ici changent en mode social, le reste vient du dictionnaire normal.
+   Vocabulaire interdit (mots entiers, insensible à la casse) : bet, buy, pay, paytable, cost of, stake, wager, money, cash, credit, currency…
+   → play, get, win, Win table, can be played for, play amount, coins, collect, balance, token… (voir tools/social-check.js).
+   Un tableau (rules, tableCols) se remplace par index : texte, ou fonction qui transforme le texte d'origine.
+   Une langue absente de ce bloc reçoit le jeu de textes anglais en mode social : ajouter ici sa version dans cette langue. */
+(function (root) {
+  root.I18N_SOCIAL = {
+    en: {
+      bet: 'PLAY', plusHint: 'ORACLE+: boost on ≈ 3 of 4 spins · play amount ×1.1', cost: 'PLAY FOR', sessWag: 'Played',
+      rulesPlus: 'ORACLE+ mode: play amount ×1.1, the Oracle shows up on ≈ 3 of 4 spins. Same RTP (≈ 96%).',
+      buyBtn: 'GET A BONUS', buyTitle: 'GET A BONUS', buySub: 'Open a bonus directly, skipping the wheel. A bonus can be played for the play amount × its multiplier. Anubis\' Fury can still seize it.',
+      buyPrice: 'PLAY FOR', buyNow: 'GET', buyOn: 'Bonus access', buyNoFunds: 'Not enough balance for this bonus',
+      resumed: 'Interrupted round: winnings added', scarabSub: 'Three scarabs plunge through the dark. Each wins the slot it lands in.',
+      splashDemo: 'Demo · play coins · Play responsibly', infoTitle: 'RULES & WIN TABLE', demo: 'Play coins — demo, the amounts shown are not real.',
+      tableCols: { 2: 'Wins' }, currencyL: 'Token', handWrongSub: 'The chain stops: current tier collected',
+      rules: {
+        0: 'One play, one spin: the wheel of judgement decides. Each segment wins its value × your play amount.',
+        2: 'ANKH: free respin of the wheel, at no extra play amount.',
+        4: function (s) { return s.replace('you cash the smallest', 'you collect the smallest'); }
+      }
+    },
+    fr: {
+      bet: 'JEU', plusHint: 'ORACLE+ : boost sur ≈ 3 tours sur 4 · montant de jeu ×1,1', cost: 'MONTANT', sessWag: 'Joué',
+      rulesPlus: 'Mode ORACLE+ : montant de jeu ×1,1, l\'Oracle apparaît sur ≈ 3 tours sur 4. RTP équivalent (≈ 96 %).',
+      buyBtn: 'OBTENIR UN BONUS', buyTitle: 'OBTENIR UN BONUS', buySub: 'Ouvrez directement un bonus, sans passer par la roue. Jouable pour : montant de jeu × multiplicateur. La Fureur d\'Anubis peut toujours le saisir.',
+      buyPrice: 'JOUABLE POUR', buyNow: 'OBTENIR', buyOn: 'Accès aux bonus', buyNoFunds: 'Solde insuffisant pour ce bonus',
+      resumed: 'Tour interrompu : gain ajouté',
+      splashDemo: 'Démo · pièces fictives · Jouez avec modération', demo: 'Pièces fictives — démo : les montants affichés ne sont pas réels.',
+      currencyL: 'Jeton', handWrongSub: 'La chaîne s\'arrête : palier ramassé',
+      rules: {
+        0: 'Un jeu, un tour : la roue du jugement décide. Chaque case donne sa valeur × votre montant de jeu.',
+        2: 'ANKH : relance gratuite de la roue, sans montant de jeu supplémentaire.',
+        4: function (s) { return s.replace('vous encaissez', 'vous ramassez'); }
+      }
+    }
+  };
 })(window);
