@@ -6,6 +6,8 @@ function ok(c, m) { if (!c) { fails++; console.log('ÉCHEC  ' + m); } else conso
 var sandbox = { window: {}, document: { documentElement: {}, querySelectorAll: function () { return []; } } };
 vm.createContext(sandbox);
 // i18n.js expose window.I18N ; on récupère les deux dictionnaires en les interrogeant
+sandbox.self = sandbox.window;   // math.js (UMD) se range dans window.AnubisMath : i18n.js en tire les chiffres cités dans les textes
+vm.runInContext(fs.readFileSync(path.join(root, 'js/math.js'), 'utf8'), sandbox);
 vm.runInContext(fs.readFileSync(path.join(root, 'js/i18n.js'), 'utf8').replace('root.I18N = {', 'root.I18N = { _D: D, _B: B, _X: X, _R: RGS_TXT,'), sandbox);
 sandbox.root = sandbox.window;
 var D = sandbox.window.I18N && sandbox.window.I18N._D;
@@ -65,12 +67,18 @@ files.forEach(function (f) {
 ok(hits.length === 0, 'aucun texte français écrit en dur dans le code' + (hits.length ? ' (' + hits.length + ') : ' + hits.slice(0, 8).join(' | ') : ''));
 // chiffres affichés aux joueurs vs maths réelles
 var M = require(path.join(root, 'js/math.js'));
-var scarabMax = Math.max.apply(null, [].concat.apply([], Object.keys(M.SCARAB_PROFILES).map(function (k) { return M.SCARAB_PROFILES[k]; })));
-var weighMax = Math.max.apply(null, [].concat.apply([], Object.keys(M.WEIGH_PROFILES).map(function (k) { return M.WEIGH_PROFILES[k].map(function (p) { return Math.max.apply(null, p[0]); }); })));
+// [24] maxima cités aux joueurs = maxima du profil « std » (le seul que sert le RGS), jamais ceux des profils démo « bold »
+var scarabMax = Math.max.apply(null, M.SCARAB_PROFILES.std);
+var weighMax = Math.max.apply(null, M.WEIGH_PROFILES.std.map(function (p) { return Math.max.apply(null, p[0]); }));
+// nombres « ×N » / « N× » d'un texte (peu importe la langue et la place du signe)
+function timesNums(t) { var o = [], m, re = /×\s*(\d[\d.,]*)|(\d[\d.,]*)\s*×/g; while ((m = re.exec(t))) o.push(parseFloat((m[1] || m[2]).replace(/,/g, ''))); return o; }
+ok(sandbox.window.I18N.fillMath && !JSON.stringify(D).match(/\{(op|opp|scmax|wmax)\}/), 'dictionnaire : aucun jeton {op} {opp} {scmax} {wmax} non résolu (math.js chargé)');
 CODES.forEach(function (l) {
   var d = D[l];
-  ok(d.buyDesc.scarab.indexOf(scarabMax + '×') >= 0, l + ' : la description des Scarabées annonce bien ' + scarabMax + '× (max réel)');
-  ok(d.buyDesc.weigh.indexOf(weighMax + '×') >= 0, l + ' : la description de la Pesée annonce bien ' + weighMax + '× (max réel)');
+  var sn = timesNums(d.buyDesc.scarab), wn = timesNums(d.buyDesc.weigh), rn = timesNums(d.rules[3]);
+  ok(sn.length > 0 && sn.every(function (x) { return x === scarabMax; }), l + ' : la description des Scarabées annonce bien ' + scarabMax + '× (max du profil std) et aucun autre maximum : ' + sn.join('/'));
+  ok(wn.length > 0 && wn.every(function (x) { return x === weighMax; }), l + ' : la description de la Pesée annonce bien ' + weighMax + '× (max du profil std) et aucun autre maximum : ' + wn.join('/'));
+  ok(rn.length > 0 && rn.every(function (x) { return x === weighMax; }), l + ' : la règle de la Pesée (rules[3]) annonce bien ×' + weighMax + ' et aucun autre maximum : ' + rn.join('/'));
   ok(d.rules.join(' ').indexOf(String(M.MAX_WIN)) >= 0, l + ' : les règles annoncent le plafond ' + M.MAX_WIN + '×');
   // Fureur d'Anubis : palier maximal, multiplicateurs des bandes, plus petit nombre (consolation) : tout vient des maths
   var tierMax = Math.pow(2, M.HAND_MAX_CHAIN), bandXs = [], rulesTxt = d.rules.join(' ');

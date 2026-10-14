@@ -37,6 +37,7 @@
     var c = cache[lang];
     if (c && c.base === d) return c.val;
     var val = SOC[lang] ? mergeInto(d, own(SOC[lang])) : (lang === 'en' ? d : mergeInto(englishBase(), own(SOC.en || {})));
+    if (I18N.fillMath) I18N.fillMath(val);   // chiffres des maths ({op}, {opp}, {scmax}, {wmax}) dans les textes sociaux
     cache[lang] = { base: d, val: val };
     return val;
   }
