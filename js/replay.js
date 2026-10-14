@@ -163,11 +163,12 @@
       for (var i = 0; i < round.spins.length; i++) {
         var sp = round.spins[i], buy = sp.index === -1 || round.mode === 'buy';
         if (!buy && sp.oracle) {
-          $('oracleText').textContent = L.oracleOn + ' ×' + sp.oracle.boost + ' → ' + L.kinds[sp.oracle.kind].replace('\n', ' ');
+          $('oracleText').textContent = L.oracleOn + ' ×? → ' + L.kinds[sp.oracle.kind].replace('\n', ' ');   // valeur scellée jusqu'à l'arrêt
           $('oracle').hidden = false;
           await G.wheel.showOracle(sp.oracle);
         }
         if (!buy) await G.wheel.spinTo(sp);
+        if (!buy && sp.oracle) { $('oracleText').textContent = L.oracleOn + ' ×' + sp.oracle.boost + ' → ' + L.kinds[sp.oracle.kind].replace('\n', ' '); await G.wheel.revealOracle(); }
         var def = M.KINDS[sp.kind] || { bonus: true };
         if (def.respin) {
           Sfx.shield(); FX.spark(G.cx, G.cy - G.R * 0.9, 30, '#ffe9a0', 300); FX.flash(0.3, '#ffe9a0');

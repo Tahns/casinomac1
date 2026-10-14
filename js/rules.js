@@ -33,7 +33,7 @@
       p: num(M.MODES.std.oracle * 100, 0), pp: num(M.MODES.plus.oracle * 100, 0), c: num(plusCost), m: maxW, h: num(M.HAND_UPGRADE * 100, 0), s: num(M.SECRET_UPGRADE * 100, 0),
       n: M.N, one: M.KINDS.scarab.count, nums: list(sortNum(numKinds)), chain: M.MAX_CHAIN || 6,
       kinds: uniq(M.ORACLE_KIND_W.map(function (t) { return t[0]; })).map(KN).join(', '),
-      rows: M.SCARAB_ROWS, picks: M.VAULT_MAX_PICKS, fin: M.VAULT_FINISH || 5,
+      rows: M.SCARAB_ROWS, tiles: M.CRYPT_CELLS, picks: M.VAULT_BASE_PICKS, keys: M.VAULT_KEY_PICKS, cap: M.VAULT_PICK_CAP, fin: M.VAULT_FINISH,
       tier: Math.pow(2, M.HAND_MAX_CHAIN), min: M.HAND_MIN_N, segs: segs.length, dbl: dbl, dblc: dbl / M.HAND_COLORS.length,
       bands: bandTxt.join(', '), spin: T.spin, stop: T.stop, auto: T.auto, turbo: T.turbo, buy: T.buyBtn, plus: T.oraclePlus,
       autos: (G && G.AUTO_STEPS ? G.AUTO_STEPS : [10, 25, 50, 100, Infinity]).filter(function (x) { return x > 0; }).map(function (x) { return isFinite(x) ? x : '∞'; }).join(', ')
@@ -69,13 +69,16 @@
       table(sv.map(function (x, i) { return '#' + (i + 1); }), [sv.map(function (x) { return '×' + num(x); }), binom.map(function (b) { return pct(b / 256 * 100, 1); })]);
     var wp = M.WEIGH_PROFILES.std, ws = sum(wp);
     out += '<h4 class="rh">' + esc(R.weighH) + '</h4>' + p(esc(f(R.weighP))) + table([R.colValue, R.colChance], wp.map(function (t) { return ['×' + num(t[0][0]) + ' / ×' + num(t[0][1]), pct(t[1] / ws * 100, 1)]; }));
-    var vp = M.VAULT_PROFILES.std, vw = sum(vp.tokens) + vp.curse;
+    var vp = M.VAULT_PROFILES.std, vw = sum(vp.tokens) + vp.seal;
     out += '<h4 class="rh">' + esc(R.vaultH) + '</h4>' + p(esc(f(R.vaultP))) + table([R.colValue, R.colChance], vp.tokens.map(function (t) {
-      var lab = t[0] === 'scepter' ? R.tokScepter : t[0] === 'ankh' ? R.tokAnkh : '+' + num(t[0]) + '×';
-      return [esc(lab), pct(t[1] / vw * 100, 2)];
-    }).concat([[esc(R.tokCurse), pct(vp.curse / vw * 100, 1)]]));
+      var lab = t[0] === 'scepter' ? R.tokScepter : t[0] === 'key' ? R.tokKey : '+' + num(t[0]) + '×';
+      return [esc(f(lab)), pct(t[1] / vw * 100, 2)];
+    }).concat([[esc(R.tokSeal), pct(vp.seal / vw * 100, 1)]]));
     out += '<h4 class="rh">' + esc(R.handH) + '</h4>' + p(esc(f(R.handP)));
-    out += '<h4 class="rh">' + esc(R.cryptH) + '</h4>' + p(esc(f(R.cryptP)));
+    var ct = M.CRYPT_TYPES, cw = sum(ct), cn = { dust: R.cDust, tab: R.cTab, tide: R.cTide, eclipse: R.cEclipse };
+    out += '<h4 class="rh">' + esc(R.cryptH) + '</h4>' + p(esc(f(R.cryptP))) + table([R.colValue, R.colChance, R.colMax], ct.map(function (t) {
+      var vals = M.CRYPT_VALUES[t[0]]; return [esc(cn[t[0]]), pct(t[1] / cw * 100, 1), vals ? '×' + list(vals.map(function (x) { return x[0]; })) : '—'];
+    }));
 
     /* relances et re-déclenchements, boutons, avertissement */
     out += h3(R.retrigH) + R.retrig.map(function (t) { return p('• ' + esc(f(t))); }).join('');
