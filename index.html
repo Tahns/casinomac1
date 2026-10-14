@@ -21,11 +21,12 @@
     <div class="top-right">
       <button class="ibtn" id="btnLang" type="button" aria-label="Langue">FR</button>
       <button class="ibtn" id="btnCur" type="button" aria-label="Devise">€</button>
-      <button class="ibtn" id="btnSound" type="button" aria-label="Son" aria-expanded="false"><svg viewBox="0 0 24 24"><path id="sndPath" d="M4 9v6h4l5 4V5L8 9H4z"/><path id="sndWave" d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
-      <button class="ibtn" id="btnInfo" type="button" aria-label="Infos">i</button>
+      <button class="ibtn" id="btnSound" type="button" aria-label="Son" aria-expanded="false" aria-haspopup="dialog" aria-controls="mixer"><svg viewBox="0 0 24 24"><path id="sndPath" d="M4 9v6h4l5 4V5L8 9H4z"/><path id="sndWave" d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
+      <button class="ibtn" id="btnInfo" type="button" aria-label="Infos" aria-haspopup="dialog" aria-controls="modal">i</button>
     </div>
   </header>
-  <div id="mixer" hidden role="dialog" aria-label="Son">
+  <div id="mixer" hidden role="dialog" aria-labelledby="mxTitle">
+    <h2 id="mxTitle">Son</h2><button class="x" id="mxClose" type="button" aria-label="Fermer">×</button>
     <div class="mx-row"><label for="mxVol" id="mxVolL">Volume</label><input id="mxVol" type="range" min="0" max="100" step="5"><b id="mxVolV"></b></div>
     <div class="mx-row"><label for="mxTone" id="mxToneL">Aigus</label><input id="mxTone" type="range" min="0" max="100" step="5"><b id="mxToneV"></b></div>
     <div class="mx-row"><label for="mxPitch" id="mxPitchL">Hauteur</label><input id="mxPitch" type="range" min="-12" max="12" step="1"><b id="mxPitchV"></b></div>
