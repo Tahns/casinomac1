@@ -371,3 +371,5 @@ html[dir=rtl] #modal .sheet{direction:rtl;text-align:right}
 #langMenu button:hover,#langMenu button:focus-visible{background:rgba(230,185,74,.16);border-color:var(--gold);outline:none}
 #langMenu button[aria-selected=true]{color:var(--gold);border-color:rgba(230,185,74,.5)}
 html[dir=rtl] .sheet .x{right:auto;left:4px}
+/* polices latines étendues / cyrillique / vietnamien : Cinzel et Philosopher sont des sous-ensembles latins, les caractères manquants (ł ş ğ ı, diacritiques vietnamiens, cyrillique) passent par ces polices SYSTÈME */
+html[data-lang=vi],html[data-lang=pl],html[data-lang=tr],html[data-lang=ru],html[data-lang=fi]{--f-title:Cinzel,"Trajan Pro",Georgia,"Noto Serif","Times New Roman","DejaVu Serif",serif;--f-num:Philosopher,Cinzel,Georgia,"Noto Serif","Times New Roman","DejaVu Serif",serif;--f-text:Philosopher,Georgia,"Noto Serif","Times New Roman","DejaVu Serif",serif}

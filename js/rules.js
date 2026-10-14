@@ -6,8 +6,10 @@
   var M = root.AnubisMath;
   function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
   function fr() { return root.I18N.lang() === 'fr'; }
+  function loc() { return root.I18N.locale ? root.I18N.locale() : (fr() ? 'fr-FR' : 'en-US'); }   // nombres à la locale de la langue (virgule décimale, séparateurs)
+  function pcs() { return { fr: 1, de: 1, es: 1, pt: 1, pl: 1, id: 1, vi: 1, fi: 1, ru: 1 }[root.I18N.lang()] ? '\u00a0%' : '%'; }   // « 96 % » comme dans les textes de ces langues
   function num(x, d) {   // nombre à la locale de la langue : 1 234,5 (fr) / 1,234.5 (en), au plus d décimales
-    return Number(x).toLocaleString(fr() ? 'fr-FR' : 'en-US', { minimumFractionDigits: 0, maximumFractionDigits: d == null ? 2 : d }).replace(/ /g, ' ');
+    return Number(x).toLocaleString(loc(), { minimumFractionDigits: 0, maximumFractionDigits: d == null ? 2 : d }).replace(/ /g, ' ');
   }
   function pct(x, d) { return num(x, d == null ? 1 : d) + (fr() ? ' %' : '%'); }
   function fill(s, v) { return String(s).replace(/\{(\w+)\}/g, function (m, k) { return v[k] != null ? v[k] : m; }); }
@@ -44,7 +46,7 @@
     var out = '';
 
     /* modes : coût, RTP, gain max */
-    var rtp = function (x) { return x == null ? '—' : Number(x).toLocaleString(fr() ? 'fr-FR' : 'en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + (fr() ? '\u00a0%' : '%'); };
+    var rtp = function (x) { return x == null ? '—' : Number(x).toLocaleString(loc(), { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + pcs(); };
     var buyNames = { scarab: T.kindsLong.scarab, weigh: T.kindsLong.weigh, vault: T.kindsLong.vault, hand: T.kindsLong.hand };
     var rowsM = [
       ['<b>' + esc(R.modeStd) + '</b><small>' + esc(f(R.modeStdD)) + '</small>', '×' + num(M.MODES.std.cost), rtp(S.std && S.std.rtp), maxW + '×'],
