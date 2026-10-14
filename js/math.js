@@ -281,7 +281,7 @@
 
   /* ---------- Échelle entière (format Stake : payoutMultiplier entier) ---------- */
   // Stake exige des multiplicateurs entiers à échelle fixe (exemple de la doc : 1150 = 11,5×). On choisit 100 = 1× (un centième de mise).
-  // Toutes les valeurs du jeu (0,25 ; 0,5 ; 0,65 ; 0,79 ; moyenne des 5 colonnes de la Crypte = somme/5 ; boosts et paliers entiers) sont des
+  // Toutes les valeurs du jeu (0,25 ; 0,5 ; 0,65 ; 0,79 ; tablettes, marées et éclipses du Sanctuaire = entiers ; boosts et paliers entiers) sont des
   // multiples de 0,01 : la conversion est EXACTE, sans écart de RTP. isExact() le vérifie ; seule la somme en flottant demande un arrondi.
   var SCALE = 100;
   function toInt(x) { return Math.round(x * SCALE); }

@@ -35,7 +35,7 @@ function bonusEvents(kind, b, src) {
     ev.push({ type: 'weighReveal', mults: b.mults.map(I), playerMult: I(playerMult), playerWins: playerWins, win: I(M.weighGain(b, pk)) });
   } else if (kind === 'vault') {
     ev.push({ type: 'profileChoice', binding: false, profile: b.profile });
-    b.picks.forEach(function (p, k) { ev.push({ type: 'vaultPick', pick: k + 1, token: typeof p.token === 'number' ? I(p.token) : p.token, saved: !!p.saved, runningTotal: I(p.total) }); });
+    b.picks.forEach(function (p, k) { ev.push({ type: 'vaultPick', pick: k + 1, token: typeof p.token === 'number' ? I(p.token) : p.token, chestsLeft: p.left, runningTotal: I(p.total) }); });
     ev.push({ type: 'vaultEnd', ended: b.ended, finishBonus: I(b.bonusFinish), win: I(b.total) });
   } else if (kind === 'hand') {
     ev.push({ type: 'furyColor', colourIndex: 0, note: 'couleur du joueur = 0 ; le front fait pivoter les noms de couleurs' });
@@ -48,8 +48,8 @@ function bonusEvents(kind, b, src) {
     });
     ev.push({ type: 'furyEnd', win: I(b.total) });
   } else if (kind === 'crypt') {
-    b.steps.forEach(function (st, k) { ev.push({ type: 'cryptDrop', block: k + 1, block_type: st.t, column: st.c, value: st.v, effect: st.effect, tops: st.tops ? st.tops.map(I) : undefined }); });
-    ev.push({ type: 'cryptEnd', columns: b.cols.map(I), win: I(b.total) });
+    b.steps.forEach(function (st, k) { ev.push({ type: 'sanctuaryTablet', tablet: k + 1, tablet_type: st.t, value: st.v, tideBefore: st.tideBefore, offering: st.pool, tide: st.tide }); });
+    ev.push({ type: 'sanctuaryEnd', offering: b.pool, tide: b.tide, win: I(b.total) });
   }
   return ev;
 }

@@ -81,7 +81,7 @@ function compute() {
   var q = S.filter(function (sg) { return sg.d === 0; }).length / n, v22 = V(false), v18 = V(true), H = [0, 0], L, pr, m;
   for (L = 0; L < MAXL; L++) { pr = Math.pow(q, L) * (1 - q); m = Math.pow(2, L); H[0] += pr * m * v22[0]; H[1] += pr * m * m * v22[1]; }
   pr = Math.pow(q, MAXL); m = Math.pow(2, MAXL); H[0] += pr * m * v18[0]; H[1] += pr * m * m * v18[1];
-  // bonus gagné sur la roue = (1-s)·[(1-h)·bonus profil Équilibré + h·Fureur] + s·Crypte
+  // bonus gagné sur la roue = (1-s)·[(1-h)·bonus profil Équilibré + h·Fureur] + s·Sanctuaire des Marées
   var rep = {}, rep1 = 0;
   ['scarab', 'weigh', 'vault'].forEach(function (k) { rep[k] = [(1 - h) * BON[k].std[0] + h * H[0], (1 - h) * BON[k].std[1] + h * H[1]]; rep1 += rep[k][0] / 3; });
   var C = cryptMoments();
