@@ -1,0 +1,28 @@
+<!doctype html><meta charset="utf-8">
+<style>
+@font-face{font-family:Cinzel;font-weight:900;src:url(../fonts/cinzel-latin-900-normal.woff2)}
+@font-face{font-family:Cinzel;font-weight:600;src:url(../fonts/cinzel-latin-600-normal.woff2)}
+html,body{margin:0;background:#07050d}
+#b{position:relative;width:2400px;height:800px;overflow:hidden;background:
+ radial-gradient(ellipse 900px 700px at 1750px 400px,#3a1f5c 0%,#1a0f33 45%,#07050d 80%),#07050d}
+.ring{position:absolute;border-radius:50%;border:2px solid;left:1750px;top:400px;transform:translate(-50%,-50%)}
+#logo{position:absolute;left:1750px;top:400px;width:700px;height:700px;transform:translate(-50%,-50%);border-radius:50%;background:url(medal.webp) center/cover;box-shadow:0 0 90px rgba(255,180,60,.28),0 0 0 3px rgba(217,180,90,.25)}
+#t1{position:absolute;left:150px;top:228px;font:600 54px Cinzel;letter-spacing:.9em;color:#d9b45a}
+#t2{position:absolute;left:142px;top:292px;font:900 168px/1 Cinzel;letter-spacing:.05em;
+ background:linear-gradient(180deg,#fff4c9 0%,#f3c95f 40%,#b8801d 75%,#8a5a12 100%);-webkit-background-clip:text;color:transparent;
+ filter:drop-shadow(0 6px 0 #2b1805) drop-shadow(0 0 30px rgba(255,180,60,.25))}
+.rule{position:absolute;left:150px;height:2px;background:linear-gradient(90deg,#d9b45a,rgba(217,180,90,0))}
+#grain{position:absolute;inset:0;opacity:.18;mix-blend-mode:overlay}
+#vig{position:absolute;inset:0;background:radial-gradient(ellipse at 60% 50%,transparent 45%,rgba(0,0,0,.65) 100%)}
+</style>
+<div id="b">
+ <div class="ring" style="width:1100px;height:1100px;border-color:rgba(217,180,90,.22)"></div>
+ <div class="ring" style="width:880px;height:880px;border-color:rgba(217,180,90,.14);border-style:dashed"></div>
+ <div class="ring" style="width:1400px;height:1400px;border-color:rgba(90,200,200,.10)"></div>
+ <div id="logo"></div>
+ <div class="rule" style="top:210px;width:900px"></div>
+ <div id="t1">ANUBIS</div><div id="t2">UNCHAINED</div>
+ <div class="rule" style="top:520px;width:1100px"></div>
+ <svg id="grain" width="2400" height="800"><filter id="n"><feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="2" seed="4"/><feColorMatrix values="0 0 0 0 .5 0 0 0 0 .5 0 0 0 0 .5 0 0 0 .9 0"/></filter><rect width="100%" height="100%" filter="url(#n)"/></svg>
+ <div id="vig"></div>
+</div>

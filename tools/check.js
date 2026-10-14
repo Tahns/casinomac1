@@ -63,6 +63,30 @@ ok(badW === 0, 'Pesée : mults ∈ profil, gain = mult du plateau choisi s\'il e
 ok(Math.abs(heavyCnt[0] / (heavyCnt[0] + heavyCnt[1]) - 0.5) < 0.05, 'Pesée : plateau le plus lourd tiré 50/50 (' + (heavyCnt[0] / (3 * nW) * 100).toFixed(2) + ' % plume)');
 ok(Math.abs(sumP[0] / sumP[1] - 1) < 0.03, 'Pesée : espérance identique si le joueur choisit la plume ou le cœur (' + (sumP[0] / 3 / nW).toFixed(3) + ' vs ' + (sumP[1] / 3 / nW).toFixed(3) + ')');
 
+// 4b'. Chambre du Trésor : le SCEAU referme la chambre (on garde le total), la CLÉ D'OR ajoute des coffres (aucun objet n'annule le sceau)
+var rv = M.mulberry32(606), badV = 0, nV = cap(1000), seals = 0, keysSeen = 0, maxOpen = 0;
+M.PROFILES.forEach(function (pf) {
+  var vp = M.VAULT_PROFILES[pf];
+  if (vp.tokens.some(function (t) { return t[0] === 'ankh' || t[0] === 'curse'; }) || 'curse' in vp) badV++;
+  for (var vi = 0; vi < nV; vi++) {
+    var vd = M._bonus.vault(rv, pf), tot = 0, allowed = M.VAULT_BASE_PICKS, pk = vd.picks;
+    if (pk.length > M.VAULT_PICK_CAP || pk.length > M.VAULT_TILES) badV++;
+    pk.forEach(function (x, j) {
+      if (j >= allowed) badV++;
+      if (x.token === 'seal') { if (j < 2 || j !== pk.length - 1 || x.total !== tot) badV++; seals++; return; }
+      if (x.token === 'key') { allowed = Math.min(M.VAULT_PICK_CAP, allowed + M.VAULT_KEY_PICKS); keysSeen++; }
+      else if (x.token === 'scepter') tot *= 2; else tot += x.token;
+      if (x.total !== tot || x.left !== allowed - j - 1) badV++;
+    });
+    maxOpen = Math.max(maxOpen, pk.length);
+    var endSeal = pk[pk.length - 1].token === 'seal';
+    if ((vd.ended === 'seal') !== endSeal || (!endSeal && pk.length !== allowed) || vd.total !== tot + (endSeal ? 0 : M.VAULT_FINISH)) badV++;
+  }
+});
+ok(badV === 0, 'Trésor : sceau = fin sans perte du total, clé d\'or = +' + M.VAULT_KEY_PICKS + ' coffres (max ' + M.VAULT_PICK_CAP + '), aucun jeton protecteur (anomalies: ' + badV + ', sceaux ' + seals + ', clés ' + keysSeen + ', max ouverts ' + maxOpen + ')');
+var VX = require('./rtp-exact'), vTgt = { safe: 10.6324, std: 10.6329, bold: 10.6297 };
+ok(M.PROFILES.every(function (pf) { return Math.abs(VX.vaultOf(M.VAULT_PROFILES[pf])[0] - vTgt[pf]) < 0.005; }), 'Trésor : espérance exacte inchangée par la refonte (10,63× aux trois profils : ' + M.PROFILES.map(function (pf) { return VX.vaultOf(M.VAULT_PROFILES[pf])[0].toFixed(3); }).join(' / ') + ')');
+
 // 4c. Fureur d'Anubis : 3 couleurs, DOUBLE de sa couleur = palier ×2 et relance, autre couleur = arrêt, bande = bonus ×N × palier
 var HS = M.HAND_SEGS, dcount = [0, 0, 0], bands = 0, nums = 0;
 HS.forEach(function (s) { if (s.d != null) dcount[s.d]++; else if (s.b) bands++; else nums++; });
@@ -102,52 +126,45 @@ for (var wi = 0; wi < 20000; wi++) { var hh = M._bonus.hand(rw2, 0, [0]); if (hh
 var forcedW = M._bonus.hand(M.mulberry32(3), 1, [12]); var d0 = forcedW.spins[0].bonus; d0.pick = 1 - d0.heavy; d0.total = M.weighGain(d0, d0.pick); M.handRecalc(forcedW);
 ok(badR === 0 && forcedW.total === 0 && forcedW.spins[0].band === 'weigh', 'Fureur : le total se recalcule si le joueur change son choix dans la Pesée imbriquée');
 
-// 4d. Bonus SECRET « Crypte d'Anubis » : colonnes de multiplicateurs, tirées d'avance, remplace un bonus gagné
-var CR = M._bonus.crypt, COLS = M.CRYPT_COLS, rc = M.mulberry32(404), badC = 0, nC = cap(300000), colCnt = [0, 0, 0, 0, 0], typeCnt = {}, iceFull = 0, crushNoop = 0, crushReal = 0, sumTot = 0;
+// 4d. Bonus SECRET « Sanctuaire des Marées » : grille 3×3 de tablettes tirées d'avance (offrande, marée, éclipse), remplace un bonus gagné
+var CR = M._bonus.crypt, rc = M.mulberry32(404), badC = 0, nC = cap(1000), typeCnt = {}, sumTot = 0, floorHit = 0;
 // implémentation de référence, écrite à part des maths : le total rejoué doit être celui du script
 function refCrypt(drops) {
-  var top = [], fx = [], c; for (c = 0; c < 5; c++) { top.push(1); fx.push([]); }
+  var pool = 0, tide = 1;
   drops.forEach(function (d) {
-    if (d.t === 'skull') top[d.c] += d.v; else if (d.t === 'epic') top = top.map(function (x) { return x + d.v; });
-    else if (d.t === 'anubis') top[d.c] *= d.v; else if (d.t === 'epicx') top = top.map(function (x) { return x * d.v; });
-    else if (d.t === 'ice') { if (fx[d.c].length < 4) { fx[d.c].push(top[d.c]); top[d.c] = 1; } }
-    else if (d.t === 'crusher') { if (fx[d.c].length >= 2) fx[d.c] = [fx[d.c].reduce(function (a, b) { return a + b; }, 0)]; }
+    if (d.t === 'tab') pool += d.v * tide; else if (d.t === 'tide') tide *= d.v; else if (d.t === 'eclipse') pool *= d.v;
   });
-  var s = 0; for (c = 0; c < 5; c++) { s += top[c]; fx[c].forEach(function (x) { s += x; }); }
-  return Math.min(s / 5, M.MAX_WIN);
+  return Math.min(Math.max(pool, 1), M.MAX_WIN);
 }
 for (var ci = 0; ci < nC; ci++) {
-  var cd = CR(rc), ds = cd.drops;
-  if (ds.length !== M.CRYPT_BLOCKS || cd.steps.length !== ds.length || cd.profile !== 'crypt') badC++;
+  var cd = CR(rc), ds = cd.drops, pool0 = 0, tide0 = 1;
+  if (ds.length !== M.CRYPT_CELLS || cd.steps.length !== ds.length || cd.profile !== 'crypt' || M.CRYPT_ROWS * M.CRYPT_COLS !== M.CRYPT_CELLS) badC++;
   ds.forEach(function (d, j) {
-    var st = cd.steps[j], all = d.t === 'epic' || d.t === 'epicx';
+    var st = cd.steps[j];
     typeCnt[d.t] = (typeCnt[d.t] || 0) + 1;
     if (!M.CRYPT_TYPES.some(function (q) { return q[0] === d.t; })) badC++;
-    if (all ? d.c !== -1 : !(d.c >= 0 && d.c < COLS)) badC++;
-    if (!all) colCnt[d.c]++;
-    if (d.t !== 'ice' && d.t !== 'crusher' && !M.CRYPT_VALUES[d.t].some(function (q) { return q[0] === d.v; })) badC++;
-    if (st.fixed.some(function (f) { return f.length > M.CRYPT_CAP; }) || st.tops.some(function (x) { return x < 1; })) badC++;
-    if (d.t === 'ice') { if (st.full) { iceFull++; if (j && cd.steps[j - 1].fixed[d.c].length !== M.CRYPT_CAP) badC++; } else if (st.froze !== (j ? cd.steps[j - 1].tops[d.c] : 1) || st.tops[d.c] !== 1) badC++; }
-    if (d.t === 'crusher') { if (st.crushed) { crushReal++; if (st.fixed[d.c].length !== 1 || st.fixed[d.c][0] !== st.crushed.reduce(function (a, b) { return a + b; }, 0)) badC++; } else crushNoop++; }
-    if (j) { // un bloc fixe n'est jamais modifié par les blocs suivants (sauf broyage de sa colonne)
-      var pv = cd.steps[j - 1];
-      for (var cc = 0; cc < COLS; cc++) if (d.t !== 'crusher' || d.c !== cc) { for (var q = 0; q < pv.fixed[cc].length; q++) if (st.fixed[cc][q] !== pv.fixed[cc][q]) badC++; }
-    }
+    if (d.t !== 'dust' && !M.CRYPT_VALUES[d.t].some(function (q) { return q[0] === d.v; })) badC++;
+    if (st.poolBefore !== pool0 || st.tideBefore !== tide0) badC++;
+    if (d.t === 'tab') pool0 += d.v * tide0; else if (d.t === 'tide') tide0 *= d.v; else if (d.t === 'eclipse') pool0 *= d.v;
+    if (st.pool !== pool0 || st.tide !== tide0) badC++;
+    if (d.t === 'tide' && st.pool !== st.poolBefore) badC++;   // la marée ne touche pas l'offrande déjà accumulée
+    if (d.t === 'tab' && st.gain !== d.v * st.tideBefore) badC++;
   });
-  if (Math.abs(cd.total - refCrypt(ds)) > 1e-9 || cd.total < 1 || cd.total > M.MAX_WIN || Math.abs(cd.total - Math.min(cd.cols.reduce(function (a, b) { return a + b; }, 0) / COLS, M.MAX_WIN)) > 1e-9) badC++;
+  if (pool0 < 1) floorHit++;
+  if (Math.abs(cd.total - refCrypt(ds)) > 1e-9 || cd.total < 1 || cd.total > M.MAX_WIN) badC++;
   sumTot += cd.total;
 }
-ok(badC === 0, 'Crypte : script de ' + M.CRYPT_BLOCKS + ' blocs, colonnes/valeurs valides, glace/broyeur/colonne pleine conformes, blocs fixes intouchés, total rejoué = total du script (référence indépendante) sur ' + nC + ' scripts (anomalies: ' + badC + ')');
-ok(colCnt.every(function (v) { return Math.abs(v / (colCnt[0]) - 1) < 0.15; }), 'Crypte : les 5 colonnes sont strictement symétriques (' + colCnt.join(' / ') + ' blocs)');
-var noop = CR(M.mulberry32(1), [{ t: 'crusher', c: 0 }, { t: 'ice', c: 0 }, { t: 'crusher', c: 0 }]);
-ok(iceFull > 0 && crushNoop === 0 && crushReal > 0 && !noop.steps[0].effect && !noop.steps[2].effect && noop.fixed[0].length === 1, 'Crypte : cas limites rencontrés (glace sur colonne pleine ' + iceFull + ', broyeur tiré sans cible: ' + crushNoop + ' (jamais), broyeur actif ' + crushReal + ')');
+ok(badC === 0, 'Sanctuaire : script de ' + M.CRYPT_CELLS + ' tablettes (grille ' + M.CRYPT_ROWS + '×' + M.CRYPT_COLS + '), types/valeurs valides, la marée n\'agit que sur les tablettes suivantes, total rejoué = référence indépendante sur ' + nC + ' scripts (anomalies: ' + badC + ')');
+ok(Object.keys(typeCnt).length === 4, 'Sanctuaire : les quatre types de tablettes apparaissent (' + JSON.stringify(typeCnt) + ')');
+var noTab = CR(M.mulberry32(1), [{ t: 'dust' }, { t: 'tide', v: 5 }, { t: 'eclipse', v: 3 }, { t: 'dust' }, { t: 'dust' }, { t: 'dust' }, { t: 'dust' }, { t: 'dust' }, { t: 'dust' }]);
+ok(noTab.total === 1 && noTab.pool === 1, 'Sanctuaire : sans aucune tablette, l\'offrande est relevée au plancher ×1');
 // plafond : un script extrême est plafonné à MAX_WIN
-var ext = []; for (var ei = 0; ei < 9; ei++) ext.push({ t: 'epicx', v: 25 });
+var ext = []; for (var ei = 0; ei < 9; ei++) ext.push(ei < 4 ? { t: 'tide', v: 10 } : { t: 'tab', v: 300 });
 var capd = CR(M.mulberry32(1), ext);
-ok(capd.total === M.MAX_WIN && capd.capped && Math.max.apply(null, capd.tops) <= M.MAX_WIN * COLS, 'Crypte : un script extrême est plafonné à ' + M.MAX_WIN + '×');
-var mini = CR(M.mulberry32(1), [{ t: 'skull', c: 0, v: 3 }, { t: 'ice', c: 0 }, { t: 'anubis', c: 0, v: 5 }, { t: 'epic', v: 1 }, { t: 'ice', c: 0 }, { t: 'ice', c: 0 }, { t: 'crusher', c: 0 }, { t: 'skull', c: 1, v: 2 }, { t: 'epicx', v: 2 }]);
-// colonne 0 : haut 1+3=4 -> glace (fixe 4, haut 1) -> ×5 -> +1 = 6 -> glace (4, 6) -> glace (4, 6, 1) -> broyeur (11) -> ×2 : haut 2 + 11 = 13 ; colonne 1 : 2+2=4 puis ×2 = 8 ; colonnes 2-4 : 2 puis ×2 = 4
-ok(mini.cols[0] === 13 && mini.fixed[0].length === 1 && mini.fixed[0][0] === 11 && mini.cols[1] === 8 && mini.total === 33 / 5, 'Crypte : script écrit à la main rejoué correctement (colonnes ' + mini.cols.join(', ') + ')');
+ok(capd.total === M.MAX_WIN && capd.capped, 'Sanctuaire : un script extrême est plafonné à ' + M.MAX_WIN + '×');
+var mini = CR(M.mulberry32(1), [{ t: 'tab', v: 3 }, { t: 'tide', v: 2 }, { t: 'tab', v: 5 }, { t: 'eclipse', v: 2 }, { t: 'dust' }, { t: 'tab', v: 1 }, { t: 'tide', v: 3 }, { t: 'tab', v: 2 }, { t: 'dust' }]);
+// 3 -> marée ×2 -> +5×2 = 13 -> éclipse ×2 = 26 -> dust -> +1×2 = 28 -> marée ×6 -> +2×6 = 40
+ok(mini.total === 40 && mini.tide === 6 && mini.steps[2].gain === 10 && mini.steps[3].pool === 26, 'Sanctuaire : script écrit à la main rejoué correctement (offrande ' + mini.total + ', marée ×' + mini.tide + ')');
 // fréquence et espérance du secret dans les vrais tours
 var rs = M.mulberry32(2024), nS = cap(2000000), secrets = 0, bonuses = 0, badS = 0;
 ['std', 'plus'].forEach(function (mode) {
@@ -173,7 +190,10 @@ for (var ei2 = 0; ei2 < nE; ei2++) {
 var replaced = (1 - M.HAND_UPGRADE) * (eR.scarab + eR.weigh + eR.vault) / 3 / nE + M.HAND_UPGRADE * eR.hand / nE;
 // tolérance = 5 écarts-types de l'écart des moyennes (Crypte ≈ 80×, Fureur ≈ 120×, autres ≈ 15-70×) : à ≤ 1000 tirages, test de fumée ; l'égalité fine est réglée par tools/tune.js
 var secTol = 5 * Math.sqrt(80 * 80 + 60 * 60) / Math.sqrt(nE);
-ok(Math.abs(eS / nE - replaced) < secTol, 'Secret : espérance ≈ ' + (eS / nE).toFixed(2) + '× pour ' + replaced.toFixed(2) + '× de bonus remplacé (± ' + secTol.toFixed(1) + ' ; réglage mesuré sur 2 M de scripts : 10,13× contre 10,2×, soit < 0,03 pt de RTP)');
+ok(Math.abs(eS / nE - replaced) < secTol, 'Secret : espérance ≈ ' + (eS / nE).toFixed(2) + '× pour ' + replaced.toFixed(2) + '× de bonus remplacé (± ' + secTol.toFixed(1) + ' ; espérance exacte du Sanctuaire = 10,2142× contre 10,2143× pour le bonus remplacé : voir tools/tune-crypt.js)');
+
+var VXc = require('./rtp-exact'), cm = VXc.cryptMoments(), rpl = VXc().replaced;
+ok(Math.abs(cm[0] - rpl) < 0.01, 'Sanctuaire : espérance EXACTE ' + cm[0].toFixed(4) + '× = bonus remplacé ' + rpl.toFixed(4) + '× (écart < 0,01×, secret neutre sur le RTP ; écart-type exact ' + Math.sqrt(cm[1] - cm[0] * cm[0]).toFixed(1) + '×)');
 
 // 5. RTP. Très haute volatilité (écart-type ≈ 16) : 1000 tours ne donnent le RTP qu'à ± 200 points, donc la référence est le calcul EXACT (tools/rtp-exact.js, moments des
 // tables de js/math.js, aucun tirage). La simulation n'est qu'un test de fumée (≤ 1000 tours, tolérance = 4 écarts-types). Mesures de réglage (2 M de tours, hors test) :

@@ -22,7 +22,7 @@ node tools/tune-profiles.js     # espérance des profils Prudent / Équilibré /
 |---|---|
 | `js/math.js` | Noyau mathématique pur : tire un tour complet sous forme de script d'événements (modèle Stake Engine) |
 | `js/game.js` | Boucle, décor du temple, roue, pointeur à ressort, overlay de gros gains |
-| `js/bonuses.js` | Les 4 bonus (Scarabées, Pesée, Trésor, Fureur d'Anubis) et le bonus secret (Crypte d'Anubis) — rejouent les scripts |
+| `js/bonuses.js` | Les 4 bonus (Scarabées, Pesée, Trésor, Fureur d'Anubis) et le bonus secret (Sanctuaire des Marées) — rejouent les scripts |
 | `js/main.js` | Flux de jeu, HUD, auto-play, table des gains, sauvegarde locale |
 | `js/imgs.js` | Liste des illustrations (remplacée par des data: URI dans le build mono-fichier) |
 | `js/art.js` · `audio.js` · `fx.js` · `i18n.js` | Dessin vectoriel, audio synthétisé, particules, 16 langues (anglais par défaut, `?lang=`) |

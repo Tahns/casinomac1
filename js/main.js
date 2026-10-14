@@ -193,11 +193,12 @@
     try { for (var i = 0; i < round.spins.length; i++) {
       var sp = round.spins[i];
       if (!buyKind && sp.oracle) {
-        $('oracleText').textContent = T.oracleOn + ' ×' + sp.oracle.boost + ' → ' + T.kinds[sp.oracle.kind].replace('\n', ' ');
+        $('oracleText').textContent = T.oracleOn + ' ×? → ' + T.kinds[sp.oracle.kind].replace('\n', ' ');   // valeur scellée jusqu'à l'arrêt de la roue
         $('oracle').hidden = false;
         await G.wheel.showOracle(sp.oracle);
       }
       if (!buyKind) await G.wheel.spinTo(sp);
+      if (!buyKind && sp.oracle) { $('oracleText').textContent = T.oracleOn + ' ×' + sp.oracle.boost + ' → ' + T.kinds[sp.oracle.kind].replace('\n', ' '); await G.wheel.revealOracle(); }
       G.speed = spd();
       var def = M.KINDS[sp.kind] || { bonus: true };
       if (def.respin) {
