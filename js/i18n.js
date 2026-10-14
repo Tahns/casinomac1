@@ -5,10 +5,10 @@
     fr: {
       brandTop: 'ANUBIS', balance: 'SOLDE', bet: 'MISE', win: 'GAIN', turbo: 'TURBO', auto: 'AUTO',
       spin: 'TOURNER', stop: 'STOP', ready: 'Tournez la roue du jugement', spinning: 'La roue du jugement tourne…',
-      oraclePlus: 'ORACLE+', plusHint: 'ORACLE+ : boost sur ≈ 3 tours sur 4 · mise ×1,1', cost: 'COÛT',
+      oraclePlus: 'ORACLE+', plusHint: 'ORACLE+ : boost sur ≈ {opp} % des tours · mise ×1,1', cost: 'COÛT',
       session: 'SÉANCE', sessTime: 'Durée', sessSpins: 'Tours', sessWag: 'Misé', sessWon: 'Gagné', sessNet: 'Résultat net', lossLimit: 'Limite de perte de la séance', qualityL: 'Qualité graphique', qAuto: 'Auto', qHigh: 'Élevée', qLow: 'Basse',
       realityTitle: 'POINT DE SÉANCE', realityMsg: function (m, n) { return 'Vous jouez depuis ' + m + ' min. Résultat net : ' + n + '.'; }, limitTitle: 'LIMITE ATTEINTE', limitMsg: 'Votre limite de perte est atteinte. Modifiez-la dans les réglages pour continuer.', keepPlaying: 'CONTINUER', takeBreak: 'FAIRE UNE PAUSE',
-      rulesPlus: 'Mode ORACLE+ : mise ×1,1, l\'Oracle apparaît sur ≈ 3 tours sur 4. RTP équivalent (≈ 96 %).',
+      rulesPlus: 'Mode ORACLE+ : mise ×1,1, l\'Oracle apparaît sur ≈ {opp} % des tours. RTP équivalent (≈ 96 %).',
       buyBtn: 'ACHETER UN BONUS', buyTitle: 'ACHETER UN BONUS', buySub: 'Ouvrez directement un bonus, sans passer par la roue. Prix = mise × multiplicateur. La Fureur d\'Anubis peut toujours le saisir.', buyPrice: 'PRIX', buyNow: 'ACHETER', buyOn: 'Achat de bonus', buyWheel: 'Retour à la roue', buyNoFunds: 'Solde insuffisant pour ce bonus', buyRtp: 'RTP ≈ 96 %',
       buyDesc: { scarab: '3 scarabées, jusqu\'à {scmax}× chacun', weigh: 'Plume ou cœur : le plus lourd gagne, jusqu\'à {wmax}×', vault: 'Pyramide : 12 coffres, des clés d\'or allongent la sélection', hand: 'Choisissez une couleur : DOUBLE = roue doublée (jusqu\'à ×16), bandes de bonus ×3 à ×12' },
       resumed: 'Tour interrompu : gain crédité',
@@ -38,7 +38,7 @@
       volatV: 'Très haute', demo: 'Argent fictif — démo sans argent réel : les montants affichés ne sont pas de vraies sommes.',
       rules: [
         'Une mise, un tour : la roue du jugement décide. Chaque case paie sa valeur × votre mise.',
-        'L\'Oracle (≈ 1 tour sur 3) désigne un type de case et lui offre un boost ×2 à ×100, dont la valeur reste scellée (« ? ») jusqu\'à l\'arrêt de la roue. Si la roue s\'y arrête, le boost s\'applique !',
+        'L\'Oracle (≈ {op} % des tours) désigne un type de case et lui offre un boost ×2 à ×100, dont la valeur reste scellée (« ? ») jusqu\'à l\'arrêt de la roue. Si la roue s\'y arrête, le boost s\'applique !',
         'ANKH : relance gratuite de la roue, sans remise.',
         'Pesée du Cœur : choisissez la plume de Maât ou le cœur, les multiplicateurs défilent et se révèlent, puis la balance tranche. Le plateau le plus lourd gagne son multiplicateur (jusqu\'à ×{wmax}), le plus léger n\'a rien : une chance sur deux.',
         'Un bonus peut être saisi par la FUREUR D\'ANUBIS : choisissez une couleur (turquoise, or ou rubis) puis lancez la roue géante. Un nombre : gain = nombre × palier. DOUBLE de VOTRE couleur : les nombres de la roue sont doublés (palier ×2, jusqu\'à ×16) et vous relancez. DOUBLE d\'une AUTRE couleur : la chaîne s\'arrête et vous encaissez le plus petit nombre de la roue (3) × palier.',
@@ -56,10 +56,10 @@
     en: {
       brandTop: 'ANUBIS', balance: 'BALANCE', bet: 'BET', win: 'WIN', turbo: 'TURBO', auto: 'AUTO',
       spin: 'SPIN', stop: 'STOP', ready: 'Spin the wheel of judgement', spinning: 'The wheel of judgement turns…',
-      oraclePlus: 'ORACLE+', plusHint: 'ORACLE+: boost on ≈ 3 of 4 spins · bet ×1.1', cost: 'COST',
+      oraclePlus: 'ORACLE+', plusHint: 'ORACLE+: boost on ≈ {opp}% of spins · bet ×1.1', cost: 'COST',
       session: 'SESSION', sessTime: 'Time', sessSpins: 'Spins', sessWag: 'Wagered', sessWon: 'Won', sessNet: 'Net result', lossLimit: 'Session loss limit', qualityL: 'Graphics quality', qAuto: 'Auto', qHigh: 'High', qLow: 'Low',
       realityTitle: 'SESSION CHECK', realityMsg: function (m, n) { return 'You have been playing for ' + m + ' min. Net result: ' + n + '.'; }, limitTitle: 'LIMIT REACHED', limitMsg: 'Your loss limit has been reached. Change it in settings to keep playing.', keepPlaying: 'KEEP PLAYING', takeBreak: 'TAKE A BREAK',
-      rulesPlus: 'ORACLE+ mode: bet ×1.1, the Oracle shows up on ≈ 3 of 4 spins. Same RTP (≈ 96%).',
+      rulesPlus: 'ORACLE+ mode: bet ×1.1, the Oracle shows up on ≈ {opp}% of spins. Same RTP (≈ 96%).',
       buyBtn: 'BUY A BONUS', buyTitle: 'BUY A BONUS', buySub: 'Open a bonus directly, skipping the wheel. Price = bet × multiplier. Anubis\' Fury can still seize it.', buyPrice: 'PRICE', buyNow: 'BUY', buyOn: 'Bonus buy', buyWheel: 'Back to the wheel', buyNoFunds: 'Not enough balance for this bonus', buyRtp: 'RTP ≈ 96%',
       buyDesc: { scarab: '3 scarabs, up to {scmax}× each', weigh: 'Feather or heart: the heavier wins, up to {wmax}×', vault: 'Pyramid: 12 chests, golden keys extend the selection', hand: 'Pick a colour: DOUBLE = doubled wheel (up to ×16), bonus bands ×3 to ×12' },
       resumed: 'Interrupted round: winnings credited',
@@ -89,7 +89,7 @@
       volatV: 'Very high', demo: 'Play money — demo, the amounts shown are not real money.',
       rules: [
         'One bet, one spin: the wheel of judgement decides. Each segment pays its value × your bet.',
-        'The Oracle (≈ 1 spin in 3) picks a type of segment and grants it a ×2 to ×100 boost, its value staying sealed ("?") until the wheel stops. If the wheel lands there, the boost applies!',
+        'The Oracle (≈ {op}% of spins) picks a type of segment and grants it a ×2 to ×100 boost, its value staying sealed ("?") until the wheel stops. If the wheel lands there, the boost applies!',
         'ANKH: free respin of the wheel, no extra stake.',
         'Weighing of the Heart: pick the feather of Ma\'at or the heart, the multipliers roll and are revealed, then the scales decide. The heavier pan wins its multiplier (up to ×{wmax}), the lighter one gets nothing: a 1-in-2 chance.',
         'Any bonus can be seized by the FURY OF ANUBIS: pick a colour (turquoise, gold or ruby), then spin the giant wheel. A number: win = number × tier. DOUBLE in YOUR colour: every number on the wheel is doubled (tier ×2, up to ×16) and you spin again. DOUBLE in ANOTHER colour: the chain stops and you cash the smallest number on the wheel (3) × tier.',
@@ -107,10 +107,10 @@
     de: {
       brandTop: 'ANUBIS', balance: 'GUTHABEN', bet: 'EINSATZ', win: 'GEWINN', turbo: 'TURBO', auto: 'AUTO',
       spin: 'DREHEN', stop: 'STOPP', ready: 'Drehe das Rad des Gerichts', spinning: 'Das Rad des Gerichts dreht sich…',
-      oraclePlus: 'ORAKEL+', plusHint: 'ORAKEL+: Boost bei ≈ 3 von 4 Drehungen · Einsatz ×1,1', cost: 'KOSTEN',
+      oraclePlus: 'ORAKEL+', plusHint: 'ORAKEL+: Boost bei ≈ {opp} % der Drehungen · Einsatz ×1,1', cost: 'KOSTEN',
       session: 'SITZUNG', sessTime: 'Dauer', sessSpins: 'Drehungen', sessWag: 'Gesetzt', sessWon: 'Gewonnen', sessNet: 'Nettoergebnis', lossLimit: 'Verlustlimit der Sitzung', qualityL: 'Grafikqualität', qAuto: 'Auto', qHigh: 'Hoch', qLow: 'Niedrig',
       realityTitle: 'SITZUNGSHINWEIS', realityMsg: function (m, n) { return 'Du spielst seit ' + m + ' Min. Nettoergebnis: ' + n + '.'; }, limitTitle: 'LIMIT ERREICHT', limitMsg: 'Dein Verlustlimit ist erreicht. Ändere es in den Einstellungen, um weiterzuspielen.', keepPlaying: 'WEITERSPIELEN', takeBreak: 'PAUSE MACHEN',
-      rulesPlus: 'Modus ORAKEL+: Einsatz ×1,1, das Orakel erscheint bei ≈ 3 von 4 Drehungen. Gleicher RTP (≈ 96 %).',
+      rulesPlus: 'Modus ORAKEL+: Einsatz ×1,1, das Orakel erscheint bei ≈ {opp} % der Drehungen. Gleicher RTP (≈ 96 %).',
       buyBtn: 'BONUS KAUFEN', buyTitle: 'BONUS KAUFEN', buySub: 'Öffne direkt einen Bonus, ohne das Rad. Preis = Einsatz × Multiplikator. Die Wut des Anubis kann ihn trotzdem ergreifen.', buyPrice: 'PREIS', buyNow: 'KAUFEN', buyOn: 'Bonuskauf', buyWheel: 'Zurück zum Rad', buyNoFunds: 'Guthaben für diesen Bonus nicht ausreichend', buyRtp: 'RTP ≈ 96 %',
       buyDesc: { scarab: '3 Skarabäen, bis zu {scmax}× je Käfer', weigh: 'Feder oder Herz: das Schwerere gewinnt, bis zu {wmax}×', vault: 'Pyramide: 12 Truhen, goldene Schlüssel verlängern die Auswahl', hand: 'Wähle eine Farbe: DOPPELT = verdoppeltes Rad (bis ×16), Bonusbänder ×3 bis ×12' },
       resumed: 'Unterbrochene Runde: Gewinn gutgeschrieben',
@@ -140,7 +140,7 @@
       volatV: 'Sehr hoch', demo: 'Spielgeld — Demo, die Beträge in € oder $ sind kein echtes Geld.',
       rules: [
         'Ein Einsatz, eine Drehung: Das Rad des Gerichts entscheidet. Jedes Feld zahlt seinen Wert × deinen Einsatz.',
-        'Das Orakel (≈ 1 Drehung von 3) wählt ein Feld und gibt ihm einen Boost von ×2 bis ×100. Hält das Rad dort an, gilt der Boost!',
+        'Das Orakel (≈ {op} % der Drehungen) wählt ein Feld und gibt ihm einen Boost von ×2 bis ×100. Hält das Rad dort an, gilt der Boost!',
         'ANKH: kostenloser Respin des Rads, ohne zusätzlichen Einsatz.',
         'Wägung des Herzens: Wähle die Feder der Ma\'at oder das Herz, die Multiplikatoren laufen durch und werden enthüllt, dann entscheidet die Waage. Die schwerere Schale gewinnt ihren Multiplikator (bis ×{wmax}), die leichtere nichts: eine Chance von 1 zu 2.',
         'Jeder Bonus kann von der WUT DES ANUBIS ergriffen werden: Wähle eine Farbe (türkis, gold oder rubin) und drehe das Riesenrad. Eine Zahl: Gewinn = Zahl × Stufe. DOPPELT in DEINER Farbe: alle Zahlen des Rads werden verdoppelt (Stufe ×2, bis ×16) und du drehst erneut. DOPPELT in einer ANDEREN Farbe: die Kette endet und du kassierst die kleinste Zahl des Rads (3) × Stufe.',
@@ -158,10 +158,10 @@
     es: {
       brandTop: 'ANUBIS', balance: 'SALDO', bet: 'APUESTA', win: 'PREMIO', turbo: 'TURBO', auto: 'AUTO',
       spin: 'GIRAR', stop: 'PARAR', ready: 'Gira la rueda del juicio', spinning: 'La rueda del juicio gira…',
-      oraclePlus: 'ORÁCULO+', plusHint: 'ORÁCULO+: potenciador en ≈ 3 de cada 4 giros · apuesta ×1,1', cost: 'COSTE',
+      oraclePlus: 'ORÁCULO+', plusHint: 'ORÁCULO+: potenciador en ≈ {opp} % de los giros · apuesta ×1,1', cost: 'COSTE',
       session: 'SESIÓN', sessTime: 'Duración', sessSpins: 'Giros', sessWag: 'Apostado', sessWon: 'Ganado', sessNet: 'Resultado neto', lossLimit: 'Límite de pérdida de la sesión', qualityL: 'Calidad gráfica', qAuto: 'Auto', qHigh: 'Alta', qLow: 'Baja',
       realityTitle: 'AVISO DE SESIÓN', realityMsg: function (m, n) { return 'Llevas ' + m + ' min jugando. Resultado neto: ' + n + '.'; }, limitTitle: 'LÍMITE ALCANZADO', limitMsg: 'Has alcanzado tu límite de pérdida. Cámbialo en los ajustes para seguir jugando.', keepPlaying: 'SEGUIR JUGANDO', takeBreak: 'HACER UNA PAUSA',
-      rulesPlus: 'Modo ORÁCULO+: apuesta ×1,1, el Oráculo aparece en ≈ 3 de cada 4 giros. Mismo RTP (≈ 96 %).',
+      rulesPlus: 'Modo ORÁCULO+: apuesta ×1,1, el Oráculo aparece en ≈ {opp} % de los giros. Mismo RTP (≈ 96 %).',
       buyBtn: 'COMPRAR BONUS', buyTitle: 'COMPRAR BONUS', buySub: 'Abre un bonus directamente, sin pasar por la rueda. Precio = apuesta × multiplicador. La Furia de Anubis aún puede apoderarse de él.', buyPrice: 'PRECIO', buyNow: 'COMPRAR', buyOn: 'Compra de bonus', buyWheel: 'Volver a la rueda', buyNoFunds: 'Saldo insuficiente para este bonus', buyRtp: 'RTP ≈ 96 %',
       buyDesc: { scarab: '3 escarabajos, hasta {scmax}× cada uno', weigh: 'Pluma o corazón: el más pesado gana, hasta {wmax}×', vault: 'Pirámide: 12 cofres, las llaves de oro alargan la selección', hand: 'Elige un color: DOBLE = rueda duplicada (hasta ×16), bandas de bonus ×3 a ×12' },
       resumed: 'Ronda interrumpida: premio abonado',
@@ -191,7 +191,7 @@
       volatV: 'Muy alta', demo: 'Dinero ficticio — demo, los importes en € o $ no son dinero real.',
       rules: [
         'Una apuesta, un giro: la rueda del juicio decide. Cada casilla paga su valor × tu apuesta.',
-        'El Oráculo (≈ 1 giro de cada 3) elige una casilla y le da un potenciador de ×2 a ×100. ¡Si la rueda se detiene allí, se aplica!',
+        'El Oráculo (≈ {op} % de los giros) elige una casilla y le da un potenciador de ×2 a ×100. ¡Si la rueda se detiene allí, se aplica!',
         'ANKH: giro gratis de la rueda, sin apuesta adicional.',
         'Pesaje del Corazón: elige la pluma de Maat o el corazón, los multiplicadores giran y se revelan, y la balanza decide. El plato más pesado gana su multiplicador (hasta ×{wmax}), el más ligero no gana nada: una oportunidad entre dos.',
         'Cualquier bonus puede ser capturado por la FURIA DE ANUBIS: elige un color (turquesa, oro o rubí) y gira la rueda gigante. Un número: premio = número × nivel. DOBLE de TU color: todos los números de la rueda se duplican (nivel ×2, hasta ×16) y giras de nuevo. DOBLE de OTRO color: la cadena se detiene y cobras el número más pequeño de la rueda (3) × nivel.',
@@ -209,10 +209,10 @@
     pt: {
       brandTop: 'ANUBIS', balance: 'SALDO', bet: 'APOSTA', win: 'GANHO', turbo: 'TURBO', auto: 'AUTO',
       spin: 'GIRAR', stop: 'PARAR', ready: 'Gire a roda do julgamento', spinning: 'A roda do julgamento gira…',
-      oraclePlus: 'ORÁCULO+', plusHint: 'ORÁCULO+: bônus em ≈ 3 de cada 4 giros · aposta ×1,1', cost: 'CUSTO',
+      oraclePlus: 'ORÁCULO+', plusHint: 'ORÁCULO+: bônus em ≈ {opp} % de los giros · aposta ×1,1', cost: 'CUSTO',
       session: 'SESSÃO', sessTime: 'Duração', sessSpins: 'Giros', sessWag: 'Apostado', sessWon: 'Ganho', sessNet: 'Resultado líquido', lossLimit: 'Limite de perda da sessão', qualityL: 'Qualidade gráfica', qAuto: 'Auto', qHigh: 'Alta', qLow: 'Baixa',
       realityTitle: 'AVISO DE SESSÃO', realityMsg: function (m, n) { return 'Você joga há ' + m + ' min. Resultado líquido: ' + n + '.'; }, limitTitle: 'LIMITE ATINGIDO', limitMsg: 'Seu limite de perda foi atingido. Altere-o nas configurações para continuar jogando.', keepPlaying: 'CONTINUAR', takeBreak: 'FAZER UMA PAUSA',
-      rulesPlus: 'Modo ORÁCULO+: aposta ×1,1, o Oráculo aparece em ≈ 3 de cada 4 giros. Mesmo RTP (≈ 96 %).',
+      rulesPlus: 'Modo ORÁCULO+: aposta ×1,1, o Oráculo aparece em ≈ {opp} % de los giros. Mesmo RTP (≈ 96 %).',
       buyBtn: 'COMPRAR BÔNUS', buyTitle: 'COMPRAR BÔNUS', buySub: 'Abra um bônus diretamente, sem passar pela roda. Preço = aposta × multiplicador. A Fúria de Anúbis ainda pode capturá-lo.', buyPrice: 'PREÇO', buyNow: 'COMPRAR', buyOn: 'Compra de bônus', buyWheel: 'Voltar à roda', buyNoFunds: 'Saldo insuficiente para este bônus', buyRtp: 'RTP ≈ 96 %',
       buyDesc: { scarab: '3 escaravelhos, até {scmax}× cada', weigh: 'Pena ou coração: o mais pesado vence, até {wmax}×', vault: 'Pirâmide: 12 baús, chaves de ouro ampliam a seleção', hand: 'Escolha uma cor: DOBRO = roda dobrada (até ×16), faixas de bônus ×3 a ×12' },
       resumed: 'Rodada interrompida: ganho creditado',
@@ -242,7 +242,7 @@
       volatV: 'Muito alta', demo: 'Dinheiro fictício — demo, os valores em € ou $ não são dinheiro real.',
       rules: [
         'Uma aposta, um giro: a roda do julgamento decide. Cada casa paga seu valor × sua aposta.',
-        'O Oráculo (≈ 1 giro em 3) escolhe uma casa e lhe dá um bônus de ×2 a ×100. Se a roda parar ali, o bônus é aplicado!',
+        'O Oráculo (≈ {op} % dos giros) escolhe uma casa e lhe dá um bônus de ×2 a ×100. Se a roda parar ali, o bônus é aplicado!',
         'ANKH: giro grátis da roda, sem aposta extra.',
         'Pesagem do Coração: escolha a pena de Maat ou o coração, os multiplicadores giram e são revelados, e a balança decide. O prato mais pesado ganha seu multiplicador (até ×{wmax}), o mais leve não ganha nada: uma chance em duas.',
         'Qualquer bônus pode ser capturado pela FÚRIA DE ANÚBIS: escolha uma cor (turquesa, ouro ou rubi) e gire a roda gigante. Um número: ganho = número × nível. DOBRO da SUA cor: todos os números da roda são dobrados (nível ×2, até ×16) e você gira de novo. DOBRO de OUTRA cor: a sequência termina e você recebe o menor número da roda (3) × nível.',
@@ -260,10 +260,10 @@
     pl: {
       brandTop: 'ANUBIS', balance: 'SALDO', bet: 'STAWKA', win: 'WYGRANA', turbo: 'TURBO', auto: 'AUTO',
       spin: 'KRĘĆ', stop: 'STOP', ready: 'Zakręć kołem sądu', spinning: 'Koło sądu się kręci…',
-      oraclePlus: 'WYROCZNIA+', plusHint: 'WYROCZNIA+: wzmocnienie w ≈ 3 z 4 obrotów · stawka ×1,1', cost: 'KOSZT',
+      oraclePlus: 'WYROCZNIA+', plusHint: 'WYROCZNIA+: wzmocnienie w ≈ {opp} % obrotów · stawka ×1,1', cost: 'KOSZT',
       session: 'SESJA', sessTime: 'Czas', sessSpins: 'Obroty', sessWag: 'Postawiono', sessWon: 'Wygrano', sessNet: 'Wynik netto', lossLimit: 'Limit strat w sesji', qualityL: 'Jakość grafiki', qAuto: 'Auto', qHigh: 'Wysoka', qLow: 'Niska',
       realityTitle: 'PRZYPOMNIENIE', realityMsg: function (m, n) { return 'Grasz od ' + m + ' min. Wynik netto: ' + n + '.'; }, limitTitle: 'LIMIT OSIĄGNIĘTY', limitMsg: 'Osiągnięto limit strat. Zmień go w ustawieniach, aby grać dalej.', keepPlaying: 'GRAJ DALEJ', takeBreak: 'ZRÓB PRZERWĘ',
-      rulesPlus: 'Tryb WYROCZNIA+: stawka ×1,1, Wyrocznia pojawia się w ≈ 3 z 4 obrotów. Ten sam RTP (≈ 96 %).',
+      rulesPlus: 'Tryb WYROCZNIA+: stawka ×1,1, Wyrocznia pojawia się w ≈ {opp} % obrotów. Ten sam RTP (≈ 96 %).',
       buyBtn: 'KUP BONUS', buyTitle: 'KUP BONUS', buySub: 'Otwórz bonus od razu, z pominięciem koła. Cena = stawka × mnożnik. Gniew Anubisa nadal może go przejąć.', buyPrice: 'CENA', buyNow: 'KUP', buyOn: 'Zakup bonusu', buyWheel: 'Powrót do koła', buyNoFunds: 'Za mało środków na ten bonus', buyRtp: 'RTP ≈ 96 %',
       buyDesc: { scarab: '3 skarabeusze, do {scmax}× każdy', weigh: 'Pióro lub serce: cięższe wygrywa, do {wmax}×', vault: 'Piramida: 12 skrzyń, złote klucze wydłużają wybór', hand: 'Wybierz kolor: PODWÓJNIE = podwojone koło (do ×16), pasy bonusowe ×3 do ×12' },
       resumed: 'Przerwana runda: wygrana zaksięgowana',
@@ -293,7 +293,7 @@
       volatV: 'Bardzo wysoka', demo: 'Pieniądze na niby — demo, kwoty w € lub $ nie są prawdziwymi pieniędzmi.',
       rules: [
         'Jedna stawka, jeden obrót: decyduje koło sądu. Każde pole wypłaca swoją wartość × twoja stawka.',
-        'Wyrocznia (≈ 1 obrót na 3) wybiera pole i daje mu wzmocnienie od ×2 do ×100. Jeśli koło zatrzyma się tam, wzmocnienie działa!',
+        'Wyrocznia (≈ {op} % obrotów) wybiera pole i daje mu wzmocnienie od ×2 do ×100. Jeśli koło zatrzyma się tam, wzmocnienie działa!',
         'ANCH: darmowy obrót koła, bez dodatkowej stawki.',
         'Ważenie Serca: wybierz pióro Maat lub serce, mnożniki się kręcą i zostają ujawnione, a potem waga rozstrzyga. Cięższa szala wygrywa swój mnożnik (do ×{wmax}), lżejsza nic: szansa jeden do dwóch.',
         'Każdy bonus może przejąć GNIEW ANUBISA: wybierz kolor (turkus, złoto lub rubin), potem zakręć gigantycznym kołem. Liczba: wygrana = liczba × poziom. PODWÓJNIE w TWOIM kolorze: wszystkie liczby na kole są podwojone (poziom ×2, do ×16) i kręcisz ponownie. PODWÓJNIE w INNYM kolorze: łańcuch się kończy i inkasujesz najmniejszą liczbę na kole (3) × poziom.',
@@ -311,10 +311,10 @@
     tr: {
       brandTop: 'ANUBIS', balance: 'BAKİYE', bet: 'BAHİS', win: 'KAZANÇ', turbo: 'TURBO', auto: 'OTO',
       spin: 'ÇEVİR', stop: 'DUR', ready: 'Yargı çarkını çevir', spinning: 'Yargı çarkı dönüyor…',
-      oraclePlus: 'KEHANET+', plusHint: 'KEHANET+: dönüşlerin ≈ 3/4’ünde güçlendirme · bahis ×1,1', cost: 'MALİYET',
+      oraclePlus: 'KEHANET+', plusHint: 'KEHANET+: dönüşlerin ≈ %{opp} kadarında güçlendirme · bahis ×1,1', cost: 'MALİYET',
       session: 'OTURUM', sessTime: 'Süre', sessSpins: 'Dönüş', sessWag: 'Bahis', sessWon: 'Kazanç', sessNet: 'Net sonuç', lossLimit: 'Oturum kayıp limiti', qualityL: 'Grafik kalitesi', qAuto: 'Oto', qHigh: 'Yüksek', qLow: 'Düşük',
       realityTitle: 'OTURUM HATIRLATMASI', realityMsg: function (m, n) { return m + ' dakikadır oynuyorsun. Net sonuç: ' + n + '.'; }, limitTitle: 'LİMİTE ULAŞILDI', limitMsg: 'Kayıp limitine ulaştın. Oynamaya devam etmek için ayarlardan değiştir.', keepPlaying: 'DEVAM ET', takeBreak: 'MOLA VER',
-      rulesPlus: 'KEHANET+ modu: bahis ×1,1, Kehanet dönüşlerin ≈ 3/4’ünde belirir. Aynı RTP (≈ %96).',
+      rulesPlus: 'KEHANET+ modu: bahis ×1,1, Kehanet dönüşlerin ≈ %{opp} kadarında belirir. Aynı RTP (≈ %96).',
       buyBtn: 'BONUS SATIN AL', buyTitle: 'BONUS SATIN AL', buySub: 'Çarkı atlayarak doğrudan bir bonus aç. Fiyat = bahis × çarpan. Anubis’in Gazabı yine de onu ele geçirebilir.', buyPrice: 'FİYAT', buyNow: 'SATIN AL', buyOn: 'Bonus satın alma', buyWheel: 'Çarka dön', buyNoFunds: 'Bu bonus için bakiye yetersiz', buyRtp: 'RTP ≈ %96',
       buyDesc: { scarab: '3 scarab, her biri {scmax}×’e kadar', weigh: 'Tüy ya da kalp: ağır olan kazanır, {wmax}×’e kadar', vault: 'Piramit: 12 sandık, altın anahtarlar seçimi uzatır', hand: 'Bir renk seç: ÇİFT = ikiye katlanan çark (×16’ya kadar), ×3 ila ×12 bonus şeritleri' },
       resumed: 'Yarım kalan tur: kazanç hesaba eklendi',
@@ -344,7 +344,7 @@
       volatV: 'Çok yüksek', demo: 'Oyun parası — demo, € veya $ tutarları gerçek para değildir.',
       rules: [
         'Bir bahis, bir dönüş: yargı çarkı karar verir. Her hücre değerini × bahsini öder.',
-        'Kehanet (≈ 3 dönüşte 1) bir hücre seçer ve ona ×2 ila ×100 güçlendirme verir. Çark orada durursa güçlendirme uygulanır!',
+        'Kehanet (dönüşlerin ≈ %{op} kadarında) bir hücre seçer ve ona ×2 ila ×100 güçlendirme verir. Çark orada durursa güçlendirme uygulanır!',
         'ANKH: çarkın ücretsiz yeniden dönüşü, ek bahis yok.',
         'Kalbin Tartılması: Maat’ın tüyünü ya da kalbi seç, çarpanlar döner ve ortaya çıkar, sonra terazi karar verir. Ağır kefe çarpanını kazanır (×{wmax}’e kadar), hafif kefe hiçbir şey: yarı yarıya şans.',
         'Her bonus ANUBİS’İN GAZABI tarafından ele geçirilebilir: bir renk seç (turkuaz, altın veya yakut), sonra dev çarkı çevir. Bir sayı: kazanç = sayı × kademe. KENDİ renginde ÇİFT: çarktaki tüm sayılar ikiye katlanır (kademe ×2, ×16’ya kadar) ve yeniden çevirirsin. BAŞKA renkte ÇİFT: zincir biter ve çarktaki en küçük sayıyı (3) × kademe alırsın.',
@@ -362,10 +362,10 @@
     id: {
       brandTop: 'ANUBIS', balance: 'SALDO', bet: 'TARUHAN', win: 'MENANG', turbo: 'TURBO', auto: 'OTO',
       spin: 'PUTAR', stop: 'BERHENTI', ready: 'Putar roda penghakiman', spinning: 'Roda penghakiman berputar…',
-      oraclePlus: 'ORAKEL+', plusHint: 'ORAKEL+: boost pada ≈ 3 dari 4 putaran · taruhan ×1,1', cost: 'BIAYA',
+      oraclePlus: 'ORAKEL+', plusHint: 'ORAKEL+: boost pada ≈ {opp} % putaran · taruhan ×1,1', cost: 'BIAYA',
       session: 'SESI', sessTime: 'Durasi', sessSpins: 'Putaran', sessWag: 'Ditaruh', sessWon: 'Dimenangkan', sessNet: 'Hasil bersih', lossLimit: 'Batas kerugian sesi', qualityL: 'Kualitas grafis', qAuto: 'Otomatis', qHigh: 'Tinggi', qLow: 'Rendah',
       realityTitle: 'PENGINGAT SESI', realityMsg: function (m, n) { return 'Kamu sudah bermain ' + m + ' menit. Hasil bersih: ' + n + '.'; }, limitTitle: 'BATAS TERCAPAI', limitMsg: 'Batas kerugianmu telah tercapai. Ubah di pengaturan untuk terus bermain.', keepPlaying: 'LANJUT MAIN', takeBreak: 'ISTIRAHAT',
-      rulesPlus: 'Mode ORAKEL+: taruhan ×1,1, Orakel muncul pada ≈ 3 dari 4 putaran. RTP sama (≈ 96 %).',
+      rulesPlus: 'Mode ORAKEL+: taruhan ×1,1, Orakel muncul pada ≈ {opp} % putaran. RTP sama (≈ 96 %).',
       buyBtn: 'BELI BONUS', buyTitle: 'BELI BONUS', buySub: 'Buka bonus langsung tanpa melewati roda. Harga = taruhan × pengali. Amarah Anubis tetap bisa merebutnya.', buyPrice: 'HARGA', buyNow: 'BELI', buyOn: 'Beli bonus', buyWheel: 'Kembali ke roda', buyNoFunds: 'Saldo tidak cukup untuk bonus ini', buyRtp: 'RTP ≈ 96 %',
       buyDesc: { scarab: '3 kumbang, hingga {scmax}× masing-masing', weigh: 'Bulu atau jantung: yang lebih berat menang, hingga {wmax}×', vault: 'Piramida: 12 peti, kunci emas memperpanjang pilihan', hand: 'Pilih warna: GANDA = roda berlipat dua (hingga ×16), pita bonus ×3 hingga ×12' },
       resumed: 'Ronde terputus: kemenangan dikreditkan',
@@ -395,7 +395,7 @@
       volatV: 'Sangat tinggi', demo: 'Uang mainan — demo, jumlah dalam € atau $ bukan uang sungguhan.',
       rules: [
         'Satu taruhan, satu putaran: roda penghakiman yang menentukan. Setiap kotak membayar nilainya × taruhanmu.',
-        'Orakel (≈ 1 dari 3 putaran) memilih satu kotak dan memberinya boost ×2 hingga ×100. Jika roda berhenti di sana, boost berlaku!',
+        'Orakel (≈ {op} % putaran) memilih satu kotak dan memberinya boost ×2 hingga ×100. Jika roda berhenti di sana, boost berlaku!',
         'ANKH: putar ulang roda gratis, tanpa taruhan tambahan.',
         'Penimbangan Hati: pilih bulu Maat atau hati, pengali berputar dan terungkap, lalu timbangan memutuskan. Piringan yang lebih berat memenangkan pengalinya (hingga ×{wmax}), yang lebih ringan tidak mendapat apa-apa: peluang satu banding dua.',
         'Bonus apa pun dapat direbut oleh AMARAH ANUBIS: pilih warna (biru tosca, emas, atau rubi), lalu putar roda raksasa. Sebuah angka: menang = angka × tingkat. GANDA pada warna KAMU: semua angka di roda berlipat dua (tingkat ×2, hingga ×16) dan kamu memutar lagi. GANDA pada warna LAIN: rantai berhenti dan kamu menerima angka terkecil di roda (3) × tingkat.',
@@ -413,10 +413,10 @@
     vi: {
       brandTop: 'ANUBIS', balance: 'SỐ DƯ', bet: 'CƯỢC', win: 'THẮNG', turbo: 'TURBO', auto: 'TỰ ĐỘNG',
       spin: 'QUAY', stop: 'DỪNG', ready: 'Quay bánh xe phán xét', spinning: 'Bánh xe phán xét đang quay…',
-      oraclePlus: 'THẦN LỜI+', plusHint: 'THẦN LỜI+: tăng lực ở ≈ 3 trong 4 lượt quay · cược ×1,1', cost: 'CHI PHÍ',
+      oraclePlus: 'THẦN LỜI+', plusHint: 'THẦN LỜI+: tăng lực ở ≈ {opp} % lượt quay · cược ×1,1', cost: 'CHI PHÍ',
       session: 'PHIÊN', sessTime: 'Thời gian', sessSpins: 'Lượt quay', sessWag: 'Đã cược', sessWon: 'Đã thắng', sessNet: 'Kết quả ròng', lossLimit: 'Hạn mức thua của phiên', qualityL: 'Chất lượng đồ họa', qAuto: 'Tự động', qHigh: 'Cao', qLow: 'Thấp',
       realityTitle: 'NHẮC NHỞ PHIÊN', realityMsg: function (m, n) { return 'Bạn đã chơi ' + m + ' phút. Kết quả ròng: ' + n + '.'; }, limitTitle: 'ĐÃ ĐẠT HẠN MỨC', limitMsg: 'Bạn đã đạt hạn mức thua. Hãy đổi trong phần cài đặt để tiếp tục chơi.', keepPlaying: 'CHƠI TIẾP', takeBreak: 'NGHỈ MỘT LÁT',
-      rulesPlus: 'Chế độ THẦN LỜI+: cược ×1,1, Thần Lời xuất hiện ở ≈ 3 trong 4 lượt quay. RTP như nhau (≈ 96 %).',
+      rulesPlus: 'Chế độ THẦN LỜI+: cược ×1,1, Thần Lời xuất hiện ở ≈ {opp} % lượt quay. RTP như nhau (≈ 96 %).',
       buyBtn: 'MUA BONUS', buyTitle: 'MUA BONUS', buySub: 'Mở thẳng một bonus, bỏ qua bánh xe. Giá = cược × hệ số. Cơn Thịnh Nộ của Anubis vẫn có thể chiếm lấy nó.', buyPrice: 'GIÁ', buyNow: 'MUA', buyOn: 'Mua bonus', buyWheel: 'Về bánh xe', buyNoFunds: 'Không đủ số dư cho bonus này', buyRtp: 'RTP ≈ 96 %',
       buyDesc: { scarab: '3 bọ hung, mỗi con tới {scmax}×', weigh: 'Lông vũ hoặc trái tim: bên nặng hơn thắng, tới {wmax}×', vault: 'Kim tự tháp: 12 rương, chìa khóa vàng kéo dài lượt chọn', hand: 'Chọn một màu: GẤP ĐÔI = bánh xe nhân đôi (tới ×16), dải bonus ×3 đến ×12' },
       resumed: 'Ván bị gián đoạn: tiền thắng đã được cộng',
@@ -446,7 +446,7 @@
       volatV: 'Rất cao', demo: 'Tiền ảo — bản demo, số tiền theo € hoặc $ không phải tiền thật.',
       rules: [
         'Một lần cược, một lượt quay: bánh xe phán xét quyết định. Mỗi ô trả giá trị của nó × cược của bạn.',
-        'Thần Lời (≈ 1 lượt trong 3) chọn một ô và tăng lực cho nó từ ×2 đến ×100. Nếu bánh xe dừng ở đó, mức tăng được áp dụng!',
+        'Thần Lời (≈ {op} % lượt quay) chọn một ô và tăng lực cho nó từ ×2 đến ×100. Nếu bánh xe dừng ở đó, mức tăng được áp dụng!',
         'ANKH: quay lại bánh xe miễn phí, không cược thêm.',
         'Cân Trái Tim: chọn lông vũ của Maat hoặc trái tim, các hệ số chạy rồi được hé lộ, sau đó cán cân quyết định. Đĩa nặng hơn thắng hệ số của nó (tới ×{wmax}), đĩa nhẹ hơn không được gì: cơ hội một trên hai.',
         'Bất kỳ bonus nào cũng có thể bị THỊNH NỘ CỦA ANUBIS chiếm lấy: chọn một màu (ngọc lam, vàng hoặc hồng ngọc), rồi quay bánh xe khổng lồ. Một con số: thắng = số × bậc. GẤP ĐÔI đúng màu CỦA BẠN: mọi số trên bánh xe được nhân đôi (bậc ×2, tới ×16) và bạn quay lại. GẤP ĐÔI màu KHÁC: chuỗi kết thúc và bạn nhận số nhỏ nhất trên bánh xe (3) × bậc.',
@@ -464,10 +464,10 @@
     fi: {
       brandTop: 'ANUBIS', balance: 'SALDO', bet: 'PANOS', win: 'VOITTO', turbo: 'TURBO', auto: 'AUTO',
       spin: 'PYÖRITÄ', stop: 'STOP', ready: 'Pyöritä tuomion rataa', spinning: 'Tuomion ratas pyörii…',
-      oraclePlus: 'ORAAKKELI+', plusHint: 'ORAAKKELI+: tehostus ≈ 3 pyöräytyksellä 4:stä · panos ×1,1', cost: 'HINTA',
+      oraclePlus: 'ORAAKKELI+', plusHint: 'ORAAKKELI+: tehostus ≈ {opp} %:lla pyöräytyksistä · panos ×1,1', cost: 'HINTA',
       session: 'ISTUNTO', sessTime: 'Kesto', sessSpins: 'Pyöräytykset', sessWag: 'Pelattu', sessWon: 'Voitettu', sessNet: 'Nettotulos', lossLimit: 'Istunnon tappioraja', qualityL: 'Grafiikan laatu', qAuto: 'Auto', qHigh: 'Korkea', qLow: 'Matala',
       realityTitle: 'ISTUNTOMUISTUTUS', realityMsg: function (m, n) { return 'Olet pelannut ' + m + ' min. Nettotulos: ' + n + '.'; }, limitTitle: 'RAJA SAAVUTETTU', limitMsg: 'Tappiorajasi on saavutettu. Muuta sitä asetuksissa jatkaaksesi pelaamista.', keepPlaying: 'JATKA PELAAMISTA', takeBreak: 'HOLLI TAUKO',
-      rulesPlus: 'ORAAKKELI+-tila: panos ×1,1, Oraakkeli ilmestyy ≈ 3 pyöräytyksellä 4:stä. Sama RTP (≈ 96 %).',
+      rulesPlus: 'ORAAKKELI+-tila: panos ×1,1, Oraakkeli ilmestyy ≈ {opp} %:lla pyöräytyksistä. Sama RTP (≈ 96 %).',
       buyBtn: 'OSTA BONUS', buyTitle: 'OSTA BONUS', buySub: 'Avaa bonus suoraan ohittaen rata. Hinta = panos × kerroin. Anubiksen Raivo voi silti kaapata sen.', buyPrice: 'HINTA', buyNow: 'OSTA', buyOn: 'Bonusosto', buyWheel: 'Takaisin rataan', buyNoFunds: 'Saldo ei riitä tähän bonukseen', buyRtp: 'RTP ≈ 96 %',
       buyDesc: { scarab: '3 skarabea, jopa {scmax}× kukin', weigh: 'Sulka tai sydän: painavampi voittaa, jopa {wmax}×', vault: 'Pyramidi: 12 arkkua, kultaiset avaimet pidentävät valintaa', hand: 'Valitse väri: TUPLA = kaksinkertainen rata (jopa ×16), bonuskaistat ×3–×12' },
       resumed: 'Keskeytynyt kierros: voitto hyvitetty',
@@ -497,7 +497,7 @@
       volatV: 'Erittäin korkea', demo: 'Leikkiraha — demo, €- tai $-summat eivät ole oikeaa rahaa.',
       rules: [
         'Yksi panos, yksi pyöräytys: tuomion ratas ratkaisee. Jokainen ruutu maksaa arvonsa × panoksesi.',
-        'Oraakkeli (≈ 1 pyöräytys 3:sta) valitsee ruudun ja antaa sille ×2–×100 tehostuksen. Jos ratas pysähtyy siihen, tehostus pätee!',
+        'Oraakkeli (≈ {op} %:lla pyöräytyksistä) valitsee ruudun ja antaa sille ×2–×100 tehostuksen. Jos ratas pysähtyy siihen, tehostus pätee!',
         'ANKH: ilmainen uudelleenpyöräytys, ei lisäpanosta.',
         'Sydämen punnitus: valitse Maatin sulka tai sydän, kertoimet pyörivät ja paljastuvat, sitten vaaka ratkaisee. Painavampi kuppi voittaa kertoimensa (jopa ×{wmax}), kevyempi ei mitään: mahdollisuus yhdestä kahteen.',
         'ANUBIKSEN RAIVO voi kaapata minkä tahansa bonuksen: valitse väri (turkoosi, kulta tai rubiini) ja pyöritä jättiratasta. Luku: voitto = luku × taso. TUPLA OMALLA värilläsi: kaikki radan luvut kaksinkertaistuvat (taso ×2, jopa ×16) ja pyöräytät uudelleen. TUPLA TOISELLA värillä: ketju päättyy ja saat radan pienimmän luvun (3) × taso.',
@@ -515,10 +515,10 @@
     ru: {
       brandTop: 'ANUBIS', balance: 'БАЛАНС', bet: 'СТАВКА', win: 'ВЫИГРЫШ', turbo: 'ТУРБО', auto: 'АВТО',
       spin: 'КРУТИТЬ', stop: 'СТОП', ready: 'Запустите колесо суда', spinning: 'Колесо суда вращается…',
-      oraclePlus: 'ОРАКУЛ+', plusHint: 'ОРАКУЛ+: усиление в ≈ 3 из 4 вращений · ставка ×1,1', cost: 'ЦЕНА',
+      oraclePlus: 'ОРАКУЛ+', plusHint: 'ОРАКУЛ+: усиление в ≈ {opp} % вращений · ставка ×1,1', cost: 'ЦЕНА',
       session: 'СЕАНС', sessTime: 'Время', sessSpins: 'Вращения', sessWag: 'Поставлено', sessWon: 'Выиграно', sessNet: 'Итог', lossLimit: 'Лимит потерь за сеанс', qualityL: 'Качество графики', qAuto: 'Авто', qHigh: 'Высокое', qLow: 'Низкое',
       realityTitle: 'НАПОМИНАНИЕ', realityMsg: function (m, n) { return 'Вы играете ' + m + ' мин. Итог: ' + n + '.'; }, limitTitle: 'ЛИМИТ ДОСТИГНУТ', limitMsg: 'Лимит потерь достигнут. Измените его в настройках, чтобы продолжить.', keepPlaying: 'ПРОДОЛЖИТЬ', takeBreak: 'СДЕЛАТЬ ПЕРЕРЫВ',
-      rulesPlus: 'Режим ОРАКУЛ+: ставка ×1,1, Оракул появляется в ≈ 3 из 4 вращений. Тот же RTP (≈ 96 %).',
+      rulesPlus: 'Режим ОРАКУЛ+: ставка ×1,1, Оракул появляется в ≈ {opp} % вращений. Тот же RTP (≈ 96 %).',
       buyBtn: 'КУПИТЬ БОНУС', buyTitle: 'КУПИТЬ БОНУС', buySub: 'Откройте бонус сразу, минуя колесо. Цена = ставка × множитель. Ярость Анубиса всё ещё может его захватить.', buyPrice: 'ЦЕНА', buyNow: 'КУПИТЬ', buyOn: 'Покупка бонуса', buyWheel: 'Назад к колесу', buyNoFunds: 'Недостаточно средств для этого бонуса', buyRtp: 'RTP ≈ 96 %',
       buyDesc: { scarab: '3 скарабея, до {scmax}× каждый', weigh: 'Перо или сердце: тяжелее — выигрывает, до {wmax}×', vault: 'Пирамида: 12 сундуков, золотые ключи продлевают выбор', hand: 'Выберите цвет: УДВОЕНИЕ = колесо вдвое (до ×16), полосы бонусов ×3–×12' },
       resumed: 'Прерванный раунд: выигрыш зачислен',
@@ -548,7 +548,7 @@
       volatV: 'Очень высокая', demo: 'Игровые деньги — демо, суммы в € или $ не являются настоящими деньгами.',
       rules: [
         'Одна ставка, одно вращение: решает колесо суда. Каждая клетка платит своё значение × вашу ставку.',
-        'Оракул (≈ 1 вращение из 3) выбирает клетку и даёт ей усиление от ×2 до ×100. Если колесо остановится там, усиление применяется!',
+        'Оракул (≈ {op} % вращений) выбирает клетку и даёт ей усиление от ×2 до ×100. Если колесо остановится там, усиление применяется!',
         'АНКХ: бесплатное повторное вращение колеса, без дополнительной ставки.',
         'Взвешивание сердца: выберите перо Маат или сердце, множители пробегают и раскрываются, затем решают весы. Тяжёлая чаша выигрывает свой множитель (до ×{wmax}), лёгкая — ничего: шанс один из двух.',
         'Любой бонус может быть захвачен ЯРОСТЬЮ АНУБИСА: выберите цвет (бирюза, золото или рубин) и запустите гигантское колесо. Число: выигрыш = число × уровень. УДВОЕНИЕ ВАШЕГО цвета: все числа на колесе удваиваются (уровень ×2, до ×16), и вы крутите снова. УДВОЕНИЕ ДРУГОГО цвета: цепочка прерывается, и вы получаете наименьшее число на колесе (3) × уровень.',
@@ -566,10 +566,10 @@
     ar: {
       brandTop: 'ANUBIS', balance: 'الرصيد', bet: 'الرهان', win: 'الربح', turbo: 'تيربو', auto: 'تلقائي',
       spin: 'دوّر', stop: 'إيقاف', ready: 'دوّر عجلة الحكم', spinning: 'عجلة الحكم تدور…',
-      oraclePlus: 'العرّاف+', plusHint: 'العرّاف+: تعزيز في ≈ 3 من كل 4 لفات · الرهان ×1.1', cost: 'التكلفة',
+      oraclePlus: 'العرّاف+', plusHint: 'العرّاف+: تعزيز في ≈ {opp}٪ من اللفات · الرهان ×1.1', cost: 'التكلفة',
       session: 'الجلسة', sessTime: 'المدة', sessSpins: 'اللفات', sessWag: 'المراهن', sessWon: 'المكسوب', sessNet: 'النتيجة الصافية', lossLimit: 'حد الخسارة للجلسة', qualityL: 'جودة الرسوميات', qAuto: 'تلقائي', qHigh: 'عالية', qLow: 'منخفضة',
       realityTitle: 'تذكير الجلسة', realityMsg: function (m, n) { return 'تلعب منذ ' + m + ' دقيقة. النتيجة الصافية: ' + n + '.'; }, limitTitle: 'تم بلوغ الحد', limitMsg: 'لقد بلغت حد الخسارة. غيّره من الإعدادات لمواصلة اللعب.', keepPlaying: 'واصل اللعب', takeBreak: 'خذ استراحة',
-      rulesPlus: 'وضع العرّاف+: الرهان ×1.1، يظهر العرّاف في ≈ 3 من كل 4 لفات. نفس نسبة العائد (≈ 96٪).',
+      rulesPlus: 'وضع العرّاف+: الرهان ×1.1، يظهر العرّاف في ≈ {opp}٪ من اللفات. نفس نسبة العائد (≈ 96٪).',
       buyBtn: 'اشترِ بونص', buyTitle: 'اشترِ بونص', buySub: 'افتح بونصاً مباشرة دون العجلة. السعر = الرهان × المضاعف. يمكن لغضب أنوبيس أن يستولي عليه.', buyPrice: 'السعر', buyNow: 'شراء', buyOn: 'شراء البونص', buyWheel: 'العودة إلى العجلة', buyNoFunds: 'الرصيد لا يكفي لهذا البونص', buyRtp: 'RTP ≈ 96٪',
       buyDesc: { scarab: '3 جعارين، حتى {scmax}× لكل منها', weigh: 'ريشة أو قلب: الأثقل يفوز، حتى {wmax}×', vault: 'هرم: 12 صندوقاً، والمفاتيح الذهبية تطيل الاختيار', hand: 'اختر لوناً: مضاعفة = عجلة مضاعفة (حتى ×16)، أشرطة بونص ×3 إلى ×12' },
       resumed: 'جولة متوقفة: تم إضافة الربح',
@@ -599,7 +599,7 @@
       volatV: 'مرتفع جداً', demo: 'نقود وهمية — نسخة تجريبية، المبالغ بـ € أو $ ليست نقوداً حقيقية.',
       rules: [
         'رهان واحد، لفة واحدة: عجلة الحكم تقرر. كل خانة تدفع قيمتها × رهانك.',
-        'العرّاف (≈ لفة من كل 3) يختار خانة ويمنحها تعزيزاً من ×2 إلى ×100. إذا توقفت العجلة عندها يُطبَّق التعزيز!',
+        'العرّاف (≈ {op}٪ من اللفات) يختار خانة ويمنحها تعزيزاً من ×2 إلى ×100. إذا توقفت العجلة عندها يُطبَّق التعزيز!',
         'عنخ: لفة مجانية للعجلة بدون رهان إضافي.',
         'وزن القلب: اختر ريشة ماعت أو القلب، تدور المضاعفات وتنكشف، ثم يحكم الميزان. الكفة الأثقل تربح مضاعفها (حتى ×{wmax}) والأخف لا تربح شيئاً: فرصة واحدة من اثنتين.',
         'يمكن لـ غضب أنوبيس الاستيلاء على أي بونص: اختر لوناً (فيروزي أو ذهبي أو ياقوتي) ثم دوّر العجلة العملاقة. رقم: الربح = الرقم × المستوى. مضاعفة بـ لونك: تتضاعف كل الأرقام على العجلة (المستوى ×2، حتى ×16) وتدور مجدداً. مضاعفة بلون آخر: تنتهي السلسلة وتقبض أصغر رقم على العجلة (3) × المستوى.',
@@ -617,10 +617,10 @@
     hi: {
       brandTop: 'ANUBIS', balance: 'बैलेंस', bet: 'दांव', win: 'जीत', turbo: 'टर्बो', auto: 'ऑटो',
       spin: 'घुमाएँ', stop: 'रुकें', ready: 'न्याय का चक्र घुमाएँ', spinning: 'न्याय का चक्र घूम रहा है…',
-      oraclePlus: 'ओरेकल+', plusHint: 'ओरेकल+: ≈ 4 में से 3 स्पिन पर बूस्ट · दांव ×1.1', cost: 'लागत',
+      oraclePlus: 'ओरेकल+', plusHint: 'ओरेकल+: ≈ {opp}% स्पिन पर बूस्ट · दांव ×1.1', cost: 'लागत',
       session: 'सत्र', sessTime: 'अवधि', sessSpins: 'स्पिन', sessWag: 'लगाया', sessWon: 'जीता', sessNet: 'शुद्ध परिणाम', lossLimit: 'सत्र की हानि सीमा', qualityL: 'ग्राफ़िक्स गुणवत्ता', qAuto: 'ऑटो', qHigh: 'उच्च', qLow: 'कम',
       realityTitle: 'सत्र अनुस्मारक', realityMsg: function (m, n) { return 'आप ' + m + ' मिनट से खेल रहे हैं। शुद्ध परिणाम: ' + n + '।'; }, limitTitle: 'सीमा पूरी हुई', limitMsg: 'आपकी हानि सीमा पूरी हो गई है। खेलना जारी रखने के लिए सेटिंग्स में बदलें।', keepPlaying: 'खेलते रहें', takeBreak: 'ब्रेक लें',
-      rulesPlus: 'ओरेकल+ मोड: दांव ×1.1, ओरेकल ≈ 4 में से 3 स्पिन पर आता है। समान RTP (≈ 96%)।',
+      rulesPlus: 'ओरेकल+ मोड: दांव ×1.1, ओरेकल ≈ {opp}% स्पिन पर आता है। समान RTP (≈ 96%)।',
       buyBtn: 'बोनस खरीदें', buyTitle: 'बोनस खरीदें', buySub: 'चक्र छोड़कर सीधे बोनस खोलें। कीमत = दांव × गुणक। अनुबिस का क्रोध फिर भी इसे छीन सकता है।', buyPrice: 'कीमत', buyNow: 'खरीदें', buyOn: 'बोनस खरीद', buyWheel: 'चक्र पर लौटें', buyNoFunds: 'इस बोनस के लिए बैलेंस पर्याप्त नहीं', buyRtp: 'RTP ≈ 96%',
       buyDesc: { scarab: '3 स्कारब, प्रत्येक {scmax}× तक', weigh: 'पंख या हृदय: भारी वाला जीतता है, {wmax}× तक', vault: 'पिरामिड: 12 संदूक, सुनहरी चाबियाँ चयन बढ़ाती हैं', hand: 'एक रंग चुनें: डबल = दोगुना चक्र (×16 तक), बोनस पट्टियाँ ×3 से ×12' },
       resumed: 'अधूरा राउंड: जीत जमा कर दी गई',
@@ -650,7 +650,7 @@
       volatV: 'बहुत ऊँची', demo: 'नकली पैसे — डेमो, € या $ की राशियाँ असली पैसे नहीं हैं।',
       rules: [
         'एक दांव, एक स्पिन: न्याय का चक्र तय करता है। हर खाना अपना मान × आपका दांव चुकाता है।',
-        'ओरेकल (≈ 3 में से 1 स्पिन) एक खाना चुनकर उसे ×2 से ×100 का बूस्ट देता है। चक्र वहाँ रुके तो बूस्ट लागू होता है!',
+        'ओरेकल (≈ {op}% स्पिन) एक खाना चुनकर उसे ×2 से ×100 का बूस्ट देता है। चक्र वहाँ रुके तो बूस्ट लागू होता है!',
         'अंख: चक्र का मुफ़्त रीस्पिन, कोई अतिरिक्त दांव नहीं।',
         'हृदय का तौल: माआत का पंख या हृदय चुनें, गुणक घूमकर प्रकट होते हैं, फिर तराज़ू फ़ैसला करता है। भारी पलड़ा अपना गुणक जीतता है (×{wmax} तक), हल्के को कुछ नहीं मिलता: दो में से एक मौका।',
         'कोई भी बोनस अनुबिस का क्रोध छीन सकता है: एक रंग चुनें (फ़िरोज़ा, सुनहरा या माणिक), फिर विशाल चक्र घुमाएँ। संख्या: जीत = संख्या × स्तर। अपने रंग का डबल: चक्र की हर संख्या दोगुनी हो जाती है (स्तर ×2, ×16 तक) और आप फिर घुमाते हैं। दूसरे रंग का डबल: श्रृंखला रुक जाती है और आपको चक्र की सबसे छोटी संख्या (3) × स्तर मिलती है।',
@@ -668,10 +668,10 @@
     ja: {
       brandTop: 'ANUBIS', balance: '残高', bet: 'ベット', win: '勝利', turbo: 'ターボ', auto: 'オート',
       spin: 'スピン', stop: '停止', ready: '審判の輪を回そう', spinning: '審判の輪が回っている…',
-      oraclePlus: '神託+', plusHint: '神託+: 4回中およそ3回でブースト · ベット ×1.1', cost: 'コスト',
+      oraclePlus: '神託+', plusHint: '神託+: およそ{opp}%の回でブースト · ベット ×1.1', cost: 'コスト',
       session: 'セッション', sessTime: '時間', sessSpins: 'スピン数', sessWag: 'ベット総額', sessWon: '獲得', sessNet: '収支', lossLimit: 'セッション損失上限', qualityL: 'グラフィック品質', qAuto: '自動', qHigh: '高', qLow: '低',
       realityTitle: 'セッション確認', realityMsg: function (m, n) { return m + '分間プレイしています。収支: ' + n + '。'; }, limitTitle: '上限に到達', limitMsg: '損失上限に達しました。続けるには設定で変更してください。', keepPlaying: '続ける', takeBreak: '休憩する',
-      rulesPlus: '神託+モード: ベット ×1.1、4回中およそ3回で神託が現れます。RTPは同じ (約96%)。',
+      rulesPlus: '神託+モード: ベット ×1.1、およそ{opp}%の回で神託が現れます。RTPは同じ (約96%)。',
       buyBtn: 'ボーナス購入', buyTitle: 'ボーナス購入', buySub: '輪を飛ばしてボーナスを直接開きます。価格 = ベット × 倍率。アヌビスの怒りに奪われることもあります。', buyPrice: '価格', buyNow: '購入', buyOn: 'ボーナス購入', buyWheel: '輪に戻る', buyNoFunds: 'このボーナスには残高が足りません', buyRtp: 'RTP 約96%',
       buyDesc: { scarab: 'スカラベ3匹、1匹あたり最大{scmax}×', weigh: '羽根か心臓: 重い方が勝ち、最大{wmax}×', vault: 'ピラミッド:宝箱12個、金の鍵で選択が延びる', hand: '色を選ぶ: ダブル = 輪が倍に (最大×16)、ボーナス帯 ×3〜×12' },
       resumed: '中断されたラウンド: 獲得分を加算しました',
@@ -701,7 +701,7 @@
       volatV: '非常に高い', demo: '架空のお金 — デモです。€や$の金額は本物のお金ではありません。',
       rules: [
         '1ベットで1スピン: 審判の輪が決める。各マスは その値 × ベット を支払う。',
-        '神託 (3回に約1回) はマスを1つ選び ×2〜×100 のブーストを与える。輪がそこで止まればブーストが適用される!',
+        '神託 (約{op}%の回) はマスを1つ選び ×2〜×100 のブーストを与える。輪がそこで止まればブーストが適用される!',
         'アンク: 追加ベットなしで輪をもう一度無料で回す。',
         '心臓の秤: マアトの羽根か心臓を選ぶ。倍率が回って明かされ、秤が決める。重い皿がその倍率 (最大×{wmax}) を獲得し、軽い皿は何も得られない: 2分の1の確率。',
         'どのボーナスも アヌビスの怒り に奪われることがある: 色 (ターコイズ、ゴールド、ルビー) を選び、巨大な輪を回す。数字: 配当 = 数字 × ティア。自分の色のダブル: 輪の数字がすべて倍になり (ティア×2、最大×16)、もう一度回す。他の色のダブル: 連鎖は終わり、輪の最小の数字 (3) × ティア を受け取る。',
@@ -719,10 +719,10 @@
     ko: {
       brandTop: 'ANUBIS', balance: '잔액', bet: '베팅', win: '당첨', turbo: '터보', auto: '자동',
       spin: '스핀', stop: '정지', ready: '심판의 바퀴를 돌리세요', spinning: '심판의 바퀴가 돌아갑니다…',
-      oraclePlus: '신탁+', plusHint: '신탁+: 4회 중 약 3회 부스트 · 베팅 ×1.1', cost: '비용',
+      oraclePlus: '신탁+', plusHint: '신탁+: 약 {opp}%의 회전에서 부스트 · 베팅 ×1.1', cost: '비용',
       session: '세션', sessTime: '시간', sessSpins: '스핀 수', sessWag: '베팅액', sessWon: '획득', sessNet: '순손익', lossLimit: '세션 손실 한도', qualityL: '그래픽 품질', qAuto: '자동', qHigh: '높음', qLow: '낮음',
       realityTitle: '세션 알림', realityMsg: function (m, n) { return m + '분째 플레이 중입니다. 순손익: ' + n + '.'; }, limitTitle: '한도 도달', limitMsg: '손실 한도에 도달했습니다. 계속하려면 설정에서 변경하세요.', keepPlaying: '계속하기', takeBreak: '휴식하기',
-      rulesPlus: '신탁+ 모드: 베팅 ×1.1, 4회 중 약 3회 신탁이 나타납니다. RTP 동일 (약 96%).',
+      rulesPlus: '신탁+ 모드: 베팅 ×1.1, 약 {opp}%의 회전에서 신탁이 나타납니다. RTP 동일 (약 96%).',
       buyBtn: '보너스 구매', buyTitle: '보너스 구매', buySub: '바퀴를 건너뛰고 보너스를 바로 엽니다. 가격 = 베팅 × 배수. 아누비스의 분노가 가로챌 수도 있습니다.', buyPrice: '가격', buyNow: '구매', buyOn: '보너스 구매', buyWheel: '바퀴로 돌아가기', buyNoFunds: '이 보너스에 필요한 잔액이 부족합니다', buyRtp: 'RTP 약 96%',
       buyDesc: { scarab: '스카라베 3마리, 각각 최대 {scmax}×', weigh: '깃털 또는 심장: 더 무거운 쪽 승리, 최대 {wmax}×', vault: '피라미드: 상자 12개, 금 열쇠가 선택을 늘려 줍니다', hand: '색 선택: 더블 = 바퀴 두 배 (최대 ×16), 보너스 띠 ×3~×12' },
       resumed: '중단된 라운드: 당첨금 지급 완료',
@@ -752,7 +752,7 @@
       volatV: '매우 높음', demo: '가상 머니 — 데모입니다. €, $ 금액은 실제 돈이 아닙니다.',
       rules: [
         '한 번 베팅하면 한 번 스핀: 심판의 바퀴가 결정합니다. 각 칸은 그 값 × 베팅액을 지급합니다.',
-        '신탁 (약 3회 중 1회)은 칸 하나를 골라 ×2~×100 부스트를 줍니다. 바퀴가 거기서 멈추면 부스트가 적용됩니다!',
+        '신탁 (약 {op}%의 회전)은 칸 하나를 골라 ×2~×100 부스트를 줍니다. 바퀴가 거기서 멈추면 부스트가 적용됩니다!',
         '앙크: 추가 베팅 없이 바퀴를 무료로 다시 돌립니다.',
         '심장의 저울: 마아트의 깃털이나 심장을 고르면 배수가 돌다가 공개되고, 저울이 판가름합니다. 더 무거운 접시가 배수 (최대 ×{wmax})를 얻고 가벼운 접시는 아무것도 얻지 못합니다: 2분의 1 확률.',
         '어떤 보너스든 아누비스의 분노가 가로챌 수 있습니다: 색 (터키석, 금색, 루비)을 고르고 거대한 바퀴를 돌리세요. 숫자: 당첨 = 숫자 × 단계. 내 색의 더블: 바퀴의 모든 숫자가 두 배가 되고 (단계 ×2, 최대 ×16) 다시 돌립니다. 다른 색의 더블: 연쇄가 끝나고 바퀴의 가장 작은 숫자 (3) × 단계를 받습니다.',
@@ -770,10 +770,10 @@
     zh: {
       brandTop: 'ANUBIS', balance: '余额', bet: '投注', win: '赢取', turbo: '极速', auto: '自动',
       spin: '旋转', stop: '停止', ready: '转动审判之轮', spinning: '审判之轮正在转动…',
-      oraclePlus: '神谕+', plusHint: '神谕+: 约四次中三次获得加成 · 投注 ×1.1', cost: '费用',
+      oraclePlus: '神谕+', plusHint: '神谕+: 约 {opp}% 的旋转获得加成 · 投注 ×1.1', cost: '费用',
       session: '本局', sessTime: '时长', sessSpins: '旋转次数', sessWag: '已投注', sessWon: '已赢取', sessNet: '净结果', lossLimit: '本局亏损上限', qualityL: '画质', qAuto: '自动', qHigh: '高', qLow: '低',
       realityTitle: '游戏提醒', realityMsg: function (m, n) { return '您已游戏 ' + m + ' 分钟。净结果: ' + n + '。'; }, limitTitle: '已达上限', limitMsg: '您已达到亏损上限。如需继续，请在设置中更改。', keepPlaying: '继续游戏', takeBreak: '休息一下',
-      rulesPlus: '神谕+模式: 投注 ×1.1，神谕约在四次旋转中出现三次。RTP 相同 (约 96%)。',
+      rulesPlus: '神谕+模式: 投注 ×1.1，神谕约在 {opp}% 的旋转中出现。RTP 相同 (约 96%)。',
       buyBtn: '购买奖励', buyTitle: '购买奖励', buySub: '跳过转轮，直接开启奖励。价格 = 投注 × 倍数。阿努比斯之怒仍可能夺走它。', buyPrice: '价格', buyNow: '购买', buyOn: '购买奖励', buyWheel: '返回转轮', buyNoFunds: '余额不足，无法购买此奖励', buyRtp: 'RTP 约 96%',
       buyDesc: { scarab: '3 只圣甲虫，每只最高 {scmax}×', weigh: '羽毛或心脏: 较重者获胜，最高 {wmax}×', vault: '金字塔:12 个宝箱,金钥匙可延长选择', hand: '选择颜色: 双倍 = 转轮翻倍 (最高 ×16)，奖励带 ×3 至 ×12' },
       resumed: '中断的回合: 奖金已入账',
@@ -803,7 +803,7 @@
       volatV: '极高', demo: '虚拟货币 — 演示版，以 € 或 $ 显示的金额并非真钱。',
       rules: [
         '一次投注，一次旋转: 由审判之轮决定。每个格子赔付其数值 × 你的投注。',
-        '神谕 (约三次旋转出现一次) 会选中一个格子并给予 ×2 至 ×100 的加成。若转轮停在该格，加成生效!',
+        '神谕 (约 {op}% 的旋转) 会选中一个格子并给予 ×2 至 ×100 的加成。若转轮停在该格，加成生效!',
         '安卡: 免费再转一次转轮，无需额外投注。',
         '心脏称重: 选择玛特之羽或心脏，倍数滚动并揭晓，然后由天平裁决。较重的秤盘赢得其倍数 (最高 ×{wmax})，较轻的一无所获: 二分之一的机会。',
         '任何奖励都可能被阿努比斯之怒夺走: 选择一种颜色 (绿松石、金色或红宝石)，然后转动巨轮。数字: 赢取 = 数字 × 等级。己方颜色的双倍: 转轮上所有数字翻倍 (等级 ×2，最高 ×16) 并再转一次。其他颜色的双倍: 连锁结束，你获得转轮上最小的数字 (3) × 等级。',
@@ -1128,8 +1128,8 @@
 (function (root) {
   root.I18N_SOCIAL = {
     en: {
-      bet: 'PLAY', plusHint: 'ORACLE+: boost on ≈ 3 of 4 spins · play amount ×1.1', cost: 'PLAY FOR', sessWag: 'Played',
-      rulesPlus: 'ORACLE+ mode: play amount ×1.1, the Oracle shows up on ≈ 3 of 4 spins. Same RTP (≈ 96%).',
+      bet: 'PLAY', plusHint: 'ORACLE+: boost on ≈ {opp}% of spins · play amount ×1.1', cost: 'PLAY FOR', sessWag: 'Played',
+      rulesPlus: 'ORACLE+ mode: play amount ×1.1, the Oracle shows up on ≈ {opp}% of spins. Same RTP (≈ 96%).',
       buyBtn: 'GET A BONUS', buyTitle: 'GET A BONUS', buySub: 'Open a bonus directly, skipping the wheel. A bonus can be played for the play amount × its multiplier. Anubis\' Fury can still seize it.',
       buyPrice: 'PLAY FOR', buyNow: 'GET', buyOn: 'Bonus access', buyNoFunds: 'Not enough balance for this bonus',
       resumed: 'Interrupted round: winnings added', scarabSub: 'Three scarabs plunge through the dark. Each wins the slot it lands in.',
@@ -1163,8 +1163,8 @@
       }
     },
     fr: {
-      bet: 'JEU', plusHint: 'ORACLE+ : boost sur ≈ 3 tours sur 4 · montant de jeu ×1,1', cost: 'MONTANT', sessWag: 'Joué',
-      rulesPlus: 'Mode ORACLE+ : montant de jeu ×1,1, l\'Oracle apparaît sur ≈ 3 tours sur 4. RTP équivalent (≈ 96 %).',
+      bet: 'JEU', plusHint: 'ORACLE+ : boost sur ≈ {opp} % des tours · montant de jeu ×1,1', cost: 'MONTANT', sessWag: 'Joué',
+      rulesPlus: 'Mode ORACLE+ : montant de jeu ×1,1, l\'Oracle apparaît sur ≈ {opp} % des tours. RTP équivalent (≈ 96 %).',
       buyBtn: 'OBTENIR UN BONUS', buyTitle: 'OBTENIR UN BONUS', buySub: 'Ouvrez directement un bonus, sans passer par la roue. Jouable pour : montant de jeu × multiplicateur. La Fureur d\'Anubis peut toujours le saisir.',
       buyPrice: 'JOUABLE POUR', buyNow: 'OBTENIR', buyOn: 'Accès aux bonus', buyNoFunds: 'Solde insuffisant pour ce bonus',
       resumed: 'Tour interrompu : gain ajouté',
@@ -1288,8 +1288,8 @@
     discH: 'مهم', disc: 'يؤدي أي عطل إلى إبطال جميع الأرباح والجولات. يلزم اتصال إنترنت مستقر. عند انقطاع الاتصال، أعد تحميل اللعبة لإنهاء الجولات غير المكتملة. يُحسب العائد المتوقع على عدد كبير من الجولات. عرض اللعبة لا يمثل أي جهاز مادي وهو للتوضيح فقط. تُسوّى الأرباح وفق المبلغ المستلم من Remote Game Server وليس وفق الأحداث داخل متصفح الويب. TM و© 2026 Engine.'
   };
   S.ar = {
-    bet: 'اللعب', plusHint: 'العرّاف+: تعزيز في ≈ 3 من كل 4 لفات · مبلغ اللعب ×1.1', cost: 'قيمة اللعب', sessWag: 'ما لُعب',
-    rulesPlus: 'وضع العرّاف+: مبلغ اللعب ×1.1، يظهر العرّاف في ≈ 3 من كل 4 لفات. نفس نسبة العائد (≈ 96٪).',
+    bet: 'اللعب', plusHint: 'العرّاف+: تعزيز في ≈ {opp}٪ من اللفات · مبلغ اللعب ×1.1', cost: 'قيمة اللعب', sessWag: 'ما لُعب',
+    rulesPlus: 'وضع العرّاف+: مبلغ اللعب ×1.1، يظهر العرّاف في ≈ {opp}٪ من اللفات. نفس نسبة العائد (≈ 96٪).',
     buyBtn: 'احصل على بونص', buyTitle: 'احصل على بونص', buySub: 'افتح بونصاً مباشرة دون العجلة. قابل للعب بقيمة: مبلغ اللعب × المضاعف. يمكن لغضب أنوبيس أن يستولي عليه.',
     buyPrice: 'قيمة اللعب', buyNow: 'احصل', buyOn: 'الوصول إلى البونص', resumed: 'جولة متوقفة: تمت إضافة الربح',
     scarabSub: 'ثلاثة جعارين تهوي في الظلام. كل واحد يربح قيمة الخانة التي يسقط فيها.',
@@ -1399,8 +1399,8 @@
     discH: 'Wichtig', disc: 'Eine Fehlfunktion macht alle Gewinne und Spiele ungültig. Eine stabile Internetverbindung ist erforderlich. Bei einer Unterbrechung lade das Spiel neu, um nicht abgeschlossene Runden zu beenden. Der erwartete Ertrag wird über viele Spiele berechnet. Die Spielanzeige repräsentiert kein physisches Gerät und dient nur der Veranschaulichung. Gewinne werden nach dem vom Remote Game Server erhaltenen Betrag abgerechnet und nicht nach Ereignissen im Webbrowser. TM und © 2026 Engine.'
   };
   S.de = {
-    bet: 'SPIEL', plusHint: 'ORAKEL+: Boost bei ≈ 3 von 4 Drehungen · Spielbetrag ×1,1', cost: 'SPIELEN FÜR', sessWag: 'Gespielt',
-    rulesPlus: 'Modus ORAKEL+: Spielbetrag ×1,1, das Orakel erscheint bei ≈ 3 von 4 Drehungen. Gleicher RTP (≈ 96 %).',
+    bet: 'SPIEL', plusHint: 'ORAKEL+: Boost bei ≈ {opp} % der Drehungen · Spielbetrag ×1,1', cost: 'SPIELEN FÜR', sessWag: 'Gespielt',
+    rulesPlus: 'Modus ORAKEL+: Spielbetrag ×1,1, das Orakel erscheint bei ≈ {opp} % der Drehungen. Gleicher RTP (≈ 96 %).',
     buyBtn: 'BONUS HOLEN', buyTitle: 'BONUS HOLEN', buySub: 'Öffne direkt einen Bonus, ohne das Rad. Spielbar für: Spielbetrag × Multiplikator. Die Wut des Anubis kann ihn trotzdem ergreifen.',
     buyPrice: 'SPIELBAR FÜR', buyNow: 'HOLEN', buyOn: 'Bonuszugang', resumed: 'Unterbrochene Runde: Gewinn hinzugefügt',
     scarabSub: 'Drei Skarabäen stürzen durch die Dunkelheit. Jeder gewinnt das Feld, in dem er landet.',
@@ -1511,8 +1511,8 @@
     discH: 'Importante', disc: 'Un mal funcionamiento anula todos los premios y partidas. Se requiere una conexión a internet estable. En caso de desconexión, vuelve a cargar el juego para terminar las rondas inconclusas. El retorno esperado se calcula a lo largo de muchas partidas. La pantalla del juego no representa ningún dispositivo físico y es solo ilustrativa. Los premios se liquidan según el importe recibido del Remote Game Server y no según los eventos del navegador web. TM y © 2026 Engine.'
   };
   S.es = {
-    bet: 'JUEGO', plusHint: 'ORÁCULO+: potenciador en ≈ 3 de cada 4 giros · importe de juego ×1,1', cost: 'JUGAR POR', sessWag: 'Jugado',
-    rulesPlus: 'Modo ORÁCULO+: importe de juego ×1,1, el Oráculo aparece en ≈ 3 de cada 4 giros. Mismo RTP (≈ 96 %).',
+    bet: 'JUEGO', plusHint: 'ORÁCULO+: potenciador en ≈ {opp} % de los giros · importe de juego ×1,1', cost: 'JUGAR POR', sessWag: 'Jugado',
+    rulesPlus: 'Modo ORÁCULO+: importe de juego ×1,1, el Oráculo aparece en ≈ {opp} % de los giros. Mismo RTP (≈ 96 %).',
     buyBtn: 'OBTENER BONUS', buyTitle: 'OBTENER BONUS', buySub: 'Abre un bonus directamente, sin pasar por la rueda. Jugable por: importe de juego × multiplicador. La Furia de Anubis aún puede tomarlo.',
     buyPrice: 'JUGABLE POR', buyNow: 'OBTENER', buyOn: 'Acceso a bonus', resumed: 'Ronda interrumpida: premio añadido',
     scarabSub: 'Tres escarabajos caen en la oscuridad. Cada uno gana la casilla donde aterriza.',
@@ -1622,8 +1622,8 @@
     discH: 'Tärkeää', disc: 'Toimintahäiriö mitätöi kaikki voitot ja pelit. Vakaa internetyhteys on välttämätön. Yhteyden katketessa lataa peli uudelleen saattaaksesi keskeneräiset kierrokset loppuun. Odotettu tuotto lasketaan monen pelin perusteella. Pelin näyttö ei edusta mitään fyysistä laitetta ja on vain havainnollistava. Voitot selvitetään Remote Game Serveriltä saadun summan mukaan, ei verkkoselaimen tapahtumien mukaan. TM ja © 2026 Engine.'
   };
   S.fi = {
-    bet: 'PELI', plusHint: 'ORAAKKELI+: tehostus ≈ 3 pyöräytyksellä 4:stä · pelisumma ×1,1', cost: 'PELIARVO', sessWag: 'Pelattu',
-    rulesPlus: 'ORAAKKELI+-tila: pelisumma ×1,1, Oraakkeli ilmestyy ≈ 3 pyöräytyksellä 4:stä. Sama RTP (≈ 96 %).',
+    bet: 'PELI', plusHint: 'ORAAKKELI+: tehostus ≈ {opp} %:lla pyöräytyksistä · pelisumma ×1,1', cost: 'PELIARVO', sessWag: 'Pelattu',
+    rulesPlus: 'ORAAKKELI+-tila: pelisumma ×1,1, Oraakkeli ilmestyy ≈ {opp} %:lla pyöräytyksistä. Sama RTP (≈ 96 %).',
     buyBtn: 'AVAA BONUS', buyTitle: 'AVAA BONUS', buySub: 'Avaa bonus suoraan ohittaen rata. Pelattavissa arvolla: pelisumma × kerroin. Anubiksen raivo voi silti ottaa sen haltuunsa.',
     buyPrice: 'PELIARVO', buyNow: 'AVAA', buyOn: 'Suora bonuspääsy', resumed: 'Keskeytynyt kierros: voitto lisätty',
     scarabSub: 'Kolme skarabeusta syöksyy pimeyteen. Kukin voittaa ruudun, johon se putoaa.',
@@ -1725,8 +1725,8 @@
     discH: 'महत्वपूर्ण', disc: 'खराबी होने पर सभी जीत और खेल रद्द हो जाते हैं। एक स्थिर इंटरनेट कनेक्शन आवश्यक है। कनेक्शन टूटने पर अधूरे राउंड पूरे करने के लिए गेम फिर से लोड करें। अपेक्षित रिटर्न की गणना बहुत सारे खेलों पर की जाती है। गेम का प्रदर्शन किसी भौतिक उपकरण का प्रतिनिधित्व नहीं करता और केवल उदाहरण के लिए है। जीत का हिसाब Remote Game Server से मिली राशि के अनुसार होता है, वेब ब्राउज़र की घटनाओं के अनुसार नहीं। TM और © 2026 Engine।'
   };
   S.hi = {
-    bet: 'खेल', plusHint: 'ओरेकल+: ≈ 4 में से 3 स्पिन पर बूस्ट · खेल राशि ×1.1', cost: 'खेल मूल्य', sessWag: 'खेला गया',
-    rulesPlus: 'ओरेकल+ मोड: खेल राशि ×1.1, ओरेकल ≈ 4 में से 3 स्पिन पर आता है। समान RTP (≈ 96%)।',
+    bet: 'खेल', plusHint: 'ओरेकल+: ≈ {opp}% स्पिन पर बूस्ट · खेल राशि ×1.1', cost: 'खेल मूल्य', sessWag: 'खेला गया',
+    rulesPlus: 'ओरेकल+ मोड: खेल राशि ×1.1, ओरेकल ≈ {opp}% स्पिन पर आता है। समान RTP (≈ 96%)।',
     buyBtn: 'बोनस पाएँ', buyTitle: 'बोनस पाएँ', buySub: 'चक्र छोड़कर सीधे बोनस खोलें। खेलने योग्य: खेल राशि × गुणक। अनुबिस का क्रोध फिर भी इसे छीन सकता है।',
     buyPrice: 'खेल मूल्य', buyNow: 'पाएँ', buyOn: 'बोनस एक्सेस', resumed: 'अधूरा राउंड: जीत जोड़ दी गई',
     scarabSub: 'तीन स्कारब अंधकार में गिरते हैं। हर एक उस खाने की जीत पाता है जहाँ वह गिरता है।',
@@ -1836,8 +1836,8 @@
     discH: 'Penting', disc: 'Kerusakan membatalkan semua kemenangan dan permainan. Koneksi internet yang stabil diperlukan. Jika terputus, muat ulang permainan untuk menyelesaikan ronde yang belum selesai. Hasil yang diharapkan dihitung dari banyak permainan. Tampilan permainan tidak mewakili perangkat fisik apa pun dan hanya bersifat ilustrasi. Kemenangan dihitung berdasarkan jumlah yang diterima dari Remote Game Server dan bukan dari kejadian di peramban web. TM dan © 2026 Engine.'
   };
   S.id = {
-    bet: 'MAIN', plusHint: 'ORAKEL+: boost pada ≈ 3 dari 4 putaran · jumlah main ×1,1', cost: 'NILAI MAIN', sessWag: 'Dimainkan',
-    rulesPlus: 'Mode ORAKEL+: jumlah main ×1,1, Orakel muncul pada ≈ 3 dari 4 putaran. RTP sama (≈ 96 %).',
+    bet: 'MAIN', plusHint: 'ORAKEL+: boost pada ≈ {opp} % putaran · jumlah main ×1,1', cost: 'NILAI MAIN', sessWag: 'Dimainkan',
+    rulesPlus: 'Mode ORAKEL+: jumlah main ×1,1, Orakel muncul pada ≈ {opp} % putaran. RTP sama (≈ 96 %).',
     buyBtn: 'AMBIL BONUS', buyTitle: 'AMBIL BONUS', buySub: 'Buka bonus langsung tanpa melewati roda. Dapat dimainkan seharga: jumlah main × pengali. Amarah Anubis tetap dapat mengambil alihnya.',
     buyPrice: 'NILAI MAIN', buyNow: 'AMBIL', buyOn: 'Akses bonus', resumed: 'Ronde terputus: kemenangan ditambahkan',
     scarabSub: 'Tiga kumbang menukik ke dalam gelap. Masing-masing memenangkan kotak tempatnya mendarat.',
@@ -1940,8 +1940,8 @@
     discH: '重要', disc: '不具合があった場合、すべての勝利とプレイは無効になります。安定したインターネット接続が必要です。切断された場合は、ゲームを再読み込みして未完了のラウンドを終了してください。期待還元率は多数のプレイにわたって計算されます。ゲームの表示は物理的な機器を表すものではなく、説明のためのものです。勝利はウェブブラウザ内のイベントではなく、Remote Game Serverから受け取った金額に基づいて確定されます。TM および © 2026 Engine。'
   };
   S.ja = {
-    bet: 'プレイ', plusHint: '神託+: 4回中およそ3回でブースト · プレイ額 ×1.1', cost: 'プレイ価値', sessWag: 'プレイ総額',
-    rulesPlus: '神託+モード: プレイ額 ×1.1、4回中およそ3回で神託が現れます。RTPは同じ (約96%)。',
+    bet: 'プレイ', plusHint: '神託+: およそ{opp}%の回でブースト · プレイ額 ×1.1', cost: 'プレイ価値', sessWag: 'プレイ総額',
+    rulesPlus: '神託+モード: プレイ額 ×1.1、およそ{opp}%の回で神託が現れます。RTPは同じ (約96%)。',
     buyBtn: 'ボーナスを開く', buyTitle: 'ボーナスを開く', buySub: '輪を飛ばしてボーナスを直接開きます。プレイ価値 = プレイ額 × 倍率。アヌビスの怒りに奪われることもあります。',
     buyPrice: 'プレイ価値', buyNow: '開く', buyOn: 'ボーナス直接開放',
     scarabSub: '3匹のスカラベが闇へ落ちる。それぞれ落ちたマスの獲得分を得る。', sayWrong: 'もう一方の皿が重い: 獲得なし',
@@ -2047,8 +2047,8 @@
     discH: '중요', disc: '오작동 시 모든 당첨과 플레이는 무효가 됩니다. 안정적인 인터넷 연결이 필요합니다. 연결이 끊기면 게임을 다시 불러와 끝나지 않은 라운드를 마무리하세요. 기대 환원율은 많은 횟수의 플레이를 기준으로 계산됩니다. 게임 화면은 어떠한 물리적 장치도 나타내지 않으며 설명용입니다. 당첨은 웹 브라우저의 이벤트가 아니라 Remote Game Server에서 받은 금액에 따라 정산됩니다. TM 및 © 2026 Engine.'
   };
   S.ko = {
-    bet: '플레이', plusHint: '신탁+: 4회 중 약 3회 부스트 · 플레이 금액 ×1.1', cost: '플레이 가치', sessWag: '플레이 합계',
-    rulesPlus: '신탁+ 모드: 플레이 금액 ×1.1, 4회 중 약 3회 신탁이 나타납니다. RTP 동일 (약 96%).',
+    bet: '플레이', plusHint: '신탁+: 약 {opp}%의 회전에서 부스트 · 플레이 금액 ×1.1', cost: '플레이 가치', sessWag: '플레이 합계',
+    rulesPlus: '신탁+ 모드: 플레이 금액 ×1.1, 약 {opp}%의 회전에서 신탁이 나타납니다. RTP 동일 (약 96%).',
     buyBtn: '보너스 열기', buyTitle: '보너스 열기', buySub: '바퀴를 건너뛰고 보너스를 바로 엽니다. 플레이 가치 = 플레이 금액 × 배수. 아누비스의 분노가 가로챌 수도 있습니다.',
     buyPrice: '플레이 가치', buyNow: '열기', buyOn: '보너스 바로 열기',
     splashDemo: '데모 · 플레이 코인 · 책임감 있게 즐기세요', infoTitle: '규칙 및 당첨표', demo: '플레이 코인 — 데모입니다. 표시된 금액은 실제가 아닙니다.',
@@ -2158,8 +2158,8 @@
     discH: 'Ważne', disc: 'Awaria unieważnia wszystkie wygrane i gry. Wymagane jest stabilne połączenie z internetem. W razie rozłączenia wczytaj grę ponownie, aby dokończyć niedokończone rundy. Oczekiwany zwrot jest obliczany na podstawie wielu gier. Wyświetlany obraz gry nie przedstawia żadnego fizycznego urządzenia i służy wyłącznie jako ilustracja. Wygrane są rozliczane według kwoty otrzymanej z Remote Game Server, a nie według zdarzeń w przeglądarce. TM i © 2026 Engine.'
   };
   S.pl = {
-    bet: 'GRA', plusHint: 'WYROCZNIA+: wzmocnienie w ≈ 3 z 4 obrotów · kwota gry ×1,1', cost: 'GRA ZA', sessWag: 'Zagrano',
-    rulesPlus: 'Tryb WYROCZNIA+: kwota gry ×1,1, Wyrocznia pojawia się w ≈ 3 z 4 obrotów. Ten sam RTP (≈ 96 %).',
+    bet: 'GRA', plusHint: 'WYROCZNIA+: wzmocnienie w ≈ {opp} % obrotów · kwota gry ×1,1', cost: 'GRA ZA', sessWag: 'Zagrano',
+    rulesPlus: 'Tryb WYROCZNIA+: kwota gry ×1,1, Wyrocznia pojawia się w ≈ {opp} % obrotów. Ten sam RTP (≈ 96 %).',
     buyBtn: 'WEŹ BONUS', buyTitle: 'WEŹ BONUS', buySub: 'Otwórz bonus od razu, z pominięciem koła. Do zagrania za: kwota gry × mnożnik. Gniew Anubisa nadal może go przejąć.',
     buyPrice: 'DO ZAGRANIA ZA', buyNow: 'WEŹ', buyOn: 'Dostęp do bonusów', resumed: 'Przerwana runda: wygrana dodana',
     scarabSub: 'Trzy skarabeusze spadają w ciemność. Każdy wygrywa pole, w które trafi.',
@@ -2269,8 +2269,8 @@
     discH: 'Importante', disc: 'O mau funcionamento anula todos os ganhos e partidas. É necessária uma conexão de internet estável. Em caso de desconexão, recarregue o jogo para concluir as rodadas inacabadas. O retorno esperado é calculado ao longo de muitas partidas. A tela do jogo não representa nenhum dispositivo físico e serve apenas como ilustração. Os ganhos são liquidados conforme o valor recebido do Remote Game Server e não conforme eventos do navegador. TM e © 2026 Engine.'
   };
   S.pt = {
-    bet: 'JOGO', plusHint: 'ORÁCULO+: boost em ≈ 3 de cada 4 giros · valor jogado ×1,1', cost: 'JOGAR POR', sessWag: 'Jogado',
-    rulesPlus: 'Modo ORÁCULO+: valor jogado ×1,1, o Oráculo aparece em ≈ 3 de cada 4 giros. Mesmo RTP (≈ 96 %).',
+    bet: 'JOGO', plusHint: 'ORÁCULO+: boost em ≈ {opp} % de los giros · valor jogado ×1,1', cost: 'JOGAR POR', sessWag: 'Jogado',
+    rulesPlus: 'Modo ORÁCULO+: valor jogado ×1,1, o Oráculo aparece em ≈ {opp} % de los giros. Mesmo RTP (≈ 96 %).',
     buyBtn: 'OBTER BÔNUS', buyTitle: 'OBTER BÔNUS', buySub: 'Abra um bônus diretamente, sem passar pela roda. Jogável por: valor jogado × multiplicador. A Fúria de Anúbis ainda pode tomá-lo.',
     buyPrice: 'JOGÁVEL POR', buyNow: 'OBTER', buyOn: 'Acesso a bônus', resumed: 'Rodada interrompida: ganho adicionado',
     scarabSub: 'Três escaravelhos mergulham na escuridão. Cada um ganha a casa onde cai.',
@@ -2380,8 +2380,8 @@
     discH: 'Важно', disc: 'Неисправность аннулирует все выигрыши и игры. Необходимо стабильное интернет-соединение. В случае разрыва соединения перезагрузите игру, чтобы завершить незавершённые раунды. Ожидаемый возврат рассчитывается на большом числе игр. Изображение игры не представляет какое-либо физическое устройство и служит только иллюстрацией. Выигрыши рассчитываются по сумме, полученной от Remote Game Server, а не по событиям в веб-браузере. TM и © 2026 Engine.'
   };
   S.ru = {
-    bet: 'ИГРА', plusHint: 'ОРАКУЛ+: усиление в ≈ 3 из 4 вращений · сумма игры ×1,1', cost: 'ИГРА НА', sessWag: 'Сыграно',
-    rulesPlus: 'Режим ОРАКУЛ+: сумма игры ×1,1, Оракул появляется в ≈ 3 из 4 вращений. Тот же RTP (≈ 96 %).',
+    bet: 'ИГРА', plusHint: 'ОРАКУЛ+: усиление в ≈ {opp} % вращений · сумма игры ×1,1', cost: 'ИГРА НА', sessWag: 'Сыграно',
+    rulesPlus: 'Режим ОРАКУЛ+: сумма игры ×1,1, Оракул появляется в ≈ {opp} % вращений. Тот же RTP (≈ 96 %).',
     buyBtn: 'ПОЛУЧИТЬ БОНУС', buyTitle: 'ПОЛУЧИТЬ БОНУС', buySub: 'Откройте бонус сразу, минуя колесо. Можно сыграть на: сумма игры × множитель. Ярость Анубиса всё равно может его перехватить.',
     buyPrice: 'ИГРА НА', buyNow: 'ПОЛУЧИТЬ', buyOn: 'Доступ к бонусам', resumed: 'Прерванный раунд: выигрыш добавлен',
     scarabSub: 'Три скарабея падают во тьму. Каждый получает выигрыш клетки, в которую упадёт.',
@@ -2490,8 +2490,8 @@
     discH: 'Önemli', disc: 'Arıza, tüm kazançları ve oyunları geçersiz kılar. Kesintisiz bir internet bağlantısı gereklidir. Bağlantı koparsa, tamamlanmamış turları bitirmek için oyunu yeniden yükle. Beklenen getiri, çok sayıda oyun üzerinden hesaplanır. Oyun ekranı hiçbir fiziksel cihazı temsil etmez ve yalnızca örnekleme amaçlıdır. Kazançlar, web tarayıcısındaki olaylara göre değil, Remote Game Server’dan alınan tutara göre hesaplanır. TM ve © 2026 Engine.'
   };
   S.tr = {
-    bet: 'OYUN', plusHint: 'KEHANET+: dönüşlerin ≈ 3/4’ünde güçlendirme · oyun tutarı ×1,1', cost: 'OYUN DEĞERİ', sessWag: 'Oynanan',
-    rulesPlus: 'KEHANET+ modu: oyun tutarı ×1,1, Kehanet dönüşlerin ≈ 3/4’ünde belirir. Aynı RTP (≈ %96).',
+    bet: 'OYUN', plusHint: 'KEHANET+: dönüşlerin ≈ %{opp} kadarında güçlendirme · oyun tutarı ×1,1', cost: 'OYUN DEĞERİ', sessWag: 'Oynanan',
+    rulesPlus: 'KEHANET+ modu: oyun tutarı ×1,1, Kehanet dönüşlerin ≈ %{opp} kadarında belirir. Aynı RTP (≈ %96).',
     buyBtn: 'BONUS AÇ', buyTitle: 'BONUS AÇ', buySub: 'Çarkı atlayarak doğrudan bir bonus aç. Oynanabilir değer = oyun tutarı × çarpan. Anubis’in Gazabı yine de onu devralabilir.',
     buyPrice: 'OYUN DEĞERİ', buyNow: 'AÇ', buyOn: 'Bonus erişimi', resumed: 'Yarıda kalan tur: kazanç eklendi',
     scarabSub: 'Üç scarab karanlığa dalıyor. Her biri düştüğü hücreyi kazanır.',
@@ -2601,8 +2601,8 @@
     discH: 'Quan trọng', disc: 'Sự cố làm mất hiệu lực mọi phần thắng và mọi ván chơi. Cần có kết nối internet ổn định. Nếu bị ngắt kết nối, hãy tải lại trò chơi để hoàn tất các ván dang dở. Mức hoàn lại kỳ vọng được tính trên nhiều ván chơi. Màn hình trò chơi không đại diện cho bất kỳ thiết bị vật lý nào và chỉ mang tính minh họa. Phần thắng được ghi nhận theo số lượng nhận từ Remote Game Server chứ không theo các sự kiện trong trình duyệt web. TM và © 2026 Engine.'
   };
   S.vi = {
-    bet: 'CHƠI', plusHint: 'THẦN LỜI+: tăng lực ở ≈ 3 trong 4 lượt quay · mức chơi ×1,1', cost: 'GIÁ TRỊ CHƠI', sessWag: 'Đã chơi',
-    rulesPlus: 'Chế độ THẦN LỜI+: mức chơi ×1,1, Thần Lời xuất hiện ở ≈ 3 trong 4 lượt quay. RTP như nhau (≈ 96 %).',
+    bet: 'CHƠI', plusHint: 'THẦN LỜI+: tăng lực ở ≈ {opp} % lượt quay · mức chơi ×1,1', cost: 'GIÁ TRỊ CHƠI', sessWag: 'Đã chơi',
+    rulesPlus: 'Chế độ THẦN LỜI+: mức chơi ×1,1, Thần Lời xuất hiện ở ≈ {opp} % lượt quay. RTP như nhau (≈ 96 %).',
     buyBtn: 'NHẬN BONUS', buyTitle: 'NHẬN BONUS', buySub: 'Mở thẳng một bonus, bỏ qua bánh xe. Chơi được với: mức chơi × hệ số. Thịnh Nộ của Anubis vẫn có thể chiếm nó.',
     buyPrice: 'GIÁ TRỊ CHƠI', buyNow: 'NHẬN', buyOn: 'Truy cập bonus', resumed: 'Ván bị gián đoạn: phần thắng đã được cộng',
     scarabSub: 'Ba con bọ hung lao xuống bóng tối. Mỗi con thắng ô nó rơi vào.',
@@ -2706,8 +2706,8 @@
     discH: '重要提示', disc: '发生故障时，所有获胜和游戏均无效。需要稳定的互联网连接。如果连接中断，请重新加载游戏以完成未结束的回合。预期回报率是基于大量游戏计算的。游戏画面不代表任何实体设备，仅供示意。获胜按从 Remote Game Server 收到的数额结算，而不是按网页浏览器中的事件结算。TM 和 © 2026 Engine。'
   };
   S.zh = {
-    bet: '游玩', plusHint: '神谕+: 约四次中三次获得加成 · 游玩额 ×1.1', cost: '游玩价值', sessWag: '已游玩',
-    rulesPlus: '神谕+模式: 游玩额 ×1.1，神谕约在四次旋转中出现三次。RTP 相同 (约 96%)。',
+    bet: '游玩', plusHint: '神谕+: 约 {opp}% 的旋转获得加成 · 游玩额 ×1.1', cost: '游玩价值', sessWag: '已游玩',
+    rulesPlus: '神谕+模式: 游玩额 ×1.1，神谕约在 {opp}% 的旋转中出现。RTP 相同 (约 96%)。',
     buyBtn: '开启奖励', buyTitle: '开启奖励', buySub: '跳过转轮，直接开启奖励。游玩价值 = 游玩额 × 倍数。阿努比斯之怒仍可能夺走它。',
     buyPrice: '游玩价值', buyNow: '开启', buyOn: '直接开启奖励', buyNoFunds: '余额不足，无法开启此奖励',
     splashDemo: '演示 · 游戏金币 · 请理性游戏', infoTitle: '规则与获胜表', demo: '游戏金币 — 演示版，所示金额并非真实。',

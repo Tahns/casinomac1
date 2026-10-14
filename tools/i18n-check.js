@@ -153,4 +153,39 @@ CODES.forEach(function (l) {
   else ok(wt.length === 5 && d.tiers.every(function (n) { return rt.indexOf(n) >= 0; }) && wt.every(function (w) { return new RegExp('×' + w + '(?!\\d)').test(rt); }), l + ' : les règles citent les paliers et les seuils ×' + wt.join(', ×'));
 });
 ok(!/jusqu.à 200×|up to 200×/.test(mainSrc), 'plus de description chiffrée en dur dans main.js');
+
+// [266] chances de l'Oracle citées aux joueurs = M.MODES.*.oracle (dictionnaire ET bloc social, 16 langues) ; jamais « 1 tour sur 3 » / « 3 sur 4 »
+var oStd = Math.round(M.MODES.std.oracle * 100), oPlus = Math.round(M.MODES.plus.oracle * 100);
+function pctNums(t) { var o = [], m, re = /(\d+(?:[.,]\d+)?)\s*[%٪]|[%٪]\s*(\d+(?:[.,]\d+)?)/g; while ((m = re.exec(t))) o.push(parseFloat((m[1] || m[2]).replace(',', '.'))); return o; }
+var SOCa = JSON.parse(JSON.stringify(sandbox.window.I18N_SOCIAL || {})); I.fillMath(SOCa);
+CODES.forEach(function (l) {
+  var src = [['dictionnaire', D[l]], ['social', SOCa[l] || {}]], bad = [];
+  src.forEach(function (sr) {
+    var d = sr[1];
+    [['plusHint', d.plusHint, oPlus], ['rulesPlus', d.rulesPlus, oPlus], ['rules[1]', d.rules && d.rules[1], oStd]].forEach(function (c) {
+      if (c[1] == null) return;   // le bloc social ne redéfinit pas rules[1] : il reprend celui du dictionnaire
+      var n = pctNums(c[1]).filter(function (x) { return x !== 96; });   // 96 % = RTP
+      if (n.length !== 1 || n[0] !== c[2]) bad.push(sr[0] + '.' + c[0] + ' (' + n.join('/') + ' ≠ ' + c[2] + ')');
+    });
+  });
+  ok(bad.length === 0, l + ' : les chances de l\'Oracle citées (' + oStd + ' % Standard, ' + oPlus + ' % ORACLE+) viennent des maths' + (bad.length ? ' : ' + bad.join(' | ') : ''));
+});
+// tableau « boosts de l'Oracle » (js/rules.js) : chaque chance affichée = poids / total à sa précision (2 décimales sous 0,1 %, jamais 0,06 arrondi à 0,1)
+vm.runInContext(fs.readFileSync(path.join(root, 'js/rules.js'), 'utf8'), sandbox);
+CODES.forEach(function (l) {
+  I.setLang(l);
+  var html = sandbox.window.Rules.html(), h = html.indexOf('<h3>' + I.block('rules').oracleH + '</h3>'), tb = html.slice(h, html.indexOf('</table>', h)), bad = [];
+  var rows = tb.split('<tr>').slice(2), nums = M.ORACLE_BOOST.num, bons = M.ORACLE_BOOST.bonus, sN = nums.reduce(function (a, t) { return a + t[1]; }, 0), sB = bons.reduce(function (a, t) { return a + t[1]; }, 0);
+  rows.forEach(function (r) {
+    var cells = r.split(/<td[^>]*>/).slice(1).map(function (c) { return c.replace(/<[^>]*>/g, ''); }), b = parseFloat(cells[0].replace(/[^\d.,]/g, '').replace(',', '.'));
+    [[cells[1], nums, sN], [cells[2], bons, sB]].forEach(function (c) {
+      var w = 0; c[1].forEach(function (t) { if (t[0] === b) w = t[1]; });
+      if (!w) return;
+      var exact = w / c[2] * 100, txt = c[0].replace(/[\s\u00a0]/g, ''), dec = (/[.,](\d+)/.exec(txt) || [0, ''])[1].length, shown = parseFloat(txt.replace(',', '.'));
+      if (Math.abs(shown - exact) > 0.5 * Math.pow(10, -dec) + 1e-9 || (exact < 0.1 && dec < 2)) bad.push('×' + b + ' : ' + c[0] + ' ≠ ' + exact.toFixed(3));
+    });
+  });
+  ok(rows.length > 0 && bad.length === 0, l + ' : tableau des boosts de l\'Oracle exact (' + rows.length + ' lignes)' + (bad.length ? ' : ' + bad.join(' | ') : ''));
+});
+I.setLang('en');
 console.log(fails ? '\n' + fails + ' échec(s)' : '\ntout est bon'); process.exit(fails ? 1 : 0);

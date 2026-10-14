@@ -11,7 +11,8 @@
   function num(x, d) {   // nombre à la locale de la langue : 1 234,5 (fr) / 1,234.5 (en), au plus d décimales
     return Number(x).toLocaleString(loc(), { minimumFractionDigits: 0, maximumFractionDigits: d == null ? 2 : d }).replace(/ /g, ' ');
   }
-  function pct(x, d) { return num(x, d == null ? 1 : d) + (fr() ? ' %' : '%'); }
+  // [266] une chance sous 0,1 % s'affiche avec 2 décimales (le ×100 de l'Oracle vaut 0,06 %, jamais « 0,1 % »)
+  function pct(x, d) { d = d == null ? 1 : d; if (x > 0 && x < 0.1 && d < 2) d = 2; return num(x, d) + (fr() ? ' %' : '%'); }
   function fill(s, v) { return String(s).replace(/\{(\w+)\}/g, function (m, k) { return v[k] != null ? v[k] : m; }); }
   function sum(tab) { var s = 0; tab.forEach(function (t) { s += t[1]; }); return s; }
   function uniq(a) { return a.filter(function (x, i) { return a.indexOf(x) === i; }); }
