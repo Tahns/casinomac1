@@ -1126,9 +1126,9 @@
     var lastBeat = -1;
     function spinTo(idx, pw) {
       pw = pw == null ? 0.5 : pw;
-      var off = 0.2 + Math.random() * 0.6, target = -(idx + off) * st, rot0 = rot, delta = mod(target - rot0, TAU) + (G.turbo ? 3 : Math.round(3 + pw * 4)) * TAU, prev = rot, pT = G.t;
+      var off = 0.2 + Math.random() * 0.6, target = -(idx + off) * st, rot0 = rot, delta = mod(target - rot0, TAU) + (G.turbo ? 3 : Math.round(2 + pw * 3)) * TAU, prev = rot, pT = G.t;
       S.spinning = true; hl = -1; Sfx.whoosh(); Sfx.furyCharge && Sfx.furyCharge();
-      return G.tween(G.turbo ? 2.4 : 4.2 + pw * 2.6, function (u) { var e = 1 - Math.pow(1 - u, 4.8), nr = rot0 + delta * e; vel = (nr - prev) / Math.max(1 / 240, G.t - pT); prev = nr; pT = G.t; rot = nr; var tn = clamp((u - 0.72) / 0.28, 0, 1), bt = Math.floor(tn * 6); if (tn > 0.3 && bt !== lastBeat) { lastBeat = bt; Sfx.drum(0.15 + 0.3 * tn); } tense = tn; vig = Math.max(vig, tn * 0.8); }, null).then(function () {
+      return G.tween(G.turbo ? 2.4 : 8.5 + pw * 4, function (u) { var e = 1 - Math.pow(1 - u, 4.4), nr = rot0 + delta * e; vel = (nr - prev) / Math.max(1 / 240, G.t - pT); prev = nr; pT = G.t; rot = nr; var tn = clamp((u - 0.55) / 0.45, 0, 1), bt = Math.floor(tn * 6); if (tn > 0.3 && bt !== lastBeat) { lastBeat = bt; Sfx.drum(0.15 + 0.3 * tn); } tense = tn; vig = Math.max(vig, tn * 0.8); }, null).then(function () {
         tense = 0; lastBeat = -1; S.spinning = false; vel = 0; rot = mod(rot, TAU); ptrV -= 4; Sfx.drum(0.3); Sfx.furyHit && Sfx.furyHit(); hl = idx;
       });
     }
