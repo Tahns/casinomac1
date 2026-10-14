@@ -250,13 +250,12 @@
     $('mxMute').textContent = Sfx.isMuted() ? T.soundOff : T.soundOn; $('mxMute').classList.toggle('on', !Sfx.isMuted());
     $('mxMusic').textContent = T.musicShort; $('mxMusic').classList.toggle('on', Sfx.isMusic());
     $('mxReset').textContent = T.resetL;
-    $('btnMix').setAttribute('aria-label', T.mixLabel);
+    $('btnSound').setAttribute('aria-label', T.mixLabel);
   }
-  function toggleMixer(open) { var m = $('mixer'); open = open == null ? m.hidden : open; m.hidden = !open; try { localStorage.setItem('au_mix', open ? '1' : '0'); } catch (e) {} G.layout && G.layout(); $('btnMix').setAttribute('aria-expanded', open ? 'true' : 'false'); if (open) refreshMixer(); }
-  $('btnMix').addEventListener('click', function (e) { e.stopPropagation(); Sfx.unlock(); toggleMixer(); });
-  document.addEventListener('click', function (e) { if (!$('mixer').hidden && !$('mixer').classList.contains('docked') && !$('mixer').contains(e.target) && e.target !== $('btnMix') && !$('btnMix').contains(e.target)) toggleMixer(false); });
-  document.addEventListener('keydown', function (e) { if (e.code === 'Escape' && !$('mixer').hidden && !$('mixer').classList.contains('docked')) { toggleMixer(false); $('btnMix').focus(); } });
-  (function () { var on = true; try { on = localStorage.getItem('au_mix') !== '0'; } catch (e) {} if (on && !(innerHeight < 520 && innerWidth > innerHeight)) { $('mixer').hidden = false; $('btnMix').setAttribute('aria-expanded', 'true'); refreshMixer(); } })();
+  function toggleMixer(open) { var m = $('mixer'); open = open == null ? m.hidden : open; m.hidden = !open; $('btnSound').setAttribute('aria-expanded', open ? 'true' : 'false'); if (open) refreshMixer(); }
+  $('btnSound').addEventListener('click', function (e) { e.stopPropagation(); Sfx.unlock(); toggleMixer(); });
+  document.addEventListener('click', function (e) { if (!$('mixer').hidden && !$('mixer').contains(e.target) && e.target !== $('btnSound') && !$('btnSound').contains(e.target)) toggleMixer(false); });
+  document.addEventListener('keydown', function (e) { if (e.code === 'Escape' && !$('mixer').hidden) { toggleMixer(false); $('btnSound').focus(); } });
   $('mxVol').addEventListener('input', function () { Sfx.unlock(); Sfx.setVolume(this.value / 100); $('mxVolV').textContent = this.value + '%'; save(); });
   $('mxVol').addEventListener('change', function () { Sfx.coin(1); });
   $('mxTone').addEventListener('input', function () { Sfx.unlock(); Sfx.setTone(this.value / 100); $('mxToneV').textContent = this.value + '%'; save(); });
@@ -266,8 +265,7 @@
   $('mxMute').addEventListener('click', function () { Sfx.unlock(); Sfx.setMuted(!Sfx.isMuted()); refreshSound(); save(); });
   $('mxMusic').addEventListener('click', function () { Sfx.unlock(); Sfx.setMusic(!Sfx.isMusic()); refreshMixer(); save(); });
   $('mxReset').addEventListener('click', function () { Sfx.setTone(0.3); Sfx.setPitch(0); Sfx.setVolume(1); Sfx.setMuted(false); Sfx.setMusic(true); refreshSound(); save(); Sfx.coin(1); });
-  $('btnSound').addEventListener('click', function () { Sfx.unlock(); Sfx.setMuted(!Sfx.isMuted()); refreshSound(); save(); });
-  // devise : suit la langue tant que le joueur n'a rien choisi, puis reste celle qu'il a choisie
+    // devise : suit la langue tant que le joueur n'a rien choisi, puis reste celle qu'il a choisie
   function setCurrency(c, explicit) {
     S.cur = c; if (explicit !== false) S.curSet = true; G.currency = c;
     $('btnCur').textContent = G.sym(); $('btnCur').setAttribute('aria-label', I18N.t().currencyL + ' : ' + c);

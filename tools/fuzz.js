@@ -227,7 +227,7 @@ async function start(p) {
 async function dismissModal(p) {
   for (var i = 0; i < 3; i++) { if (await ev(p, "!document.getElementById('modal').hidden")) await p.keyboard.press('Escape'); else break; await p.waitForTimeout(40); }
   if (await ev(p, "!document.getElementById('modal').hidden")) await ev(p, "document.getElementById('modalClose').click()");
-  if (await ev(p, "!document.getElementById('mixer').hidden")) await ev(p, "document.getElementById('btnMix').click()");
+  if (await ev(p, "!document.getElementById('mixer').hidden")) await ev(p, "document.getElementById('btnSound').click()");
 }
 
 // sort d'un état bloqué pour poursuivre la session
@@ -266,9 +266,9 @@ async function perturb(p, url, ep) {
   else if (k === 'resize') { var w = pick([360, 390, 640, 844, 1024, 1366]), h = pick([320, 390, 640, 720, 844, 1024]); await p.setViewportSize({ width: w, height: h }); }
   else if (k === 'hidden') { await ev(p, "window.__vis=true;document.dispatchEvent(new Event('visibilitychange'));0"); await p.waitForTimeout(250); await ev(p, "window.__vis=false;document.dispatchEvent(new Event('visibilitychange'));0"); }
   else if (k === 'freeze') await ev(p, 'var t0=Date.now();while(Date.now()-t0<1500);0');
-  else if (k === 'mixer') { await p.click('#btnMix'); await p.waitForTimeout(60); if (chance(0.5)) await p.click('#btnMix'); }
-  else if (k === 'mute') await p.click('#btnSound');
-  else if (k === 'music') { await p.click('#btnMix'); await p.click('#mxMusic'); await p.click('#btnMix'); }
+  else if (k === 'mixer') { await p.click('#btnSound'); await p.waitForTimeout(60); if (chance(0.5)) await p.click('#btnSound'); }
+  else if (k === 'mute') await p.click('#mxMute');
+  else if (k === 'music') { await p.click('#btnSound'); await p.click('#mxMusic'); await p.click('#btnSound'); }
   else if (k === 'pitch') { await ev(p, "var m=document.getElementById('mxPitch');m.value=" + Math.floor(rnd() * 25 - 12) + ";m.dispatchEvent(new Event('input'));0"); }
   else if (k === 'info') { await p.click('#btnInfo'); await p.waitForTimeout(60); if (chance(0.7)) await p.keyboard.press('Escape'); }
   else if (k === 'turbo') await p.click('#btnTurbo');
