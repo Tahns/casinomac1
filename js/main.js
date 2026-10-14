@@ -75,8 +75,8 @@
   // affiche un montant ; data-l réduit la police quand le texte est long (gros soldes, plafond × plus grosse mise)
   function setMoney(el, v) {
     var t = G.money(v); el.textContent = t;
-    var n = t.length, l = n >= 15 ? 3 : n >= 12 ? 2 : n >= 10 ? 1 : 0;
-    if (el.id === 'bet') l = n >= 10 ? 4 : n >= 9 ? 3 : n >= 7 ? 1 : 0;   // la mise a moins de place (entre − et +)
+    var n = t.length, l = n >= 14 ? 3 : n >= 11 ? 2 : n >= 9 ? 1 : 0;
+    if (el.id === 'bet') l = n >= 10 ? 4 : n >= 8 ? 3 : n >= 6 ? 1 : 0;   // la mise a moins de place (entre − et +)
     el.setAttribute('data-l', String(l));
   }
   var shown = { bal: -1, win: -1 }, cnt = { bal: 0, win: 0 };

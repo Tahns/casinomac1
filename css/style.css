@@ -202,7 +202,7 @@ label{font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--d
   #statBal,.stat.win{grid-area:auto;justify-self:stretch;text-align:center}#statBal{grid-area:bal}.stat.win{grid-area:win}
   #spin{grid-area:spin;justify-self:center}
   .betbox{grid-area:bet;justify-self:stretch}.toggles{grid-area:tgl;justify-self:stretch}
-  .stat,.betbox{min-width:0;padding:15px 8px 8px}.stat b{font-size:17px}
+  .stat,.betbox{min-width:0;padding:15px 16px 8px}.stat b{font-size:17px}
   #spin{width:80px!important}
   .betbox{padding:14px 10px 8px;justify-content:space-between}
   .toggles{grid-template-columns:minmax(0,1fr) minmax(0,1fr);min-width:0}.tgl{min-width:0;width:100%;box-sizing:border-box}.tgl.buy,.tgl.plus{grid-column:1/-1}
