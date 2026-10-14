@@ -791,7 +791,7 @@
     setTimeout(startGame, 3000); // filet de sécurité : ne jamais bloquer le jeu sur une police
   } else startGame();
   // utilitaires de test (?debug)
-  G.AUTO_STEPS = AUTO_STEPS; G.S = S; G.SESS = SESS; G.play = play; G.updateHud = updateHud; G.setWin = setWin; G.BETS = BETS; G.setCurrency = setCurrency; G.applyLang = applyLang; G.lockCurrency = function (on) { S.curLocked = on !== false; curButton(); };
+  G.AUTO_STEPS = AUTO_STEPS; G.STOP_WINS = STOP_WINS; G.S = S; G.SESS = SESS; G.play = play; G.updateHud = updateHud; G.setWin = setWin; G.BETS = BETS; G.setCurrency = setCurrency; G.applyLang = applyLang; G.lockCurrency = function (on) { S.curLocked = on !== false; curButton(); };
   // mode social activé après coup (config.jurisdiction.socialCasino du RGS) : devise et textes sont recalculés
   G.onSocial = function () { var c = pickCurrency(); if (c !== S.cur) setCurrency(c, false); applyLang(); if (G.refreshSplash) G.refreshSplash(); };
   if (/[?&]debug/.test(location.search)) { G.debug = true; }

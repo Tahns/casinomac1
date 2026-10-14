@@ -188,4 +188,17 @@ CODES.forEach(function (l) {
   ok(rows.length > 0 && bad.length === 0, l + ' : tableau des boosts de l\'Oracle exact (' + rows.length + ' lignes)' + (bad.length ? ' : ' + bad.join(' | ') : ''));
 });
 I.setLang('en');
+
+// [235] guide des boutons exact : l'entrée de devise (rang 9) n'existe que si le bouton est visible ; langue = menu des 16 langues ; option d'arrêt sur gain décrite
+CODES.forEach(function (l) {
+  I.setLang(l);
+  var bt = I.block('rules').btn, raw = (l === 'en' || l === 'fr' ? B.rules[l] : X.rules[l]).btn;
+  ok(/€/.test(raw[9][0]) && /\{langs\}/.test(raw[8][1]) && /\{stopwin\}/.test(raw[2][1]) && /\{stops\}/.test(raw[2][1]) && !/FR \/ EN/.test(JSON.stringify(raw)), l + ' : guide des boutons — entrée devise au rang 9, langue = menu de {langs} langues, option d\'arrêt sur gain ({stopwin}) décrite, plus de « FR / EN »');
+  sandbox.window.G = { S: { curLocked: false }, STOP_WINS: [0, 10, 50, 100] }; var shown = sandbox.window.Rules.html();
+  sandbox.window.G.S.curLocked = true; var hiddenCur = sandbox.window.Rules.html(); sandbox.window.G = undefined;
+  var dt = function (h) { return (h.match(/<dt>/g) || []).length; };
+  ok(dt(shown) === raw.length && dt(hiddenCur) === raw.length - 1 && shown.indexOf(raw[9][0]) >= 0 && hiddenCur.indexOf('<dt>' + raw[9][0] + '</dt>') < 0, l + ' : guide — bouton de devise listé seulement s\'il est visible (' + dt(shown) + ' entrées, ' + dt(hiddenCur) + ' quand la devise est imposée)');
+  ok(hiddenCur.indexOf('{') < 0 || !/\{(langs|stopwin|stops)\}/.test(hiddenCur), l + ' : guide — marqueurs {langs} {stopwin} {stops} remplacés');
+});
+I.setLang('en');
 console.log(fails ? '\n' + fails + ' échec(s)' : '\ntout est bon'); process.exit(fails ? 1 : 0);

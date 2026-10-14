@@ -25,6 +25,7 @@
   function p(t) { return '<p>' + t + '</p>'; }
   function h3(t) { return '<h3>' + esc(t) + '</h3>'; }
 
+  var BTN_CUR = 9;   // rang de l'entrée « devise » dans le guide des boutons (R.btn) : tools/i18n-check.js vérifie qu'elle porte bien le bouton de devise
   function html() {
     var R = root.I18N.block('rules'), T = root.I18N.t(), S = root.HOA_STATS || {}, G = root.G, k;
     var KN = function (id) { return String(T.kinds[id]).replace('\n', ' '); };
@@ -39,6 +40,8 @@
       rows: M.SCARAB_ROWS, tiles: M.CRYPT_CELLS, picks: M.VAULT_BASE_PICKS, keys: M.VAULT_KEY_PICKS, cap: M.VAULT_PICK_CAP, fin: M.VAULT_FINISH,
       tier: Math.pow(2, M.HAND_MAX_CHAIN), min: M.HAND_MIN_N, segs: segs.length, dbl: dbl, dblc: dbl / M.HAND_COLORS.length,
       bands: bandTxt.join(', '), spin: T.spin, stop: T.stop, auto: T.auto, turbo: T.turbo, buy: T.buyBtn, plus: T.oraclePlus,
+      langs: (root.I18N.langs || []).length || 16,
+      stopwin: (root.I18N.rgs().autoStopWin || ''), stops: (G && G.STOP_WINS ? G.STOP_WINS : [0, 10, 50, 100]).filter(function (x) { return x > 0; }).map(function (x) { return '×' + x; }).join(' / '),
       autos: (G && G.AUTO_STEPS ? G.AUTO_STEPS : [10, 25, 50, 100, Infinity]).filter(function (x) { return x > 0; }).map(function (x) { return isFinite(x) ? x : '∞'; }).join(', ')
     };
     var wheelNums = sortNum(uniq(segs.filter(function (s) { return s.n; }).map(function (s) { return s.n; })));
@@ -85,7 +88,9 @@
 
     /* relances et re-déclenchements, boutons, avertissement */
     out += h3(R.retrigH) + R.retrig.map(function (t) { return p('• ' + esc(f(t))); }).join('');
-    out += h3(R.btnH) + '<dl class="guide">' + R.btn.map(function (b) { return '<dt>' + esc(f(b[0])) + '</dt><dd>' + esc(f(b[1])) + '</dd>'; }).join('') + '</dl>';
+    // [235] le guide ne décrit que les commandes présentes : le bouton de devise (entrée BTN_CUR) est caché quand la devise est imposée (session RGS, ?currency=)
+    var curHidden = !!(G && G.S && G.S.curLocked);
+    out += h3(R.btnH) + '<dl class="guide">' + R.btn.filter(function (b, i) { return !(i === BTN_CUR && curHidden); }).map(function (b) { return '<dt>' + esc(f(b[0])) + '</dt><dd>' + esc(f(b[1])) + '</dd>'; }).join('') + '</dl>';
     out += h3(R.discH) + '<p class="disc">' + esc(R.disc) + '</p>';
     return out;
   }

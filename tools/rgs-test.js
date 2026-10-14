@@ -186,6 +186,10 @@ var FINISH = `(async()=>{ G.turbo=true; G.speed=1.6; var g=0; while(G.S.busy&&g<
   await clk(s.p, '#btnInfo'); await s.p.waitForTimeout(200);
   var rs = await s.p.evaluate("({btn:!!document.getElementById('optReset'), txt:document.getElementById('modalBody').textContent, guide:Array.prototype.map.call(document.querySelectorAll('dl.guide dd'),function(e){return e.textContent}).join(' | ')})");
   ok(!rs.btn && rs.txt.indexOf(LBL_RESET_FR) < 0 && !/réinitialisation du solde|reset the balance/i.test(rs.guide), '[222] mode RGS : ni bouton #optReset ni mention dans le guide des boutons');
+  // [235] guide des boutons en session RGS : pas de bouton de devise (caché), « Langue » = menu des 16 langues, option d'arrêt sur gain décrite
+  var gd = await s.p.evaluate("({dt:Array.prototype.map.call(document.querySelectorAll('dl.guide dt'),function(e){return e.textContent}), dd:Array.prototype.map.call(document.querySelectorAll('dl.guide dd'),function(e){return e.textContent}), curBtn:getComputedStyle(document.getElementById('btnCur')).display, stop:I18N.rgs().autoStopWin})");
+  ok(gd.curBtn === 'none' && gd.dt.indexOf('€ / $') < 0 && gd.dt.indexOf('FR / EN') < 0 && gd.dt.indexOf('Langue') >= 0 && /16/.test(gd.dd[gd.dt.indexOf('Langue')]), '[235] session RGS : bouton de devise caché et absent du guide, « Langue » décrit comme un menu de 16 langues');
+  ok(gd.dd.some(function (t) { return t.indexOf('« ' + gd.stop + ' »') >= 0 && /×10/.test(t); }), '[235] le guide décrit l\'option « ' + gd.stop + ' » du panneau AUTO');
   await s.p.evaluate("document.getElementById('modalClose').click()");
   ok((await s.p.evaluate('G.S.balance')) === 0 && plays(m0).length === 0, '[222] solde local toujours 0 après ouverture des réglages, aucune requête /wallet/play');
   await done(s);
