@@ -164,3 +164,28 @@ Marques et droits :
 - Rapport du Copyright Office, Partie 2 (29 janvier 2025), résumé : https://www.akingump.com/en/insights/ai-law-and-regulation-tracker/us-copyright-office-releases-part-2-of-ai-report
 
 Dernier rappel : ce document est une aide à la décision. Seul un professionnel qualifié peut apprécier un risque de contrefaçon, et aucune recherche par mots-clés ne le supprime.
+
+## 6. État après corrections — client RGS et flux de paris (guidelines 181, 183, 274, 242, 187, 221, 222, 31, 104)
+
+Ce paragraphe décrit uniquement ce qui a été fait pour le client RGS ; il ne prétend pas que le jeu est conforme dans son ensemble (voir les autres sections et les autres chantiers : devises, mode social, rediffusion, langues).
+
+**Fait (js/rgs.js, js/main.js, tools/mock-rgs.js, tools/rgs-test.js)**
+- Mode RGS actif dès qu'un `sessionID` ou un `rgs_url` est présent. Paramètres lus : `sessionID`, `rgs_url`, `lang` (inconnue -> anglais), `currency` (EUR/USD seulement pour l'instant), `device`, `social`, `demo`. Aucun hôte codé en dur ; un hôte nu reçoit `https://`. Sans ces paramètres : démo locale inchangée (artifact, tests).
+- [181] `/wallet/authenticate` au lancement : solde, `betLevels`, `defaultBetLevel`, `minBet`/`maxBet`/`stepBet` (filtre et génération de secours), round actif.
+- [183] `/wallet/play { sessionID, amount en micro-unités, mode }` (modes `std`, `plus`, `buy_scarab`, `buy_weigh`, `buy_vault`, `buy_fury`) ; le tour joué vient de `round.state` (adaptateur `RGS.bookToRound`, qui lit le format de tools/stake-export.js) ; le gain fait foi via `payoutMultiplier`. `/bet/event` est envoyé à chaque tour de roue terminé (sans attendre la réponse).
+- [274] `rgs_url` absent ou invalide (ou `authenticate` en échec) : écran de blocage plein écran avec message, aucune mise possible, aucun repli local ni autre hôte.
+- [242] niveaux de mise = ceux de la config (jamais de liste codée en dur en mode RGS), ouverture sur `defaultBetLevel`, arrêt aux deux extrémités.
+- [187] round actif : mise = `round.amount`, round rejoué sans nouvelle mise, puis `/wallet/end-round` ; la mise reste la même ensuite.
+- [221] `/wallet/end-round` seulement pour un round gagnant (`payoutMultiplier > 0`) et après l'animation ; jamais pour un 0×. Si l'encaissement échoue, il est retenté avant la prochaine mise.
+- [222] aucune requête `/wallet/play` si solde < mise × coût du mode (barre d'espace, autoplay, achat, Oracle+) ; message « Solde insuffisant ».
+- [104] AUTO ouvre un panneau (nombre de tours, arrêt sur bonus, arrêt sur gain) confirmé par « Démarrer » ; un appui sur Tourner ne lance plus jamais l'autoplay (les puces d'autoplay des réglages ont été retirées).
+- [31] achats de bonus : fenêtre « Acheter X pour Y ? » avec Annuler / Confirmer ; Oracle+ (×1,1) n'en a pas besoin.
+- Erreurs `ERR_VAL`, `ERR_IPB`, `ERR_GLE`, `ERR_ACT` (retentée 2 fois), `ERR_GEN`, réseau : messages FR/EN (bloc `rgs` de js/i18n.js).
+- Tests : `node tools/rgs-test.js` (faux RGS local, 600 books au total, quelques dizaines de tours) couvre les neuf guidelines ci-dessus plus les 6 modes ; `node tools/mock-rgs.js` lance le faux RGS à la main.
+
+**Limites et non fait**
+- Le comportement du vrai RGS n'a pas été vérifié (aucun accès) : on suppose que `payoutMultiplier` du round est un multiple flottant de la mise de base, que `round.amount` est la mise de base en micro-unités, que `state` est la liste d'événements et que `/wallet/play` débite mise × coût du mode.
+- Choix du joueur dans les bonus : un book est un résultat figé. Fureur d'Anubis : plus de choix de couleur ni de profil (turquoise/équilibré) ; Pesée du Cœur : le choix reste affiché mais n'influence pas le gain ; profils Prudent/Audacieux indisponibles en mode RGS (il faudrait un mode par profil dans la math publiée).
+- Les mathématiques publiées (tables de poids optimisées, `index.json`) ne sont pas produites ici : tools/stake-export.js ne génère qu'une démonstration du format (poids égaux).
+- Devises hors EUR/USD, mode social, rediffusion (`replay=true`), règles de jeu et langue de repli complète relèvent d'autres chantiers ; `/wallet/balance` n'est appelé qu'après une erreur de solde/réseau.
+- Jamais testé contre un RGS réel ni dans l'iframe Stake ; aucune soumission n'a été faite.

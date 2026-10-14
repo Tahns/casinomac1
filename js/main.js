@@ -2,6 +2,7 @@
 (function (root) {
   'use strict';
   var M = root.AnubisMath, G = root.G, FX = root.FX, Sfx = root.Sfx;
+  var RG = root.RGS, LIVE = !!(RG && RG.enabled);   // LIVE = mode RGS (sessionID / rgs_url dans l'adresse) ; sinon démo locale
   function $(id) { return document.getElementById(id); }
 
   // Statistiques mesurées par tools/simulate.js (RTP exact par calcul des moments + simulation 2 M de tours par mode ; Pesée à choix plume/cœur : gain 1 fois sur 2) — affichées dans la table des gains
@@ -15,7 +16,7 @@
   var AUTO_STEPS = [0, 10, 25, 50, 100, Infinity];
   var SAVE_KEY = 'anubis_save_v1', OLD_SAVE_KEY = 'hoa_save_v1';   // ancienne clé lue une fois pour ne pas perdre les soldes
 
-  var S = { pending: 0, balance: START_BAL, bi: BET_DEFAULT, cur: '', curSet: false, lastWin: 0, autoIdx: 0, auto: 0, stopOnBonus: false, busy: false, hist: [], reduced: false, mode: 'std', buyOn: true, limit: 0, quality: 'auto', limitHit: false };
+  var S = { pending: 0, balance: START_BAL, bi: BET_DEFAULT, cur: '', curSet: false, lastWin: 0, autoIdx: 0, auto: 0, stopOnBonus: false, busy: false, hist: [], blocked: false, pendingEnd: false, stopWin: 0, reduced: false, mode: 'std', buyOn: true, limit: 0, quality: 'auto', limitHit: false };
   var SESS = { start: Date.now(), spins: 0, wag: 0, won: 0, lastCheck: Date.now() };
   var LIMITS = [0, 20, 50, 100, 250, 500];
   var rng = M.cryptoRng();
@@ -27,7 +28,7 @@
         // ancienne sauvegarde (crédits, sans « v ») : solde, mise, gain en attente et limite repartent des valeurs par défaut
         if (d.lang) I18N.setLang(d.lang);
         if (d.cur === 'EUR' || d.cur === 'USD') { S.cur = d.cur; S.curSet = true; }
-        if (d.v >= SAVE_VER) {
+        if (d.v >= SAVE_VER && !LIVE) {   // en mode RGS : solde, mise et gain en attente viennent du serveur, jamais du stockage local
           if (typeof d.balance === 'number' && isFinite(d.balance) && d.balance >= 0) S.balance = r2(d.balance);
           if (typeof d.bi === 'number' && BETS[d.bi]) S.bi = d.bi;
           // tour interrompu (rechargement en pleine animation) : le résultat était déjà décidé, on le crédite
@@ -56,7 +57,7 @@
   }
   function save() {
     try {
-      localStorage.setItem(SAVE_KEY, JSON.stringify({ v: SAVE_VER, cur: S.curSet ? S.cur : '', pending: S.pending, balance: S.balance, bi: S.bi, lang: I18N.lang(), muted: Sfx.isMuted(), pitch: Sfx.getPitch(), vol: Sfx.getVolume(), tone: Sfx.getTone(), music: Sfx.isMusic(), turbo: G.turbo, ultra: !!G.ultra, sobV2: S.stopOnBonus, reduced: S.reduced, hist: S.hist, mode: S.mode, buyOn: S.buyOn, limit: S.limit, quality: S.quality }));
+      localStorage.setItem(SAVE_KEY, JSON.stringify({ v: SAVE_VER, cur: S.curSet ? S.cur : '', pending: LIVE ? 0 : S.pending, balance: LIVE ? START_BAL : S.balance, bi: LIVE ? BET_DEFAULT : S.bi, lang: I18N.lang(), muted: Sfx.isMuted(), pitch: Sfx.getPitch(), vol: Sfx.getVolume(), tone: Sfx.getTone(), music: Sfx.isMusic(), turbo: G.turbo, ultra: !!G.ultra, sobV2: S.stopOnBonus, reduced: S.reduced, hist: S.hist, mode: S.mode, buyOn: S.buyOn, limit: S.limit, quality: S.quality }));
     } catch (e) {}
   }
 
@@ -120,17 +121,17 @@
   function setSpinBtn() {
     var b = $('spin'), T = I18N.t();
     b.classList.toggle('stop', S.auto > 0);
-    b.disabled = S.busy && S.auto === 0;
+    b.disabled = (S.busy && S.auto === 0) || S.blocked;
     $('spinText').textContent = S.auto > 0 ? T.stop + (isFinite(S.auto) ? ' ' + S.auto : '') : T.spin;
     var rem = S.auto > 0 ? (isFinite(S.auto) ? String(S.auto) : '∞') : '';
     $('spinText').textContent = S.auto > 0 ? T.stop : T.spin;
     var at = $('autoText');
     if (S.auto > 0) { if (at.getAttribute('data-n') !== rem) { at.setAttribute('data-n', rem); at.textContent = T.auto + ' '; var nb = document.createElement('b'); nb.className = 'autoCount'; nb.textContent = rem; at.appendChild(nb); } }
-    else { at.removeAttribute('data-n'); at.textContent = AUTO_STEPS[S.autoIdx] ? T.auto + ' ' + (isFinite(AUTO_STEPS[S.autoIdx]) ? AUTO_STEPS[S.autoIdx] : '∞') : T.auto; }
-    $('btnAuto').classList.toggle('on', S.autoIdx > 0);
+    else { at.removeAttribute('data-n'); at.textContent = T.auto; }
+    $('btnAuto').classList.toggle('on', S.auto > 0);
     $('btnTurbo').classList.toggle('on', G.turbo); $('btnTurbo').classList.toggle('ultra', !!G.ultra); $('btnTurbo').querySelector('span').textContent = G.ultra ? 'ULTRA' : T.turbo;
     $('btnPlus').classList.toggle('on', S.mode === 'plus'); $('plusText').textContent = T.oraclePlus + (S.mode === 'plus' ? ' · ' + G.money(cost()) : '');
-    $('btnBuy').hidden = !S.buyOn; $('btnBuy').disabled = S.busy || S.auto > 0 || S.autoIdx > 0; $('buyText').textContent = T.buyBtn;
+    $('btnBuy').hidden = !S.buyOn; $('btnBuy').disabled = S.busy || S.blocked || S.auto > 0; $('buyText').textContent = T.buyBtn;
   }
   function pushHistory(mult, bonus) {
     S.hist.unshift({ m: mult, b: bonus ? 1 : 0 }); S.hist = S.hist.slice(0, 10); renderHistory();
@@ -150,24 +151,45 @@
   // -1 : pas d'animation de gain (< ×1 le coût du tour) · 0 WIN · 1 BIG WIN · 2 EXTRA WIN · 3 MEGA WIN · 4 JUGEMENT DIVIN (seuils : G.WIN_TIERS)
   function tierOf(m) { var t = -1; G.WIN_TIERS.forEach(function (x, i) { if (m >= x) t = i; }); return t; }
 
-  async function play(buyKind) {
-    if (S.busy) return;
-    var b = bet(), T = I18N.t();
-    var priceMult = buyKind ? M.BUY[buyKind].price : M.MODES[S.mode].cost;
-    var c = buyKind ? r2(b * priceMult) : cost();
-    if (S.limitHit) { openLimit(); return; }
-    if (S.balance < c) { say(T.noFunds); Sfx.curse(); stopAuto(); return; }
+  // resume = { round, bet } : reprise d'un round ouvert renvoyé par /wallet/authenticate (déjà débité côté serveur : aucune nouvelle mise)
+  async function play(buyKind, resume) {
+    if (S.busy || S.blocked) return;
+    var T = I18N.t(), b = resume ? resume.bet : bet();
+    var priceMult = buyKind ? M.BUY[buyKind].price : resume ? M.MODES[resume.mode].cost : M.MODES[S.mode].cost;
+    var c = r2(b * priceMult);   // coût réel du mode = mise x coût du mode (barre d'espace, autoplay et achats passent tous par ici)
+    if (!resume) {
+      if (S.limitHit) { openLimit(); return; }
+      if (S.balance < c) { say(T.noFunds); Sfx.curse(); stopAuto(); return; }   // jamais de requête /wallet/play sans le solde pour le coût réel
+    }
     Sfx.unlock(); Sfx.startAmbient(); Sfx.spinStart();
     S.busy = true; G.speed = spd();
-    S.balance = r2(S.balance - c); SESS.spins++; SESS.wag = r2(SESS.wag + c); updateHud(true); setWin(0, false); setSpinBtn();
-    var round = buyKind ? M.playBuy(rng, buyKind) : M.playRound(rng, S.mode), hadBonus = false;
-    // le gain est connu avant l'animation : on le met en attente et on sauvegarde tout de suite la mise débitée
-    S.pending = r2(Math.min(round.total, M.MAX_WIN) * b); save();
+    var round, srv = null, hadBonus = false;
+    if (LIVE) {
+      setWin(0, false); setSpinBtn(); say(T.spinning);
+      if (S.pendingEnd && !(await finishRound())) { S.busy = false; stopAuto(); updateHud(); setSpinBtn(); return; }   // un gain précédent n'a pas pu être encaissé
+      try {
+        srv = RG.readRound(resume ? resume.round : null);
+        if (!resume) {
+          var res = await RG.play(b, RG.modeName(S.mode, buyKind));
+          srv = RG.readRound(res.round); S.balance = r2(RG.fromMicro(res.balance.amount));
+          SESS.spins++; SESS.wag = r2(SESS.wag + c); updateHud(true);
+        }
+        if (!srv.events.length) throw Object.assign(new Error('book'), { code: 'ERR_BOOK' });
+        round = RG.bookToRound(srv.events, M);
+      } catch (e) {
+        S.busy = false; stopAuto(); updateHud(); setSpinBtn(); rgsFail(e); return;
+      }
+    } else {
+      S.balance = r2(S.balance - c); SESS.spins++; SESS.wag = r2(SESS.wag + c); updateHud(true); setWin(0, false); setSpinBtn();
+      round = buyKind ? M.playBuy(rng, buyKind) : M.playRound(rng, S.mode);
+      // le gain est connu avant l'animation : on le met en attente et on sauvegarde tout de suite la mise débitée
+      S.pending = r2(Math.min(round.total, M.MAX_WIN) * b); save();
+    }
     G.wheel.clearHighlight(); G.wheel.clearOracle();
     say(T.spinning);
     var total = 0;
     // si le joueur choisit un autre profil de bonus, le gain en attente est recalculé et sauvegardé tout de suite
-    G.onBonusChoice = function () { var t = 0; round.spins.forEach(function (x) { t += x.pay; }); S.pending = r2(Math.min(t, M.MAX_WIN) * b); save(); };
+    G.onBonusChoice = function () { if (LIVE) return; var t = 0; round.spins.forEach(function (x) { t += x.pay; }); S.pending = r2(Math.min(t, M.MAX_WIN) * b); save(); };
     try { for (var i = 0; i < round.spins.length; i++) {
       var sp = round.spins[i];
       if (!buyKind && sp.oracle) {
@@ -201,17 +223,20 @@
       }
       total += sp.pay;
       $('oracle').hidden = true;
+      if (LIVE) RG.betEvent(i + 1);   // progression du tour (reprise éventuelle côté serveur), sans attendre la réponse
     } } catch (err) {   // une scène en erreur ne doit jamais bloquer le jeu ni perdre le gain déjà décidé
       if (root.console) console.error(err);
       total = 0; round.spins.forEach(function (x) { total += x.pay; }); G.scene = null; G.eg = null; G.winOv = null; G.fade = 0; G.setScene(null);
     }
-    total = Math.min(total, M.MAX_WIN);
+    total = LIVE ? srv.mult : Math.min(total, M.MAX_WIN);   // en mode RGS le gain fait foi : payoutMultiplier du serveur
     var amount = r2(total * b);
     G.wheel.clearOracle(); $('oracle').hidden = true;
     if (amount > 0) {
       var tier = tierOf(total / priceMult);
       if (tier >= 0) await G.showBigWin(total, amount, tier);
-      S.balance = r2(S.balance + amount); S.lastWin = amount; SESS.won = r2(SESS.won + amount);
+      if (LIVE) { S.pendingEnd = true; await finishRound(); }   // round ouvert (gain > 0) : /wallet/end-round, jamais pour un 0x
+      else S.balance = r2(S.balance + amount);
+      S.lastWin = amount; SESS.won = r2(SESS.won + amount);
       setWin(amount, true); updateHud(true);
       say(T.winLine + ' ×' + G.fmt(total) + '  ·  ' + G.money(amount, true));
     } else { setWin(0); say(T.ready); }
@@ -219,7 +244,7 @@
     G.wheel.clearHighlight();
     S.pending = 0; S.busy = false; G.speed = spd();
     save();
-    var stopped = responsibleCheck();
+    var stopped = responsibleCheck() || (S.auto > 0 && S.stopWin > 0 && total >= S.stopWin);
     if (S.auto > 0 && !buyKind) {
       if (stopped || (hadBonus && S.stopOnBonus)) stopAuto(); else S.auto = isFinite(S.auto) ? S.auto - 1 : S.auto;
     }
@@ -229,12 +254,83 @@
   }
   function stopAuto() { S.auto = 0; S.autoIdx = 0; setSpinBtn(); }
 
+  /* ---------- mode RGS : encaissement, erreurs, démarrage ---------- */
+  // /wallet/end-round : uniquement pour un round ouvert (gain > 0). Renvoie true si le gain est encaissé.
+  async function finishRound() {
+    try { var r = await RG.endRound(); S.balance = r2(RG.fromMicro(r.balance.amount)); S.pendingEnd = false; updateHud(true); return true; }
+    catch (e) { rgsFail(e); return false; }
+  }
+  // message clair selon le code d'erreur du RGS ; ERR_IPB / ERR_GLE : on resynchronise le solde (/wallet/balance)
+  function rgsFail(e) {
+    var T = I18N.t().rgs, code = e && e.code || 'ERR_NET', key = { ERR_VAL: 'errVal', ERR_IPB: 'errIpb', ERR_GLE: 'errGle', ERR_ACT: 'errAct', ERR_GEN: 'errGen', ERR_BOOK: 'errBook', ERR_URL: 'errUrl' }[code] || 'errNet';
+    if (root.console) console.error('RGS', code, e && e.message);
+    if (code === 'ERR_IPB') { say(T.errIpb); Sfx.curse(); }
+    else say(T[key]);
+    if (code === 'ERR_IPB' || code === 'ERR_GLE' || code === 'ERR_NET') RG.balance().then(function (r) { S.balance = r2(RG.fromMicro(r.balance.amount)); updateHud(true); }, function () {});
+    if (code !== 'ERR_IPB') showMsg(I18N.t().brandTop + ' UNCHAINED', T[key], [[T.confirm]]);
+  }
+  // blocage total : aucune mise possible tant que la connexion n'est pas établie (pas de repli local)
+  function blockGame(code) {
+    var T = I18N.t().rgs, key = { ERR_URL: 'errUrl', ERR_VAL: 'errVal' }[code] || 'errAuth', el = $('rgsBlock');
+    S.blocked = true; setSpinBtn();
+    if (!el) {
+      el = document.createElement('div'); el.id = 'rgsBlock'; el.setAttribute('role', 'alertdialog'); el.setAttribute('aria-live', 'assertive');
+      el.innerHTML = '<div class="sheet"><h2 id="rgsBlockT"></h2><p id="rgsBlockM"></p><div class="acts"><button type="button" class="btn-go" id="rgsBlockB"></button></div></div>';
+      document.body.appendChild(el);
+      $('rgsBlockB').addEventListener('click', function () { root.location.reload(); });
+    }
+    $('rgsBlockT').textContent = I18N.t().brandTop + ' UNCHAINED'; $('rgsBlockM').textContent = T[key]; $('rgsBlockB').textContent = T.retry;
+    el.hidden = false; say(T[key]);
+  }
+  // niveaux de mise : uniquement ceux de config.betLevels (filtrés par minBet / maxBet) ; stepBet ne sert qu'à en générer si la liste est absente
+  function betLevelsFrom(cfg) {
+    var lv = (cfg.betLevels || []).map(Number).filter(function (v) { return isFinite(v) && v > 0 && (!(cfg.minBet > 0) || v >= cfg.minBet) && (!(cfg.maxBet > 0) || v <= cfg.maxBet); });
+    if (!lv.length && cfg.minBet > 0 && cfg.maxBet >= cfg.minBet && cfg.stepBet > 0) for (var v = cfg.minBet; v <= cfg.maxBet && lv.length < 100; v += cfg.stepBet) lv.push(v);
+    if (!lv.length && cfg.defaultBetLevel > 0) lv.push(cfg.defaultBetLevel);
+    lv.sort(function (a, b) { return a - b; });
+    return lv.filter(function (v, i) { return i === 0 || v !== lv[i - 1]; });
+  }
+  function nearest(lv, v) { var k = 0; lv.forEach(function (x, i) { if (Math.abs(x - v) < Math.abs(lv[k] - v)) k = i; }); return k; }
+  function startRgs() {
+    var P = RG.params, T = I18N.t();
+    S.blocked = true; S.balance = 0;
+    if (P.lang) { I18N.setLang(P.lang); if (I18N.lang() !== P.lang.toLowerCase()) I18N.setLang('en'); }   // langue inconnue -> anglais
+    if (P.currency === 'EUR' || P.currency === 'USD') { S.cur = P.currency; S.curSet = true; G.currency = P.currency; }
+    applyLang(); T = I18N.t();
+    if (RG.error) { blockGame(RG.error); return; }
+    say(T.rgs.connecting);
+    RG.authenticate().then(function (a) {
+      var cfg = a.config, lv = betLevelsFrom(cfg), rd = a.round && a.round.active ? a.round : null, ix;
+      if (rd && !(rd.amount > 0)) rd = null;
+      if (rd && lv.indexOf(rd.amount) < 0) { lv.push(rd.amount); lv.sort(function (x, y) { return x - y; }); }   // la mise du round repris reste sélectionnable
+      BETS.length = 0; lv.forEach(function (v) { BETS.push(RG.fromMicro(v)); });
+      ix = rd ? lv.indexOf(rd.amount) : nearest(lv, cfg.defaultBetLevel);   // round actif : sa mise ; sinon defaultBetLevel
+      S.bi = Math.max(0, ix);
+      S.balance = r2(RG.fromMicro(a.balance.amount));
+      var cur = String(a.balance.currency || '').toUpperCase();
+      if (cur === 'EUR' || cur === 'USD') { S.cur = cur; S.curSet = true; G.currency = cur; }
+      S.blocked = false; shown.bal = -1; applyLang(); updateHud(); setSpinBtn(); say(I18N.t().ready);
+      if (rd) {
+        var pm = RG.parseMode(rd.mode); if (!pm.buy && pm.mode === 'plus') S.mode = 'plus';
+        S.resume = { round: rd, bet: RG.fromMicro(rd.amount), mode: pm.mode, buy: pm.buy, mult: Number(rd.payoutMultiplier) || 0 };
+        resumeRound();
+      }
+    }, function (e) { blockGame(e && e.code === 'ERR_VAL' ? 'ERR_VAL' : 'ERR_AUTH'); });
+  }
+  // reprise d'un round ouvert : on le rejoue (la mise est déjà débitée), puis /wallet/end-round s'il paie
+  function resumeRound() {
+    var r = S.resume; if (!r || !started) return;
+    S.resume = null;
+    var st = r.round.state, n = Array.isArray(st) ? st.length : st && st.events ? st.events.length : 0;
+    if (n) play(r.buy, r);
+    else if (r.mult > 0) { S.pendingEnd = true; finishRound(); }
+  }
+
   /* ---------- événements ---------- */
   $('spin').addEventListener('click', function () {
     Sfx.unlock();
     if (S.auto > 0) { stopAuto(); return; }
     if (G.skipWinOv()) return;
-    if (S.autoIdx > 0 && !S.busy) { S.auto = AUTO_STEPS[S.autoIdx]; setSpinBtn(); }
     play();
   });
   function stepBet(d) { if (S.busy) return; var n = S.bi + d; if (n < 0 || n >= BETS.length) return; S.bi = n; Sfx.click(); updateHud(); save(); }
@@ -245,9 +341,36 @@
     G.speed = spd(); Sfx.click(); setSpinBtn(); save();
   });
   $('btnPlus').addEventListener('click', function () { if (S.busy) return; S.mode = S.mode === 'plus' ? 'std' : 'plus'; Sfx.click(); updateHud(); setSpinBtn(); save(); say(S.mode === 'plus' ? I18N.t().plusHint : I18N.t().ready); });
+  // [104] un appui sur AUTO n'engage aucun pari : il ouvre un panneau (nombre de tours, arrêts) à confirmer par « Démarrer »
+  var STOP_WINS = [0, 10, 50, 100];
+  function openAuto() {
+    if (S.busy || S.blocked) return;
+    var T = I18N.t(), R = T.rgs, sel = Math.max(1, S.autoLast || 1), sw = S.stopWin;
+    $('modalBody').innerHTML = '<h2>' + R.autoTitle + '</h2><p class="sub">' + R.autoSub + '</p>' +
+      '<p class="sub">' + R.autoCost + ' : ' + G.money(cost()) + '</p>' +
+      '<div class="opt"><span>' + R.autoRounds + '</span><div class="chips" id="apN"></div></div>' +
+      '<div class="opt"><span>' + T.stopBonus + '</span><div class="chips"><button id="apBonus" type="button"></button></div></div>' +
+      '<div class="opt"><span>' + R.autoStopWin + '</span><div class="chips" id="apWin"></div></div>' +
+      '<div class="acts"><button type="button" class="chip" id="apCancel">' + R.cancel + '</button><button type="button" class="btn-go" id="apGo">' + R.autoStart + '</button></div>';
+    function chips(box, items, cur, set) {
+      box.innerHTML = '';
+      items.forEach(function (it) { var bt = document.createElement('button'); bt.type = 'button'; bt.textContent = it[0]; bt.className = cur() === it[1] ? 'on' : ''; bt.onclick = function () { set(it[1]); chips(box, items, cur, set); }; box.appendChild(bt); });
+    }
+    chips($('apN'), AUTO_STEPS.slice(1).map(function (n, i) { return [isFinite(n) ? String(n) : '∞', i + 1]; }), function () { return sel; }, function (v) { sel = v; });
+    chips($('apWin'), STOP_WINS.map(function (n) { return [n ? '×' + n : T.off, n]; }), function () { return sw; }, function (v) { sw = v; });
+    function bonusBtn() { $('apBonus').textContent = S.stopOnBonus ? T.on : T.off; $('apBonus').className = S.stopOnBonus ? 'on' : ''; }
+    bonusBtn(); $('apBonus').onclick = function () { S.stopOnBonus = !S.stopOnBonus; bonusBtn(); save(); };
+    $('apCancel').onclick = function () { hideModal(); };
+    $('apGo').disabled = S.balance < cost();
+    $('apGo').onclick = function () {
+      hideModal(); Sfx.unlock(); S.autoLast = sel; S.stopWin = sw; S.autoIdx = sel;
+      S.auto = AUTO_STEPS[sel]; setSpinBtn(); play();
+    };
+    showModal(); Sfx.click();
+  }
   $('btnAuto').addEventListener('click', function () {
     if (S.auto > 0) { stopAuto(); return; }
-    S.autoIdx = (S.autoIdx + 1) % AUTO_STEPS.length; Sfx.click(); setSpinBtn();
+    openAuto();
   });
   function refreshSound() { $('btnSound').classList.toggle('off', Sfx.isMuted()); refreshMixer(); }
   /* ---------- mixeur rapide : volume, hauteur, ambiance, muet — sans ouvrir les réglages ---------- */
@@ -334,10 +457,20 @@
       var d = document.createElement('small'); d.textContent = T.buyDesc[k]; card.appendChild(d);
       var pr = document.createElement('div'); pr.className = 'pr'; pr.textContent = G.money(price); var mu = document.createElement('i'); mu.textContent = '(×' + M.BUY[k].price + ')'; pr.appendChild(mu); card.appendChild(pr);
       var go = document.createElement('div'); go.className = 'go'; go.textContent = card.disabled ? T.buyNoFunds : T.buyNow; card.appendChild(go);
-      card.onclick = function () { hideModal(); Sfx.unlock(); play(k); };
+      card.onclick = function () { confirmBuy(k, name, price); };
       grid.appendChild(card);
     });
     showModal(); Sfx.click();
+  }
+  // [31] achat de bonus (coût > 2x la mise) : fenêtre « Acheter X pour Y » avec Annuler / Confirmer ; rien n'est misé avant « Confirmer »
+  function confirmBuy(k, name, price) {
+    var R = I18N.t().rgs;
+    $('modalBody').innerHTML = '<h2>' + R.buyConfirmTitle + '</h2><p id="buyConfirmTxt"></p><div class="acts"><button type="button" class="chip" id="buyNo">' + R.cancel + '</button><button type="button" class="btn-go" id="buyYes">' + R.confirm + '</button></div>';
+    $('buyConfirmTxt').textContent = R.buyConfirm.replace('{name}', name).replace('{price}', G.money(price));
+    $('buyNo').onclick = function () { hideModal(); };
+    $('buyYes').disabled = S.balance < price;
+    $('buyYes').onclick = function () { hideModal(); Sfx.unlock(); play(k); };
+    $('buyYes').focus();
   }
   $('btnBuy').addEventListener('click', openBuy);
 
@@ -384,18 +517,10 @@
       '<div class="opt"><span>' + T.currencyL + '</span><div class="chips" id="optCur"></div></div>' +
       '<div class="opt"><span>' + T.lossLimit + '</span><div class="chips" id="optLimit"></div></div>' +
       '<div class="opt"><span>' + T.qualityL + '</span><div class="chips" id="optQ"></div></div>' +
-      '<div class="opt"><span>' + T.autoOpts + '</span><div class="chips" id="optAuto"></div></div>' +
       '<div class="opt"><span>' + T.stopBonus + '</span><div class="chips"><button id="optStop" class="' + (S.stopOnBonus ? 'on' : '') + '" type="button">' + (S.stopOnBonus ? T.on : T.off) + '</button></div></div>' +
       '<div class="opt"><span>' + T.buyOn + '</span><div class="chips"><button id="optBuy" class="' + (S.buyOn ? 'on' : '') + '" type="button">' + (S.buyOn ? T.on : T.off) + '</button></div></div>' +
       '<div class="opt"><span>' + T.reducedFx + '</span><div class="chips"><button id="optRed" class="' + (S.reduced ? 'on' : '') + '" type="button">' + (S.reduced ? T.on : T.off) + '</button></div></div>' +
       '<div class="opt"><span>' + T.resetBal + '</span><div class="chips"><button id="optReset" type="button">' + G.money(START_BAL) + '</button></div></div>';
-    var ao = $('optAuto');
-    AUTO_STEPS.forEach(function (n) {
-      var bt = document.createElement('button'); bt.type = 'button'; bt.textContent = n === 0 ? T.off : isFinite(n) ? n : '∞';
-      bt.className = (AUTO_STEPS[S.autoIdx] === n) ? 'on' : '';
-      bt.onclick = function () { if (S.busy) return; var ix = AUTO_STEPS.indexOf(n); S.autoIdx = ix < 0 ? 0 : ix; setSpinBtn(); openInfo(); };
-      ao.appendChild(bt);
-    });
     var ol = $('optLimit');
     LIMITS.forEach(function (n) {
       var bt = document.createElement('button'); bt.type = 'button'; bt.textContent = n ? G.money(n) : T.off; bt.className = S.limit === n ? 'on' : '';
@@ -428,9 +553,10 @@
   load(); G.quality = S.quality; if (S.quality === 'low') FX.lite = true; I18N.apply(); refreshSound(); applyLang();
   updateHud(); setWin(0); setSpinBtn(); renderHistory();
   if (S.resumed) { say(I18N.t().resumed + ' ' + G.money(S.resumed, true)); save(); }
+  if (LIVE) startRgs();
   // les polices du canvas doivent être prêtes avant le premier rendu (sinon texte de secours visible, et roue/médaillons mesurés avec la mauvaise police)
   var started = false;
-  function startGame() { if (started) return; started = true; G.start(); }
+  function startGame() { if (started) return; started = true; G.start(); resumeRound(); }
   if (document.fonts && document.fonts.load) {
     Promise.all(G.FONT_LOADS.map(function (f) { return document.fonts.load(f, 'ÉœéÀ0123456789×€$’'); })).then(startGame, startGame);
     setTimeout(startGame, 3000); // filet de sécurité : ne jamais bloquer le jeu sur une police
