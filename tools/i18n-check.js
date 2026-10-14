@@ -94,10 +94,10 @@ var X = sandbox.window.I18N._X, R0 = sandbox.window.I18N._R, I = sandbox.window.
 function allStrings(v, f, p) { if (typeof v === 'string') f(v, p); else if (Array.isArray(v)) v.forEach(function (x, i) { allStrings(x, f, p + '[' + i + ']'); }); else if (v && typeof v === 'object') Object.keys(v).forEach(function (k) { allStrings(v[k], f, p + '.' + k); }); }
 CODES.filter(function (c) { return c !== 'en' && c !== 'fr'; }).forEach(function (c) {
   var dd = [];
-  ['rules', 'replay'].forEach(function (n) { var cur = X[n][c]; if (!cur) { dd.push(n + ' absent'); return; } walk(B[n].en, cur, n, dd); walk(cur, B[n].en, n, dd); });
+  Object.keys(B).forEach(function (n) { var cur = X[n][c]; if (!cur) { dd.push(n + ' absent'); return; } walk(B[n].en, cur, n, dd); walk(cur, B[n].en, n, dd); });
   if (!X.rgs[c]) dd.push('rgs absent'); else { walk(R0.en, X.rgs[c], 'rgs', dd); walk(X.rgs[c], R0.en, 'rgs', dd); }
   ok(dd.length === 0, c + ' : blocs rules, replay et textes RGS complets (mêmes clés, types, longueurs, marqueurs {x} que l\'anglais)' + (dd.length ? ' : ' + dd.slice(0, 5).join(' | ') : ''));
-  if (!X.rules[c] || !X.replay[c] || !X.rgs[c]) return;
+  if (!X.rules[c] || !X.replay[c] || !X.rgs[c] || !X.ui[c]) return;
   // titres des bonus dans les règles = noms des bonus du dictionnaire (cohérence terminologique) ; le ou les mots-clés ne diffèrent que par la casse
   var Rr = X.rules[c], d = D[c], bad = [];
   [['scarabH', 'scarabIntro'], ['weighH', 'weighIntro'], ['vaultH', 'vaultIntro'], ['handH', 'handIntro']].forEach(function (p) { if (Rr && Rr[p[0]].toLocaleLowerCase(c) !== d[p[1]].toLocaleLowerCase(c)) bad.push(p[0] + ' ≠ ' + p[1] + ' (' + Rr[p[0]] + ' / ' + d[p[1]] + ')'); });
