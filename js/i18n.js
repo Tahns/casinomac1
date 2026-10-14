@@ -38,7 +38,7 @@
       volatV: 'Très haute', demo: 'Argent fictif — démo sans argent réel : les montants en € ou $ ne sont pas de vrais euros ni dollars.',
       rules: [
         'Une mise, un tour : la roue du jugement décide. Chaque case paie sa valeur × votre mise.',
-        'L\'Oracle (≈ 1 tour sur 3) désigne une case et lui offre un boost ×2 à ×100. Si la roue s\'y arrête, le boost s\'applique !',
+        'L\'Oracle (≈ 1 tour sur 3) désigne un type de case et lui offre un boost ×2 à ×100, dont la valeur reste scellée (« ? ») jusqu\'à l\'arrêt de la roue. Si la roue s\'y arrête, le boost s\'applique !',
         'ANKH : relance gratuite de la roue, sans remise.',
         'Pesée du Cœur : choisissez la plume de Maât ou le cœur, les multiplicateurs défilent et se révèlent, puis la balance tranche. Le plateau le plus lourd gagne son multiplicateur (jusqu\'à ×3000), le plus léger n\'a rien : une chance sur deux.',
         'Un bonus peut être saisi par la FUREUR D\'ANUBIS : choisissez une couleur (turquoise, or ou rubis) puis lancez la roue géante. Un nombre : gain = nombre × palier. DOUBLE de VOTRE couleur : les nombres de la roue sont doublés (palier ×2, jusqu\'à ×16) et vous relancez. DOUBLE d\'une AUTRE couleur : la chaîne s\'arrête et vous encaissez le plus petit nombre de la roue (3) × palier.',
@@ -90,7 +90,7 @@
       volatV: 'Very high', demo: 'Play money — demo, the € or $ amounts are not real money.',
       rules: [
         'One bet, one spin: the wheel of judgement decides. Each segment pays its value × your bet.',
-        'The Oracle (≈ 1 spin in 3) picks a segment and grants it a ×2 to ×100 boost. If the wheel lands there, the boost applies!',
+        'The Oracle (≈ 1 spin in 3) picks a type of segment and grants it a ×2 to ×100 boost, its value staying sealed ("?") until the wheel stops. If the wheel lands there, the boost applies!',
         'ANKH: free respin of the wheel, no extra stake.',
         'Weighing of the Heart: pick the feather of Ma\'at or the heart, the multipliers roll and are revealed, then the scales decide. The heavier pan wins its multiplier (up to ×3000), the lighter one gets nothing: a 1-in-2 chance.',
         'Any bonus can be seized by the FURY OF ANUBIS: pick a colour (turquoise, gold or ruby), then spin the giant wheel. A number: win = number × tier. DOUBLE in YOUR colour: every number on the wheel is doubled (tier ×2, up to ×16) and you spin again. DOUBLE in ANOTHER colour: the chain stops and you cash the smallest number on the wheel (3) × tier.',

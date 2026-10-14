@@ -596,7 +596,7 @@
         var bg2 = ctx.createRadialGradient(-br * 0.3, -br * 0.3, 0, 0, 0, br); bg2.addColorStop(0, '#fffbe0'); bg2.addColorStop(1, '#d99a1e');
         ctx.fillStyle = bg2; ctx.shadowColor = 'rgba(255,200,60,.9)'; ctx.shadowBlur = 14; ctx.fill(); ctx.shadowBlur = 0;
         ctx.lineWidth = 1.5; ctx.strokeStyle = '#5b4311'; ctx.stroke();
-        G.txt('×' + o.boost, 0, br * 0.06, { size: br * 0.95, weight: 900, fill: '#3a2000' });
+        G.txt(o.revealed ? '×' + o.boost : '?', 0, br * 0.06, { size: br * 0.95, weight: 900, fill: '#3a2000' });   // bénédiction scellée : la valeur n'est révélée qu'à l'arrêt de la roue
         ctx.restore();
         if (o.num && o.ap > 0) wheelBoostLabel(i, am, o, R, (ri + ro) / 2);
       }
@@ -626,11 +626,17 @@
   /* ---- actions de la roue (promesses) ---- */
   W.showOracle = function (o) {
     var kd = M.KINDS[o.kind];
-    W.oracle = { kind: o.kind, boost: o.boost, t: 0, ap: 0, num: !kd.bonus && !kd.respin && kd.mult > 0 && o.boost > 1 };
+    W.oracle = { kind: o.kind, boost: o.boost, revealed: false, t: 0, ap: 0, num: !kd.bonus && !kd.respin && kd.mult > 0 && o.boost > 1 };
     Sfx.oracle(); FX.ring(G.cx, G.cy, '#ffe9a0', G.R * 1.1, 0.9); FX.flash(0.25, '#ffe9a0');
     return G.sleep(G.turbo ? 0.5 : 1.5);
   };
   W.clearOracle = function () { W.oracle = null; };
+  // la roue est arrêtée : la valeur de la bénédiction (scellée avant le tour) se révèle, que la case soit atteinte ou non
+  W.revealOracle = function () {
+    var o = W.oracle; if (!o) return Promise.resolve();
+    o.revealed = true; if (!FX.reduced) { Sfx.sparkle && Sfx.sparkle(); FX.ring(G.cx, G.cy, '#ffe9a0', G.R * 1.0, 0.6); }
+    return G.sleep(G.turbo ? 0.2 : 0.55);
+  };
   // la roue s'est arrêtée sur la case boostée : son chiffre est réécrit avec la valeur déjà multipliée (durée : turbo plus court, FX.reduced : fondu)
   W.applyBoost = function () {
     var o = W.oracle; if (!o || !o.num) return Promise.resolve();
