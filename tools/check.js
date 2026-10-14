@@ -63,6 +63,30 @@ ok(badW === 0, 'Pesée : mults ∈ profil, gain = mult du plateau choisi s\'il e
 ok(Math.abs(heavyCnt[0] / (heavyCnt[0] + heavyCnt[1]) - 0.5) < 0.05, 'Pesée : plateau le plus lourd tiré 50/50 (' + (heavyCnt[0] / (3 * nW) * 100).toFixed(2) + ' % plume)');
 ok(Math.abs(sumP[0] / sumP[1] - 1) < 0.03, 'Pesée : espérance identique si le joueur choisit la plume ou le cœur (' + (sumP[0] / 3 / nW).toFixed(3) + ' vs ' + (sumP[1] / 3 / nW).toFixed(3) + ')');
 
+// 4b'. Chambre du Trésor : le SCEAU referme la chambre (on garde le total), la CLÉ D'OR ajoute des coffres (aucun objet n'annule le sceau)
+var rv = M.mulberry32(606), badV = 0, nV = cap(1000), seals = 0, keysSeen = 0, maxOpen = 0;
+M.PROFILES.forEach(function (pf) {
+  var vp = M.VAULT_PROFILES[pf];
+  if (vp.tokens.some(function (t) { return t[0] === 'ankh' || t[0] === 'curse'; }) || 'curse' in vp) badV++;
+  for (var vi = 0; vi < nV; vi++) {
+    var vd = M._bonus.vault(rv, pf), tot = 0, allowed = M.VAULT_BASE_PICKS, pk = vd.picks;
+    if (pk.length > M.VAULT_PICK_CAP || pk.length > M.VAULT_TILES) badV++;
+    pk.forEach(function (x, j) {
+      if (j >= allowed) badV++;
+      if (x.token === 'seal') { if (j < 2 || j !== pk.length - 1 || x.total !== tot) badV++; seals++; return; }
+      if (x.token === 'key') { allowed = Math.min(M.VAULT_PICK_CAP, allowed + M.VAULT_KEY_PICKS); keysSeen++; }
+      else if (x.token === 'scepter') tot *= 2; else tot += x.token;
+      if (x.total !== tot || x.left !== allowed - j - 1) badV++;
+    });
+    maxOpen = Math.max(maxOpen, pk.length);
+    var endSeal = pk[pk.length - 1].token === 'seal';
+    if ((vd.ended === 'seal') !== endSeal || (!endSeal && pk.length !== allowed) || vd.total !== tot + (endSeal ? 0 : M.VAULT_FINISH)) badV++;
+  }
+});
+ok(badV === 0, 'Trésor : sceau = fin sans perte du total, clé d\'or = +' + M.VAULT_KEY_PICKS + ' coffres (max ' + M.VAULT_PICK_CAP + '), aucun jeton protecteur (anomalies: ' + badV + ', sceaux ' + seals + ', clés ' + keysSeen + ', max ouverts ' + maxOpen + ')');
+var VX = require('./rtp-exact'), vTgt = { safe: 10.6324, std: 10.6329, bold: 10.6297 };
+ok(M.PROFILES.every(function (pf) { return Math.abs(VX.vaultOf(M.VAULT_PROFILES[pf])[0] - vTgt[pf]) < 0.005; }), 'Trésor : espérance exacte inchangée par la refonte (10,63× aux trois profils : ' + M.PROFILES.map(function (pf) { return VX.vaultOf(M.VAULT_PROFILES[pf])[0].toFixed(3); }).join(' / ') + ')');
+
 // 4c. Fureur d'Anubis : 3 couleurs, DOUBLE de sa couleur = palier ×2 et relance, autre couleur = arrêt, bande = bonus ×N × palier
 var HS = M.HAND_SEGS, dcount = [0, 0, 0], bands = 0, nums = 0;
 HS.forEach(function (s) { if (s.d != null) dcount[s.d]++; else if (s.b) bands++; else nums++; });

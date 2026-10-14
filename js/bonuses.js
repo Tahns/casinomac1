@@ -668,8 +668,28 @@
   /* ======================================================================
    * 3. CHAMBRE DU TRÉSOR — pick-me, 12 chambres
    * ====================================================================== */
+  // clé d'or (token de la Chambre) : anneau, tige et deux dents, inclinée
+  function vaultKey(x, y, s, fill, stroke) {
+    sv(function () {
+      ctx.translate(x, y); ctx.rotate(-0.6); ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+      ctx.strokeStyle = stroke; ctx.fillStyle = fill; ctx.lineWidth = s * 0.07;
+      ctx.beginPath(); ctx.arc(0, -s * 0.34, s * 0.2, 0, TAU); ctx.arc(0, -s * 0.34, s * 0.09, 0, TAU, true); ctx.fill('evenodd'); ctx.stroke();
+      A.roundRect(ctx, -s * 0.05, -s * 0.16, s * 0.1, s * 0.6, s * 0.03); ctx.fill(); ctx.stroke();
+      A.roundRect(ctx, s * 0.05, s * 0.24, s * 0.2, s * 0.08, s * 0.02); ctx.fill(); ctx.stroke();
+      A.roundRect(ctx, s * 0.05, s * 0.4, s * 0.14, s * 0.08, s * 0.02); ctx.fill(); ctx.stroke();
+    });
+  }
+  // sceau de pierre (token de fermeture) : disque gravé d'un anneau shen et d'une barre
+  function vaultSeal(x, y, s, fill, stroke) {
+    sv(function () {
+      ctx.translate(x, y); ctx.lineWidth = s * 0.07; ctx.strokeStyle = stroke; ctx.fillStyle = fill;
+      ctx.beginPath(); ctx.arc(0, 0, s * 0.5, 0, TAU); ctx.globalAlpha *= 0.25; ctx.fillStyle = '#000'; ctx.fill(); ctx.globalAlpha /= 0.25; ctx.strokeStyle = fill; ctx.stroke();
+      ctx.beginPath(); ctx.ellipse(0, 0, s * 0.2, s * 0.3, 0, 0, TAU); ctx.lineWidth = s * 0.09; ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(-s * 0.3, s * 0.2); ctx.lineTo(s * 0.3, s * 0.2); ctx.stroke();
+    });
+  }
   function vaultScene(sp, bet) {
-    var T = I18N.t(), data = sp.bonus, S = newScene(T.vaultIntro), g = {}, B = bf(sp); S.bgImg = 'vault'; var tiles = [], n = 0, shield = 0, hover = -1, waiting = false, pickRes = null, queued = -1, shake = 0, vig = 0, vigCol = '255,40,20', beams = [], entry = 0, endGlow = 0;
+    var T = I18N.t(), data = sp.bonus, S = newScene(T.vaultIntro), g = {}, B = bf(sp); S.bgImg = 'vault'; var tiles = [], n = 0, left = M.VAULT_BASE_PICKS, leftPop = 0, hover = -1, waiting = false, pickRes = null, queued = -1, shake = 0, vig = 0, vigCol = '255,40,20', beams = [], entry = 0, endGlow = 0;
     var cols = 4, rows = 3;
     for (var i = 0; i < cols * rows; i++) tiles.push({ state: 'closed', token: null, u: 0, dim: false, lg: i % 3, crack: 0, tens: 0, pop: 0, col: null, dark: 0 });
     S.layout = function () {
@@ -678,9 +698,9 @@
       g.x0 = G.cx - (cols * g.t + (cols - 1) * g.gap) / 2; g.y0 = top + ((bot - top) - (rows * g.t + (rows - 1) * g.gap)) / 2;
     };
     function rect(i) { var c = i % cols, r = Math.floor(i / cols); return { x: g.x0 + c * (g.t + g.gap), y: g.y0 + r * (g.t + g.gap), s: g.t }; }
-    var colorOf = { num: ['#f3cf6a', '#7a5a12'], scepter: ['#6a95ff', '#1a3a8a'], ankh: ['#4ff0d8', '#0b6f64'], curse: ['#ff6a50', '#7a1209'] };
+    var colorOf = { num: ['#f3cf6a', '#7a5a12'], scepter: ['#6a95ff', '#1a3a8a'], key: ['#4ff0d8', '#0b6f64'], seal: ['#b8895a', '#3a1d0c'] };
     S.update = function (dt) {
-      chromeUpdate(S, dt); shake = Math.max(0, shake - dt * 2); vig = Math.max(0, vig - dt * 0.9); endGlow = Math.max(0, endGlow - dt * 0.6); entry = Math.min(1.6, entry + dt * 1.4);
+      chromeUpdate(S, dt); shake = Math.max(0, shake - dt * 2); vig = Math.max(0, vig - dt * 0.9); endGlow = Math.max(0, endGlow - dt * 0.6); leftPop = Math.max(0, leftPop - dt * 2); entry = Math.min(1.6, entry + dt * 1.4);
       for (var bi = beams.length - 1; bi >= 0; bi--) { beams[bi].t += dt; if (beams[bi].t > beams[bi].life) beams.splice(bi, 1); }
       tiles.forEach(function (t) { t.pop = Math.max(0, t.pop - dt * 2.2); t.dark = Math.max(0, t.dark - dt * 0.5); if (t.state !== 'closed') t.tens = Math.max(0, t.tens - dt * 4); if (t.state === 'flipping') t.u = Math.min(1, t.u + dt / 0.5); if (t.u >= 1 && t.state === 'flipping') t.state = 'open'; });
     };
@@ -723,17 +743,16 @@
           var kind = typeof t.token === 'number' ? 'num' : t.token, col = colorOf[kind];
           var g2 = ctx.createLinearGradient(r.x, r.y, r.x, r.y + r.s); g2.addColorStop(0, col[0]); g2.addColorStop(1, col[1]);
           ctx.save(); ctx.shadowColor = col[0]; ctx.shadowBlur = 10 + t.pop * 40; ctx.fillStyle = g2; ctx.fill(); ctx.restore();
-          ctx.lineWidth = 3; ctx.strokeStyle = kind === 'curse' ? '#ff9a80' : '#fff1b8'; ctx.stroke();
+          ctx.lineWidth = 3; ctx.strokeStyle = kind === 'seal' ? '#e0b48a' : '#fff1b8'; ctx.stroke();
           ctx.save(); A.roundRect(ctx, r.x, r.y, r.s, r.s, r.s * 0.1); ctx.clip();
           A.rays(ctx, cx, cy, r.s, 12, G.t * 0.5, '#ffffff', 0.18); ctx.restore();
           if (kind === 'num') { var tkn = '+' + fb(t.token, B); G.icon(ctx, 'coin', cx, cy - r.s * 0.04, r.s * 0.92); G.txt(tkn, cx, cy + r.s * 0.12, { size: r.s * Math.min(tkn.length > 2 ? 0.3 : 0.38, 0.8 / Math.max(2, tkn.length * 0.62)), weight: 900, fill: '#fff8d8', stroke: '#3a2400', sw: r.s * 0.07, shadow: 'rgba(0,0,0,.6)', blur: 6 }); }
           else if (false) G.txt('+' + t.token, cx, cy + r.s * 0.01, { size: r.s * (String(t.token).length > 1 ? 0.4 : 0.5), weight: 900, fill: '#fff8d8', stroke: '#4a3208', shadow: 'rgba(255,255,255,.6)' });
           else if (kind === 'scepter' && G.icon(ctx, 'scepter', cx, cy - r.s * 0.02, r.s * 0.95)) { G.txt('×2', cx, cy + r.s * 0.34, { size: r.s * 0.3, weight: 900, fill: '#fff', stroke: '#0d2466', sw: r.s * 0.06 }); }
           else if (kind === 'scepter') { G.txt('×2', cx, cy - r.s * 0.05, { size: r.s * 0.46, weight: 900, fill: '#fff', stroke: '#0d2466' }); G.txt('SCEPTRE', cx, cy + r.s * 0.3, { size: r.s * 0.11, weight: 800, fill: '#d8e4ff', family: G.TEXT, spacing: 2 }); }
-          else if (kind === 'ankh' && G.icon(ctx, 'amulet', cx, cy, r.s * 0.92)) { /* amulette */ }
-          else if (kind === 'ankh') { A.ankh(ctx, cx, cy - r.s * 0.02, r.s * 0.55, '#fff', '#0b5a50'); }
-          else if (!G.icon(ctx, 'skull', cx, cy, r.s * 0.95)) { A.skull(ctx, cx, cy, r.s * 0.66, '#fff1d8', '#5a0c06'); }
-          if (kind === 'curse' && t.dark > 0) { A.roundRect(ctx, r.x, r.y, r.s, r.s, r.s * 0.1); ctx.fillStyle = 'rgba(40,0,0,' + (0.5 * t.dark * (0.6 + 0.4 * Math.sin(G.t * 30))) + ')'; ctx.fill(); }
+          else if (kind === 'key') { vaultKey(cx, cy - r.s * 0.04, r.s * 0.66, '#fff', '#0b5a50'); G.txt('+' + M.VAULT_KEY_PICKS, cx, cy + r.s * 0.34, { size: r.s * 0.26, weight: 900, fill: '#fff', stroke: '#0b5a50', sw: r.s * 0.06 }); }
+          else { vaultSeal(cx, cy, r.s * 0.7, '#fff1d8', '#3a1d0c'); }
+          if (kind === 'seal' && t.dark > 0) { A.roundRect(ctx, r.x, r.y, r.s, r.s, r.s * 0.1); ctx.fillStyle = 'rgba(40,0,0,' + (0.5 * t.dark * (0.6 + 0.4 * Math.sin(G.t * 30))) + ')'; ctx.fill(); }
         }
         ctx.restore();
       });
@@ -749,8 +768,8 @@
         ctx.fillStyle = vg; ctx.fillRect(0, 0, G.w, G.h);
       }
       if (endGlow > 0.01) A.rays(ctx, G.cx, G.cy, Math.max(G.w, G.h), 16, G.t * 0.5, '#ffd86a', 0.16 * Math.min(1, endGlow));
-      // boucliers Ankh
-      for (var s = 0; s < shield; s++) A.ankh(ctx, G.cx - (shield - 1) * 20 + s * 40, g.y0 - 26, 28, '#4ff0d8');
+      // compteur de coffres restants (la clé d'or l'augmente)
+      if (S.run && left >= 0) G.txt(T.vaultLeft.replace('{n}', left), g.x0 + 4 * g.t + 3 * g.gap, g.y0 - 14, { align: 'right', size: Math.max(13, g.t * 0.15) * (1 + 0.25 * leftPop), weight: 800, fill: leftPop > 0 ? '#9ff4e6' : '#f1d58a', stroke: '#2a1a05', sw: 4, family: G.TEXT, spacing: 2 });
       chrome(S);
     };
     // un seul toucher ouvre la dalle (hitbox élargie à l'espace entre dalles, aucun survol requis) ;
@@ -777,41 +796,38 @@
     }
     async function reveal(i, rec) {
       var t = tiles[i], r = rect(i), cx = r.x + r.s / 2, cy = r.y + r.s / 2;
-      var bad = rec.token === 'curse' && !rec.saved, big = typeof rec.token === 'number' && rec.token >= 5;
+      var bad = rec.token === 'seal', big = typeof rec.token === 'number' && rec.token >= 5;
       // tension avant révélation : la dalle vibre, la lumière monte, le cœur bat
       t.tens = 1; Sfx.drum(0.3);
       if (!quick()) { await G.sleep(0.3); Sfx.drum(0.45); FX.spark(cx, cy, 10, '#ffe9a0', 120, 0.5); await G.sleep(0.3); } else await G.sleep(0.12);
       t.token = rec.token; t.state = 'flipping'; t.u = 0; t.pop = 1; Sfx.reveal();
-      var kc = rec.token === 'curse' ? '255,70,40' : rec.token === 'ankh' ? '79,240,216' : rec.token === 'scepter' ? '120,160,255' : '255,216,106';
+      var kc = rec.token === 'seal' ? '210,150,90' : rec.token === 'key' ? '79,240,216' : rec.token === 'scepter' ? '120,160,255' : '255,216,106';
       beams.push({ x: cx, y: cy + r.s * 0.5, w: r.s * (bad ? 0.3 : 0.55), c: kc, t: 0, life: bad ? 0.9 : 0.7 });
       FX.ring(cx, cy, bad ? '#ff3b20' : '#fff1b8', r.s * 1.2, 0.5);
       await G.sleep(0.28);
-      if (rec.token === 'curse') {
-        if (rec.saved) { shield--; Sfx.shield(); FX.float(T.vaultSaved, cx, cy - r.s * 0.7, '#6ff0dd', 26); FX.ring(cx, cy, '#6ff0dd', r.s * 1.6, 0.8); FX.flash(0.25, '#6ff0dd'); }
-        else {   // malédiction : vignette rouge, double flash, tuiles assombries, fumée
-          Sfx.curse(); shake = 1.4; vig = 1.4; t.dark = 1; FX.shake(26, 1.0); FX.flash(0.6, '#ff3b20');
-          FX.ring(cx, cy, '#ff3b20', r.s * 3.2, 1.1); FX.dust(cx, cy, 26, '#5a0c06'); FX.spark(cx, cy, 30, '#ff5a3a', 360, 0.8);
-          FX.float(T.vaultCurse, cx, cy - r.s * 0.7, '#ff7a5a', 40);
-          tiles.forEach(function (o) { if (o !== t && o.state === 'closed') o.dim = true; });
-          G.sleep(0.18).then(function () { FX.flash(0.4, '#ff3b20'); FX.shake(14, 0.5); });
-          await G.sleep(quick() ? 0.3 : 0.9);
-          tiles.forEach(function (o) { if (o.state === 'closed') o.dim = false; });
-        }
-      } else if (rec.token === 'ankh') { shield++; Sfx.shield(); FX.float(T.vaultShield, cx, cy - r.s * 0.7, '#6ff0dd', 24); FX.ring(cx, cy, '#6ff0dd', r.s * 1.4, 0.8); }
+      if (rec.token === 'seal') {   // le sceau se referme : dalles assombries, poussière, lourde porte de pierre (on garde le total)
+        Sfx.sealShut(); shake = 1.0; vig = 1.1; vigCol = '90,50,20'; t.dark = 1; FX.shake(22, 0.9); FX.flash(0.35, '#d9a066');
+        FX.ring(cx, cy, '#d9a066', r.s * 2.8, 1.0); FX.dust(cx, cy, 30, '#6a4a2a'); FX.spark(cx, cy, 18, '#e8c08a', 260, 0.7);
+        FX.float(T.vaultSeal, cx, cy - r.s * 0.7, '#f0c890', 34);
+        tiles.forEach(function (o) { if (o !== t && o.state === 'closed') o.dim = true; });
+        await G.sleep(quick() ? 0.3 : 0.9);
+        tiles.forEach(function (o) { if (o.state === 'closed') o.dim = false; });
+      } else if (rec.token === 'key') { Sfx.keyGet(); left = rec.left; leftPop = 1; FX.float(T.vaultKey.replace('{n}', M.VAULT_KEY_PICKS), cx, cy - r.s * 0.7, '#6ff0dd', 26); FX.ring(cx, cy, '#6ff0dd', r.s * 1.6, 0.8); FX.spark(cx, cy, 22, '#9ff4e6', 300); }
       else if (rec.token === 'scepter') { Sfx.lightning(); FX.flash(0.35, '#9ab8ff'); FX.float(T.vaultScepter, cx, cy - r.s * 0.7, '#9ab8ff', 28); FX.ring(cx, cy, '#9ab8ff', r.s * 2, 0.9); FX.ring(cx, cy, '#dbe6ff', r.s * 3, 1.2); FX.spark(cx, cy, 24, '#9ab8ff', 380); FX.shake(8, 0.3); }
       else { Sfx.chime(rec.token); FX.coins(cx, cy, 10 + Math.min(34, rec.token * 4), 700 + (big ? 200 : 0), 40); FX.spark(cx, cy, 18, '#ffe9a0', 300); FX.ring(cx, cy, '#ffd86a', r.s * 2.2, 0.8); if (big) { FX.rain(G.w, 18); FX.flash(0.2, '#ffe9a0'); FX.shake(6, 0.3); } FX.float('+' + fb(rec.token, B), cx, cy - r.s * 0.7, '#fff1b8', 30); }
-      if (rec.token !== 'curse' || !rec.saved) bump(S, rec.total * B); else bump(S, S.totalT);
+      if (rec.token !== 'key') left = rec.left;
+      bump(S, rec.total * B);
       await G.sleep(0.65);
     }
     S.run = async function () {
       G.say(T.vaultSub); await G.sleep(1.2);
       await boostIntro(S, sp);
-      var leftovers = [1, 2, 3, 5, 8, 2, 1, 3, 'scepter', 1, 5, 'ankh'];
+      var leftovers = [1, 2, 3, 5, 8, 2, 1, 3, 'scepter', 1, 5, 'key'];
       for (n = 0; n < data.picks.length; n++) {
         G.say(T.pick);
         var i = await waitPick(); hover = -1;
         await reveal(i, data.picks[n]);
-        if (data.picks[n].token === 'curse' && !data.picks[n].saved) break;
+        if (data.picks[n].token === 'seal') break;
       }
       G.say('');
       if (data.ended === 'cleared') {
@@ -1613,8 +1629,8 @@
     function line(p) {
       if (kind === 'scarab') { var v = M.SCARAB_PROFILES[p]; return T.lineScarab.replace('{a}', Math.min.apply(null, v)).replace('{b}', Math.max.apply(null, v)); }
       if (kind === 'weigh') { var mx = 0; M.WEIGH_PROFILES[p].forEach(function (q) { mx = Math.max(mx, q[0][1]); }); return T.lineWeigh.replace('{b}', mx); }
-      var vp = M.VAULT_PROFILES[p], sum = vp.curse; vp.tokens.forEach(function (q) { sum += q[1]; });
-      return T.lineVault.replace('{p}', Math.round(vp.curse / sum * 100));
+      var vp = M.VAULT_PROFILES[p], sum = vp.seal; vp.tokens.forEach(function (q) { sum += q[1]; });
+      return T.lineVault.replace('{p}', Math.round(vp.seal / sum * 100));
     }
     var ICON = { safe: 'amulet', std: 'coin', bold: 'scepter' };
     S.layout = function () {

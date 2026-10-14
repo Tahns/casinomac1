@@ -18,23 +18,31 @@ function weigh(prof) {   // gain = multiplicateur du plateau choisi s'il est le 
   tab.forEach(function (t) { var p = t[0]; a += t[1] * 0.5 * (p[0] + p[1]) / 2; b += t[1] * 0.5 * (p[0] * p[0] + p[1] * p[1]) / 2; });
   return [a / s, b / s];
 }
-function vault(prof) {   // énumération exacte des 7 choix (au plus ~10^7 feuilles)
-  var vp = M.VAULT_PROFILES[prof], pool = vp.tokens.concat([['curse', vp.curse]]), W = 0, E = 0, E2 = 0;
+function vaultOf(vp) {   // calcul exact par propagation des lois (position, coffres permis, total) : clé d'or = +VAULT_KEY_PICKS coffres (plafonné)
+  var pool = vp.tokens.concat([['seal', vp.seal]]), W = 0, E = 0, E2 = 0, i;
   pool.forEach(function (t) { W += t[1]; });
-  var Wnc = W - vp.curse;
-  (function rec(i, total, shield, p) {
-    if (i === M.VAULT_MAX_PICKS) { var f = total + 5; E += p * f; E2 += p * f * f; return; }
-    pool.forEach(function (t) {
-      var pr = i < 2 ? (t[0] === 'curse' ? 0 : t[1] / Wnc) : t[1] / W, k = t[0];
-      if (!pr) return;
-      if (k === 'curse') { if (shield > 0) rec(i + 1, total, shield - 1, p * pr); else { E += p * pr * total; E2 += p * pr * total * total; } }
-      else if (k === 'ankh') rec(i + 1, total, shield + 1, p * pr);
-      else if (k === 'scepter') rec(i + 1, total * 2, shield, p * pr);
-      else rec(i + 1, total + k, shield, p * pr);
+  var Wns = W - vp.seal, layer = new Map();
+  layer.set(M.VAULT_BASE_PICKS + '|0', 1);   // clé « permis|total »
+  for (i = 0; i < M.VAULT_PICK_CAP; i++) {
+    var next = new Map();
+    layer.forEach(function (p, key) {
+      var parts = key.split('|'), allowed = +parts[0], total = +parts[1];
+      if (i >= allowed) { var f = total + M.VAULT_FINISH; E += p * f; E2 += p * f * f; return; }
+      pool.forEach(function (t) {
+        var pr = i < 2 ? (t[0] === 'seal' ? 0 : t[1] / Wns) : t[1] / W, k = t[0];
+        if (!pr) return;
+        if (k === 'seal') { E += p * pr * total; E2 += p * pr * total * total; return; }
+        var al = allowed, tt = total;
+        if (k === 'key') al = Math.min(M.VAULT_PICK_CAP, allowed + M.VAULT_KEY_PICKS); else if (k === 'scepter') tt = total * 2; else tt = total + k;
+        var nk = al + '|' + tt; next.set(nk, (next.get(nk) || 0) + p * pr);
+      });
     });
-  })(0, 0, 0, 1);
+    layer = next;
+  }
+  layer.forEach(function (p, key) { var f = +key.split('|')[1] + M.VAULT_FINISH; E += p * f; E2 += p * f * f; });
   return [E, E2];
 }
+function vault(prof) { return vaultOf(M.VAULT_PROFILES[prof]); }
 var FN = { scarab: scarab, weigh: weigh, vault: vault };
 
 function compute() {
@@ -84,6 +92,7 @@ function compute() {
   return { std: std, plus: { mean: plus.mean / M.MODES.plus.cost, sd: plus.sd, sdRel: plus.sd / M.MODES.plus.cost, hit: plus.hit }, buy: buy, bonusEvery: Nn / 3, bonus: BON, hand: H, replaced: rep1 };
 }
 module.exports = compute;
+module.exports.vaultOf = vaultOf;
 
 if (require.main === module) {
   var r = compute();

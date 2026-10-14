@@ -142,36 +142,39 @@
     return data;
   }
 
-  /* ---------- Bonus 3 : Chambre du Trésor (pick-me, 12 tuiles) ---------- */
+  /* ---------- Bonus 3 : Chambre du Trésor (pick-me, 12 coffres) ---------- */
+  // Règle : on ouvre des coffres un par un (7 au départ). Chaque coffre contient des pièces (+N), un SCEPTRE (×2 sur le total), une CLÉ D'OR
+  // (+2 coffres à ouvrir, 10 au plus) ou le SCEAU : le sceau referme la chambre, on garde le total acquis. Aucun objet n'annule ni ne retarde le sceau :
+  // la clé ne fait qu'allonger la sélection. Jamais de sceau sur les deux premiers coffres. Chambre vidée (tous les coffres permis ouverts) : prime +5×.
+  // Trois profils de même espérance (10,63×) : le sceau est plus rare (prudent) ou plus fréquent (audacieux), les gains suivent ; poids du sceau calés par
+  // le calcul exact (tools/rtp-exact.js, tools/tune-vault.js).
   var VAULT_TILES = 12;
-  // Trois profils : la malédiction est plus rare (prudent) ou plus fréquente (audacieux), les gains suivent ; poids de la malédiction calés par simulation pour une même espérance.
   var VAULT_PROFILES = {
-    safe:  { curse: 39, tokens: [[1, 48], [2, 26], [3, 10], [5, 5], [10, 2], [25, 0.6], [100, 0.12], [500, 0.02], ['scepter', 2], ['ankh', 4]] },
-    std:   { curse: 72.7, tokens: [[1, 40], [2, 25], [3, 12], [5, 6], [10, 3], [25, 1.2], [80, 0.4], [500, 0.06], ['scepter', 2.5], ['ankh', 3]] },
-    bold:  { curse: 67, tokens: [[1, 60], [2, 15], [3, 6], [5, 3], [10, 2], [25, 1.5], [100, 0.4], [600, 0.08], ['scepter', 4], ['ankh', 1]] }
+    safe:  { seal: 34.79, tokens: [[1, 48], [2, 26], [3, 10], [5, 5], [10, 2], [25, 0.6], [100, 0.12], [500, 0.02], ['scepter', 2], ['key', 4]] },
+    std:   { seal: 66.19, tokens: [[1, 40], [2, 25], [3, 12], [5, 6], [10, 3], [25, 1.2], [80, 0.4], [500, 0.06], ['scepter', 2.5], ['key', 3]] },
+    bold:  { seal: 64.94, tokens: [[1, 60], [2, 15], [3, 6], [5, 3], [10, 2], [25, 1.5], [100, 0.4], [600, 0.08], ['scepter', 4], ['key', 1]] }
   };
   var VAULT_TOKENS = VAULT_PROFILES.std.tokens;
-  var VAULT_MAX_PICKS = 7;
+  var VAULT_BASE_PICKS = 7, VAULT_KEY_PICKS = 2, VAULT_PICK_CAP = 10, VAULT_FINISH = 5;
+  var VAULT_MAX_PICKS = VAULT_PICK_CAP;   // nombre maximal de coffres ouverts (tuiles disponibles : VAULT_TILES)
   function vault(rng, prof) {
-    var picks = [], total = 0, shield = 0, ended = 'cleared', vp = VAULT_PROFILES[prof || 'std'];
-    var pool = vp.tokens.concat([['curse', vp.curse]]);
-    for (var i = 0; i < VAULT_MAX_PICKS; i++) {
+    var picks = [], total = 0, allowed = VAULT_BASE_PICKS, ended = 'cleared', vp = VAULT_PROFILES[prof || 'std'];
+    var pool = vp.tokens.concat([['seal', vp.seal]]);
+    for (var i = 0; i < allowed; i++) {
       var tk = weighted(rng, pool);
-      if (i < 2 && tk === 'curse') { // jamais de malédiction sur les deux premiers choix
-        while (tk === 'curse') tk = weighted(rng, pool);
+      if (i < 2 && tk === 'seal') { // jamais de sceau sur les deux premiers choix
+        while (tk === 'seal') tk = weighted(rng, pool);
       }
-      var rec = { token: tk, total: 0, saved: false };
-      if (tk === 'curse') {
-        if (shield > 0) { shield--; rec.saved = true; }
-        else { rec.total = total; picks.push(rec); ended = 'curse'; break; }
-      } else if (tk === 'ankh') { shield++; }
+      var rec = { token: tk, total: 0, left: 0 };
+      if (tk === 'seal') { rec.total = total; rec.left = 0; picks.push(rec); ended = 'seal'; break; }
+      else if (tk === 'key') { allowed = Math.min(VAULT_PICK_CAP, allowed + VAULT_KEY_PICKS); }
       else if (tk === 'scepter') { total *= 2; }
       else { total += tk; }
-      rec.total = total;
+      rec.total = total; rec.left = allowed - i - 1;
       picks.push(rec);
     }
-    if (ended === 'cleared') total += 5; // prime « chambre vidée »
-    return { picks: picks, ended: ended, bonusFinish: ended === 'cleared' ? 5 : 0, total: total, profile: prof || 'std' };
+    if (ended === 'cleared') total += VAULT_FINISH; // prime « chambre vidée »
+    return { picks: picks, ended: ended, bonusFinish: ended === 'cleared' ? VAULT_FINISH : 0, total: total, profile: prof || 'std' };
   }
 
   /* ---------- Bonus 4 : Fureur d'Anubis (roue géante : choix d'une couleur, DOUBLE, bandes de bonus) ---------- */
@@ -389,7 +392,7 @@
     SCARAB_PROFILES: SCARAB_PROFILES, WEIGH_PROFILES: WEIGH_PROFILES, VAULT_PROFILES: VAULT_PROFILES,
     MAX_WIN: MAX_WIN, MODES: MODES, ORACLE_KIND_W: ORACLE_KIND_W, ORACLE_BOOST: ORACLE_BOOST, N: N, LAYOUT: LAYOUT, KINDS: KINDS,
     SCARAB_ROWS: SCARAB_ROWS, SCARAB_VALUES: SCARAB_VALUES, SCARAB_BALLS: SCARAB_BALLS,
-    WEIGH_PAIRS: WEIGH_PAIRS, weighGain: weighGain, VAULT_TILES: VAULT_TILES, VAULT_MAX_PICKS: VAULT_MAX_PICKS,
+    WEIGH_PAIRS: WEIGH_PAIRS, weighGain: weighGain, VAULT_TILES: VAULT_TILES, VAULT_MAX_PICKS: VAULT_MAX_PICKS, VAULT_BASE_PICKS: VAULT_BASE_PICKS, VAULT_KEY_PICKS: VAULT_KEY_PICKS, VAULT_PICK_CAP: VAULT_PICK_CAP, VAULT_FINISH: VAULT_FINISH,
     CRYPT_COLS: CRYPT_COLS, CRYPT_CAP: CRYPT_CAP, CRYPT_BLOCKS: CRYPT_BLOCKS, CRYPT_START: CRYPT_START, CRYPT_STACK: CRYPT_STACK, CRYPT_TYPES: CRYPT_TYPES, CRYPT_VALUES: CRYPT_VALUES, SECRET_UPGRADE: SECRET_UPGRADE, cryptReplay: cryptReplay,
     HAND_SEGS: HAND_SEGS, HAND_COLORS: HAND_COLORS, HAND_MAX_CHAIN: HAND_MAX_CHAIN, HAND_MIN_N: HAND_MIN_N, handOptions: handOptions, handRecalc: handRecalc, HAND_UPGRADE: HAND_UPGRADE, ORACLE_CHANCE: ORACLE_CHANCE,
     mulberry32: mulberry32, cryptoRng: cryptoRng,
