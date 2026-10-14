@@ -173,7 +173,7 @@ async function oneRound(p, ep, errs, url) {
   while (steps++ < MAXS) {
     try {
       var st = await ev(p, '({busy:G.S.busy,auto:G.S.auto,tb:window.__tb,scene:!!G.scene})');
-      if (isTest ? st.tb === true : (!st.busy && st.auto === 0 && !(await ev(p, '!!G.winOv||!!G.eg')))) { idle = true; break; }
+      if (isTest ? (st.tb === true && !st.busy && st.auto === 0 && !(await ev(p, '!!G.winOv||!!G.eg'))) : (!st.busy && st.auto === 0 && !(await ev(p, '!!G.winOv||!!G.eg')))) { idle = true; break; }
       await ev(p, 'G.advance(' + (1 + Math.floor(rnd() * 2)) + ')');
       if (chance(0.5)) await randomInput(p);
       if (perturbLeft > 0 && chance(0.08)) { perturbLeft--; totals.perturb++; var res = await perturb(p, url, ep); if (res === 'reloaded') { reloaded = true; if (isTest) isTest = false; if (!(await ev(p, 'G.S.busy'))) { idle = true; break; } } }
@@ -199,7 +199,7 @@ async function oneRound(p, ep, errs, url) {
     if (S.pending !== 0) P.push('gain en attente non nul ' + S.pending);
     if (Math.abs(Math.round(S.balance * 100) - S.balance * 100) > 1e-6) P.push('solde hors centime ' + S.balance);
     if (S.balance < 0) P.push('solde négatif ' + S.balance);
-    var sv = JSON.parse(localStorage.getItem('anubis_save_v1') || 'null'); if (!sv || sv.pending !== 0 || sv.balance !== S.balance) P.push('sauvegarde incohérente ' + JSON.stringify(sv && { p: sv.pending, b: sv.balance }) + ' vs solde ' + S.balance);
+    var sv = JSON.parse(localStorage.getItem('anubis_save_v1') || 'null'); if ((sv || window.__rounds.length) && (!sv || sv.pending !== 0 || sv.balance !== S.balance)) P.push('sauvegarde incohérente ' + JSON.stringify(sv && { p: sv.pending, b: sv.balance }) + ' vs solde ' + S.balance);
     var L = window.__ledger(); L.bad.forEach(function (x) { P.push(x); });
     return { P: P, L: L, bal: S.balance, turbo: G.turbo, hb: window.__rounds.some(window.__hasBonus), tc: window.__tc, nr: window.__rounds.length, hold: G.timers.length, tw: G.tweens.length }; })()`);
   inv.P.forEach(function (m) { fail(ep, m); });

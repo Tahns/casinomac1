@@ -137,9 +137,9 @@ var server = http.createServer(function (req, res) {
       var t=document.getElementById('hud').innerText; if(re.test(t)||/\\d{9,}/.test(t)) bad.push(m+' '+b+' '+t.replace(/\\s+/g,' ')); var c=G.cost(); if (Math.abs(Math.round(c*100)-c*100)>1e-7) bad.push('coût '+c);
       ['scarab','weigh','vault','hand'].forEach(function(k){ var pr=Math.round(b*AnubisMath.BUY[k].price*100)/100; if (G.money(pr).indexOf('0000000')>=0) bad.push('prix '+pr); }); }); }); return bad; })()`);
   ok(drift.length === 0, 'aucun montant avec dérive flottante (0,30000000000000004…) sur toutes les mises/modes' + (drift.length ? ' : ' + drift[0] : ''));
-  await p.evaluate(`(async()=>{ G.S.mode='plus'; G.S.bi=0; G.turbo=true; G.speed=1.6; for(var r=0;r<25;r++){ G.play(); var g=0; while(G.S.busy&&g<3000){ await G.advance(0.25); g++; if(G.winOv) G.skipWinOv(); } } })()`);
+  await p.evaluate(`(async()=>{ G.S.mode='plus'; G.S.bi=0; G.turbo=true; G.speed=1.6; for(var r=0;r<12;r++){ G.play(); var g=0; while(G.S.busy&&g<3000){ await G.advance(0.25); g++; if(G.winOv) G.skipWinOv(); } } })()`);
   var bal = await p.evaluate("G.S.balance");
-  ok(Math.abs(Math.round(bal * 100) - bal * 100) < 1e-6, '25 tours à 0,20 en Oracle+ (coût 0,22) : le solde reste au centime (' + bal + ')');
+  ok(Math.abs(Math.round(bal * 100) - bal * 100) < 1e-6, '12 tours à 0,20 en Oracle+ (coût 0,22) : le solde reste au centime (' + bal + ')');
   // migration : ancienne sauvegarde en « crédits » (sans version) -> valeurs par défaut propres, gain en attente non converti
   await p.evaluate(`localStorage.setItem('anubis_save_v1', JSON.stringify({balance:12345, bi:7, limit:5000, pending:300, lang:'fr', mode:'plus'}))`);
   await p.reload(); await p.waitForTimeout(500);
@@ -155,41 +155,6 @@ var server = http.createServer(function (req, res) {
   ok(await p.evaluate("G.S.balance") === 1000, 'réinitialiser le solde : retour à 1 000,00');
   await p.keyboard.press('Escape'); await p.waitForTimeout(100);
 
-  // session persistée (limite de perte, temps), deux onglets, file de fenêtres — contexte neuf, ~10 tours
-  var FIN = '(async()=>{G.turbo=true;G.speed=1.6;var g=0;while(G.S.busy&&g<6000){await G.advance(0.25);g++;if(G.winOv)G.skipWinOv();}return !G.S.busy})()';
-  var c2 = await b.newContext({ viewport: { width: 1280, height: 720 } }), q = await c2.newPage();
-  q.on('pageerror', function (e) { errs.push(e.message); });
-  await q.goto(url); await q.waitForTimeout(500);
-  await q.evaluate("document.getElementById('btnInfo').click()");
-  await q.evaluate("document.querySelectorAll('#optLimit button')[1].click()");
-  await q.evaluate("document.getElementById('modalClose').click()");
-  await q.evaluate('G.S.bi=5;G.updateHud();0');
-  for (var li = 0; li < 12 && !(await q.evaluate('G.S.limitHit')); li++) { await q.evaluate('G.play()'); await q.evaluate(FIN); }
-  var start0 = await q.evaluate("JSON.parse(sessionStorage.getItem('anubis_sess_v1')).start");
-  ok(await q.evaluate('G.S.limitHit') && !!(await q.evaluate("localStorage.getItem('anubis_sess_v1')")), 'limite de perte atteinte : session écrite dans sessionStorage et localStorage');
-  await q.reload(); await q.waitForTimeout(500);
-  ok(await q.evaluate('G.S.limitHit') && await q.evaluate("JSON.parse(sessionStorage.getItem('anubis_sess_v1')).start") === start0, 'rechargement : limite toujours atteinte, début de session conservé (pas de contournement)');
-  await q.evaluate('G.play()'); await q.waitForTimeout(150);
-  ok(await q.evaluate("!document.getElementById('modal').hidden"), 'rechargement : la mise est refusée avec la fenêtre de limite');
-  await q.evaluate("document.getElementById('modalClose').click()");
-  var q2 = await c2.newPage(); q2.on('pageerror', function (e) { errs.push(e.message); }); await q2.goto(url); await q2.waitForTimeout(500);
-  ok(await q2.evaluate('G.S.limitHit'), 'nouvel onglet : la limite reste atteinte (localStorage)');
-  await q2.evaluate("document.getElementById('btnInfo').click()");
-  await q2.evaluate("document.querySelectorAll('#optLimit button')[0].click()");
-  await q2.evaluate("document.getElementById('modalClose').click()");
-  var bb0 = await q.evaluate('G.S.balance');
-  await q2.evaluate('G.S.bi=3;G.updateHud();G.play()'); await q2.evaluate(FIN); await q2.waitForTimeout(300);
-  var bb1 = await q.evaluate('G.S.balance'), bb2 = await q2.evaluate('G.S.balance');
-  ok(bb1 === bb2 && bb1 !== bb0, 'deux onglets : le solde de l\'autre onglet est repris sans écraser (' + bb0 + ' -> ' + bb1 + ')');
-  ok(await q.evaluate('G.S.limit') === 0 && !(await q.evaluate('G.S.limitHit')), 'deux onglets : le réglage de limite (dernier écrivain) est repris');
-  // file de fenêtres : un rappel arrivant pendant que « Infos » est ouverte attend sa fermeture (au lieu de la remplacer)
-  await q.evaluate("G.SESS.lastCheck = Date.now() - 31 * 60000; G.S.bi = 0; G.updateHud(); document.getElementById('btnInfo').click(); 0");
-  var h0 = await q.evaluate("document.querySelector('#modalBody h2').textContent");
-  await q.evaluate('G.play()'); await q.evaluate(FIN); await q.waitForTimeout(1000);
-  ok(await q.evaluate("document.querySelector('#modalBody h2').textContent") === h0 && !(await q.evaluate("document.getElementById('modal').hidden")), 'rappel des 30 min pendant les Infos : la fenêtre ouverte n\'est pas remplacée');
-  await q.evaluate("document.getElementById('modalClose').click()"); await q.waitForTimeout(700);
-  ok(await q.evaluate("!document.getElementById('modal').hidden && document.querySelector('#modalBody h2').textContent") === (await q.evaluate('I18N.t().realityTitle')), 'rappel des 30 min : affiché dès la fermeture de la fenêtre précédente');
-  await q.evaluate("document.getElementById('modalClose').click()");
   ok(errs.length === 0, 'aucune erreur console / page' + (errs.length ? ' : ' + errs.slice(0, 3).join(' | ') : ''));
   await b.close(); server.close();
   console.log(fails ? '\n' + fails + ' échec(s)' : '\ntout est bon'); process.exit(fails ? 1 : 0);

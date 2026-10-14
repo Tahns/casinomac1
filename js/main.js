@@ -321,7 +321,7 @@
     } else { setWin(0); say(T.ready); }
     pushHistory(total, hadBonus);
     G.wheel.clearHighlight();
-    S.pending = 0; S.busy = false; G.speed = spd();
+    S.pending = 0; S.busy = false; G.speed = spd(); G.onBonusChoice = null;   // plus de rappel périmé d'un tour terminé
     save();
     var stopped = responsibleCheck() || (S.auto > 0 && S.stopWin > 0 && total >= S.stopWin);
     if (S.auto > 0 && !buyKind) {

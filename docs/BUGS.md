@@ -14,10 +14,19 @@ Méthode : relecture de main.js, game.js, audio.js, bonuses.js, math.js ; correc
 | Basse | Thème de bonus : le `setInterval` continuait de jouer dans un onglet caché | Changer d'onglet pendant un bonus | Le pas est ignoré si `document.hidden` |
 | Basse | Bonus boosté : le gain affiché dépassait `MAX_WIN` alors que le crédit était plafonné | Boost élevé sur un gros bonus | Affichage plafonné à `MAX_WIN` (maths inchangées) |
 
-## Non corrigés
+| Haute | Limite de perte et temps de session remis à zéro par un rechargement (contournement) | Atteindre la limite puis recharger | Session (début, tours, mises, gains, dernier rappel, plafond ERR_GLE) écrite dans sessionStorage ET localStorage, reprise au chargement (nouvel onglet : reprise si activité < 30 min) ; limite recalculée au chargement ; plafond de perte conservé aussi en mode RGS |
+| Haute | Mode RGS : ERR_GLE du serveur sans effet durable | Plafond serveur atteint puis rechargement | ERR_GLE : plus de mise pendant 60 s (message), mémorisé dans la session |
+| Moyenne | Deux onglets : la dernière sauvegarde écrasait l'autre | Jouer dans deux onglets | Événement `storage` : préférences = dernier écrivain ; solde et compteurs de session fusionnés par écart (aucune mise ni gain perdu). Mode RGS : un seul onglet de jeu actif, l'autre est bloqué derrière un avertissement avec « Jouer ici » |
+| Basse | Alerte 30 min / limite (`setTimeout`) remplaçant une fenêtre ouverte | Rappel pendant « Infos » | File d'attente de fenêtres : la fenêtre ouverte n'est jamais remplacée, la suivante s'ouvre à sa fermeture (limite avant rappel) |
+| Basse | Musique / hauteur changées pendant un thème de bonus : ambiance superposée | Mixeur pendant un bonus | `startAmbient` refuse de démarrer sous un thème actif ; le thème respecte « musique coupée » |
+| Basse | Rappel de gain (`G.onBonusChoice`) périmé conservé après le tour | Bonus lancé hors flux | Remis à `null` en fin de tour |
 
-- Limite de perte et temps de session non persistés : un rechargement remet la session à zéro (contournement possible). Demande un choix produit (sessionStorage).
-- Deux onglets ouverts : la dernière sauvegarde écrase l'autre (pas d'écoute de l'événement `storage`).
-- Audio : changer musique/hauteur pendant un thème de bonus peut superposer l'ambiance (cosmétique).
-- Alerte « 30 min » ou limite atteinte : `setTimeout` qui peut remplacer une fenêtre déjà ouverte.
-- Fuzzer non exécuté en entier ; résultats à confirmer.
+## Vérifié sans défaut
+Redimensionnement / rotation pendant chacun des 5 bonus (4 tailles, fin de bonus propre), changement de langue en plein bonus, 80 tours sans fuite (objets, canvas et tas stables après ramasse-miettes), mises extrêmes et Oracle+ à 0,20 (`e2e.js`, fuzzer).
+
+## Fuzzer
+`tools/fuzz.js` tourne (4 exécutions de 20 à 60 tours, graines 2, 12, 13, 14 : « tout est bon »). Corrigé côté outil : clics forcés (boutons animés jugés instables, attente de 30 s), solde imposé non sauvegardé, bonus de test lancé pendant un vrai tour, turbo réactivé par le joueur. « Turbo toujours actif après un bonus » n'était pas un bug du jeu (`play()` le coupe à l'arrivée sur un bonus) : l'invariant ignore désormais un clic du joueur. Délai global (`FUZZ_MAX_SECONDS`, 90 s) et plafond de 1000 tours.
+
+## Non corrigés
+- Textes d'accessibilité et avertissement « autre onglet » : traduits en FR et EN seulement (bloc `ui` de i18n.js), les 14 autres langues retombent sur l'anglais.
+- Deux onglets en course dans la même milliseconde : une mise peut être perdue (aucun verrou entre onglets en démo).
