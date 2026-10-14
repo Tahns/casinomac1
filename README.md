@@ -11,6 +11,9 @@ node tools/check.js              # invariants des maths (sortie 1 si échec)
 node tools/contrast.js           # contraste WCAG AA des couples texte/fond
 node tools/i18n-check.js         # 16 langues Stake complètes (clés, marqueurs {x}, longueurs), pas de français en dur, chiffres affichés = maths
 node tools/stake-export.js       # démonstration du format Stake (books .jsonl.zst, lookup CSV, index.json) dans tools/out/, <= 1000 books par mode
+node tools/export-parity.js    # tirages de parité JS pour stake-math/tests (≤ 1000 tours au total)
+python3 -m unittest discover -s stake-math/tests   # portage Python (math-sdk) : parité avec le JS, moments exacts, format des books (51 tests, ≈ 1 s)
+python3 stake-math/run.py       # books + lookup + index.json au format math-sdk dans stake-math/library/ (≤ 1000 books par mode ; HOA_BIG=1 réservé à une vraie production)
 node tools/social-check.js       # mode social (Stake.US) : aucun mot interdit dans tous les textes sociaux, 10.00 SC / GC sans « $ » ; avec PLAYWRIGHT_CORE, scanne aussi le DOM et le canvas (?social=true&currency=XSC)
 PLAYWRIGHT_CORE=... node tools/layout.js # mises en page sur 10 tailles d'écran (portrait, paysage, grand écran)
 PLAYWRIGHT_CORE=/chemin/node_modules/playwright-core node tools/e2e.js   # tests de bout en bout dans Chromium
@@ -31,6 +34,7 @@ node tools/tune-profiles.js     # espérance des profils Prudent / Équilibré /
 | `img/` | Illustrations générées (WebP/JPEG, ≈ 1 Mo) : décors, logos de bonus, médaillon, accueil, cadre et plaques du menu |
 | `tools/build-single.py` | Construit le fichier HTML unique (CSS, polices, JS, images en data: URI) : `python3 -I tools/build-single.py sortie.html` |
 | `fonts/` | Cinzel (lettrage) et Philosopher (chiffres, textes), OFL 1.1, sous-ensemble latin ≈ 90 Ko — détail dans `docs/ANALYSE.md` |
+| `stake-math/` | Portage Python des maths au format math-sdk de Stake (game_config, books, lookup, index.json, optimiseur, tests de parité) — voir `stake-math/README.md` |
 | `docs/ANALYSE.md` | SWOT, benchmark GitHub, DA, mathématiques, chemin vers Stake |
 | `docs/STAKE_ENGINE_CONFORMITE.md` | Checklist de conformité Stake Engine, risques brevets/marques/droits, plan d'action (pas un avis juridique) |
 
