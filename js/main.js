@@ -21,7 +21,7 @@
   var SAVE_KEY = 'anubis_save_v1', OLD_SAVE_KEY = 'hoa_save_v1';   // ancienne clé lue une fois pour ne pas perdre les soldes
   var REPLAY = !!(root.Replay && root.Replay.active);   // mode replay (js/replay.js) : aucune sauvegarde lue ni écrite, pas d'écran d'accueil
 
-  var S = { pending: 0, balance: START_BAL, bi: BET_DEFAULT, cur: '', curSet: false, lastWin: 0, autoIdx: 0, auto: 0, stopOnBonus: false, busy: false, hist: [], blocked: false, pendingEnd: false, stopWin: 0, reduced: false, mode: 'std', buyOn: true, limit: 0, limitB: 0, quality: 'auto', limitHit: false, curLocked: false, balCur: 'EUR' };
+  var S = { pending: 0, balance: LIVE ? 0 : START_BAL, bi: BET_DEFAULT, cur: '', curSet: false, lastWin: 0, autoIdx: 0, auto: 0, stopOnBonus: false, busy: false, hist: [], blocked: false, pendingEnd: false, stopWin: 0, reduced: false, mode: 'std', buyOn: true, limit: 0, limitB: 0, quality: 'auto', limitHit: false, curLocked: false, balCur: 'EUR' };
   var SESS = { start: Date.now(), spins: 0, wag: 0, won: 0, lastCheck: Date.now() };
   // La session (début, tours, mises, gains, dernier rappel) survit au rechargement : sinon recharger la page remettrait à zéro la limite de perte et
   // le temps de jeu (contournement). Elle est écrite dans sessionStorage (cet onglet) ET localStorage (nouvel onglet, page rouverte) ;
@@ -109,13 +109,13 @@
     } catch (e) {}
     // mouvement réduit : suit le réglage du système tant que le joueur n'a rien choisi
     try { if (!localStorage.getItem(SAVE_KEY) && !localStorage.getItem(OLD_SAVE_KEY) && root.matchMedia && root.matchMedia('(prefers-reduced-motion: reduce)').matches) { S.reduced = true; FX.reduced = true; } } catch (e) {}
-    if (!(S.balance >= BETS[0])) S.balance = START_BAL;
+    if (!LIVE && !(S.balance >= BETS[0])) S.balance = START_BAL;   // mode RGS : le solde ne vient que des réponses du serveur, jamais d'une valeur locale
     // devise effective, puis solde enregistré converti si elle diffère de celle du dernier enregistrement
     S.cur = pickCurrency(); G.currency = S.cur;
     var ratio = root.CUR.rate(S.cur) / root.CUR.rate(S.balCur);
     applyScale(root.CUR.rate(S.cur));
-    if (ratio !== 1) { S.balance = G.rc(S.balance * ratio); if (S.resumed) S.resumed = G.rc(S.resumed * ratio); }
-    if (!(S.balance >= BETS[0])) S.balance = START_BAL;
+    if (!LIVE && ratio !== 1) { S.balance = G.rc(S.balance * ratio); if (S.resumed) S.resumed = G.rc(S.resumed * ratio); }
+    if (!LIVE && !(S.balance >= BETS[0])) S.balance = START_BAL;
     S.synced = S.balance; loadSess(); checkLimit();
   }
   function save() {
@@ -664,7 +664,8 @@
       '<div class="opt"><span>' + T.stopBonus + '</span><div class="chips"><button id="optStop" class="' + (S.stopOnBonus ? 'on' : '') + '" type="button">' + (S.stopOnBonus ? T.on : T.off) + '</button></div></div>' +
       '<div class="opt"><span>' + T.buyOn + '</span><div class="chips"><button id="optBuy" class="' + (S.buyOn ? 'on' : '') + '" type="button">' + (S.buyOn ? T.on : T.off) + '</button></div></div>' +
       '<div class="opt"><span>' + T.reducedFx + '</span><div class="chips"><button id="optRed" class="' + (S.reduced ? 'on' : '') + '" type="button">' + (S.reduced ? T.on : T.off) + '</button></div></div>' +
-      '<div class="opt"><span>' + T.resetBal + '</span><div class="chips"><button id="optReset" type="button">' + G.money(START_BAL) + '</button></div></div>';
+      // [222] « Réinitialiser le solde » n'existe que dans la démo locale : en mode RGS le solde ne vient que des réponses du serveur
+      (LIVE ? '' : '<div class="opt"><span>' + T.resetBal + '</span><div class="chips"><button id="optReset" type="button">' + G.money(START_BAL) + '</button></div></div>');
     var ol = $('optLimit');
     LIMITS.forEach(function (n, li) {
       var bt = document.createElement('button'); bt.type = 'button'; bt.textContent = n ? G.money(n) : T.off; bt.className = S.limit === n ? 'on' : '';
@@ -687,7 +688,7 @@
     $('optBuy').onclick = function () { S.buyOn = !S.buyOn; save(); setSpinBtn(); openInfo(); };
     $('optStop').onclick = function () { S.stopOnBonus = !S.stopOnBonus; save(); openInfo(); };
     $('optRed').onclick = function () { S.reduced = !S.reduced; FX.reduced = S.reduced; save(); openInfo(); };
-    $('optReset').onclick = function () { if (S.busy) return; S.balance = START_BAL; shown.bal = -1; updateHud(); save(); };
+    if (!LIVE && $('optReset')) $('optReset').onclick = function () { if (S.busy) return; S.balance = START_BAL; shown.bal = -1; updateHud(); save(); };
     showModal(); Sfx.click();
   }
   $('btnInfo').addEventListener('click', openInfo);

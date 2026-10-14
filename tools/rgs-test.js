@@ -11,7 +11,7 @@ var R = require('../js/rgs.js'), M = require('../js/math.js'), E = require('./st
 var root = path.join(__dirname, '..'), fails = 0;
 var MIME = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.woff2': 'font/woff2' };
 function ok(c, m) { if (!c) { fails++; console.log('ÉCHEC  ' + m); } else console.log('ok     ' + m); }
-var MICRO = 1000000;
+var MICRO = 1000000, LBL_RESET_FR = 'Réinitialiser le solde';
 // clic DOM direct : le bouton Tourner s'anime en permanence (Playwright le juge « instable »)
 function clk(p, sel) { return p.evaluate('(function(){ var e = document.querySelector(' + JSON.stringify(sel) + '); if (e && !e.disabled) e.click(); })()'); }
 
@@ -181,6 +181,13 @@ var FINISH = `(async()=>{ G.turbo=true; G.speed=1.6; var g=0; while(G.S.busy&&g<
   ok(await s.p.evaluate("document.getElementById('apGo').disabled"), '[222] autoplay : « Démarrer » désactivé quand le solde ne couvre pas un tour');
   await s.p.evaluate("var g=document.getElementById('apGo'); g.disabled=false; g.click()"); await s.p.waitForTimeout(250);
   ok(plays(m0).length === 0, '[222] autoplay forcé sans solde : aucune requête /wallet/play');
+  // [222] plus aucun moyen de réécrire le solde en mode RGS : pas de bouton de remise à zéro du solde dans les réglages ni dans le guide des boutons
+  await s.p.evaluate("document.getElementById('modalClose').click()"); await s.p.evaluate("G.S.balance = 0; G.updateHud()");
+  await clk(s.p, '#btnInfo'); await s.p.waitForTimeout(200);
+  var rs = await s.p.evaluate("({btn:!!document.getElementById('optReset'), txt:document.getElementById('modalBody').textContent, guide:Array.prototype.map.call(document.querySelectorAll('dl.guide dd'),function(e){return e.textContent}).join(' | ')})");
+  ok(!rs.btn && rs.txt.indexOf(LBL_RESET_FR) < 0 && !/réinitialisation du solde|reset the balance/i.test(rs.guide), '[222] mode RGS : ni bouton #optReset ni mention dans le guide des boutons');
+  await s.p.evaluate("document.getElementById('modalClose').click()");
+  ok((await s.p.evaluate('G.S.balance')) === 0 && plays(m0).length === 0, '[222] solde local toujours 0 après ouverture des réglages, aucune requête /wallet/play');
   await done(s);
 
   // ---- [104] autoplay : un appui n'engage aucun pari ----
@@ -428,6 +435,7 @@ var FINISH = `(async()=>{ G.turbo=true; G.speed=1.6; var g=0; while(G.S.busy&&g<
 
   ok(allErrs.length === 0, 'aucune erreur de page' + (allErrs.length ? ' : ' + allErrs.slice(0, 3).join(' | ') : ''));
   await b.close(); server.close();
+  console.log('budget : ' + mockRgs.draws() + ' books tirés + ' + mockRgs.rounds() + ' tours joués (/wallet/play) ; limite : 1000 au total');
   console.log(fails ? '\n' + fails + ' échec(s)' : '\ntout est bon');
   process.exit(fails ? 1 : 0);
 })().catch(function (e) { console.log(e); process.exit(1); });
