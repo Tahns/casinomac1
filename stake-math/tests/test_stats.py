@@ -21,7 +21,7 @@ class TestRtp(unittest.TestCase):
     def test_six_modes_declares(self):
         cfg = C.GameConfig()
         self.assertEqual([b.get_name() for b in cfg.bet_modes], ["std", "plus", "buy_scarab", "buy_weigh", "buy_vault", "buy_fury"])
-        self.assertEqual([b.get_cost() for b in cfg.bet_modes], [1.0, 1.1, 9.24, 10.31, 12.37, 27.28])
+        self.assertEqual([b.get_cost() for b in cfg.bet_modes], [1.0, 1.1, 9.26, 10.31, 12.37, 27.3])
         self.assertEqual([b.get_buybonus() for b in cfg.bet_modes], [False, False, True, True, True, True])
         for b in cfg.bet_modes:
             self.assertEqual(b.get_wincap(), 25000)
@@ -109,21 +109,46 @@ class TestGainMax(unittest.TestCase):
         for d in C.KINDS.values():
             if d["mult"] is not None:
                 self.assertTrue(C.is_exact(d["mult"]))
-        for cost in [1.1, 9.24, 10.31, 12.37, 27.28]:
+        for cost in [1.1, 9.26, 10.31, 12.37, 27.3]:
             self.assertTrue(C.is_exact(cost))
 
 
 class TestPasDeDix(unittest.TestCase):
-    def test_pas_de_10_du_verificateur_du_sdk(self):
-        # utils/rgs_verification.py exige des payouts multiples de 10 ; l'échelle 100 laisse passer 25, 65, 79... -> arrondi du book
+    """utils/rgs_verification.py exige des payouts multiples de 10 (0,10 x à l'échelle 100) : tous les gains du jeu le sont, sans arrondi."""
+
+    def test_valeurs_du_jeu_en_dixiemes(self):
+        vals = [d["mult"] for d in C.KINDS.values() if d["mult"] is not None]
+        for tab in C.SCARAB_PROFILES.values():
+            vals += tab
+        for tab in C.WEIGH_PROFILES.values():
+            for (a, b), _ in tab:
+                vals += [a, b]
+        for vp in C.VAULT_PROFILES.values():
+            vals += [t for t, _ in vp["tokens"] if isinstance(t, (int, float))]
+        vals += [s["n"] for s in C.HAND_SEGS if "n" in s]
+        vals += [v for v, _ in C.CRYPT_VALUES["tab"]]
+        for v in vals:
+            self.assertTrue(C.is_tenth(v), v)
+        self.assertEqual(C.KINDS["m025"]["mult_int"] % 10, 0)
+        self.assertEqual(C.PAYOUT_STEP, 1)   # aucun arrondi
+
+    def test_gains_des_tours_multiples_de_10(self):
+        from rng import mulberry32
+        for mi, mode in enumerate(C.MODE_ORDER):
+            rng = mulberry32(5 + mi)
+            for _ in range(150):
+                r = G.play_mode(rng, mode)
+                self.assertEqual(r["total"] % 10, 0, mode)
+                for s in r["spins"]:
+                    self.assertEqual(s["pay"] % 10, 0, mode)
+
+    def test_arrondi_de_garde_fou(self):
         self.assertEqual(G.round_step(25, 10), 30)
         self.assertEqual(G.round_step(24, 10), 20)
         self.assertEqual(G.round_step(5, 10), 10)       # un gain non nul ne tombe jamais à 0
         self.assertEqual(G.round_step(0, 10), 0)
         self.assertEqual(G.round_step(2500000, 10), 2500000)
         self.assertEqual(G.round_step(25, 1), 25)
-        # la plus petite valeur du jeu (0,25 x) est bien non multiple de 10 : le problème est réel et documenté
-        self.assertEqual(C.KINDS["m025"]["mult_int"] % 10, 5)
 
 
 if __name__ == "__main__":

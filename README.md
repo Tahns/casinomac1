@@ -12,7 +12,7 @@ node tools/contrast.js           # contraste WCAG AA des couples texte/fond
 node tools/i18n-check.js         # 16 langues Stake complètes (clés, marqueurs {x}, longueurs), pas de français en dur, chiffres affichés = maths
 node tools/stake-export.js       # démonstration du format Stake (books .jsonl.zst, lookup CSV, index.json) dans tools/out/, <= 1000 books par mode
 node tools/export-parity.js    # tirages de parité JS pour stake-math/tests (≤ 1000 tours au total)
-python3 -m unittest discover -s stake-math/tests   # portage Python (math-sdk) : parité avec le JS, moments exacts, format des books (51 tests, ≈ 1 s)
+python3 -m unittest discover -s stake-math/tests   # portage Python (math-sdk) : parité avec le JS, moments exacts, format des books (54 tests, ≈ 1 s)
 python3 stake-math/run.py       # books + lookup + index.json au format math-sdk dans stake-math/library/ (≤ 1000 books par mode ; HOA_BIG=1 réservé à une vraie production)
 node tools/social-check.js       # mode social (Stake.US) : aucun mot interdit dans tous les textes sociaux, 10.00 SC / GC sans « $ » ; avec PLAYWRIGHT_CORE, scanne aussi le DOM et le canvas (?social=true&currency=XSC)
 PLAYWRIGHT_CORE=... node tools/layout.js # mises en page sur 10 tailles d'écran (portrait, paysage, grand écran)

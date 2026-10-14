@@ -221,5 +221,23 @@ var rI = M.mulberry32(77), inexact = 0, nI = cap(1000), sumInt = 0, sumFl = 0;
 ['std', 'plus'].forEach(function (m) { for (var i = 0; i < nI; i++) { var rr = M.playRound(rI, m); rr.spins.forEach(function (sp) { if (!M.isExact(sp.pay)) inexact++; }); if (!M.isExact(rr.total)) inexact++; sumInt += M.toInt(rr.total); sumFl += rr.total; } });
 Object.keys(M.BUY).forEach(function (k) { if (!M.isExact(M.BUY[k].price)) inexact++; for (var i = 0; i < nI; i++) { var rr = M.playBuy(rI, k); if (!M.isExact(rr.total)) inexact++; sumInt += M.toInt(rr.total); sumFl += rr.total; } });
 ok(M.SCALE === 100 && inexact === 0 && Math.abs(sumInt / M.SCALE - sumFl) < 1e-6 * Math.max(1, sumFl), 'échelle entière ×' + M.SCALE + ' : tous les gains de ' + nI + ' tours par mode sont des multiples exacts de 0,01 (non exacts : ' + inexact + ')');
+// 7. pas de 0,1× exigé par le vérificateur du SDK Stake (payouts multiples de 10 à l'échelle 100) : aucun arrondi du total, TOUS les gains sont des multiples de 0,1
+var rT = M.mulberry32(88), notTenth = 0, nT = cap(1000);
+function tenths(v) { if (typeof v === 'number' && !M.isTenth(v)) notTenth++; }
+M.PROFILES.forEach(function (pf) { M.SCARAB_PROFILES[pf].forEach(tenths); M.WEIGH_PROFILES[pf].forEach(function (e) { tenths(e[0][0]); tenths(e[0][1]); }); M.VAULT_PROFILES[pf].tokens.forEach(function (t) { tenths(t[0]); }); });
+Object.keys(M.KINDS).forEach(function (k) { if (M.KINDS[k].mult != null) tenths(M.KINDS[k].mult); });
+M.HAND_SEGS.forEach(function (s) { if (s.n != null) tenths(s.n); });
+M.CRYPT_VALUES.tab.forEach(function (t) { tenths(t[0]); });
+['std', 'plus'].forEach(function (m) { for (var i = 0; i < nT; i++) { var rr = M.playRound(rT, m); rr.spins.forEach(function (sp) { tenths(sp.pay); tenths(sp.base); }); tenths(rr.total); } });
+Object.keys(M.BUY).forEach(function (k) { for (var i = 0; i < nT; i++) { var rr = M.playBuy(rT, k); tenths(rr.total); } });
+ok(notTenth === 0 && M.toInt(M.KINDS.m025.mult) % 10 === 0, 'gains en multiples de 0,1× (payoutMultiplier multiple de 10 à l\'échelle ' + M.SCALE + ', exigence de utils/rgs_verification.py) : ' + nT + ' tours par mode, valeurs non conformes : ' + notTenth);
+// 8. Sanctuaire des Marées : book (sanctuaryTablet) -> tour par RGS.bookToRound, mêmes gains (tablet_type / value, pas l'ancien cryptDrop)
+var RGc = require('../js/rgs.js'), SEc = require('./stake-export.js'), rS = M.mulberry32(99), badSanct = 0, nS = Math.min(cap(1000), 300);
+for (var si = 0; si < nS; si++) {
+  var cb = M._bonus.crypt(rS), rnd = { spins: [{ oracle: null, index: 5, kind: 'vault', boost: 1, bonus: cb, secret: true, base: cb.total, pay: cb.total }], total: cb.total, capped: false, cost: 1, mode: 'std' };
+  var back = RGc.bookToRound(SEc.bookEvents(rnd), M), bs = back.spins[0];
+  if (!bs || !bs.secret || bs.bonus.drops.length !== M.CRYPT_CELLS || M.toInt(bs.bonus.total) !== M.toInt(cb.total) || M.toInt(back.total) !== M.toInt(cb.total)) badSanct++;
+}
+ok(badSanct === 0, 'RGS.bookToRound relit le Sanctuaire des Marées (sanctuaryTablet : type, valeur) avec le même gain sur ' + nS + ' bonus (écarts : ' + badSanct + ')');
 console.log(fails ? '\n' + fails + ' échec(s)' : '\ntout est bon');
 process.exit(fails ? 1 : 0);

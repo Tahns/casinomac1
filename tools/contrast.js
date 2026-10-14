@@ -16,7 +16,7 @@ var P = [
   ['Carte d\'achat : description 11 px',              '#b9a780', '#1d1710', 4.5],
   ['Carte d\'achat : bouton (bas du dégradé)',         '#140a00', '#c9962a', 4.5],
   ['Roue : « 0 » sur case Poussière',                 '#d8c49a', '#52432f', 3],
-  ['Roue : disque 0,25× sur ambre (bas du dégradé)',   '#2a1600', '#9a6a22', 3],
+  ['Roue : disque 0,3× sur ambre (bas du dégradé)',   '#2a1600', '#9a6a22', 3],
   ['Roue : disque 0,5× sur or (bas du dégradé)',       '#2a1600', '#a8741e', 3],
   ['Roue : 1× sur lapis',                             '#ffffff', '#2358d8', 3],
   ['Roue : 2× sur turquoise',                         '#032b26', '#0fa896', 3],
