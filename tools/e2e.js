@@ -112,7 +112,7 @@ var server = http.createServer(function (req, res) {
   ok(en.spin === 'SPIN' && en.bal === 'BALANCE' && en.html === 'en', 'passage en anglais : HUD traduit (' + en.spin + ' / ' + en.bal + ')');
   await p.click('#btnInfo'); await p.waitForTimeout(200);
   var tbl = await p.evaluate("document.getElementById('modalBody').innerText");
-  ok(/3,?000×/.test(tbl) && !/ 300×/.test(tbl), 'table des gains en anglais : Pesée annoncée jusqu\'à 3000×');
+  ok(/1,?000×/.test(tbl) && !/3,?000×|230×/.test(tbl), 'table des gains en anglais : Pesée annoncée jusqu\'à 1000× et scarabée jusqu\'à 100× (profil std, [24]), pas les maxima du profil bold');
   ok(!/[éèêà]/.test(tbl.replace(/Jugement/g, '')), 'table des gains en anglais : aucun accent français résiduel');
   await p.keyboard.press('Escape'); await p.waitForTimeout(100);
 
