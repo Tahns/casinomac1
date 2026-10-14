@@ -43,8 +43,7 @@
         'Pesée du Cœur : choisissez la plume de Maât ou le cœur, les multiplicateurs défilent et se révèlent, puis la balance tranche. Le plateau le plus lourd gagne son multiplicateur (jusqu\'à ×3000), le plus léger n\'a rien : une chance sur deux.',
         'Un bonus peut être saisi par la FUREUR D\'ANUBIS : choisissez une couleur (turquoise, or ou rubis) puis lancez la roue géante. Un nombre : gain = nombre × palier. DOUBLE de VOTRE couleur : les nombres de la roue sont doublés (palier ×2, jusqu\'à ×16) et vous relancez. DOUBLE d\'une AUTRE couleur : la chaîne s\'arrête et vous encaissez le plus petit nombre de la roue (3) × palier.',
         'Les bandes de la Fureur lancent un bonus (Scarabées ×3 ou ×12, Pesée ×6, Trésor ×4) : gain du bonus × le multiplicateur de la bande × palier, jusqu\'à ×25000. Une bande ne ramène jamais à la Fureur.',
-        'Animations de gain, selon le multiplicateur total du tour (gain ÷ coût du tour) : WIN dès ×1, BIG WIN dès ×10, EXTRA WIN dès ×40, MEGA WIN dès ×150, JUGEMENT DIVIN dès ×1000.',
-        '??? Un bonus secret se cache parfois derrière un bonus gagné… extrêmement rare. À vous de le découvrir.'
+        'Animations de gain, selon le multiplicateur total du tour (gain ÷ coût du tour) : WIN dès ×1, BIG WIN dès ×10, EXTRA WIN dès ×40, MEGA WIN dès ×150, JUGEMENT DIVIN dès ×1000.'
       ],
       secretWord: 'BONUS SECRET', secretUnlocked: 'DÉBLOQUÉ !', secretHint: 'Un bonus caché vient de s\'ouvrir… Touchez le bouton ou appuyez sur Espace',
       cryptIntro: 'SANCTUAIRE DES MARÉES', cryptPool: 'OFFRANDE', cryptTide: 'MARÉE', cryptCount: 'TABLETTE {n} / {m}', cryptPick: 'Touchez une tablette', cryptCapped: 'PLAFOND ATTEINT',
@@ -95,8 +94,7 @@
         'Weighing of the Heart: pick the feather of Ma\'at or the heart, the multipliers roll and are revealed, then the scales decide. The heavier pan wins its multiplier (up to ×3000), the lighter one gets nothing: a 1-in-2 chance.',
         'Any bonus can be seized by the FURY OF ANUBIS: pick a colour (turquoise, gold or ruby), then spin the giant wheel. A number: win = number × tier. DOUBLE in YOUR colour: every number on the wheel is doubled (tier ×2, up to ×16) and you spin again. DOUBLE in ANOTHER colour: the chain stops and you cash the smallest number on the wheel (3) × tier.',
         'The Fury\'s bands launch a bonus (Scarabs ×3 or ×12, Weighing ×6, Vault ×4): bonus win × the band multiplier × tier, up to ×25000. A band never leads back to the Fury.',
-        'Win animations, by the round\'s total multiplier (win ÷ round cost): WIN from ×1, BIG WIN from ×10, EXTRA WIN from ×40, MEGA WIN from ×150, DIVINE JUDGEMENT from ×1000.',
-        '??? A secret bonus sometimes hides behind a won bonus… extremely rare. Find it yourself.'
+        'Win animations, by the round\'s total multiplier (win ÷ round cost): WIN from ×1, BIG WIN from ×10, EXTRA WIN from ×40, MEGA WIN from ×150, DIVINE JUDGEMENT from ×1000.'
       ],
       secretWord: 'SECRET BONUS', secretUnlocked: 'UNLOCKED!', secretHint: 'A hidden bonus has opened… Tap the button or press Space',
       cryptIntro: 'SANCTUARY OF TIDES', cryptPool: 'OFFERING', cryptTide: 'TIDE', cryptCount: 'TABLET {n} / {m}', cryptPick: 'Tap a tablet', cryptCapped: 'MAX WIN REACHED',
@@ -147,8 +145,7 @@
         'Wägung des Herzens: Wähle die Feder der Ma\'at oder das Herz, die Multiplikatoren laufen durch und werden enthüllt, dann entscheidet die Waage. Die schwerere Schale gewinnt ihren Multiplikator (bis ×3000), die leichtere nichts: eine Chance von 1 zu 2.',
         'Jeder Bonus kann von der WUT DES ANUBIS ergriffen werden: Wähle eine Farbe (türkis, gold oder rubin) und drehe das Riesenrad. Eine Zahl: Gewinn = Zahl × Stufe. DOPPELT in DEINER Farbe: alle Zahlen des Rads werden verdoppelt (Stufe ×2, bis ×16) und du drehst erneut. DOPPELT in einer ANDEREN Farbe: die Kette endet und du kassierst die kleinste Zahl des Rads (3) × Stufe.',
         'Die Bänder der Wut starten einen Bonus (Skarabäen ×3 oder ×12, Wägung ×6, Schatz ×4): Bonusgewinn × Bandmultiplikator × Stufe, bis ×25000. Ein Band führt nie zurück zur Wut.',
-        'Gewinnanimationen nach dem Gesamtmultiplikator der Runde (Gewinn ÷ Rundenkosten): WIN ab ×1, BIG WIN ab ×10, EXTRA WIN ab ×40, MEGA WIN ab ×150, GÖTTLICHES URTEIL ab ×1000.',
-        '??? Manchmal versteckt sich hinter einem gewonnenen Bonus ein Geheimbonus… extrem selten. Entdecke ihn selbst.'
+        'Gewinnanimationen nach dem Gesamtmultiplikator der Runde (Gewinn ÷ Rundenkosten): WIN ab ×1, BIG WIN ab ×10, EXTRA WIN ab ×40, MEGA WIN ab ×150, GÖTTLICHES URTEIL ab ×1000.'
       ],
       secretWord: 'GEHEIMBONUS', secretUnlocked: 'FREIGESCHALTET!', secretHint: 'Ein versteckter Bonus hat sich geöffnet… Tippe auf die Taste oder drücke die Leertaste',
       cryptIntro: 'HEILIGTUM DER GEZEITEN', cryptPool: 'OPFERGABE', cryptTide: 'GEZEITEN', cryptPick: 'Tippe auf eine Tafel', cryptCount: 'TAFEL {n} / {m}', cryptCapped: 'MAXIMALGEWINN ERREICHT',
@@ -199,8 +196,7 @@
         'Pesaje del Corazón: elige la pluma de Maat o el corazón, los multiplicadores giran y se revelan, y la balanza decide. El plato más pesado gana su multiplicador (hasta ×3000), el más ligero no gana nada: una oportunidad entre dos.',
         'Cualquier bonus puede ser capturado por la FURIA DE ANUBIS: elige un color (turquesa, oro o rubí) y gira la rueda gigante. Un número: premio = número × nivel. DOBLE de TU color: todos los números de la rueda se duplican (nivel ×2, hasta ×16) y giras de nuevo. DOBLE de OTRO color: la cadena se detiene y cobras el número más pequeño de la rueda (3) × nivel.',
         'Las bandas de la Furia lanzan un bonus (Escarabajos ×3 o ×12, Pesaje ×6, Tesoro ×4): premio del bonus × multiplicador de la banda × nivel, hasta ×25000. Una banda nunca devuelve a la Furia.',
-        'Animaciones de premio según el multiplicador total de la ronda (premio ÷ coste de la ronda): WIN desde ×1, BIG WIN desde ×10, EXTRA WIN desde ×40, MEGA WIN desde ×150, JUICIO DIVINO desde ×1000.',
-        '??? A veces un bonus secreto se esconde tras un bonus ganado… rarísimo. Descúbrelo tú mismo.'
+        'Animaciones de premio según el multiplicador total de la ronda (premio ÷ coste de la ronda): WIN desde ×1, BIG WIN desde ×10, EXTRA WIN desde ×40, MEGA WIN desde ×150, JUICIO DIVINO desde ×1000.'
       ],
       secretWord: 'BONUS SECRETO', secretUnlocked: '¡DESBLOQUEADO!', secretHint: 'Se ha abierto un bonus oculto… Toca el botón o pulsa Espacio',
       cryptIntro: 'SANTUARIO DE LAS MAREAS', cryptPool: 'OFRENDA', cryptTide: 'MAREA', cryptPick: 'Toca una tablilla', cryptCount: 'TABLILLA {n} / {m}', cryptCapped: 'PREMIO MÁXIMO ALCANZADO',
@@ -251,8 +247,7 @@
         'Pesagem do Coração: escolha a pena de Maat ou o coração, os multiplicadores giram e são revelados, e a balança decide. O prato mais pesado ganha seu multiplicador (até ×3000), o mais leve não ganha nada: uma chance em duas.',
         'Qualquer bônus pode ser capturado pela FÚRIA DE ANÚBIS: escolha uma cor (turquesa, ouro ou rubi) e gire a roda gigante. Um número: ganho = número × nível. DOBRO da SUA cor: todos os números da roda são dobrados (nível ×2, até ×16) e você gira de novo. DOBRO de OUTRA cor: a sequência termina e você recebe o menor número da roda (3) × nível.',
         'As faixas da Fúria iniciam um bônus (Escaravelhos ×3 ou ×12, Pesagem ×6, Tesouro ×4): ganho do bônus × multiplicador da faixa × nível, até ×25000. Uma faixa nunca leva de volta à Fúria.',
-        'Animações de ganho, conforme o multiplicador total da rodada (ganho ÷ custo da rodada): WIN a partir de ×1, BIG WIN a partir de ×10, EXTRA WIN a partir de ×40, MEGA WIN a partir de ×150, JULGAMENTO DIVINO a partir de ×1000.',
-        '??? Às vezes um bônus secreto se esconde atrás de um bônus ganho… raríssimo. Descubra por conta própria.'
+        'Animações de ganho, conforme o multiplicador total da rodada (ganho ÷ custo da rodada): WIN a partir de ×1, BIG WIN a partir de ×10, EXTRA WIN a partir de ×40, MEGA WIN a partir de ×150, JULGAMENTO DIVINO a partir de ×1000.'
       ],
       secretWord: 'BÔNUS SECRETO', secretUnlocked: 'DESBLOQUEADO!', secretHint: 'Um bônus oculto se abriu… Toque no botão ou pressione Espaço',
       cryptIntro: 'SANTUÁRIO DAS MARÉS', cryptPool: 'OFERENDA', cryptTide: 'MARÉ', cryptPick: 'Toque em uma tábua', cryptCount: 'TÁBUA {n} / {m}', cryptCapped: 'GANHO MÁXIMO ATINGIDO',
@@ -303,8 +298,7 @@
         'Ważenie Serca: wybierz pióro Maat lub serce, mnożniki się kręcą i zostają ujawnione, a potem waga rozstrzyga. Cięższa szala wygrywa swój mnożnik (do ×3000), lżejsza nic: szansa jeden do dwóch.',
         'Każdy bonus może przejąć GNIEW ANUBISA: wybierz kolor (turkus, złoto lub rubin), potem zakręć gigantycznym kołem. Liczba: wygrana = liczba × poziom. PODWÓJNIE w TWOIM kolorze: wszystkie liczby na kole są podwojone (poziom ×2, do ×16) i kręcisz ponownie. PODWÓJNIE w INNYM kolorze: łańcuch się kończy i inkasujesz najmniejszą liczbę na kole (3) × poziom.',
         'Pasy Gniewu uruchamiają bonus (Skarabeusze ×3 lub ×12, Ważenie ×6, Skarb ×4): wygrana z bonusu × mnożnik pasa × poziom, do ×25000. Pas nigdy nie prowadzi z powrotem do Gniewu.',
-        'Animacje wygranych według łącznego mnożnika rundy (wygrana ÷ koszt rundy): WIN od ×1, BIG WIN od ×10, EXTRA WIN od ×40, MEGA WIN od ×150, BOSKI WYROK od ×1000.',
-        '??? Czasem za wygranym bonusem kryje się tajny bonus… niezwykle rzadko. Odkryj go sam.'
+        'Animacje wygranych według łącznego mnożnika rundy (wygrana ÷ koszt rundy): WIN od ×1, BIG WIN od ×10, EXTRA WIN od ×40, MEGA WIN od ×150, BOSKI WYROK od ×1000.'
       ],
       secretWord: 'TAJNY BONUS', secretUnlocked: 'ODBLOKOWANY!', secretHint: 'Ukryty bonus się otworzył… Dotknij przycisku lub naciśnij spację',
       cryptIntro: 'SANKTUARIUM PŁYWÓW', cryptPool: 'OFIARA', cryptTide: 'PŁYW', cryptPick: 'Dotknij tablicy', cryptCount: 'TABLICA {n} / {m}', cryptCapped: 'OSIĄGNIĘTO MAKS. WYGRANĄ',
@@ -355,8 +349,7 @@
         'Kalbin Tartılması: Maat’ın tüyünü ya da kalbi seç, çarpanlar döner ve ortaya çıkar, sonra terazi karar verir. Ağır kefe çarpanını kazanır (×3000’e kadar), hafif kefe hiçbir şey: yarı yarıya şans.',
         'Her bonus ANUBİS’İN GAZABI tarafından ele geçirilebilir: bir renk seç (turkuaz, altın veya yakut), sonra dev çarkı çevir. Bir sayı: kazanç = sayı × kademe. KENDİ renginde ÇİFT: çarktaki tüm sayılar ikiye katlanır (kademe ×2, ×16’ya kadar) ve yeniden çevirirsin. BAŞKA renkte ÇİFT: zincir biter ve çarktaki en küçük sayıyı (3) × kademe alırsın.',
         'Gazap şeritleri bir bonus başlatır (Scarablar ×3 veya ×12, Tartı ×6, Hazine ×4): bonus kazancı × şerit çarpanı × kademe, ×25000’e kadar. Bir şerit asla Gazap’a geri götürmez.',
-        'Kazanç animasyonları turun toplam çarpanına göre (kazanç ÷ tur maliyeti): ×1’den WIN, ×10’dan BIG WIN, ×40’tan EXTRA WIN, ×150’den MEGA WIN, ×1000’den İLAHİ HÜKÜM.',
-        '??? Bazen kazanılan bir bonusun ardında gizli bir bonus saklanır… son derece nadir. Kendin keşfet.'
+        'Kazanç animasyonları turun toplam çarpanına göre (kazanç ÷ tur maliyeti): ×1’den WIN, ×10’dan BIG WIN, ×40’tan EXTRA WIN, ×150’den MEGA WIN, ×1000’den İLAHİ HÜKÜM.'
       ],
       secretWord: 'GİZLİ BONUS', secretUnlocked: 'AÇILDI!', secretHint: 'Gizli bir bonus açıldı… Düğmeye dokun veya Boşluk tuşuna bas',
       cryptIntro: 'GELGİT SIĞINAĞI', cryptPool: 'ADAK', cryptTide: 'GELGİT', cryptPick: 'Bir tablete dokun', cryptCount: 'TABLET {n} / {m}', cryptCapped: 'MAKS. KAZANÇ',
@@ -407,8 +400,7 @@
         'Penimbangan Hati: pilih bulu Maat atau hati, pengali berputar dan terungkap, lalu timbangan memutuskan. Piringan yang lebih berat memenangkan pengalinya (hingga ×3000), yang lebih ringan tidak mendapat apa-apa: peluang satu banding dua.',
         'Bonus apa pun dapat direbut oleh AMARAH ANUBIS: pilih warna (biru tosca, emas, atau rubi), lalu putar roda raksasa. Sebuah angka: menang = angka × tingkat. GANDA pada warna KAMU: semua angka di roda berlipat dua (tingkat ×2, hingga ×16) dan kamu memutar lagi. GANDA pada warna LAIN: rantai berhenti dan kamu menerima angka terkecil di roda (3) × tingkat.',
         'Pita Amarah memulai bonus (Kumbang ×3 atau ×12, Timbang ×6, Harta ×4): kemenangan bonus × pengali pita × tingkat, hingga ×25000. Pita tidak pernah membawa kembali ke Amarah.',
-        'Animasi kemenangan menurut pengali total ronde (kemenangan ÷ biaya ronde): WIN mulai ×1, BIG WIN mulai ×10, EXTRA WIN mulai ×40, MEGA WIN mulai ×150, PENGHAKIMAN ILAHI mulai ×1000.',
-        '??? Kadang bonus rahasia bersembunyi di balik bonus yang dimenangkan… sangat langka. Temukan sendiri.'
+        'Animasi kemenangan menurut pengali total ronde (kemenangan ÷ biaya ronde): WIN mulai ×1, BIG WIN mulai ×10, EXTRA WIN mulai ×40, MEGA WIN mulai ×150, PENGHAKIMAN ILAHI mulai ×1000.'
       ],
       secretWord: 'BONUS RAHASIA', secretUnlocked: 'TERBUKA!', secretHint: 'Bonus tersembunyi terbuka… Ketuk tombol atau tekan Spasi',
       cryptIntro: 'KUIL PASANG SURUT', cryptPool: 'PERSEMBAHAN', cryptTide: 'PASANG', cryptPick: 'Ketuk sebuah tablet', cryptCount: 'TABLET {n} / {m}', cryptCapped: 'MENANG MAKS. TERCAPAI',
@@ -459,8 +451,7 @@
         'Cân Trái Tim: chọn lông vũ của Maat hoặc trái tim, các hệ số chạy rồi được hé lộ, sau đó cán cân quyết định. Đĩa nặng hơn thắng hệ số của nó (tới ×3000), đĩa nhẹ hơn không được gì: cơ hội một trên hai.',
         'Bất kỳ bonus nào cũng có thể bị THỊNH NỘ CỦA ANUBIS chiếm lấy: chọn một màu (ngọc lam, vàng hoặc hồng ngọc), rồi quay bánh xe khổng lồ. Một con số: thắng = số × bậc. GẤP ĐÔI đúng màu CỦA BẠN: mọi số trên bánh xe được nhân đôi (bậc ×2, tới ×16) và bạn quay lại. GẤP ĐÔI màu KHÁC: chuỗi kết thúc và bạn nhận số nhỏ nhất trên bánh xe (3) × bậc.',
         'Các dải của Thịnh Nộ khởi động một bonus (Bọ Hung ×3 hoặc ×12, Cân ×6, Kho Báu ×4): tiền thắng bonus × hệ số dải × bậc, tới ×25000. Một dải không bao giờ dẫn trở lại Thịnh Nộ.',
-        'Hiệu ứng thắng theo hệ số tổng của ván (thắng ÷ chi phí ván): WIN từ ×1, BIG WIN từ ×10, EXTRA WIN từ ×40, MEGA WIN từ ×150, PHÁN XÉT THẦN THÁNH từ ×1000.',
-        '??? Đôi khi một bonus bí mật ẩn sau một bonus đã thắng… cực kỳ hiếm. Hãy tự khám phá.'
+        'Hiệu ứng thắng theo hệ số tổng của ván (thắng ÷ chi phí ván): WIN từ ×1, BIG WIN từ ×10, EXTRA WIN từ ×40, MEGA WIN từ ×150, PHÁN XÉT THẦN THÁNH từ ×1000.'
       ],
       secretWord: 'BONUS BÍ MẬT', secretUnlocked: 'ĐÃ MỞ KHÓA!', secretHint: 'Một bonus ẩn vừa mở ra… Chạm nút hoặc nhấn Phím cách',
       cryptIntro: 'THÁNH ĐIỆN THỦY TRIỀU', cryptPool: 'LỄ VẬT', cryptTide: 'THỦY TRIỀU', cryptPick: 'Chạm vào một tấm bia', cryptCount: 'BIA {n} / {m}', cryptCapped: 'ĐẠT THẮNG TỐI ĐA',
@@ -511,8 +502,7 @@
         'Sydämen punnitus: valitse Maatin sulka tai sydän, kertoimet pyörivät ja paljastuvat, sitten vaaka ratkaisee. Painavampi kuppi voittaa kertoimensa (jopa ×3000), kevyempi ei mitään: mahdollisuus yhdestä kahteen.',
         'ANUBIKSEN RAIVO voi kaapata minkä tahansa bonuksen: valitse väri (turkoosi, kulta tai rubiini) ja pyöritä jättiratasta. Luku: voitto = luku × taso. TUPLA OMALLA värilläsi: kaikki radan luvut kaksinkertaistuvat (taso ×2, jopa ×16) ja pyöräytät uudelleen. TUPLA TOISELLA värillä: ketju päättyy ja saat radan pienimmän luvun (3) × taso.',
         'Raivon kaistat käynnistävät bonuksen (Skarabeet ×3 tai ×12, Punnitus ×6, Aarre ×4): bonusvoitto × kaistan kerroin × taso, jopa ×25000. Kaista ei koskaan johda takaisin Raivoon.',
-        'Voittoanimaatiot kierroksen kokonaiskertoimen mukaan (voitto ÷ kierroksen hinta): WIN alkaen ×1, BIG WIN alkaen ×10, EXTRA WIN alkaen ×40, MEGA WIN alkaen ×150, JUMALAINEN TUOMIO alkaen ×1000.',
-        '??? Joskus voitetun bonuksen takana piilee salainen bonus… äärimmäisen harvinainen. Löydä se itse.'
+        'Voittoanimaatiot kierroksen kokonaiskertoimen mukaan (voitto ÷ kierroksen hinta): WIN alkaen ×1, BIG WIN alkaen ×10, EXTRA WIN alkaen ×40, MEGA WIN alkaen ×150, JUMALAINEN TUOMIO alkaen ×1000.'
       ],
       secretWord: 'SALAINEN BONUS', secretUnlocked: 'AVATTU!', secretHint: 'Piilotettu bonus avautui… Napauta painiketta tai paina välilyöntiä',
       cryptIntro: 'VUOROVESIEN PYHÄKKÖ', cryptPool: 'UHRI', cryptTide: 'VUOROVESI', cryptPick: 'Napauta taulua', cryptCount: 'TAULU {n} / {m}', cryptCapped: 'ENIMMÄISVOITTO SAAVUTETTU',
@@ -563,8 +553,7 @@
         'Взвешивание сердца: выберите перо Маат или сердце, множители пробегают и раскрываются, затем решают весы. Тяжёлая чаша выигрывает свой множитель (до ×3000), лёгкая — ничего: шанс один из двух.',
         'Любой бонус может быть захвачен ЯРОСТЬЮ АНУБИСА: выберите цвет (бирюза, золото или рубин) и запустите гигантское колесо. Число: выигрыш = число × уровень. УДВОЕНИЕ ВАШЕГО цвета: все числа на колесе удваиваются (уровень ×2, до ×16), и вы крутите снова. УДВОЕНИЕ ДРУГОГО цвета: цепочка прерывается, и вы получаете наименьшее число на колесе (3) × уровень.',
         'Полосы Ярости запускают бонус (Скарабеи ×3 или ×12, Весы ×6, Сокровище ×4): выигрыш бонуса × множитель полосы × уровень, до ×25000. Полоса никогда не возвращает к Ярости.',
-        'Анимации выигрыша по общему множителю раунда (выигрыш ÷ цена раунда): WIN от ×1, BIG WIN от ×10, EXTRA WIN от ×40, MEGA WIN от ×150, БОЖЕСТВЕННЫЙ СУД от ×1000.',
-        '??? Иногда за выигранным бонусом скрывается секретный бонус… крайне редко. Найдите его сами.'
+        'Анимации выигрыша по общему множителю раунда (выигрыш ÷ цена раунда): WIN от ×1, BIG WIN от ×10, EXTRA WIN от ×40, MEGA WIN от ×150, БОЖЕСТВЕННЫЙ СУД от ×1000.'
       ],
       secretWord: 'СЕКРЕТНЫЙ БОНУС', secretUnlocked: 'ОТКРЫТ!', secretHint: 'Скрытый бонус открылся… Коснитесь кнопки или нажмите пробел',
       cryptIntro: 'СВЯТИЛИЩЕ ПРИЛИВОВ', cryptPool: 'ДАР', cryptTide: 'ПРИЛИВ', cryptPick: 'Коснитесь таблички', cryptCount: 'ТАБЛИЧКА {n} / {m}', cryptCapped: 'МАКС. ВЫИГРЫШ ДОСТИГНУТ',
@@ -615,8 +604,7 @@
         'وزن القلب: اختر ريشة ماعت أو القلب، تدور المضاعفات وتنكشف، ثم يحكم الميزان. الكفة الأثقل تربح مضاعفها (حتى ×3000) والأخف لا تربح شيئاً: فرصة واحدة من اثنتين.',
         'يمكن لـ غضب أنوبيس الاستيلاء على أي بونص: اختر لوناً (فيروزي أو ذهبي أو ياقوتي) ثم دوّر العجلة العملاقة. رقم: الربح = الرقم × المستوى. مضاعفة بـ لونك: تتضاعف كل الأرقام على العجلة (المستوى ×2، حتى ×16) وتدور مجدداً. مضاعفة بلون آخر: تنتهي السلسلة وتقبض أصغر رقم على العجلة (3) × المستوى.',
         'أشرطة الغضب تُطلق بونصاً (جعارين ×3 أو ×12، الميزان ×6، الكنز ×4): ربح البونص × مضاعف الشريط × المستوى، حتى ×25000. لا يعيدك أي شريط إلى الغضب.',
-        'مؤثرات الربح حسب المضاعف الكلي للجولة (الربح ÷ تكلفة الجولة): WIN من ×1، BIG WIN من ×10، EXTRA WIN من ×40، MEGA WIN من ×150، DIVINE JUDGEMENT من ×1000.',
-        '??? أحياناً يختبئ بونص سري خلف بونص رابح… نادر للغاية. اكتشفه بنفسك.'
+        'مؤثرات الربح حسب المضاعف الكلي للجولة (الربح ÷ تكلفة الجولة): WIN من ×1، BIG WIN من ×10، EXTRA WIN من ×40، MEGA WIN من ×150، DIVINE JUDGEMENT من ×1000.'
       ],
       secretWord: 'بونص سري', secretUnlocked: 'تم الفتح!', secretHint: 'انفتح بونص خفي… المس الزر أو اضغط المسافة',
       cryptIntro: 'محراب المدّ والجزر', cryptPool: 'القربان', cryptTide: 'المدّ', cryptPick: 'المس لوحاً', cryptCount: 'اللوح {n} / {m}', cryptCapped: 'بلغت أقصى ربح',
@@ -667,8 +655,7 @@
         'हृदय का तौल: माआत का पंख या हृदय चुनें, गुणक घूमकर प्रकट होते हैं, फिर तराज़ू फ़ैसला करता है। भारी पलड़ा अपना गुणक जीतता है (×3000 तक), हल्के को कुछ नहीं मिलता: दो में से एक मौका।',
         'कोई भी बोनस अनुबिस का क्रोध छीन सकता है: एक रंग चुनें (फ़िरोज़ा, सुनहरा या माणिक), फिर विशाल चक्र घुमाएँ। संख्या: जीत = संख्या × स्तर। अपने रंग का डबल: चक्र की हर संख्या दोगुनी हो जाती है (स्तर ×2, ×16 तक) और आप फिर घुमाते हैं। दूसरे रंग का डबल: श्रृंखला रुक जाती है और आपको चक्र की सबसे छोटी संख्या (3) × स्तर मिलती है।',
         'क्रोध की पट्टियाँ बोनस शुरू करती हैं (स्कारब ×3 या ×12, तराज़ू ×6, ख़ज़ाना ×4): बोनस जीत × पट्टी का गुणक × स्तर, ×25000 तक। कोई पट्टी कभी क्रोध पर वापस नहीं ले जाती।',
-        'जीत के एनिमेशन राउंड के कुल गुणक (जीत ÷ राउंड की लागत) के अनुसार: WIN ×1 से, BIG WIN ×10 से, EXTRA WIN ×40 से, MEGA WIN ×150 से, DIVINE JUDGEMENT ×1000 से।',
-        '??? कभी-कभी जीते हुए बोनस के पीछे एक गुप्त बोनस छिपा होता है… अत्यंत दुर्लभ। इसे ख़ुद खोजें।'
+        'जीत के एनिमेशन राउंड के कुल गुणक (जीत ÷ राउंड की लागत) के अनुसार: WIN ×1 से, BIG WIN ×10 से, EXTRA WIN ×40 से, MEGA WIN ×150 से, DIVINE JUDGEMENT ×1000 से।'
       ],
       secretWord: 'गुप्त बोनस', secretUnlocked: 'अनलॉक!', secretHint: 'एक छिपा बोनस खुल गया… बटन टैप करें या स्पेस दबाएँ',
       cryptIntro: 'ज्वार का गर्भगृह', cryptPool: 'भेंट', cryptTide: 'ज्वार', cryptPick: 'एक पट्टिका को टैप करें', cryptCount: 'पट्टिका {n} / {m}', cryptCapped: 'अधिकतम जीत पहुँची',
@@ -719,8 +706,7 @@
         '心臓の秤: マアトの羽根か心臓を選ぶ。倍率が回って明かされ、秤が決める。重い皿がその倍率 (最大×3000) を獲得し、軽い皿は何も得られない: 2分の1の確率。',
         'どのボーナスも アヌビスの怒り に奪われることがある: 色 (ターコイズ、ゴールド、ルビー) を選び、巨大な輪を回す。数字: 配当 = 数字 × ティア。自分の色のダブル: 輪の数字がすべて倍になり (ティア×2、最大×16)、もう一度回す。他の色のダブル: 連鎖は終わり、輪の最小の数字 (3) × ティア を受け取る。',
         '怒りの帯はボーナスを起動する (スカラベ ×3 または ×12、秤 ×6、財宝 ×4): ボーナス配当 × 帯の倍率 × ティア、最大×25000。帯から怒りに戻ることはない。',
-        '勝利演出はラウンドの合計倍率 (配当 ÷ ラウンドのコスト) で決まる: ×1からWIN、×10からBIG WIN、×40からEXTRA WIN、×150からMEGA WIN、×1000からDIVINE JUDGEMENT。',
-        '??? 勝ち取ったボーナスの裏に、まれに秘密のボーナスが隠れている… 極めて希少。自分で見つけよう。'
+        '勝利演出はラウンドの合計倍率 (配当 ÷ ラウンドのコスト) で決まる: ×1からWIN、×10からBIG WIN、×40からEXTRA WIN、×150からMEGA WIN、×1000からDIVINE JUDGEMENT。'
       ],
       secretWord: '秘密のボーナス', secretUnlocked: '解放!', secretHint: '隠されたボーナスが開いた… ボタンをタップするかスペースキーを押す',
       cryptIntro: '潮の聖域', cryptPool: '供物', cryptTide: '潮', cryptPick: '石板をタップ', cryptCount: '石板 {n} / {m}', cryptCapped: '最大配当に到達',
@@ -771,8 +757,7 @@
         '심장의 저울: 마아트의 깃털이나 심장을 고르면 배수가 돌다가 공개되고, 저울이 판가름합니다. 더 무거운 접시가 배수 (최대 ×3000)를 얻고 가벼운 접시는 아무것도 얻지 못합니다: 2분의 1 확률.',
         '어떤 보너스든 아누비스의 분노가 가로챌 수 있습니다: 색 (터키석, 금색, 루비)을 고르고 거대한 바퀴를 돌리세요. 숫자: 당첨 = 숫자 × 단계. 내 색의 더블: 바퀴의 모든 숫자가 두 배가 되고 (단계 ×2, 최대 ×16) 다시 돌립니다. 다른 색의 더블: 연쇄가 끝나고 바퀴의 가장 작은 숫자 (3) × 단계를 받습니다.',
         '분노의 띠는 보너스를 시작합니다 (스카라베 ×3 또는 ×12, 저울 ×6, 보물 ×4): 보너스 당첨 × 띠 배수 × 단계, 최대 ×25000. 띠에서 분노로 되돌아가지는 않습니다.',
-        '당첨 연출은 라운드 총 배수 (당첨 ÷ 라운드 비용)에 따라: ×1부터 WIN, ×10부터 BIG WIN, ×40부터 EXTRA WIN, ×150부터 MEGA WIN, ×1000부터 DIVINE JUDGEMENT.',
-        '??? 가끔 얻은 보너스 뒤에 비밀 보너스가 숨어 있습니다… 극히 드뭅니다. 직접 찾아보세요.'
+        '당첨 연출은 라운드 총 배수 (당첨 ÷ 라운드 비용)에 따라: ×1부터 WIN, ×10부터 BIG WIN, ×40부터 EXTRA WIN, ×150부터 MEGA WIN, ×1000부터 DIVINE JUDGEMENT.'
       ],
       secretWord: '비밀 보너스', secretUnlocked: '해금!', secretHint: '숨겨진 보너스가 열렸습니다… 버튼을 탭하거나 스페이스를 누르세요',
       cryptIntro: '조수의 성소', cryptPool: '제물', cryptTide: '조수', cryptPick: '석판을 탭하세요', cryptCount: '석판 {n} / {m}', cryptCapped: '최대 당첨 도달',
@@ -823,8 +808,7 @@
         '心脏称重: 选择玛特之羽或心脏，倍数滚动并揭晓，然后由天平裁决。较重的秤盘赢得其倍数 (最高 ×3000)，较轻的一无所获: 二分之一的机会。',
         '任何奖励都可能被阿努比斯之怒夺走: 选择一种颜色 (绿松石、金色或红宝石)，然后转动巨轮。数字: 赢取 = 数字 × 等级。己方颜色的双倍: 转轮上所有数字翻倍 (等级 ×2，最高 ×16) 并再转一次。其他颜色的双倍: 连锁结束，你获得转轮上最小的数字 (3) × 等级。',
         '怒之带会触发一个奖励 (圣甲虫 ×3 或 ×12，称重 ×6，宝藏 ×4): 奖励赢取 × 带倍数 × 等级，最高 ×25000。奖励带不会再回到怒之轮。',
-        '赢取动画按该回合总倍数 (赢取 ÷ 回合费用) 触发: ×1 起 WIN，×10 起 BIG WIN，×40 起 EXTRA WIN，×150 起 MEGA WIN，×1000 起 DIVINE JUDGEMENT。',
-        '??? 有时在赢得的奖励背后藏着一个秘密奖励… 极其罕见。请自己去发现。'
+        '赢取动画按该回合总倍数 (赢取 ÷ 回合费用) 触发: ×1 起 WIN，×10 起 BIG WIN，×40 起 EXTRA WIN，×150 起 MEGA WIN，×1000 起 DIVINE JUDGEMENT。'
       ],
       secretWord: '秘密奖励', secretUnlocked: '已解锁!', secretHint: '隐藏奖励已开启… 点击按钮或按空格键',
       cryptIntro: '潮汐圣所', cryptPool: '祭品', cryptTide: '潮汐', cryptPick: '点击一块石板', cryptCount: '石板 {n} / {m}', cryptCapped: '已达最高赢取',
@@ -1076,6 +1060,27 @@
         0: 'One play, one spin: the wheel of judgement decides. Each segment wins its value × your play amount.',
         2: 'ANKH: free respin of the wheel, at no extra play amount.',
         4: function (s) { return s.replace('you cash the smallest', 'you collect the smallest'); }
+      },
+      // blocs séparés (js/rules.js, js/replay.js, client RGS) : clés « $rules », « $replay », « $rgs »
+      $rules: {
+        modesH: 'Modes, play value, RTP and max win', colCost: 'Played for',
+        modesNote: function (s) { return s.replace('Cost is a multiple', 'The play value is a multiple'); },
+        how: {
+          1: function (s) { return s.replace('at no cost', 'at no extra play amount'); },
+          4: function (s) { return s.replace('the cost of the mode', 'what the mode can be played for'); }
+        },
+        btn: {
+          4: { 1: 'Opens the menu of directly opened bonuses. Each card shows what it can be played for; choosing a card starts that bonus.' },
+          5: { 1: function (s) { return s.replace('cost ×', 'play value ×').replace('The cost is shown under', 'The play value is shown under'); } },
+          9: { 0: 'SC / GC', 1: 'Switches the display between the two tokens (same numeric value).' }
+        }
+      },
+      $replay: { bet: 'PLAY AMOUNT', realCost: 'REAL PLAY VALUE', costMult: 'Play value' },
+      $rgs: {
+        errVal: 'Request refused: the session has expired or the play is invalid. Please relaunch the game from the site.',
+        errIpb: 'Insufficient balance for this play.', errGle: 'Limit reached: this play is refused.',
+        errNet: 'Network unavailable or invalid response. Your play may not have been taken into account: check your balance.',
+        buyConfirm: 'Get {name}? It can be played for {price}.', buyConfirmTitle: 'CONFIRM BONUS', autoCost: 'Play value per round'
       }
     },
     fr: {
@@ -1090,7 +1095,10 @@
         0: 'Un jeu, un tour : la roue du jugement décide. Chaque case donne sa valeur × votre montant de jeu.',
         2: 'ANKH : relance gratuite de la roue, sans montant de jeu supplémentaire.',
         4: function (s) { return s.replace('vous encaissez', 'vous ramassez'); }
-      }
+      },
+      $rules: { btn: { 9: { 0: 'SC / GC', 1: 'Passe l\'affichage entre les deux jetons (même valeur numérique).' } } },
+      $replay: { bet: 'MONTANT JOUÉ' },
+      $rgs: { buyConfirm: 'Obtenir {name} ? Jouable pour {price}.' }
     }
   };
 })(window);

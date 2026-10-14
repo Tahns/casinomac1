@@ -19,10 +19,12 @@ ok(SOC && SOC.active, 'js/social.js : ?social=true active le mode social');
 
 function esc(s) { return s.replace(/[.*+?^${}()|[\]\\\/]/g, '\\$&').replace(/\s+/g, '\\s+'); }
 var RES = SOC.RESTRICTED.map(function (w) { return { w: w, re: new RegExp('(?<![\\p{L}\\p{N}])' + esc(w) + '(?![\\p{L}\\p{N}])', 'iu') }; });
-function scan(text) { var t = String(text).normalize('NFC'), out = []; RES.forEach(function (r) { if (r.re.test(t)) out.push(r.w); }); return out; }
+function scan(text) { var t = String(text).normalize('NFC').replace(/\{\w+\}/g, ' '), out = [];   // les marqueurs {buy} ne sont pas du texte affiché
+ RES.forEach(function (r) { if (r.re.test(t)) out.push(r.w); }); return out; }
 
 var found = {};   // mot → premiers exemples
 function check(where, text) {
+  if (/[$\u20ac]/.test(String(text)) && where.indexOf('normal.') !== 0) (found['« $ » ou « € » en dur'] = found['« $ » ou « € » en dur'] || []).push(where + ' : « ' + String(text).slice(0, 90) + ' »');
   scan(text).forEach(function (w) { (found[w] = found[w] || []).push(where + ' : « ' + String(text).replace(/\s+/g, ' ').slice(0, 90) + ' »'); });
 }
 function walk(v, p) {
@@ -34,7 +36,7 @@ function walk(v, p) {
 
 // 1. textes sociaux de chaque langue (la langue sans bloc social reçoit le jeu anglais)
 var langs = Object.keys(D);
-langs.forEach(function (l) { walk(SOC.strings(l), l); });
+langs.forEach(function (l) { walk(SOC.strings(l), l); var bl = SOC.blocks(l); Object.keys(bl).forEach(function (n) { walk(bl[n], l + '.$' + n); }); });
 ok(langs.length >= 2, 'langues scannées en mode social : ' + langs.join(', '));
 Object.keys(W.I18N_SOCIAL || {}).forEach(function (l) { walk(W.I18N_SOCIAL[l], 'I18N_SOCIAL.' + l); });
 // à titre de contrôle : le mode normal contient bien des mots interdits (sinon la recherche ne vaut rien)

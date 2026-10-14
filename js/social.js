@@ -24,6 +24,7 @@
     });
     return out;
   }
+  function own(ov) { var o = {}; Object.keys(ov).forEach(function (k) { if (k.charAt(0) !== '$') o[k] = ov[k]; }); return o; }   // « $rules »… : blocs séparés
   var cache = {}, baseT = I18N.t, baseApply = I18N.apply, enBase = null;
   function englishBase() {
     if (enBase) return enBase;
@@ -35,7 +36,7 @@
   function strings(lang, d) {
     var c = cache[lang];
     if (c && c.base === d) return c.val;
-    var val = SOC[lang] ? mergeInto(d, SOC[lang]) : (lang === 'en' ? d : mergeInto(englishBase(), SOC.en || {}));
+    var val = SOC[lang] ? mergeInto(d, own(SOC[lang])) : (lang === 'en' ? d : mergeInto(englishBase(), own(SOC.en || {})));
     cache[lang] = { base: d, val: val };
     return val;
   }
@@ -45,6 +46,21 @@
     var d = I18N.t();
     document.querySelectorAll('[data-i]').forEach(function (el) { var k = el.getAttribute('data-i'); if (d[k] != null) el.textContent = d[k]; });
   };
+
+  // blocs séparés (« rules », « replay ») et textes du RGS : clés « $rules », « $replay », « $rgs » du bloc social de la langue ;
+  // une langue sans bloc social reçoit les textes anglais sociaux
+  var blockCache = {};
+  function socialBlock(name, base, lang, en) {
+    var key = name + '/' + lang, c = blockCache[key];
+    if (c && c.base === base) return c.val;
+    var ov = (SOC[lang] || {})['$' + name], val = SOC[lang] ? (ov ? mergeInto(base, ov) : base) : mergeInto(en, (SOC.en || {})['$' + name] || {});
+    blockCache[key] = { base: base, val: val };
+    return val;
+  }
+  var baseBlock = I18N.block, baseRgs = I18N.rgs;
+  function enOf(fn) { var cur = I18N.lang(); I18N.setLang('en'); var r = fn(); I18N.setLang(cur); return r; }
+  if (baseBlock) I18N.block = function (name) { var b = baseBlock.call(I18N, name); return on ? socialBlock(name, b, I18N.lang(), enOf(function () { return baseBlock.call(I18N, name); })) : b; };
+  if (baseRgs) I18N.rgs = function () { var b = baseRgs.call(I18N); return on ? socialBlock('rgs', b, I18N.lang(), enOf(function () { return baseRgs.call(I18N); })) : b; };
 
   root.SOCIAL = {
     RESTRICTED: RESTRICTED,
@@ -56,6 +72,8 @@
       if (root.G && root.G.onSocial) root.G.onSocial();   // devise et textes recalculés par main.js
     },
     // texte social d'une langue (utilisé par les outils de vérification)
+    // blocs séparés sociaux d'une langue (outils de vérification)
+    blocks: function (lang) { var cur = I18N.lang(); I18N.setLang(lang); var r = { rules: I18N.block('rules'), replay: I18N.block('replay'), rgs: I18N.rgs() }; I18N.setLang(cur); return r; },
     strings: function (lang) { var cur = I18N.lang(); I18N.setLang(lang); var d = baseT(); var r = strings(I18N.lang(), d); I18N.setLang(cur); return r; }
   };
   try { document.documentElement.setAttribute('data-social', on ? 'true' : 'false'); } catch (e) {}
