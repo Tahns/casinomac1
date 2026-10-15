@@ -57,7 +57,7 @@ var FINISH = `(async()=>{ G.turbo=true; G.speed=1.6; var g=0; while(G.S.busy&&g<
   async function open(mock, extra) {
     var port = await mock.listen(0);
     var ctx = await b.newContext({ viewport: { width: 1280, height: 720 } }), p = await ctx.newPage();
-    p.on('pageerror', function (e) { allErrs.push(e.message); });
+    p.on('pageerror', function (e) { allErrs.push((e.stack||e.message).split('\n').slice(0,4).join(' < ')); });
     p.on('console', function (m) { if (m.type() === 'error' && !/RGS|Failed to load resource|net::ERR/.test(m.text())) allErrs.push(m.text()); });
     await p.goto(gurl + '?debug&lang=fr&sessionID=' + mock.state.sessionID + '&rgs_url=' + encodeURIComponent('http://localhost:' + port) + (extra || ''));
     await p.waitForTimeout(700);
@@ -452,7 +452,7 @@ var FINISH = `(async()=>{ G.turbo=true; G.speed=1.6; var g=0; while(G.S.busy&&g<
 
   // ---- deux onglets de jeu en mode RGS : le second est bloqué derrière un message, « Jouer ici » reprend la main ----
   var mt = mockRgs.create(), st1 = await open(mt), pgB = await st1.ctx.newPage();
-  pgB.on('pageerror', function (e) { allErrs.push(e.message); });
+  pgB.on('pageerror', function (e) { allErrs.push((e.stack||e.message).split('\n').slice(0,4).join(' < ')); });
   await pgB.goto(gurl + '?debug&lang=fr&sessionID=' + mt.state.sessionID + '&rgs_url=' + encodeURIComponent('http://localhost:' + mt.server.address().port)); await pgB.waitForTimeout(800);
   var tabA = await st1.p.evaluate("!!(document.getElementById('tabBlock') && !document.getElementById('tabBlock').hidden)");
   var tabB = await pgB.evaluate("!!(document.getElementById('tabBlock') && !document.getElementById('tabBlock').hidden)");

@@ -1032,12 +1032,13 @@
 
   /* parallaxe : la caméra bouge un peu avec le pointeur / l'inclinaison du téléphone, sinon un balancement lent */
   var P = G.par = { x: 0, y: 0, tx: 0, ty: 0, stamp: -99 };
-  function parAim(x, y) { P.tx = clamp(x, -1, 1); P.ty = clamp(y, -1, 1); P.stamp = G.t; }
+  function parAim(x, y) { if (!isFinite(x) || !isFinite(y)) return; P.tx = clamp(x, -1, 1); P.ty = clamp(y, -1, 1); P.stamp = G.t; }
   root.addEventListener('pointermove', function (e) { parAim(e.clientX / G.w * 2 - 1, e.clientY / G.h * 2 - 1); });
   root.addEventListener('deviceorientation', function (e) { if (e.gamma != null && e.beta != null) parAim(e.gamma / 25, (e.beta - 45) / 25); });
   function parUpdate(dt) {
     if (G.t - P.stamp > 3.5) { P.tx = Math.sin(G.t * 0.31) * 0.55; P.ty = Math.cos(G.t * 0.23) * 0.4; }
     var k = Math.min(1, dt * 3); P.x += (P.tx - P.x) * k; P.y += (P.ty - P.y) * k;
+    if (!isFinite(P.x) || !isFinite(P.y)) { P.x = P.y = P.tx = P.ty = 0; }
     if (FX.reduced) { P.x = 0; P.y = 0; }
   }
 
