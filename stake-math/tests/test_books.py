@@ -131,9 +131,9 @@ class TestFormat(unittest.TestCase):
     def test_reproductible(self):
         a = tempfile.mkdtemp(prefix="anubis_a_")
         b = tempfile.mkdtemp(prefix="anubis_b_")
-        quiet_run(["--books", "30", "--modes", "std,buy_fury", "--out", a, "--seed", "99"])
-        quiet_run(["--books", "30", "--modes", "std,buy_fury", "--out", b, "--seed", "99"])
-        for mode in ("std", "buy_fury"):
+        quiet_run(["--books", "30", "--modes", "std,bonus_fury", "--out", a, "--seed", "99"])
+        quiet_run(["--books", "30", "--modes", "std,bonus_fury", "--out", b, "--seed", "99"])
+        for mode in ("std", "bonus_fury"):
             self.assertEqual(load_books(a, mode), load_books(b, mode))
 
     def test_criteres_respectes(self):
@@ -202,7 +202,7 @@ class TestEvenements(unittest.TestCase):
 
     def test_pesee_deux_issues_un_gain(self):
         seen = 0
-        for mode in ("buy_weigh", "std", "buy_scarab", "buy_fury"):
+        for mode in ("bonus_weigh", "std", "bonus_scarab", "bonus_fury"):
             for b in load_books(self.tmp, mode):
                 for e in b["events"]:
                     if e["type"] != "weighReveal":
@@ -219,7 +219,7 @@ class TestEvenements(unittest.TestCase):
 
     def test_tresor(self):
         seen = 0
-        for mode in ("buy_vault", "std"):
+        for mode in ("bonus_vault", "std"):
             for bk in load_books(self.tmp, mode):
                 for bn in self.split_bonus(bk["events"]):
                     if bn["start"]["bonus"] != "vault":
@@ -253,7 +253,7 @@ class TestEvenements(unittest.TestCase):
 
     def test_fureur_une_seule_couleur_et_gain_rejoue(self):
         seen = 0
-        for mode in ("buy_fury", "std", "buy_scarab"):
+        for mode in ("bonus_fury", "std", "bonus_scarab"):
             for bk in load_books(self.tmp, mode):
                 for bn in self.split_bonus(bk["events"]):
                     if bn["start"]["bonus"] != "hand":
@@ -291,7 +291,7 @@ class TestEvenements(unittest.TestCase):
 
     def test_scarabees(self):
         seen = 0
-        for bk in load_books(self.tmp, "buy_scarab"):
+        for bk in load_books(self.tmp, "bonus_scarab"):
             for bn in self.split_bonus(bk["events"]):
                 if bn["start"]["bonus"] != "scarab":
                     continue

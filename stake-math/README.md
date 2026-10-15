@@ -12,7 +12,7 @@ lancé ici ; aucun test, aucune simulation ne dépasse 1000 tours (`cap.py`).
 
 | Fichier | Rôle (équivalent math-sdk) |
 |---|---|
-| `game_config.py` | `GameConfig` : 6 modes (`std`, `plus`, `buy_scarab`, `buy_weigh`, `buy_vault`, `buy_fury`), coûts, RTP cible 96,2 %, `wincap` 25 000, roue de 64 cases, Oracle, tables des bonus, échelle `SCALE = 100`. Utilise `BetMode`/`Distribution` du SDK s'il est importable, sinon des classes de même signature |
+| `game_config.py` | `GameConfig` : 6 modes (`std`, `plus`, `bonus_scarab`, `bonus_weigh`, `bonus_vault`, `bonus_fury`), coûts, RTP cible 96,2 %, `wincap` 25 000, roue de 64 cases, Oracle, tables des bonus, échelle `SCALE = 100`. Utilise `BetMode`/`Distribution` du SDK s'il est importable, sinon des classes de même signature |
 | `game_calculations.py` | Les calculs du jeu (Scarabées, Pesée, Trésor, Fureur, Sanctuaire, tour, achat) : copie de `js/math.js`, mêmes tables, mêmes plafonds, même ordre de consommation des tirages, **tout en entiers** (échelle 100) |
 | `game_events.py` | Les événements d'un book (voir « Format des events ») |
 | `gamestate.py` | `GameState.run_spin` : un tour → un book, critères de distribution par rejet (comme `check_repeat` du SDK) |
@@ -29,7 +29,7 @@ lancé ici ; aucun test, aucune simulation ne dépasse 1000 tours (`cap.py`).
 python3 -m unittest discover -s stake-math/tests          # 54 tests, ~1 s
 python3 stake-math/exact.py                              # RTP exact de chaque mode (aucun tirage)
 python3 stake-math/run.py                                # 1000 books par mode dans stake-math/library/ (ignoré par git)
-python3 stake-math/run.py --books 200 --modes std,buy_fury
+python3 stake-math/run.py --books 200 --modes std,bonus_fury
 node tools/export-parity.js                              # régénère les tirages de parité (≤ 1000 tours au total)
 ```
 
@@ -43,10 +43,10 @@ compresser les books ; sans aucun d'eux, `run.py` écrit des `.jsonl` bruts et l
 |---|---|---|---|---|
 | `std` | 1 | 96,21 % | 42,6 % | 16,1 |
 | `plus` (Oracle+) | 1,1 | 96,10 % | 42,6 % | 18,8 |
-| `buy_scarab` | 9,26 | 96,02 % | 100 % | 4,03 × le prix |
-| `buy_weigh` | 10,31 | 96,02 % | 54,0 % | 6,72 × le prix |
-| `buy_vault` | 12,37 | 96,03 % | 100 % | 3,49 × le prix |
-| `buy_fury` | 27,30 | 96,01 % | 100 % | 4,37 × le prix |
+| `bonus_scarab` | 9,26 | 96,02 % | 100 % | 4,03 × le prix |
+| `bonus_weigh` | 10,31 | 96,02 % | 54,0 % | 6,72 × le prix |
+| `bonus_vault` | 12,37 | 96,03 % | 100 % | 3,49 × le prix |
+| `bonus_fury` | 27,30 | 96,01 % | 100 % | 4,37 × le prix |
 
 RTP cible déclaré : **96,2 %** pour tous les modes (`BetMode.rtp`). Les RTP exacts ci-dessus sont ceux des lois NON optimisées (écart maximal entre modes
 0,2 point, sous les 0,5 point de la source tierce) ; l'optimiseur les ramène à la cible en réglant les poids. Gain maximal : **25 000 ×**

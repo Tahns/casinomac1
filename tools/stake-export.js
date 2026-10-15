@@ -18,8 +18,8 @@
 //    jetons 'scepter' ×2) restent des nombres bruts (×N = N).
 //  - Chaque événement porte `seq` (compteur 0.., ordre de lecture) et `type` ; `wheelStop.index` est la case de la roue, pas le compteur.
 //  - Le coût d'un mode : roundStart.cost en entier ×100 (110 = ×1,1) ; index.json garde le multiple décimal (1.1) comme le SDK.
-//    Le RGS débite mise × coût. Les 6 modes : std (1), plus (1,1 : Oracle+), buy_scarab (9,24), buy_weigh (10,31), buy_vault (12,37),
-//    buy_fury (27,28). À l'achat il n'y a ni oracle ni wheelStop : roundStart.mode == 'buy' et un seul bonusStart (bought:true).
+//    Le RGS débite mise × coût. Les 6 modes : std (1), plus (1,1 : Oracle+), bonus_scarab (9,24), bonus_weigh (10,31), bonus_vault (12,37),
+//    bonus_fury (27,28). À l'achat il n'y a ni oracle ni wheelStop : roundStart.mode == 'bonus' et un seul bonusStart (bought:true).
 //
 // CHOIX DU JOUEUR : RÈGLE D'OR = TOUTES LES VARIANTES SÉLECTIONNABLES D'UN BOOK PAIENT EXACTEMENT LE MÊME TOTAL (== payoutMultiplier).
 //  Le book contient toutes les variantes ; le choix du joueur ne fait que SÉLECTIONNER celle qui est affichée (aucun appel réseau). Comme
@@ -36,7 +36,7 @@
 //  - Sanctuaire des Marées : la k-ième tablette touchée révèle sanctuaryTablet k (tablettes indépendantes, ordre neutre).
 //
 // ÉVÉNEMENTS (dans l'ordre) — type et champs
-//  roundStart   { v:2, mode:'std'|'plus'|'buy', cost, maxWin:2500000, cells:64 }       cells = taille de la roue (index.json donne layout[64])
+//  roundStart   { v:2, mode:'std'|'plus'|'bonus', cost, maxWin:2500000, cells:64 }       cells = taille de la roue (index.json donne layout[64])
 //  pour chaque tour n = 1.. (une relance Ankh = un tour de plus) :
 //   oracle        { spin, kind, boost, sealed:true }     bénédiction scellée AVANT l'arrêt : boost est dans le book mais le front l'affiche
 //                                                          « ×? » jusqu'à l'arrêt de la roue (absent si pas d'Oracle ce tour, absent à l'achat)
@@ -117,7 +117,7 @@ function bonusEvents(kind, b) {
 }
 
 function bookEvents(round) {
-  var ev = [{ type: 'roundStart', v: FORMAT, mode: round.mode, cost: I(round.cost), maxWin: I(M.MAX_WIN), cells: M.N }];
+  var ev = [{ type: 'roundStart', v: FORMAT, mode: round.mode === 'buy' ? 'bonus' : round.mode, cost: I(round.cost), maxWin: I(M.MAX_WIN), cells: M.N }];
   round.spins.forEach(function (s, k) {
     var n = k + 1;
     if (s.oracle) ev.push({ type: 'oracle', spin: n, kind: s.oracle.kind, boost: s.oracle.boost, sealed: true });
@@ -264,7 +264,7 @@ var MODES = [
   { name: 'plus', cost: M.MODES.plus.cost, play: function (r) { return M.playRound(r, 'plus'); } }
 ];
 [['scarab', 'scarab'], ['weigh', 'weigh'], ['vault', 'vault'], ['fury', 'hand']].forEach(function (p) {
-  MODES.push({ name: 'buy_' + p[0], cost: M.BUY[p[1]].price, buy: true, play: function (r) { return M.playBuy(r, p[1]); } });
+  MODES.push({ name: 'bonus_' + p[0], cost: M.BUY[p[1]].price, buy: true, play: function (r) { return M.playBuy(r, p[1]); } });
 });
 
 fs.mkdirSync(OUT, { recursive: true });

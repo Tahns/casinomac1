@@ -197,7 +197,7 @@ def compute():
 
 
 def mode_rtp(name, res=None):
-    """RTP exact d'un mode (clé du jeu : std, plus, buy_scarab...)."""
+    """RTP exact d'un mode (clé du jeu : std, plus, bonus_scarab...)."""
     res = res or compute()
     if name == "std":
         return res["std"]["mean"]

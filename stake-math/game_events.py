@@ -102,7 +102,7 @@ def bonus_events(log, kind, b, nested=None, color=None):
 def book_events(rnd, payout_int):
     """Événements ordonnés d'un tour (dictionnaire rendu par game_calculations.play_mode)."""
     log = EventLog()
-    log.add("roundStart", v=2, mode=rnd["mode"], modeName=rnd.get("mode_name", rnd["mode"]), cost=C.S(rnd["cost"]),
+    log.add("roundStart", v=2, mode="bonus" if rnd["mode"] == "buy" else rnd["mode"], modeName=rnd.get("mode_name", rnd["mode"]), cost=C.S(rnd["cost"]),
             scale=C.SCALE, maxWin=C.WINCAP_INT, wincap=C.WINCAP_INT, cells=C.N)
     for k, s in enumerate(rnd["spins"]):
         n = k + 1

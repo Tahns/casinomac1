@@ -46,7 +46,7 @@ var FINISH = `(async()=>{ G.turbo=true; G.speed=1.6; var g=0; while(G.S.busy&&g<
   ok(vbad === 0 && ibad === 0 && variants > 0, 'format v2 : verify() (règles recalculées sans le front) et adaptateur sans écart sur ' + nb + ' books (' + variants + ' variantes Pesée / Fureur, mêmes totaux)');
   var v1 = false; try { R.bookToRound([{ type: 'roundStart', mode: 'std', cost: 100 }], M); } catch (e) { v1 = e.code === 'ERR_BOOK'; }
   ok(v1, 'un book qui n\'est pas en v2 est refusé (ERR_BOOK)');
-  var wb = probe.pool.buy_weigh.filter(function (b) { return b.payoutMultiplier > 0; })[0], wr = R.bookToRound(wb.events, M).spins[0].bonus, w0 = wr.total;
+  var wb = probe.pool.bonus_weigh.filter(function (b) { return b.payoutMultiplier > 0; })[0], wr = R.bookToRound(wb.events, M).spins[0].bonus, w0 = wr.total;
   wr.pick = 1; var w1 = wr.mults.slice(); wr.pick = 0;
   ok(wr.total === w0 && wr.fixed === w0 && wr.mults[wr.pick] === wb.events.filter(function (e) { return e.type === 'weighReveal'; })[0].variants[0].playerMult / 100 && w1[1] === wr.mults[0], 'Pesée : plume et cœur portent la même valeur du joueur, gain figé du book (' + w0 + '×)');
 
@@ -223,7 +223,7 @@ var FINISH = `(async()=>{ G.turbo=true; G.speed=1.6; var g=0; while(G.S.busy&&g<
   await clk(s.p, '#btnBuy'); await s.p.waitForTimeout(250);
   await s.p.evaluate("document.querySelectorAll('.buyCard')[0].click()"); await s.p.waitForTimeout(200);
   await clk(s.p, '#buyYes'); await s.p.waitForFunction('G.S.busy'); await s.p.waitForTimeout(200);
-  ok(plays(mb).length === 1 && plays(mb)[0].body.mode === 'buy_vault' && plays(mb)[0].body.amount === 1 * MICRO, '[31] Confirmer : /wallet/play { amount: 1000000, mode: buy_vault } (le serveur facture mise × coût)');
+  ok(plays(mb).length === 1 && plays(mb)[0].body.mode === 'bonus_vault' && plays(mb)[0].body.amount === 1 * MICRO, '[31] Confirmer : /wallet/play { amount: 1000000, mode: bonus_vault } (le serveur facture mise × coût)');
   await s.p.evaluate(FINISH); await s.p.waitForTimeout(250);
   ok(Math.abs((await s.p.evaluate('G.S.balance')) - mb.state.balance / MICRO) < 1e-6, '[31] solde après achat = solde du serveur');
   // Oracle+ (×1,1) : pas de confirmation, un bascule seulement le mode ; l'espace mise ensuite
@@ -262,7 +262,7 @@ var FINISH = `(async()=>{ G.turbo=true; G.speed=1.6; var g=0; while(G.S.busy&&g<
   await done(s);
 
   // ---- 6 modes × 10 tours : chaque book v2 rejoué, solde final = solde RGS ----
-  var ALL = [[null, 'std'], ['plus', 'plus'], ['scarab', 'buy_scarab'], ['weigh', 'buy_weigh'], ['vault', 'buy_vault'], ['hand', 'buy_fury']];
+  var ALL = [[null, 'std'], ['plus', 'plus'], ['scarab', 'bonus_scarab'], ['weigh', 'bonus_weigh'], ['vault', 'bonus_vault'], ['hand', 'bonus_fury']];
   for (var mi = 0; mi < ALL.length; mi++) {
     var m6 = mockRgs.create({ seed: 100 + mi, balance: 100000 * MICRO }); s = await open(m6);
     var blocked6 = 0, over = [];
@@ -304,7 +304,7 @@ var FINISH = `(async()=>{ G.turbo=true; G.speed=1.6; var g=0; while(G.S.busy&&g<
   var hround = { spins: [hsp], total: Math.min(hsp.pay, M.MAX_WIN), capped: hsp.pay > M.MAX_WIN, cost: M.BUY.hand.price, mode: 'buy' };
   var hbook = E.makeBook(1, hround), wev = hbook.events.filter(function (e) { return e.type === 'weighReveal' && e.color === 1; })[0];
   ok(E.verify(hbook).length === 0 && hd.total > 0 && !!wev, 'book Fureur → bande Pesée ×6 fabriqué (' + hbook.payoutMultiplier / 100 + '×) : 3 couleurs et 2 variantes plume / cœur, mêmes totaux');
-  var mh = mockRgs.create({ seed: 31, balance: 1000 * MICRO }); mh.queueBook('buy_fury', hbook);
+  var mh = mockRgs.create({ seed: 31, balance: 1000 * MICRO }); mh.queueBook('bonus_fury', hbook);
   s = await open(mh, '');
   await s.p.evaluate("(function(){ var o=G.runBonus; G.__sps=[]; G.runBonus=function(sp,b){ G.__sps.push(sp); return o.call(G,sp,b); }; })()");
   await clk(s.p, '#btnBuy'); await s.p.waitForTimeout(250);
@@ -323,7 +323,7 @@ var FINISH = `(async()=>{ G.turbo=true; G.speed=1.6; var g=0; while(G.S.busy&&g<
   var wrng = M.mulberry32(99), wd = null; tries = 0;
   while (tries++ < 400) { wd = M._bonus.weigh(wrng, 'std'); if (wd.heavy === 0 && wd.mults[0] > 1) break; }
   var wround = { spins: [spinOf('weigh', { bonus: wd, base: wd.total, pay: wd.total })], total: wd.total, capped: false, cost: M.BUY.weigh.price, mode: 'buy' }, wbook = E.makeBook(1, wround);
-  var mw = mockRgs.create({ seed: 32, balance: 1000 * MICRO }); mw.queueBook('buy_weigh', wbook); mw.queueBook('buy_weigh', wbook);
+  var mw = mockRgs.create({ seed: 32, balance: 1000 * MICRO }); mw.queueBook('bonus_weigh', wbook); mw.queueBook('bonus_weigh', wbook);
   s = await open(mw, '');
   var wgains = [];
   for (i = 0; i < 2; i++) {

@@ -18,7 +18,7 @@ var MODES = [
   { name: 'plus', cost: M.MODES.plus.cost, play: function (r) { return M.playRound(r, 'plus'); } }
 ];
 [['scarab', 'scarab'], ['weigh', 'weigh'], ['vault', 'vault'], ['fury', 'hand']].forEach(function (p) {
-  MODES.push({ name: 'buy_' + p[0], cost: M.BUY[p[1]].price, play: function (r) { return M.playBuy(r, p[1]); } });
+  MODES.push({ name: 'bonus_' + p[0], cost: M.BUY[p[1]].price, play: function (r) { return M.playBuy(r, p[1]); } });
 });
 
 function makePool(seed) {

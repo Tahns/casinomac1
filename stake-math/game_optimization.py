@@ -86,8 +86,8 @@ def class_targets(mode):
     kind = C.BUY_KIND_OF[mode]
     hit = res["buy"][kind]["hit"]
     out = {"wincap": {"rtp": WINCAP_RTP},
-           "bonus": {"rtp": round(target - WINCAP_RTP, 5), "hr": round(1 / (hit if mode == "buy_weigh" else 1.0), 3)}}
-    if mode == "buy_weigh":
+           "bonus": {"rtp": round(target - WINCAP_RTP, 5), "hr": round(1 / (hit if mode == "bonus_weigh" else 1.0), 3)}}
+    if mode == "bonus_weigh":
         out["0"] = {}
     return out
 

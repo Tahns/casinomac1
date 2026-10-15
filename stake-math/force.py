@@ -54,7 +54,7 @@ def wincap_script(mode_name):
                 u_index(bonus_idx, C.N),     # la roue s'arrête sur un bonus
                 0.5,                         # pas de Sanctuaire (>= 4 %)
                 0.01] + fury                 # Fureur d'Anubis (< 8 %)
-    if mode_name == "buy_fury":
+    if mode_name == "bonus_fury":
         return fury
     return [0.01] + fury                     # achat d'un autre bonus, saisi par la Fureur (< 8 %)
 
