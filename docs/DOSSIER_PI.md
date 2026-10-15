@@ -54,7 +54,7 @@ Source : `docs/STAKE_ENGINE_CONFORMITE.md` section « Contournements (design-aro
 - La **clé d'or** (+2 choix) : brevets sur les « choix supplémentaires » en sélection masquée non recherchés.
 - La **Pesée** (plateau le plus lourd gagne) est proche d'un « Coin Flip » d'Evolution par sa structure 50/50 ; seul l'habillage (plume, cœur, balance) diffère.
 - Le nom « Ankh » (case de relance) : « Ankh of Anubis » est un titre de Play'n GO.
-- Le visuel `brand/stake-media/background-tile-3x4.png` montre Anubis tendant une **main d'or** ouverte : voir (d), risque de rapprochement visuel avec « Hand of Anubis ».
+- Le visuel `brand/stake-media/background-tile-3x4.png` était un visuel IA (main d'or ouverte) rapprochable de « Hand of Anubis » ; remplacé par un fond abstrait généré par script (dégradé, rayons, particules), sans personnage.
 
 ---
 
@@ -115,7 +115,7 @@ Aucun brevet trouvé pour : Pesée, achat de bonus, bonus secret, « Hand of Anu
 - **Lot documenté.** `docs/ASSETS_HIGGSFIELD.md` (2026-10-13) conserve, pour **31 images**, la bible de style, le prompt exact, le `job_id`, l'URL du résultat et un verdict, générées avec `gpt_image_2_5` (qualité haute). Ces images n'ont pas pu être téléchargées (le domaine cloudfront renvoyait 403) : **leurs fichiers ne sont pas dans le dépôt**, certaines n'ont pas de branchement dans `js/imgs.js`. Ne pas affirmer que les 27 fichiers de `img/` sont ces 31 images.
 - **Droits d'usage.** Selon le centre d'aide Higgsfield (lu via recherche, **non ouvert directement**) : la plateforme ne revendique pas la propriété des sorties et ne limite pas l'usage commercial, sous réserve d'avoir les droits sur les entrées ; les sorties à filigrane peuvent être inadaptées ; conditions mises à jour en juillet 2026 (applicables aux comptes existants depuis le 27 août 2026, d'après la recherche). **Les conditions n'ont pas été lues intégralement.** Le plan payant (sans filigrane) utilisé pour chaque image n'est pas documenté : à rassembler.
 - **Originalité humaine.** Le rapport du Copyright Office américain (Partie 2, 29 janvier 2025, lu via un résumé) indique qu'une œuvre produite par IA sans contribution humaine suffisante n'est pas protégée ; des prompts seuls ne suffisent pas. Un concurrent pourrait copier ces images sans recours facile. L'apport humain dans ce projet (retouches, détourage, composition, rendu du logo en HTML/CSS) existe mais n'est pas documenté image par image. Position en droit européen : **non étudiée**.
-- **Ressemblance involontaire.** Une image IA peut ressembler à un visuel existant. Les images clés n'ont pas été comparées à des visuels de jeux concurrents. Le fond `brand/stake-media/background-tile-3x4.png` (Anubis tendant une main d'or ouverte dans un halo de particules) est à examiner pour la question « Hand of Anubis ».
+- **Ressemblance involontaire.** Une image IA peut ressembler à un visuel existant. Les images clés n'ont pas été comparées à des visuels de jeux concurrents. Les fonds Stake (`brand/stake-media/background-*.png`) sont désormais abstraits et générés par script : plus de risque « Hand of Anubis » de ce côté.
 - **Entrées de référence.** Si des images de référence ont été envoyées à Higgsfield, leur origine n'est pas documentée : non vérifié.
 
 ### Polices (SIL OFL 1.1)
