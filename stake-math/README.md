@@ -3,8 +3,7 @@
 Portage de `js/math.js` (référence) vers un dossier qui produit ce que le RGS de Stake attend : books (`.jsonl.zst`), tables de lookup (CSV)
 et `index.json`, plus les fichiers lus par l'optimiseur du SDK officiel (`StakeEngine/math-sdk`, lu en juin 2026 depuis GitHub).
 
-**État honnête** : le portage et les contrôles de parité sont faits et testés. **La table de production optimisée n'existe pas** : elle doit être
-produite par l'utilisateur avec la grosse simulation puis l'optimiseur Rust de Stake (section « Produire la table de production »). Ce que
+**État honnête** : le portage et les contrôles de parité sont faits et testés. **Une table de production a été produite le 2026-10-15** (200 000 books par mode, optimiseur Rust de Stake lancé mode par mode : RTP 96,20 % dans les 6 modes, taux de gain 42,59 % en Standard/Oracle+, gain max 1 sur 12,5 millions en Standard ; contrôle de format du dossier : aucune erreur). Elle n'est pas dans git (62 Mo) et n'a pas été éprouvée contre un vrai RGS. Pour la refaire : l'utilisateur avec la grosse simulation puis l'optimiseur Rust de Stake (section « Produire la table de production »). Ce que
 `run.py` écrit par défaut (≤ 1000 books par mode, poids tous égaux) ne sert qu'à montrer le format. Le programme Rust de l'optimiseur n'a **pas** été
 lancé ici ; aucun test, aucune simulation ne dépasse 1000 tours (`cap.py`).
 
