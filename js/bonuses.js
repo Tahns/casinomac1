@@ -1029,18 +1029,6 @@
     }
     S.draw = function () {
       var u = g.u, cx = G.cx, cy = g.cy, Rb = g.R * G.ease.outBack(clamp(wheelK, 0, 1)), R = Rb * (1 + 0.08 * Math.sin(Math.PI * clamp(upPulse, 0, 1)));
-      if (beam > 0.01) {   // colonne de lumière divine descendant du ciel
-        sv(function () {
-          ctx.globalCompositeOperation = 'lighter';
-          // fin faisceau vertical, plus large en haut qu'en bas, bords doux (dégradé horizontal) et pied qui s'estompe sur la main
-          var bw = u * (0.035 + 0.05 * Math.min(1, beam)), y1 = cy - u * 0.05, al = Math.min(1, beam);
-          var hg = ctx.createLinearGradient(cx - bw, 0, cx + bw, 0);
-          hg.addColorStop(0, 'rgba(255,225,140,0)'); hg.addColorStop(0.5, 'rgba(255,240,190,' + 0.55 * al + ')'); hg.addColorStop(1, 'rgba(255,225,140,0)');
-          ctx.fillStyle = hg; ctx.beginPath(); ctx.moveTo(cx - bw * 1.6, 0); ctx.lineTo(cx + bw * 1.6, 0); ctx.lineTo(cx + bw * 0.7, y1); ctx.lineTo(cx - bw * 0.7, y1); ctx.closePath(); ctx.fill();
-          var fg = ctx.createRadialGradient(cx, y1, 0, cx, y1, u * 0.22); fg.addColorStop(0, 'rgba(255,240,200,' + 0.45 * al + ')'); fg.addColorStop(1, 'rgba(255,225,140,0)');
-          ctx.fillStyle = fg; ctx.fillRect(cx - u * 0.22, y1 - u * 0.22, u * 0.44, u * 0.44);
-        });
-      }
       if (shock > 0.01) {   // onde de choc au sol
         sv(function () {
           ctx.translate(cx, cy); ctx.scale(1, 0.45);
