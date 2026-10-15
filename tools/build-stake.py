@@ -12,7 +12,7 @@ OUT = os.path.abspath(sys.argv[1]) if len(sys.argv) > 1 else os.path.join(ROOT, 
 ZIP = OUT + '.zip'
 MAX_MB = 50          # garde-fou : un front de jeu ne doit pas approcher cette taille
 TEXT = ('.html', '.js', '.css', '.json', '.svg')
-ALLOWED_EXT = {'.html', '.js', '.css', '.woff2', '.webp', '.jpg', '.png', '.svg', '.json'}
+ALLOWED_EXT = {'.txt', '.html', '.js', '.css', '.woff2', '.webp', '.jpg', '.png', '.svg', '.json'}
 BUILD_JS = "/* Build flag written by tools/build-stake.py: production build for Stake (no local demo). */\nwindow.ANUBIS_BUILD = 'stake';\n"
 
 errors = []
@@ -60,6 +60,9 @@ for css in sorted(f for f in list(files) if f.endswith('.css')):
 for js in sorted(f for f in list(files) if f.endswith('.js')):
     for m in re.finditer(r"""['"`]((?:img|fonts)/[A-Za-z0-9_.\-/]+\.(?:webp|jpg|png|svg|woff2))['"`]""", rd(js)):
         need(m.group(1), js)
+
+if os.path.exists(os.path.join(ROOT, 'fonts', 'OFL.txt')):
+    files.add('fonts/OFL.txt')   # licence des polices embarquées
 
 if errors:
     sys.exit(1)
