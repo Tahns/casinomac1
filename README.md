@@ -37,6 +37,7 @@ node tools/tune-profiles.js     # espérance des profils Prudent / Équilibré /
 | `stake-math/` | Portage Python des maths au format math-sdk de Stake (game_config, books, lookup, index.json, optimiseur, tests de parité) — voir `stake-math/README.md` |
 | `docs/ANALYSE.md` | SWOT, benchmark GitHub, DA, mathématiques, chemin vers Stake |
 | `docs/STAKE_ENGINE_CONFORMITE.md` | Checklist de conformité Stake Engine, risques brevets/marques/droits, plan d'action (pas un avis juridique) |
+| `docs/GUIDE_PUBLICATION.md` · `docs/DOSSIER_PI.md` | Guide pas à pas de publication sur Stake Engine (qui fait quoi, cases à cocher) · dossier à remettre à un conseil en propriété industrielle (pas un avis juridique) |
 
 Commandes : `Espace` = tourner / accélérer, `↑ ↓` = mise. Ajouter `?debug` à l'URL expose `G.testBonus('vault'|'scarab'|'weigh', boost, upgraded)` pour tester un bonus.
 
