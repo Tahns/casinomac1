@@ -4,6 +4,16 @@
   var M = root.AnubisMath, G = root.G, FX = root.FX, Sfx = root.Sfx;
   var RG = root.RGS, LIVE = !!(RG && RG.enabled);   // LIVE = mode RGS (sessionID / rgs_url dans l'adresse) ; sinon démo locale
   function $(id) { return document.getElementById(id); }
+  // build de production Stake (js/build.js, tools/build-stake.py) : pas de démo locale. Sans session RGS ni replay : écran « Lancez le jeu depuis Stake », rien d'autre
+  var STAKE = root.ANUBIS_BUILD === 'stake';
+  if (STAKE && !LIVE && !(root.Replay && root.Replay.active)) {
+    ['ui', 'splash', 'stage'].forEach(function (id) { var el = $(id); if (el) el.remove(); });
+    var lb = document.createElement('div'); lb.id = 'rgsBlock'; lb.setAttribute('role', 'alertdialog'); lb.setAttribute('data-code', 'ERR_LAUNCH');
+    lb.innerHTML = '<div class="sheet"><h2></h2><p></p></div>';
+    lb.querySelector('h2').textContent = I18N.t().brandTop + ' UNCHAINED'; lb.querySelector('p').textContent = I18N.rgs().errLaunch;
+    document.body.appendChild(lb); document.title = 'Anubis Unchained';
+    return;
+  }
 
   // Statistiques mesurées par tools/simulate.js (RTP exact par calcul des moments + simulation 2 M de tours par mode ; Pesée à choix plume/cœur : gain 1 fois sur 2) — affichées dans la table des gains
   var STATS = { rtp: '96.2', rtpPlus: '96.1', hit: '42.6', bonusEvery: '20.0' };
@@ -31,7 +41,7 @@
   var tabOff = false;   // mode RGS : cet onglet n'est pas l'onglet de jeu actif (voir plus bas)
   var GLE_WAIT = 60000;   // ERR_GLE du RGS : plus aucune mise pendant cette durée, puis le serveur tranche de nouveau
   var LIMIT_BASE = [0, 20, 50, 100, 250, 500], LIMITS = LIMIT_BASE.slice();
-  var rng = M.cryptoRng();
+  var rng = STAKE ? null : M.cryptoRng();   // build Stake : aucun tirage dans le navigateur (le RGS tire)
 
   // devise : ?currency= de l'URL (prioritaire, verrouille le sélecteur), sinon le choix du joueur, sinon la langue (démo locale) ;
   // en mode social : jetons SC / GC uniquement, jamais « $ »
@@ -238,7 +248,7 @@
 
   // resume = { round, bet } : reprise d'un round ouvert renvoyé par /wallet/authenticate (déjà débité côté serveur : aucune nouvelle mise)
   async function play(buyKind, resume) {
-    if (S.busy || S.blocked || tabOff) return;
+    if (S.busy || S.blocked || tabOff || (STAKE && !LIVE)) return;
     var T = I18N.t(), b = resume ? resume.bet : bet();
     var priceMult = buyKind ? M.BUY[buyKind].price : resume ? M.MODES[resume.mode].cost : M.MODES[S.mode].cost;
     var c = rr(b * priceMult);   // coût réel du mode = mise x coût du mode (barre d'espace, autoplay et achats passent tous par ici)
@@ -507,7 +517,8 @@
   function curButton() {
     var b = $('btnCur'), sy = G.sym(), t = sy.length > 2 ? S.cur : sy;
     b.textContent = t; b.setAttribute('data-l', t.length > 2 ? '1' : '0');
-    b.setAttribute('aria-label', I18N.t().currencyL + ' : ' + S.cur);
+    var hint = (!LIVE && !STAKE) ? ' — ' + I18N.t().curHint : '';   // démo : liste des devises et conversion indicative
+    b.setAttribute('aria-label', I18N.t().currencyL + ' : ' + S.cur + hint); b.title = I18N.t().currencyL + ' : ' + S.cur + hint;
     b.style.display = S.curLocked ? 'none' : '';
   }
   function setCurrency(c, explicit) {
@@ -661,7 +672,7 @@
       rows += '<tr><td><span class="sw" style="background:' + G.kindColor(id) + '"></span>' + T.kinds[id] + disc + '</td><td class="n">' + def.count + ' / ' + M.N + '</td><td>' + pays + '</td></tr>';
     });
     $('modalBody').innerHTML =
-      '<h2>' + T.infoTitle + '</h2>' + (LIVE ? '' : '<p class="sub">' + T.demo + '</p>') +   // [77] « argent fictif / démo » : démo locale seulement, jamais en session RGS
+      '<h2>' + T.infoTitle + '</h2>' + (LIVE ? '' : '<p class="sub">' + T.demo + '</p><p class="sub">' + T.demoBuild + '</p><p class="sub">' + T.curHint + '</p>') +   // [77] « argent fictif / démo » : démo locale seulement, jamais en session RGS
 
       '<div class="kv"><div><label>' + T.rtp + '</label><b>' + STATS.rtp + '% <small style="font-size:11px;color:var(--turq)">· ORACLE+ ' + STATS.rtpPlus + '%</small></b></div><div><label>' + T.maxWin + '</label><b>' + G.fmt(M.MAX_WIN) + '×</b></div>' +
       '<div><label>' + T.hitRate + '</label><b>' + STATS.hit + '%</b></div><div><label>' + T.bonusFreq + '</label><b>1 / ' + STATS.bonusEvery + '</b></div><div><label>' + T.volat + '</label><b>' + T.volatV + '</b></div></div>' +
@@ -816,7 +827,7 @@
       if (!sp.isConnected) return;
       var T = I18N.t();
       $('spSub').textContent = T.splashSub; $('spBtn').textContent = T.splashEnter;
-      $('spDemo').textContent = LIVE ? String(T.splashDemo).split(' · ').pop() : T.splashDemo;
+      $('spDemo').textContent = LIVE ? String(T.splashDemo).split(' · ').pop() : T.splashDemo + ' · ' + T.demoBuild;
     };
     G.refreshSplash();
     sp.hidden = false;

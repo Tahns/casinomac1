@@ -34,7 +34,7 @@ books.sanct = roundOf(sp0('vault', { oracle: { kind: 'vault', boost: 5 }, index:
 var xb = M._bonus.crypt(M.mulberry32(8), [{ t: 'tide', v: 10 }, { t: 'tide', v: 10 }, { t: 'tide', v: 10 }, { t: 'tide', v: 10 }, { t: 'tab', v: 300 }]);
 books.max = roundOf(sp0('vault', { index: vi, bonus: xb, secret: true, profile: 'crypt', base: xb.total, pay: xb.total }), 'std', 1);
 var CASES = {
-  fury: { mode: 'buy_fury', cost: 27.28, round: books.fury },
+  fury: { mode: 'bonus_fury', cost: 27.28, round: books.fury },
   sanct: { mode: 'std', cost: 1, round: books.sanct },
   max: { mode: 'std', cost: 1, round: books.max },
   mismatch: { mode: 'plus', cost: 1.1, round: books.win, tamper: 5 },
@@ -42,7 +42,7 @@ var CASES = {
   loss: { mode: 'plus', cost: 1.1, round: books.loss },
   win: { mode: 'plus', cost: 1.1, round: books.win },
   bonus: { mode: 'plus', cost: 1.1, round: books.bonus },
-  buyHand: { mode: 'buy_hand', cost: 27.28, round: books.buyHand },
+  buyHand: { mode: 'bonus_hand', cost: 27.28, round: books.buyHand },
   buyScarab: { mode: 'buy_scarab', cost: 9.24, round: books.buyScarab }
 };
 var server = http.createServer(function (req, res) {

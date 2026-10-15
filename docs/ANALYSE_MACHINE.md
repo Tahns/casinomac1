@@ -33,7 +33,7 @@ Règle reçue : **aucune simulation au-dessus de 100 000 tours, puis au-dessus d
 |---|---|
 | `node tools/simulate.js 12000000 21 std` | RTP, taux de gain, répartition par case, distribution |
 | `node tools/simulate.js 12000000 21 plus` | idem en Oracle+ (mise ×1,1) |
-| `node tools/simulate.js 3000000 5 buy-<scarab|weigh|vault|fury>` | RTP et volatilité à l'achat |
+| `node tools/simulate.js 3000000 5 bonus-<scarab|weigh|vault|fury>` | RTP et volatilité à l'achat |
 | `node tools/tune.js` (1 000 000 tirages par bonus) | espérance isolée de chaque bonus, secret compris |
 | `node tools/tune-profiles.js` (4 000 000, graine 1) | égalité d'espérance des profils prudent / équilibré / audacieux |
 | Script d'analyse complémentaire (hors dépôt, 4 000 000 tours, graine 99, + 4 000 marches aléatoires par mode) | séries sans gain, écart entre bonus, paliers de gros gain, durée estimée, temps pour doubler / perdre |
@@ -173,7 +173,7 @@ Résultat du modèle sur 4 M de tours Standard :
 - 100 tours ≈ **21 minutes** ; doubler un capital de 100 mises (médiane quand cela arrive) ≈ **76 minutes** ; atteindre −100 mises nettes (médiane) ≈ **2 h 35** ;
 - le toucher sur la roue accélère le spin ×3,2 (`G.onWheelTap`) ; Turbo et Ultra ramènent un tour à quelques secondes (≈ 3 à 4 s en Turbo, ≈ 1,5 à 2 s en Ultra, **non chronométré**). **Le turbo se coupe dès qu'un bonus est atteint** (`main.js` `play()`, commit 28a546b) : tous les bonus se jouent à vitesse normale.
 
-### 1.10 Achat de bonus (`simulate.js 3000000 5 buy-*`) [mesuré]
+### 1.10 Achat de bonus (`simulate.js 3000000 5 bonus-*`) [mesuré]
 
 | Bonus acheté | Prix (× mise) | RTP simulé | Écart-type (× mise) | Achats qui paient > 0 | Gain max |
 |---|---|---|---|---|---|

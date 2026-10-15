@@ -107,9 +107,9 @@ N = len(LAYOUT)                  # 64
 # ---------------------------------------------------------------------------------------------------------------------
 MODES = {"std": {"cost": 1.0, "oracle": 0.29}, "plus": {"cost": 1.1, "oracle": 0.698}}
 BUY = {"scarab": 9.26, "weigh": 10.31, "vault": 12.37, "hand": 27.30}   # « hand » = Fureur d'Anubis (identifiant interne conservé)
-BUY_NAMES = {"scarab": "buy_scarab", "weigh": "buy_weigh", "vault": "buy_vault", "hand": "buy_fury"}
+BUY_NAMES = {"scarab": "bonus_scarab", "weigh": "bonus_weigh", "vault": "bonus_vault", "hand": "bonus_fury"}
 BUY_KIND_OF = {v: k for k, v in BUY_NAMES.items()}
-MODE_ORDER = ["std", "plus", "buy_scarab", "buy_weigh", "buy_vault", "buy_fury"]
+MODE_ORDER = ["std", "plus", "bonus_scarab", "bonus_weigh", "bonus_vault", "bonus_fury"]
 
 # ---------------------------------------------------------------------------------------------------------------------
 # Oracle : bénédiction scellée avant le tour, révélée à l'arrêt de la roue
@@ -288,10 +288,10 @@ def _dist(criteria, quota, **cond):
 QUOTAS = {
     "std":        [("wincap", 0.002), ("0", 0.25), ("bonus", 0.30), ("basegame", 0.448)],
     "plus":       [("wincap", 0.002), ("0", 0.25), ("bonus", 0.30), ("basegame", 0.448)],
-    "buy_scarab": [("wincap", 0.002), ("bonus", 0.998)],
-    "buy_weigh":  [("wincap", 0.002), ("0", 0.45), ("bonus", 0.548)],
-    "buy_vault":  [("wincap", 0.002), ("bonus", 0.998)],
-    "buy_fury":   [("wincap", 0.002), ("bonus", 0.998)],
+    "bonus_scarab": [("wincap", 0.002), ("bonus", 0.998)],
+    "bonus_weigh":  [("wincap", 0.002), ("0", 0.45), ("bonus", 0.548)],
+    "bonus_vault":  [("wincap", 0.002), ("bonus", 0.998)],
+    "bonus_fury":   [("wincap", 0.002), ("bonus", 0.998)],
 }
 
 
@@ -327,7 +327,7 @@ class GameConfig:
         self.opt_params = {}
         self.bet_modes = []
         for name in MODE_ORDER:
-            buy = name.startswith("buy_")
+            buy = name.startswith("bonus_")
             cost = BUY[BUY_KIND_OF[name]] if buy else MODES[name]["cost"]
             self.bet_modes.append(BetMode(
                 name=name, cost=cost, rtp=self.rtp, max_win=self.wincap,

@@ -317,7 +317,7 @@ def play_buy(rng, kind):
 
 
 def play_mode(rng, mode_name):
-    """Joue un tour dans un des 6 modes du jeu (std, plus, buy_scarab, buy_weigh, buy_vault, buy_fury)."""
+    """Joue un tour dans un des 6 modes du jeu (std, plus, bonus_scarab, bonus_weigh, bonus_vault, bonus_fury)."""
     if mode_name in C.BUY_KIND_OF:
         r = play_buy(rng, C.BUY_KIND_OF[mode_name])
     else:

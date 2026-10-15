@@ -355,7 +355,7 @@
   }
 
   /* ---------- Achat de bonus ---------- */
-  // Prix en x la mise, calés par le calcul exact pour un RTP ≈ 96 % (tools/rtp-exact.js), recoupés par tools/simulate.js <n> <graine> buy-<bonus>.
+  // Prix en x la mise, calés par le calcul exact pour un RTP ≈ 96 % (tools/rtp-exact.js), recoupés par tools/simulate.js <n> <graine> bonus-<bonus>.
   // La Fureur d'Anubis peut toujours saisir un bonus acheté (même probabilité que sur la roue), sans boost Oracle.
   var BUY = { scarab: { price: 9.26 }, weigh: { price: 10.31 }, vault: { price: 12.37 }, hand: { price: 27.30 } };
   function playBuy(rng, kind) {

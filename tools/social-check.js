@@ -56,6 +56,13 @@ var html = fs.readFileSync(path.join(root, 'index.html'), 'utf8').replace(/<scri
 (html.match(/(aria-label|title|alt|placeholder)="[^"]*"/g) || []).forEach(function (a) { check('index.html ' + a.split('=')[0], a.replace(/^[^=]+="|"$/g, '')); });
 check('index.html (texte)', html.replace(/<[^>]*>/g, ' '));
 
+// noms de modes envoyés à /wallet/play : aucun mot interdit ; les anciens noms buy_* restent lus (rediffusion) sans jamais être écrits
+(function () {
+  var R = require('../js/rgs.js'), names = ['std', 'plus'].map(function (m) { return R.modeName(m, null); }).concat(['scarab', 'weigh', 'vault', 'hand'].map(function (k) { return R.modeName('std', k); }));
+  names.forEach(function (n) { check('RGS.modeName', n.replace(/_/g, ' ')); });
+  ok(names.join() === 'std,plus,bonus_scarab,bonus_weigh,bonus_vault,bonus_fury', 'noms de modes écrits : ' + names.join(', '));
+  ok(R.parseMode('buy_fury').buy === 'hand' && R.parseMode('bonus_fury').buy === 'hand' && R.parseMode('buy_vault').buy === 'vault', 'RGS.parseMode lit les anciens (buy_*) et les nouveaux noms');
+})();
 // noms de modes des math publish (index.json, stake-export…) affichés tels quels
 var modeFiles = [];
 (function find(d, depth) {

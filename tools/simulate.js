@@ -5,7 +5,7 @@ var n = require('./cap')(parseInt(process.argv[2] || '1000', 10));
 var seed = parseInt(process.argv[3] || '1', 10);
 var mode = process.argv[4] || 'std';
 var rng = M.mulberry32(seed);
-var BUYK = mode.indexOf('buy-') === 0 ? mode.slice(4) : null;
+var BUYK = mode.indexOf('bonus-') === 0 ? mode.slice(6) : mode.indexOf('buy-') === 0 ? mode.slice(4) : null;   // « buy- » : ancien nom, toujours accepté
 if (BUYK === 'fury') BUYK = 'hand';   // identifiant interne conservé (Fureur d'Anubis)
 var COST = BUYK ? M.BUY[BUYK].price : (M.MODES[mode] || M.MODES.std).cost;
 

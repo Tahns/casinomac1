@@ -12,7 +12,7 @@ var I = M.toInt;
 var perMode = parseInt(process.argv[2] || '100', 10), perBonus = parseInt(process.argv[3] || '60', 10);
 var seed = parseInt(process.argv[4] || '2026', 10);
 var out = process.argv[5] || path.join(__dirname, '..', 'stake-math', 'tests', 'parity_draws.json');
-var MODES = ['std', 'plus', 'buy_scarab', 'buy_weigh', 'buy_vault', 'buy_fury'], BUYS = { buy_scarab: 'scarab', buy_weigh: 'weigh', buy_vault: 'vault', buy_fury: 'hand' };
+var MODES = ['std', 'plus', 'bonus_scarab', 'bonus_weigh', 'bonus_vault', 'bonus_fury'], BUYS = { bonus_scarab: 'scarab', bonus_weigh: 'weigh', bonus_vault: 'vault', bonus_fury: 'hand' };
 var BUDGET = cap(1000), used = 0;
 function take(n) { if (used + n > BUDGET) throw new Error('budget de ' + BUDGET + ' tirages dépassé'); used += n; return n; }
 
@@ -102,7 +102,7 @@ var B = M._bonus;
   var fury = [uIdx(d0[0], n), uIdx(d0[1], n), uIdx(d0[0], n), uIdx(w, n),
     uW(M.WEIGH_PROFILES.std, function (p) { return p[0] === 60 && p[1] === 1000; }), 0.25, 0.75, 0.75, uIdx(1, n), uIdx(1, n)];
   var pre = {
-    std: [0.9999, uIdx(M.LAYOUT.indexOf('scarab'), M.N), 0.5, 0.01], plus: null, buy_scarab: [0.01], buy_weigh: [0.01], buy_vault: [0.01], buy_fury: []
+    std: [0.9999, uIdx(M.LAYOUT.indexOf('scarab'), M.N), 0.5, 0.01], plus: null, bonus_scarab: [0.01], bonus_weigh: [0.01], bonus_vault: [0.01], bonus_fury: []
   };
   pre.plus = pre.std;
   doc.wincap = {};

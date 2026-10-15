@@ -20,7 +20,7 @@ HIT = {m: exact.mode_hit(m, RES) for m in C.MODE_ORDER}
 class TestRtp(unittest.TestCase):
     def test_six_modes_declares(self):
         cfg = C.GameConfig()
-        self.assertEqual([b.get_name() for b in cfg.bet_modes], ["std", "plus", "buy_scarab", "buy_weigh", "buy_vault", "buy_fury"])
+        self.assertEqual([b.get_name() for b in cfg.bet_modes], ["std", "plus", "bonus_scarab", "bonus_weigh", "bonus_vault", "bonus_fury"])
         self.assertEqual([b.get_cost() for b in cfg.bet_modes], [1.0, 1.1, 9.26, 10.31, 12.37, 27.3])
         self.assertEqual([b.get_buybonus() for b in cfg.bet_modes], [False, False, True, True, True, True])
         for b in cfg.bet_modes:

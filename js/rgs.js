@@ -87,17 +87,19 @@
     });
   };
   RGS.balance = function () { return post('/wallet/balance', { sessionID: RGS.sessionID }); };
-  // bet : montant de base en unités ; mode : nom du mode du RGS (std, plus, buy_scarab…)
+  // bet : montant de base en unités ; mode : nom du mode du RGS (std, plus, bonus_scarab…)
   RGS.play = function (bet, mode) { return post('/wallet/play', { sessionID: RGS.sessionID, amount: RGS.toMicro(bet), mode: mode }, 0); };
   RGS.endRound = function () { return post('/wallet/end-round', { sessionID: RGS.sessionID }); };
   RGS.betEvent = function (event) { return post('/bet/event', { sessionID: RGS.sessionID, event: String(event) }, 0).catch(function () {}); };
 
   // nom de mode du RGS <-> mode du jeu ({ mode:'std'|'plus', buy:'scarab'|'weigh'|'vault'|'hand' })
-  var BUY_NAMES = { scarab: 'buy_scarab', weigh: 'buy_weigh', vault: 'buy_vault', hand: 'buy_fury' };
+  // (aucun mot « buy » dans les noms publiés : ils peuvent s'afficher en mode social ; l'identifiant interne `buy` reste dans le code)
+  var BUY_NAMES = { scarab: 'bonus_scarab', weigh: 'bonus_weigh', vault: 'bonus_vault', hand: 'bonus_fury' };
+  var LEGACY_NAMES = { scarab: 'buy_scarab', weigh: 'buy_weigh', vault: 'buy_vault', hand: 'buy_fury' };   // anciens books / rediffusions : lus, jamais écrits
   RGS.modeName = function (mode, buy) { return buy ? BUY_NAMES[buy] : (mode === 'plus' ? 'plus' : 'std'); };
   RGS.parseMode = function (name) {
     var buy = null;
-    Object.keys(BUY_NAMES).forEach(function (k) { if (BUY_NAMES[k] === name) buy = k; });
+    Object.keys(BUY_NAMES).forEach(function (k) { if (BUY_NAMES[k] === name || LEGACY_NAMES[k] === name) buy = k; });
     return { mode: name === 'plus' ? 'plus' : 'std', buy: buy };
   };
 
@@ -218,7 +220,7 @@
     sum = Math.min(Math.round(sum * S) / S, M.MAX_WIN);
     var total = f(fin.amount);
     if (Math.abs(total - sum) > TOL) issues.push('finalWin ' + total + ' != sum of spins ' + sum);
-    return { spins: spins, total: total, sum: sum, capped: !!fin.capped, cost: f(rs.cost), mode: rs.mode, issues: issues, version: 2 };
+    return { spins: spins, total: total, sum: sum, capped: !!fin.capped, cost: f(rs.cost), mode: rs.mode === 'bonus' ? 'buy' : rs.mode, issues: issues, version: 2 };
   }
   RGS.bookToRound = bookToRound;
 

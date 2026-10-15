@@ -2,7 +2,7 @@
 """Anubis Unchained — génération des books, tables de lookup et index.json au format math-sdk de Stake.
 
     python3 stake-math/run.py                          # 1000 books par mode (plafond), dans stake-math/library/
-    python3 stake-math/run.py --books 200 --modes std,buy_fury
+    python3 stake-math/run.py --books 200 --modes std,bonus_fury
     python3 stake-math/run.py --step 10                # garde-fou : arrondit le total d'un tour au multiple de 10 (sans effet : les gains sont des dixièmes)
     HOA_BIG=1 python3 stake-math/run.py --books 1000000   # VRAIE production : seulement lancée par l'utilisateur
 
