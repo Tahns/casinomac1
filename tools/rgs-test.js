@@ -223,7 +223,7 @@ var FINISH = `(async()=>{ G.turbo=true; G.speed=1.6; var g=0; while(G.S.busy&&g<
   await clk(s.p, '#btnBuy'); await s.p.waitForTimeout(250);
   await s.p.evaluate("document.querySelectorAll('.buyCard')[0].click()"); await s.p.waitForTimeout(200);
   await clk(s.p, '#buyYes'); await s.p.waitForFunction('G.S.busy'); await s.p.waitForTimeout(200);
-  ok(plays(mb).length === 1 && plays(mb)[0].body.mode === 'bonus_vault' && plays(mb)[0].body.amount === 1 * MICRO, '[31] Confirmer : /wallet/play { amount: 1000000, mode: bonus_vault } (le serveur facture mise × coût)');
+  ok(plays(mb).length === 1 && plays(mb)[0].body.mode === 'bonus_vault' && plays(mb)[0].body.amount === 1 * MICRO, '[31] Confirmer : /wallet/play { amount: 1000000, mode: bonus_vault } (le serveur facture mise × coût) ' + JSON.stringify(plays(mb).map(function (l) { return l.body; })));
   await s.p.evaluate(FINISH); await s.p.waitForTimeout(250);
   ok(Math.abs((await s.p.evaluate('G.S.balance')) - mb.state.balance / MICRO) < 1e-6, '[31] solde après achat = solde du serveur');
   // Oracle+ (×1,1) : pas de confirmation, un bascule seulement le mode ; l'espace mise ensuite
@@ -427,7 +427,7 @@ var FINISH = `(async()=>{ G.turbo=true; G.speed=1.6; var g=0; while(G.S.busy&&g<
   // démo locale (sans RGS) : la mention reste affichée
   var dctx = await b.newContext({ viewport: { width: 1280, height: 720 } }), dp = await dctx.newPage();
   await dp.goto(gurl + '?splash=1&lang=en'); await dp.waitForTimeout(700);
-  var dm = await dp.evaluate("({demo:document.getElementById('spDemo').textContent, want:I18N.t().splashDemo})");
+  var dm = await dp.evaluate("({demo:document.getElementById('spDemo').textContent, want:I18N.t().splashDemo + ' · ' + I18N.t().demoBuild})");
   ok(dm.demo === dm.want && /demo/i.test(dm.demo), '[77] E1 démo locale (hors RGS) : « ' + dm.demo + ' » reste affiché');
   await dctx.close();
   var mj = mockRgs.create({ seed: 61, currency: 'JPY', balance: 100000 * MICRO, betLevels: [100, 200, 500, 1000].map(function (x) { return x * MICRO; }), defaultBetLevel: 100 * MICRO }); s = await open(mj, '');

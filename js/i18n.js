@@ -20,7 +20,7 @@
       scarabSub: 'Trois scarabées traversent les ténèbres. Chacun rapporte la case où il tombe.', scarabIntro: 'CHUTE DES SCARABÉES',
       weighIntro: 'PESÉE DU CŒUR', weighSub: 'Plume de Maât ou cœur ? Le plateau le plus lourd gagne son multiplicateur, le plus léger n\'a rien.', feather: 'PLUME', featherOf: 'DE MAÂT', heart: 'CŒUR', heartOf: 'DE VOTRE ÂME', weighRoll: 'Les multiplicateurs se révèlent…', weighWon: 'GAGNÉ', weighLost: 'PERDU', sayRight: 'Votre plateau est le plus lourd : ×{m} !', sayWrong: 'L\'autre plateau est plus lourd : pas de gain', weighing: 'Les dieux pèsent votre âme…',
       vaultIntro: 'CHAMBRE DU TRÉSOR', vaultSub: 'Un toucher ouvre un coffre. Le sceau referme la chambre (vous gardez votre total) ; une clé d\'or ajoute des coffres à ouvrir.', pick: 'Touchez un coffre', vaultSeal: 'SCELLÉ !', vaultKey: 'CLÉ D\'OR  +{n} COFFRES', vaultLeft: 'COFFRES : {n}', vaultScepter: 'SCEPTRE ×2', vaultClear: 'COFFRES VIDÉS  +{p}×', total: 'TOTAL',
-      splashEnter: 'ENTRER', splashSub: 'Le jugement vous attend', splashDemo: 'Démo · argent fictif · Jouez avec modération',
+      splashEnter: 'ENTRER', splashSub: 'Le jugement vous attend', splashDemo: 'Démo · argent fictif · Jouez avec modération', curHint: 'Démo : 7 devises (USD, EUR, CAD, MXN, JPY, SC, GC) — conversion indicative, pas de taux de change réels.', demoBuild: 'Démo locale — ce n\'est pas le build de production Stake. Les montants sont fictifs.',
       steerHint: 'Touchez à gauche ou à droite pour guider le scarabée', fateResists: 'LE DESTIN RÉSISTE',
       pushHint: 'Touchez vite pour faire pencher votre plateau !',
       launchBonus: 'LANCER LE BONUS', bonusWord: 'BONUS', bonusUnlocked: 'BONUS DÉBLOQUÉ', launchHint: 'Touchez le bouton ou appuyez sur Espace', chooseTitle: 'CHOISISSEZ VOTRE DESTIN', chooseHint: 'Touchez une carte : même espérance de gain, risque différent', chooseRtp: 'Les trois choix ont le même RTP',
@@ -71,7 +71,7 @@
       scarabSub: 'Three scarabs plunge through the dark. Each pays the slot it lands in.', scarabIntro: 'SCARAB DROP',
       weighIntro: 'WEIGHING OF THE HEART', weighSub: 'Feather of Ma\'at or heart? The heavier pan wins its multiplier, the lighter one gets nothing.', feather: 'FEATHER', featherOf: 'OF MA\'AT', heart: 'HEART', heartOf: 'OF YOUR SOUL', weighRoll: 'The multipliers are revealed…', weighWon: 'WON', weighLost: 'LOST', sayRight: 'Your pan is the heavier one: ×{m}!', sayWrong: 'The other pan is heavier: no win', weighing: 'The gods weigh your soul…',
       vaultIntro: 'TREASURE VAULT', vaultSub: 'One tap opens a chest. The seal closes the vault (you keep your total); a golden key adds chests to open.', pick: 'Tap a chest', vaultSeal: 'SEALED!', vaultKey: 'GOLDEN KEY  +{n} CHESTS', vaultLeft: 'CHESTS: {n}', vaultScepter: 'SCEPTER ×2', vaultClear: 'VAULT CLEARED  +{p}×', total: 'TOTAL',
-      splashEnter: 'ENTER', splashSub: 'Judgement awaits', splashDemo: 'Demo · play money · Play responsibly',
+      splashEnter: 'ENTER', splashSub: 'Judgement awaits', splashDemo: 'Demo · play money · Play responsibly', curHint: 'Demo: 7 currencies (USD, EUR, CAD, MXN, JPY, SC, GC) — indicative conversion, not real exchange rates.', demoBuild: 'Local demo — this is not the Stake production build. Amounts are fictitious.',
       steerHint: 'Tap left or right to steer the scarab', fateResists: 'FATE RESISTS',
       pushHint: 'Tap fast to tip your pan!',
       launchBonus: 'START THE BONUS', bonusWord: 'BONUS', bonusUnlocked: 'BONUS UNLOCKED', launchHint: 'Tap the button or press Space', chooseTitle: 'CHOOSE YOUR FATE', chooseHint: 'Tap a card: same expected return, different risk', chooseRtp: 'All three choices have the same RTP',
@@ -122,7 +122,7 @@
       scarabSub: 'Drei Skarabäen stürzen durch die Dunkelheit. Jeder zahlt das Feld, in dem er landet.', scarabIntro: 'SKARABÄENFALL',
       weighIntro: 'WÄGUNG DES HERZENS', weighSub: 'Feder der Ma\'at oder Herz? Die schwerere Schale gewinnt ihren Multiplikator, die leichtere nichts.', feather: 'FEDER', featherOf: 'DER MA\'AT', heart: 'HERZ', heartOf: 'DEINER SEELE', weighRoll: 'Die Multiplikatoren werden enthüllt…', weighWon: 'GEWONNEN', weighLost: 'VERLOREN', sayRight: 'Deine Schale ist schwerer: ×{m}!', sayWrong: 'Die andere Schale ist schwerer: kein Gewinn', weighing: 'Die Götter wiegen deine Seele…',
       vaultIntro: 'SCHATZKAMMER', vaultSub: 'Ein Tippen öffnet eine Truhe. Das Siegel schließt die Kammer (dein Gesamt bleibt); ein goldener Schlüssel gibt weitere Truhen.', pick: 'Tippe auf eine Truhe', vaultSeal: 'VERSIEGELT!', vaultKey: 'GOLDENER SCHLÜSSEL  +{n} TRUHEN', vaultLeft: 'TRUHEN: {n}', vaultScepter: 'SZEPTER ×2', vaultClear: 'KAMMER GELEERT  +{p}×', total: 'GESAMT',
-      splashEnter: 'EINTRETEN', splashSub: 'Das Urteil erwartet dich', splashDemo: 'Demo · Spielgeld · Spiele verantwortungsvoll',
+      splashEnter: 'EINTRETEN', splashSub: 'Das Urteil erwartet dich', splashDemo: 'Demo · Spielgeld · Spiele verantwortungsvoll', curHint: 'Demo: 7 Währungen (USD, EUR, CAD, MXN, JPY, SC, GC) – Umrechnung nur zur Orientierung, keine echten Wechselkurse.', demoBuild: 'Lokale Demo – das ist nicht der Stake-Produktions-Build. Die Beträge sind fiktiv.',
       steerHint: 'Tippe links oder rechts, um den Skarabäus zu lenken', fateResists: 'SCHICKSAL WEHRT SICH',
       pushHint: 'Tippe schnell, um deine Schale zu senken!',
       launchBonus: 'BONUS STARTEN', bonusWord: 'BONUS', bonusUnlocked: 'BONUS FREIGESCHALTET', launchHint: 'Tippe auf die Taste oder drücke die Leertaste', chooseTitle: 'WÄHLE DEIN SCHICKSAL', chooseHint: 'Tippe eine Karte: gleiche Gewinnerwartung, anderes Risiko', chooseRtp: 'Alle drei Wahlmöglichkeiten haben denselben RTP',
@@ -173,7 +173,7 @@
       scarabSub: 'Tres escarabajos caen en la oscuridad. Cada uno paga la casilla donde aterriza.', scarabIntro: 'CAÍDA DE ESCARABAJOS',
       weighIntro: 'PESAJE DEL CORAZÓN', weighSub: '¿Pluma de Maat o corazón? El plato más pesado gana su multiplicador, el más ligero no gana nada.', feather: 'PLUMA', featherOf: 'DE MAAT', heart: 'CORAZÓN', heartOf: 'DE TU ALMA', weighRoll: 'Se revelan los multiplicadores…', weighWon: 'GANADO', weighLost: 'PERDIDO', sayRight: 'Tu plato es el más pesado: ×{m}!', sayWrong: 'El otro plato pesa más: sin premio', weighing: 'Los dioses pesan tu alma…',
       vaultIntro: 'CÁMARA DEL TESORO', vaultSub: 'Un toque abre un cofre. El sello cierra la cámara (conservas tu total); una llave de oro añade cofres por abrir.', pick: 'Toca un cofre', vaultSeal: '¡SELLADO!', vaultKey: 'LLAVE DE ORO  +{n} COFRES', vaultLeft: 'COFRES: {n}', vaultScepter: 'CETRO ×2', vaultClear: 'CÁMARA VACIADA  +{p}×', total: 'TOTAL',
-      splashEnter: 'ENTRAR', splashSub: 'El juicio te espera', splashDemo: 'Demo · dinero ficticio · Juega con moderación',
+      splashEnter: 'ENTRAR', splashSub: 'El juicio te espera', splashDemo: 'Demo · dinero ficticio · Juega con moderación', curHint: 'Demo: 7 divisas (USD, EUR, CAD, MXN, JPY, SC, GC); conversión orientativa, sin tipos de cambio reales.', demoBuild: 'Demo local: no es la versión de producción de Stake. Los importes son ficticios.',
       steerHint: 'Toca a izquierda o derecha para guiar al escarabajo', fateResists: 'EL DESTINO SE RESISTE',
       pushHint: '¡Toca rápido para inclinar tu plato!',
       launchBonus: 'INICIAR EL BONUS', bonusWord: 'BONUS', bonusUnlocked: 'BONUS DESBLOQUEADO', launchHint: 'Toca el botón o pulsa Espacio', chooseTitle: 'ELIGE TU DESTINO', chooseHint: 'Toca una carta: misma esperanza de ganancia, distinto riesgo', chooseRtp: 'Las tres opciones tienen el mismo RTP',
@@ -224,7 +224,7 @@
       scarabSub: 'Três escaravelhos mergulham na escuridão. Cada um paga a casa onde cai.', scarabIntro: 'QUEDA DE ESCARAVELHOS',
       weighIntro: 'PESAGEM DO CORAÇÃO', weighSub: 'Pena de Maat ou coração? O prato mais pesado ganha seu multiplicador, o mais leve não ganha nada.', feather: 'PENA', featherOf: 'DE MAAT', heart: 'CORAÇÃO', heartOf: 'DA SUA ALMA', weighRoll: 'Os multiplicadores são revelados…', weighWon: 'GANHOU', weighLost: 'PERDEU', sayRight: 'Seu prato é o mais pesado: ×{m}!', sayWrong: 'O outro prato pesa mais: sem ganho', weighing: 'Os deuses pesam sua alma…',
       vaultIntro: 'CÂMARA DO TESOURO', vaultSub: 'Um toque abre um baú. O selo fecha a câmara (você mantém seu total); uma chave de ouro adiciona baús para abrir.', pick: 'Toque em um baú', vaultSeal: 'SELADO!', vaultKey: 'CHAVE DE OURO  +{n} BAÚS', vaultLeft: 'BAÚS: {n}', vaultScepter: 'CETRO ×2', vaultClear: 'CÂMARA ESVAZIADA  +{p}×', total: 'TOTAL',
-      splashEnter: 'ENTRAR', splashSub: 'O julgamento aguarda', splashDemo: 'Demo · dinheiro fictício · Jogue com responsabilidade',
+      splashEnter: 'ENTRAR', splashSub: 'O julgamento aguarda', splashDemo: 'Demo · dinheiro fictício · Jogue com responsabilidade', curHint: 'Demo: 7 moedas (USD, EUR, CAD, MXN, JPY, SC, GC); conversão indicativa, sem taxas de câmbio reais.', demoBuild: 'Demo local: esta não é a versão de produção da Stake. Os valores são fictícios.',
       steerHint: 'Toque à esquerda ou à direita para guiar o escaravelho', fateResists: 'O DESTINO RESISTE',
       pushHint: 'Toque rápido para inclinar seu prato!',
       launchBonus: 'INICIAR O BÔNUS', bonusWord: 'BÔNUS', bonusUnlocked: 'BÔNUS DESBLOQUEADO', launchHint: 'Toque no botão ou pressione Espaço', chooseTitle: 'ESCOLHA SEU DESTINO', chooseHint: 'Toque numa carta: mesmo retorno esperado, risco diferente', chooseRtp: 'As três opções têm o mesmo RTP',
@@ -275,7 +275,7 @@
       scarabSub: 'Trzy skarabeusze spadają w ciemność. Każdy wypłaca pole, na którym wyląduje.', scarabIntro: 'UPADEK SKARABEUSZY',
       weighIntro: 'WAŻENIE SERCA', weighSub: 'Pióro Maat czy serce? Cięższa szala wygrywa swój mnożnik, lżejsza nic.', feather: 'PIÓRO', featherOf: 'MAAT', heart: 'SERCE', heartOf: 'TWOJEJ DUSZY', weighRoll: 'Mnożniki zostają ujawnione…', weighWon: 'WYGRANA', weighLost: 'PRZEGRANA', sayRight: 'Twoja szala jest cięższa: ×{m}!', sayWrong: 'Druga szala jest cięższa: brak wygranej', weighing: 'Bogowie ważą twoją duszę…',
       vaultIntro: 'SKARBIEC', vaultSub: 'Jedno dotknięcie otwiera skrzynię. Pieczęć zamyka komnatę (zachowujesz sumę); złoty klucz dodaje skrzynie do otwarcia.', pick: 'Dotknij skrzyni', vaultSeal: 'ZAPIECZĘTOWANO!', vaultKey: 'ZŁOTY KLUCZ  +{n} SKRZYNIE', vaultLeft: 'SKRZYNIE: {n}', vaultScepter: 'BERŁO ×2', vaultClear: 'KOMNATA OPRÓŻNIONA  +{p}×', total: 'RAZEM',
-      splashEnter: 'WEJDŹ', splashSub: 'Sąd czeka', splashDemo: 'Demo · pieniądze na niby · Graj odpowiedzialnie',
+      splashEnter: 'WEJDŹ', splashSub: 'Sąd czeka', splashDemo: 'Demo · pieniądze na niby · Graj odpowiedzialnie', curHint: 'Demo: 7 walut (USD, EUR, CAD, MXN, JPY, SC, GC); przeliczenie orientacyjne, bez rzeczywistych kursów.', demoBuild: 'Lokalne demo — to nie jest wersja produkcyjna Stake. Kwoty są fikcyjne.',
       steerHint: 'Dotknij lewej lub prawej strony, by kierować skarabeuszem', fateResists: 'LOS SIĘ OPIERA',
       pushHint: 'Stukaj szybko, by przechylić szalę!',
       launchBonus: 'URUCHOM BONUS', bonusWord: 'BONUS', bonusUnlocked: 'BONUS ODBLOKOWANY', launchHint: 'Dotknij przycisku lub naciśnij spację', chooseTitle: 'WYBIERZ SWÓJ LOS', chooseHint: 'Dotknij karty: ta sama wartość oczekiwana, inne ryzyko', chooseRtp: 'Wszystkie trzy wybory mają ten sam RTP',
@@ -326,7 +326,7 @@
       scarabSub: 'Üç scarab karanlığa dalıyor. Her biri düştüğü hücreyi öder.', scarabIntro: 'SCARAB DÜŞÜŞÜ',
       weighIntro: 'KALBİN TARTILMASI', weighSub: 'Maat’ın tüyü mü, kalp mi? Ağır kefe çarpanını kazanır, hafif kefe hiçbir şey.', feather: 'TÜY', featherOf: 'MAAT’IN', heart: 'KALP', heartOf: 'RUHUNUN', weighRoll: 'Çarpanlar ortaya çıkıyor…', weighWon: 'KAZANDI', weighLost: 'KAYBETTİ', sayRight: 'Kefen daha ağır: ×{m}!', sayWrong: 'Diğer kefe daha ağır: kazanç yok', weighing: 'Tanrılar ruhunu tartıyor…',
       vaultIntro: 'HAZİNE ODASI', vaultSub: 'Bir dokunuş bir sandık açar. Mühür odayı kapatır (toplamın kalır); altın anahtar açılacak sandık ekler.', pick: 'Bir sandığa dokun', vaultSeal: 'MÜHÜRLENDİ!', vaultKey: 'ALTIN ANAHTAR  +{n} SANDIK', vaultLeft: 'SANDIK: {n}', vaultScepter: 'ASA ×2', vaultClear: 'ODA BOŞALTILDI  +{p}×', total: 'TOPLAM',
-      splashEnter: 'GİR', splashSub: 'Yargı seni bekliyor', splashDemo: 'Demo · oyun parası · Sorumlu oyna',
+      splashEnter: 'GİR', splashSub: 'Yargı seni bekliyor', splashDemo: 'Demo · oyun parası · Sorumlu oyna', curHint: 'Demo: 7 para birimi (USD, EUR, CAD, MXN, JPY, SC, GC); dönüşüm yaklaşıktır, gerçek kur değildir.', demoBuild: 'Yerel demo — bu, Stake üretim sürümü değildir. Tutarlar kurgusaldır.',
       steerHint: 'Scarabı yönlendirmek için sola veya sağa dokun', fateResists: 'KADER DİRENİYOR',
       pushHint: 'Kefeni eğmek için hızlı dokun!',
       launchBonus: 'BONUSU BAŞLAT', bonusWord: 'BONUS', bonusUnlocked: 'BONUS AÇILDI', launchHint: 'Düğmeye dokun veya Boşluk tuşuna bas', chooseTitle: 'KADERİNİ SEÇ', chooseHint: 'Bir karta dokun: aynı beklenen getiri, farklı risk', chooseRtp: 'Üç seçeneğin RTP’si aynı',
@@ -377,7 +377,7 @@
       scarabSub: 'Tiga kumbang menukik ke dalam gelap. Masing-masing membayar kotak tempat ia mendarat.', scarabIntro: 'JATUHNYA KUMBANG',
       weighIntro: 'PENIMBANGAN HATI', weighSub: 'Bulu Maat atau hati? Piringan yang lebih berat memenangkan pengalinya, yang lebih ringan tidak mendapat apa-apa.', feather: 'BULU', featherOf: 'MAAT', heart: 'HATI', heartOf: 'JIWAMU', weighRoll: 'Pengali diungkap…', weighWon: 'MENANG', weighLost: 'KALAH', sayRight: 'Piringanmu lebih berat: ×{m}!', sayWrong: 'Piringan lain lebih berat: tidak menang', weighing: 'Para dewa menimbang jiwamu…',
       vaultIntro: 'RUANG HARTA', vaultSub: 'Satu ketukan membuka peti. Segel menutup ruangan (totalmu tetap); kunci emas menambah peti untuk dibuka.', pick: 'Ketuk sebuah peti', vaultSeal: 'TERSEGEL!', vaultKey: 'KUNCI EMAS  +{n} PETI', vaultLeft: 'PETI: {n}', vaultScepter: 'TONGKAT ×2', vaultClear: 'RUANG TERKOSONGKAN  +{p}×', total: 'TOTAL',
-      splashEnter: 'MASUK', splashSub: 'Penghakiman menantimu', splashDemo: 'Demo · uang mainan · Bermainlah dengan bijak',
+      splashEnter: 'MASUK', splashSub: 'Penghakiman menantimu', splashDemo: 'Demo · uang mainan · Bermainlah dengan bijak', curHint: 'Demo: 7 mata uang (USD, EUR, CAD, MXN, JPY, SC, GC); konversi hanya perkiraan, bukan kurs sebenarnya.', demoBuild: 'Demo lokal — ini bukan build produksi Stake. Jumlah yang ditampilkan bersifat fiktif.',
       steerHint: 'Ketuk kiri atau kanan untuk mengarahkan kumbang', fateResists: 'TAKDIR MELAWAN',
       pushHint: 'Ketuk cepat untuk memiringkan piringanmu!',
       launchBonus: 'MULAI BONUS', bonusWord: 'BONUS', bonusUnlocked: 'BONUS TERBUKA', launchHint: 'Ketuk tombol atau tekan Spasi', chooseTitle: 'PILIH TAKDIRMU', chooseHint: 'Ketuk kartu: imbal hasil yang sama, risiko berbeda', chooseRtp: 'Ketiga pilihan memiliki RTP yang sama',
@@ -428,7 +428,7 @@
       scarabSub: 'Ba con bọ hung lao xuống bóng tối. Mỗi con trả ô nó rơi vào.', scarabIntro: 'BỌ HUNG RƠI',
       weighIntro: 'CÂN TRÁI TIM', weighSub: 'Lông vũ Maat hay trái tim? Đĩa cân nặng hơn thắng hệ số của nó, đĩa nhẹ hơn không được gì.', feather: 'LÔNG VŨ', featherOf: 'CỦA MAAT', heart: 'TRÁI TIM', heartOf: 'CỦA BẠN', weighRoll: 'Các hệ số được hé lộ…', weighWon: 'THẮNG', weighLost: 'THUA', sayRight: 'Đĩa của bạn nặng hơn: ×{m}!', sayWrong: 'Đĩa kia nặng hơn: không thắng', weighing: 'Các vị thần đang cân linh hồn bạn…',
       vaultIntro: 'PHÒNG KHO BÁU', vaultSub: 'Một chạm mở một rương. Con dấu đóng căn phòng (bạn giữ tổng điểm); chìa khóa vàng thêm rương để mở.', pick: 'Chạm vào một rương', vaultSeal: 'ĐÃ NIÊM PHONG!', vaultKey: 'CHÌA KHÓA VÀNG  +{n} RƯƠNG', vaultLeft: 'RƯƠNG: {n}', vaultScepter: 'TRƯỢNG ×2', vaultClear: 'ĐÃ DỌN SẠCH PHÒNG  +{p}×', total: 'TỔNG',
-      splashEnter: 'VÀO', splashSub: 'Phán xét đang chờ', splashDemo: 'Bản demo · tiền ảo · Hãy chơi có trách nhiệm',
+      splashEnter: 'VÀO', splashSub: 'Phán xét đang chờ', splashDemo: 'Bản demo · tiền ảo · Hãy chơi có trách nhiệm', curHint: 'Bản demo: 7 loại tiền tệ (USD, EUR, CAD, MXN, JPY, SC, GC); quy đổi chỉ mang tính tham khảo, không phải tỷ giá thật.', demoBuild: 'Demo cục bộ — đây không phải bản chính thức của Stake. Các số hiển thị là giả định.',
       steerHint: 'Chạm trái hoặc phải để điều khiển bọ hung', fateResists: 'SỐ PHẬN CHỐNG CỰ',
       pushHint: 'Chạm nhanh để nghiêng đĩa cân của bạn!',
       launchBonus: 'BẮT ĐẦU BONUS', bonusWord: 'BONUS', bonusUnlocked: 'ĐÃ MỞ KHÓA BONUS', launchHint: 'Chạm nút hoặc nhấn Phím cách', chooseTitle: 'CHỌN SỐ PHẬN', chooseHint: 'Chạm một lá bài: cùng kỳ vọng, rủi ro khác nhau', chooseRtp: 'Cả ba lựa chọn có cùng RTP',
@@ -479,7 +479,7 @@
       scarabSub: 'Kolme skarabeusta syöksyy pimeyteen. Kukin maksaa ruudun, johon se putoaa.', scarabIntro: 'SKARABEUSTEN PUDOTUS',
       weighIntro: 'SYDÄMEN PUNNITUS', weighSub: 'Maatin sulka vai sydän? Painavampi vaakakuppi voittaa kertoimensa, kevyempi ei mitään.', feather: 'SULKA', featherOf: 'MAATIN', heart: 'SYDÄN', heartOf: 'SIELUSI', weighRoll: 'Kertoimet paljastuvat…', weighWon: 'VOITTO', weighLost: 'HÄVIÖ', sayRight: 'Vaakakuppisi on painavampi: ×{m}!', sayWrong: 'Toinen kuppi on painavampi: ei voittoa', weighing: 'Jumalat punnitsevat sielusi…',
       vaultIntro: 'AARREKAMMIO', vaultSub: 'Yksi napautus avaa arkun. Sinetti sulkee kammion (pidät kertyneen summan); kultainen avain lisää avattavia arkkuja.', pick: 'Napauta arkkua', vaultSeal: 'SINETÖITY!', vaultKey: 'KULTAINEN AVAIN  +{n} ARKKUA', vaultLeft: 'ARKUT: {n}', vaultScepter: 'SEPPELE ×2', vaultClear: 'KAMMIO TYHJENNETTY  +{p}×', total: 'YHTEENSÄ',
-      splashEnter: 'ASTU SISÄÄN', splashSub: 'Tuomio odottaa', splashDemo: 'Demo · leikkiraha · Pelaa vastuullisesti',
+      splashEnter: 'ASTU SISÄÄN', splashSub: 'Tuomio odottaa', splashDemo: 'Demo · leikkiraha · Pelaa vastuullisesti', curHint: 'Demo: 7 valuuttaa (USD, EUR, CAD, MXN, JPY, SC, GC); muunnos on suuntaa-antava, ei oikeita kursseja.', demoBuild: 'Paikallinen demo — tämä ei ole Staken tuotantoversio. Summat ovat kuvitteellisia.',
       steerHint: 'Napauta vasemmalle tai oikealle ohjataksesi skarabea', fateResists: 'KOHTALO VASTUSTAA',
       pushHint: 'Napauta nopeasti kallistaaksesi vaakakuppiasi!',
       launchBonus: 'KÄYNNISTÄ BONUS', bonusWord: 'BONUS', bonusUnlocked: 'BONUS AVATTU', launchHint: 'Napauta painiketta tai paina välilyöntiä', chooseTitle: 'VALITSE KOHTALOSI', chooseHint: 'Napauta korttia: sama odotusarvo, eri riski', chooseRtp: 'Kaikilla kolmella valinnalla on sama RTP',
@@ -530,7 +530,7 @@
       scarabSub: 'Три скарабея падают во тьму. Каждый приносит выплату клетки, в которую упал.', scarabIntro: 'ПАДЕНИЕ СКАРАБЕЕВ',
       weighIntro: 'ВЗВЕШИВАНИЕ СЕРДЦА', weighSub: 'Перо Маат или сердце? Тяжёлая чаша выигрывает свой множитель, лёгкая — ничего.', feather: 'ПЕРО', featherOf: 'МААТ', heart: 'СЕРДЦЕ', heartOf: 'ВАШЕЙ ДУШИ', weighRoll: 'Множители раскрываются…', weighWon: 'ВЫИГРЫШ', weighLost: 'ПРОИГРЫШ', sayRight: 'Ваша чаша тяжелее: ×{m}!', sayWrong: 'Другая чаша тяжелее: без выигрыша', weighing: 'Боги взвешивают вашу душу…',
       vaultIntro: 'СОКРОВИЩНИЦА', vaultSub: 'Одно касание открывает сундук. Печать запирает камеру (накопленная сумма остаётся); золотой ключ добавляет сундуки.', pick: 'Коснитесь сундука', vaultSeal: 'ЗАПЕЧАТАНО!', vaultKey: 'ЗОЛОТОЙ КЛЮЧ  +{n} СУНДУКА', vaultLeft: 'СУНДУКИ: {n}', vaultScepter: 'СКИПЕТР ×2', vaultClear: 'КАМЕРА ОЧИЩЕНА  +{p}×', total: 'ИТОГО',
-      splashEnter: 'ВОЙТИ', splashSub: 'Суд ожидает', splashDemo: 'Демо · игровые деньги · Играйте ответственно',
+      splashEnter: 'ВОЙТИ', splashSub: 'Суд ожидает', splashDemo: 'Демо · игровые деньги · Играйте ответственно', curHint: 'Демо: 7 валют (USD, EUR, CAD, MXN, JPY, SC, GC); пересчёт ориентировочный, не по реальному курсу.', demoBuild: 'Локальное демо — это не рабочая версия Stake. Суммы условные.',
       steerHint: 'Коснитесь слева или справа, чтобы направить скарабея', fateResists: 'СУДЬБА СОПРОТИВЛЯЕТСЯ',
       pushHint: 'Быстро нажимайте, чтобы склонить свою чашу!',
       launchBonus: 'ЗАПУСТИТЬ БОНУС', bonusWord: 'БОНУС', bonusUnlocked: 'БОНУС ОТКРЫТ', launchHint: 'Коснитесь кнопки или нажмите пробел', chooseTitle: 'ВЫБЕРИТЕ СУДЬБУ', chooseHint: 'Коснитесь карты: то же ожидание, другой риск', chooseRtp: 'У всех трёх вариантов одинаковый RTP',
@@ -581,7 +581,7 @@
       scarabSub: 'ثلاثة جعارين تهوي في الظلام. كل واحد يدفع قيمة الخانة التي يسقط فيها.', scarabIntro: 'سقوط الجعارين',
       weighIntro: 'وزن القلب', weighSub: 'ريشة ماعت أم القلب؟ الكفة الأثقل تربح مضاعفها والأخف لا تربح شيئاً.', feather: 'الريشة', featherOf: 'ماعت', heart: 'القلب', heartOf: 'روحك', weighRoll: 'تُكشف المضاعفات…', weighWon: 'ربحت', weighLost: 'خسرت', sayRight: 'كفتك هي الأثقل: ×{m}!', sayWrong: 'الكفة الأخرى أثقل: لا ربح', weighing: 'الآلهة تزن روحك…',
       vaultIntro: 'غرفة الكنز', vaultSub: 'لمسة واحدة تفتح صندوقاً. الختم يغلق الغرفة (تحتفظ بمجموعك)، والمفتاح الذهبي يضيف صناديق للفتح.', pick: 'المس صندوقاً', vaultSeal: 'مختوم!', vaultKey: 'مفتاح ذهبي  +{n} صناديق', vaultLeft: 'الصناديق: {n}', vaultScepter: 'صولجان ×2', vaultClear: 'تم إفراغ الغرفة  +{p}×', total: 'المجموع',
-      splashEnter: 'ادخل', splashSub: 'الحكم ينتظرك', splashDemo: 'عرض تجريبي · نقود وهمية · العب بمسؤولية',
+      splashEnter: 'ادخل', splashSub: 'الحكم ينتظرك', splashDemo: 'عرض تجريبي · نقود وهمية · العب بمسؤولية', curHint: 'عرض تجريبي: 7 عملات (USD, EUR, CAD, MXN, JPY, SC, GC)؛ التحويل تقريبي وليس بأسعار صرف حقيقية.', demoBuild: 'عرض محلي تجريبي — هذه ليست نسخة الإنتاج الخاصة بـ Stake. المبالغ وهمية.',
       steerHint: 'المس اليسار أو اليمين لتوجيه الجعران', fateResists: 'القدر يقاوم',
       pushHint: 'المس بسرعة لإمالة كفتك!',
       launchBonus: 'ابدأ البونص', bonusWord: 'بونص', bonusUnlocked: 'تم فتح البونص', launchHint: 'المس الزر أو اضغط المسافة', chooseTitle: 'اختر قدرك', chooseHint: 'المس بطاقة: نفس العائد المتوقع، مخاطرة مختلفة', chooseRtp: 'الخيارات الثلاثة لها نفس RTP',
@@ -632,7 +632,7 @@
       scarabSub: 'तीन स्कारब अंधकार में गिरते हैं। हर एक उसी खाने का भुगतान करता है जहाँ वह गिरता है।', scarabIntro: 'स्कारब पतन',
       weighIntro: 'हृदय का तौल', weighSub: 'माआत का पंख या हृदय? भारी पलड़ा अपना गुणक जीतता है, हल्के को कुछ नहीं मिलता।', feather: 'पंख', featherOf: 'माआत का', heart: 'हृदय', heartOf: 'आपकी आत्मा का', weighRoll: 'गुणक प्रकट हो रहे हैं…', weighWon: 'जीत', weighLost: 'हार', sayRight: 'आपका पलड़ा भारी है: ×{m}!', sayWrong: 'दूसरा पलड़ा भारी है: कोई जीत नहीं', weighing: 'देवता आपकी आत्मा तौल रहे हैं…',
       vaultIntro: 'ख़ज़ाना कक्ष', vaultSub: 'एक टैप से संदूक खुलता है। मुहर कक्ष बंद कर देती है (आपका कुल बना रहता है); सुनहरी चाबी खोलने के लिए और संदूक जोड़ती है।', pick: 'एक संदूक को टैप करें', vaultSeal: 'मुहरबंद!', vaultKey: 'सुनहरी चाबी  +{n} संदूक', vaultLeft: 'संदूक: {n}', vaultScepter: 'राजदंड ×2', vaultClear: 'कक्ष खाली  +{p}×', total: 'कुल',
-      splashEnter: 'प्रवेश', splashSub: 'न्याय प्रतीक्षा कर रहा है', splashDemo: 'डेमो · नकली पैसे · ज़िम्मेदारी से खेलें',
+      splashEnter: 'प्रवेश', splashSub: 'न्याय प्रतीक्षा कर रहा है', splashDemo: 'डेमो · नकली पैसे · ज़िम्मेदारी से खेलें', curHint: 'डेमो: 7 मुद्राएँ (USD, EUR, CAD, MXN, JPY, SC, GC); रूपांतरण केवल सांकेतिक है, असली विनिमय दर नहीं।', demoBuild: 'स्थानीय डेमो — यह Stake का प्रोडक्शन बिल्ड नहीं है। राशियाँ काल्पनिक हैं।',
       steerHint: 'स्कारब को मोड़ने के लिए बाएँ या दाएँ टैप करें', fateResists: 'भाग्य प्रतिरोध करता है',
       pushHint: 'अपना पलड़ा झुकाने के लिए तेज़ी से टैप करें!',
       launchBonus: 'बोनस शुरू करें', bonusWord: 'बोनस', bonusUnlocked: 'बोनस अनलॉक', launchHint: 'बटन टैप करें या स्पेस दबाएँ', chooseTitle: 'अपनी नियति चुनें', chooseHint: 'एक कार्ड टैप करें: समान अपेक्षित रिटर्न, अलग जोखिम', chooseRtp: 'तीनों विकल्पों का RTP समान है',
@@ -683,7 +683,7 @@
       scarabSub: '3匹のスカラベが闇へ落ちる。それぞれ落ちたマスの配当を得る。', scarabIntro: 'スカラベの落下',
       weighIntro: '心臓の秤', weighSub: 'マアトの羽根か心臓か? 重い皿がその倍率を獲得し、軽い皿は何も得られない。', feather: '羽根', featherOf: 'マアトの', heart: '心臓', heartOf: 'あなたの魂の', weighRoll: '倍率が明らかになる…', weighWon: '勝ち', weighLost: '負け', sayRight: 'あなたの皿が重い: ×{m}!', sayWrong: 'もう一方の皿が重い: 配当なし', weighing: '神々があなたの魂を量っている…',
       vaultIntro: '財宝の間', vaultSub: 'タップで宝箱が開く。封印で部屋が閉じる(合計は保持)。金の鍵は開ける宝箱を増やす。', pick: '宝箱をタップ', vaultSeal: '封印!', vaultKey: '金の鍵  +{n} 宝箱', vaultLeft: '宝箱: {n}', vaultScepter: '王笏 ×2', vaultClear: '部屋を制覇  +{p}×', total: '合計',
-      splashEnter: '入場', splashSub: '審判が待っている', splashDemo: 'デモ · 架空のお金 · 遊びすぎにご注意',
+      splashEnter: '入場', splashSub: '審判が待っている', splashDemo: 'デモ · 架空のお金 · 遊びすぎにご注意', curHint: 'デモ：7通貨（USD、EUR、CAD、MXN、JPY、SC、GC）。換算は目安であり、実際のレートではありません。', demoBuild: 'ローカルデモ — これはStakeの本番ビルドではありません。金額は架空です。',
       steerHint: '左右をタップしてスカラベを操作', fateResists: '運命が抗う',
       pushHint: '素早くタップして皿を傾けよう!',
       launchBonus: 'ボーナス開始', bonusWord: 'ボーナス', bonusUnlocked: 'ボーナス解放', launchHint: 'ボタンをタップするかスペースキーを押す', chooseTitle: '運命を選べ', chooseHint: 'カードをタップ: 期待値は同じ、リスクが違う', chooseRtp: '3つの選択肢はすべて同じRTP',
@@ -734,7 +734,7 @@
       scarabSub: '스카라베 세 마리가 어둠 속으로 떨어집니다. 각각 떨어진 칸의 배당을 줍니다.', scarabIntro: '스카라베 낙하',
       weighIntro: '심장의 저울', weighSub: '마아트의 깃털일까, 심장일까? 더 무거운 접시가 배수를 얻고, 가벼운 접시는 아무것도 얻지 못합니다.', feather: '깃털', featherOf: '마아트의', heart: '심장', heartOf: '당신의 영혼의', weighRoll: '배수가 공개됩니다…', weighWon: '승리', weighLost: '패배', sayRight: '당신의 접시가 더 무겁습니다: ×{m}!', sayWrong: '반대쪽 접시가 더 무겁습니다: 당첨 없음', weighing: '신들이 당신의 영혼을 달고 있습니다…',
       vaultIntro: '보물의 방', vaultSub: '한 번 탭하면 상자가 열립니다. 봉인은 방을 닫습니다(합계는 유지). 금 열쇠는 열 수 있는 상자를 늘립니다.', pick: '상자를 탭하세요', vaultSeal: '봉인!', vaultKey: '금 열쇠  +{n} 상자', vaultLeft: '상자: {n}', vaultScepter: '홀 ×2', vaultClear: '방 클리어  +{p}×', total: '합계',
-      splashEnter: '입장', splashSub: '심판이 기다립니다', splashDemo: '데모 · 가상 머니 · 책임감 있게 즐기세요',
+      splashEnter: '입장', splashSub: '심판이 기다립니다', splashDemo: '데모 · 가상 머니 · 책임감 있게 즐기세요', curHint: '데모: 통화 7종(USD, EUR, CAD, MXN, JPY, SC, GC). 환산은 참고용이며 실제 환율이 아닙니다.', demoBuild: '로컬 데모입니다. Stake 프로덕션 빌드가 아닙니다. 금액은 가상입니다.',
       steerHint: '좌우를 탭해 스카라베를 조종하세요', fateResists: '운명이 저항합니다',
       pushHint: '빠르게 탭해 접시를 기울이세요!',
       launchBonus: '보너스 시작', bonusWord: '보너스', bonusUnlocked: '보너스 해금', launchHint: '버튼을 탭하거나 스페이스를 누르세요', chooseTitle: '운명을 선택하세요', chooseHint: '카드를 탭하세요: 기대 수익은 같고 위험이 다릅니다', chooseRtp: '세 가지 선택 모두 RTP가 같습니다',
@@ -785,7 +785,7 @@
       scarabSub: '三只圣甲虫坠入黑暗。每只赢取其落入格子的奖金。', scarabIntro: '圣甲虫坠落',
       weighIntro: '心脏称重', weighSub: '玛特之羽还是心脏? 较重的秤盘赢得其倍数，较轻的一无所获。', feather: '羽毛', featherOf: '玛特之', heart: '心脏', heartOf: '你的灵魂', weighRoll: '倍数揭晓中…', weighWon: '获胜', weighLost: '落败', sayRight: '你的秤盘更重: ×{m}!', sayWrong: '另一边更重: 无奖金', weighing: '众神正在称量你的灵魂…',
       vaultIntro: '宝藏密室', vaultSub: '轻触即可开箱。封印会关闭密室(已得总额保留);金钥匙可增加可开的宝箱。', pick: '点击一个宝箱', vaultSeal: '封印!', vaultKey: '金钥匙  +{n} 宝箱', vaultLeft: '宝箱: {n}', vaultScepter: '权杖 ×2', vaultClear: '密室通关  +{p}×', total: '总计',
-      splashEnter: '进入', splashSub: '审判正等待着你', splashDemo: '演示 · 虚拟货币 · 请理性游戏',
+      splashEnter: '进入', splashSub: '审判正等待着你', splashDemo: '演示 · 虚拟货币 · 请理性游戏', curHint: '演示：7 种货币（USD、EUR、CAD、MXN、JPY、SC、GC）；换算仅供参考，并非真实汇率。', demoBuild: '本地演示版 — 这不是 Stake 的正式生产版本。金额均为虚拟。',
       steerHint: '点击左侧或右侧来操控圣甲虫', fateResists: '命运在抗拒',
       pushHint: '快速点击，压低你的秤盘!',
       launchBonus: '开始奖励', bonusWord: '奖励', bonusUnlocked: '奖励已解锁', launchHint: '点击按钮或按空格键', chooseTitle: '选择你的命运', chooseHint: '点击一张卡: 期望回报相同，风险不同', chooseRtp: '三个选项的 RTP 相同',
@@ -1012,6 +1012,7 @@
   var RGS_TXT = {
     fr: {
       connecting: 'Connexion au serveur de jeu…', retry: 'Réessayer', confirm: 'Confirmer', cancel: 'Annuler',
+      errLaunch: 'Lancez le jeu depuis Stake. Une session de jeu est nécessaire.',
       errUrl: 'Connexion impossible : l\'adresse du serveur de jeu (rgs_url) ou la session est absente ou invalide. Relancez le jeu depuis le site.',
       errAuth: 'Connexion au serveur de jeu impossible. Vérifiez votre connexion puis relancez le jeu.',
       errVal: 'Requête refusée : session expirée ou mise invalide. Relancez le jeu depuis le site.',
@@ -1033,6 +1034,7 @@
     },
     en: {
       connecting: 'Connecting to the game server…', retry: 'Retry', confirm: 'Confirm', cancel: 'Cancel',
+      errLaunch: 'Launch the game from Stake. A game session is required.',
       errUrl: 'Cannot connect: the game server address (rgs_url) or the session is missing or invalid. Please relaunch the game from the site.',
       errAuth: 'Cannot reach the game server. Check your connection and relaunch the game.',
       errVal: 'Request refused: the session has expired or the bet is invalid. Please relaunch the game from the site.',
@@ -1133,7 +1135,7 @@
       buyBtn: 'GET A BONUS', buyTitle: 'GET A BONUS', buySub: 'Open a bonus directly, skipping the wheel. A bonus can be played for the play amount × its multiplier. Anubis\' Fury can still seize it.',
       buyPrice: 'PLAY FOR', buyNow: 'GET', buyOn: 'Bonus access', buyNoFunds: 'Not enough balance for this bonus',
       resumed: 'Interrupted round: winnings added', scarabSub: 'Three scarabs plunge through the dark. Each wins the slot it lands in.',
-      splashDemo: 'Demo · play coins · Play responsibly', infoTitle: 'Rules & Win table', demo: 'Play coins — demo, the amounts shown are not real.',
+      splashDemo: 'Demo · play coins · Play responsibly', curHint: 'Demo: 2 tokens (SC, GC) — indicative amounts only.', demoBuild: 'Local demo — not the production build. Amounts are fictitious.', infoTitle: 'Rules & Win table', demo: 'Play coins — demo, the amounts shown are not real.',
       tableCols: { 2: 'Wins' }, currencyL: 'Token', handWrongSub: 'The chain stops: current tier collected',
       rules: {
         0: 'One play, one spin: the wheel of judgement decides. Each segment wins its value × your play amount.',
@@ -1156,6 +1158,7 @@
       },
       $replay: { bet: 'PLAY AMOUNT', realCost: 'REAL PLAY VALUE', costMult: 'Play value' },
       $rgs: {
+        errLaunch: 'Launch the game from the site. A game session is required.',
         errVal: 'Request refused: the session has expired or the play is invalid. Please relaunch the game from the site.',
         errIpb: 'Insufficient balance for this play.', errGle: 'Limit reached: this play is refused.',
         errNet: 'Network unavailable or invalid response. Your play may not have been taken into account: check your balance.',
@@ -1168,7 +1171,7 @@
       buyBtn: 'OBTENIR UN BONUS', buyTitle: 'OBTENIR UN BONUS', buySub: 'Ouvrez directement un bonus, sans passer par la roue. Jouable pour : montant de jeu × multiplicateur. La Fureur d\'Anubis peut toujours le saisir.',
       buyPrice: 'JOUABLE POUR', buyNow: 'OBTENIR', buyOn: 'Accès aux bonus', buyNoFunds: 'Solde insuffisant pour ce bonus',
       resumed: 'Tour interrompu : gain ajouté',
-      splashDemo: 'Démo · pièces fictives · Jouez avec modération', demo: 'Pièces fictives — démo : les montants affichés ne sont pas réels.',
+      splashDemo: 'Démo · pièces fictives · Jouez avec modération', curHint: 'Démo : 2 jetons (SC, GC) — montants indicatifs seulement.', demoBuild: 'Démo locale — pas la version de production. Les montants sont fictifs.', demo: 'Pièces fictives — démo : les montants affichés ne sont pas réels.',
       infoTitle: 'Règles & table des gains', currencyL: 'Jeton', handWrongSub: 'La chaîne s\'arrête : palier ramassé',
       rules: {
         0: 'Un jeu, un tour : la roue du jugement décide. Chaque case donne sa valeur × votre montant de jeu.',
@@ -1190,6 +1193,7 @@
       },
       $replay: { bet: 'MONTANT JOUÉ', realCost: 'VALEUR DE JEU RÉELLE', costMult: 'Valeur de jeu' },
       $rgs: {
+        errLaunch: 'Lancez le jeu depuis le site. Une session de jeu est nécessaire.',
         errVal: 'Requête refusée : session expirée ou jeu invalide. Relancez le jeu depuis le site.', errIpb: 'Solde insuffisant pour cette partie.',
         errGle: 'Limite de jeu atteinte : cette partie est refusée.',
         errNet: 'Réseau indisponible ou réponse invalide. Votre partie n\'a peut-être pas été prise en compte : vérifiez votre solde.',
@@ -1222,6 +1226,7 @@
   };
   X.rgs.ar = {
     connecting: 'جارٍ الاتصال بخادم اللعبة…', retry: 'إعادة المحاولة', confirm: 'تأكيد', cancel: 'إلغاء',
+    errLaunch: 'شغّل اللعبة من Stake. مطلوب وجود جلسة لعب.',
     errUrl: 'تعذّر الاتصال: عنوان خادم اللعبة (rgs_url) أو الجلسة مفقود أو غير صالح. يرجى إعادة تشغيل اللعبة من الموقع.',
     errAuth: 'تعذّر الوصول إلى خادم اللعبة. تحقق من اتصالك ثم أعد تشغيل اللعبة.',
     errVal: 'تم رفض الطلب: انتهت الجلسة أو أن الرهان غير صالح. يرجى إعادة تشغيل اللعبة من الموقع.',
@@ -1293,7 +1298,7 @@
     buyBtn: 'احصل على بونص', buyTitle: 'احصل على بونص', buySub: 'افتح بونصاً مباشرة دون العجلة. قابل للعب بقيمة: مبلغ اللعب × المضاعف. يمكن لغضب أنوبيس أن يستولي عليه.',
     buyPrice: 'قيمة اللعب', buyNow: 'احصل', buyOn: 'الوصول إلى البونص', resumed: 'جولة متوقفة: تمت إضافة الربح',
     scarabSub: 'ثلاثة جعارين تهوي في الظلام. كل واحد يربح قيمة الخانة التي يسقط فيها.',
-    splashDemo: 'عرض تجريبي · قطع اللعب · العب بمسؤولية', infoTitle: 'القواعد وجدول الأرباح', demo: 'قطع اللعب — نسخة تجريبية، المبالغ المعروضة ليست حقيقية.',
+    splashDemo: 'عرض تجريبي · قطع اللعب · العب بمسؤولية', curHint: 'عرض تجريبي: رمزان (SC, GC)؛ المبالغ تقريبية فقط.', demoBuild: 'عرض محلي تجريبي — ليست نسخة الإنتاج. المبالغ وهمية.', infoTitle: 'القواعد وجدول الأرباح', demo: 'قطع اللعب — نسخة تجريبية، المبالغ المعروضة ليست حقيقية.',
     tableCols: { 2: 'الربح' }, currencyL: 'توكن', handWrongSub: 'تنتهي السلسلة: يُجمع المستوى الحالي',
     rules: {
       0: 'لعبة واحدة، لفة واحدة: عجلة الحكم تقرر. كل خانة تربح قيمتها × مبلغ لعبك.',
@@ -1313,6 +1318,7 @@
     },
     $replay: { bet: 'مبلغ اللعب', realCost: 'قيمة اللعب الفعلية', costMult: 'قيمة اللعب' },
     $rgs: {
+        errLaunch: 'شغّل اللعبة من الموقع. مطلوب وجود جلسة لعب.',
       errVal: 'تم رفض الطلب: انتهت الجلسة أو أن اللعبة غير صالحة. يرجى إعادة تشغيل اللعبة من الموقع.',
       errIpb: 'الرصيد غير كافٍ لهذه اللعبة.', errGle: 'تم بلوغ الحد: رُفضت هذه اللعبة.',
       errNet: 'الشبكة غير متاحة أو الاستجابة غير صالحة. ربما لم تُحتسب لعبتك: تحقق من رصيدك.',
@@ -1333,6 +1339,7 @@
   };
   X.rgs.de = {
     connecting: 'Verbindung zum Spielserver…', retry: 'Erneut versuchen', confirm: 'Bestätigen', cancel: 'Abbrechen',
+    errLaunch: 'Starte das Spiel über Stake. Eine Spielsitzung ist erforderlich.',
     errUrl: 'Verbindung nicht möglich: Die Adresse des Spielservers (rgs_url) oder die Sitzung fehlt oder ist ungültig. Bitte starte das Spiel erneut über die Website.',
     errAuth: 'Der Spielserver ist nicht erreichbar. Prüfe deine Verbindung und starte das Spiel neu.',
     errVal: 'Anfrage abgelehnt: Die Sitzung ist abgelaufen oder der Einsatz ist ungültig. Bitte starte das Spiel erneut über die Website.',
@@ -1404,7 +1411,7 @@
     buyBtn: 'BONUS HOLEN', buyTitle: 'BONUS HOLEN', buySub: 'Öffne direkt einen Bonus, ohne das Rad. Spielbar für: Spielbetrag × Multiplikator. Die Wut des Anubis kann ihn trotzdem ergreifen.',
     buyPrice: 'SPIELBAR FÜR', buyNow: 'HOLEN', buyOn: 'Bonuszugang', resumed: 'Unterbrochene Runde: Gewinn hinzugefügt',
     scarabSub: 'Drei Skarabäen stürzen durch die Dunkelheit. Jeder gewinnt das Feld, in dem er landet.',
-    splashDemo: 'Demo · Spielmünzen · Spiele verantwortungsvoll', infoTitle: 'Regeln & Gewinntabelle', demo: 'Spielmünzen — Demo, die angezeigten Beträge sind nicht echt.',
+    splashDemo: 'Demo · Spielmünzen · Spiele verantwortungsvoll', curHint: 'Demo: 2 Token (SC, GC) – Beträge nur zur Orientierung.', demoBuild: 'Lokale Demo – nicht die Produktionsversion. Die Beträge sind fiktiv.', infoTitle: 'Regeln & Gewinntabelle', demo: 'Spielmünzen — Demo, die angezeigten Beträge sind nicht echt.',
     tableCols: { 2: 'Gewinn' }, currencyL: 'Token', handWrongSub: 'Die Kette endet: aktuelle Stufe eingesammelt',
     rules: {
       0: 'Ein Spiel, eine Drehung: Das Rad des Gerichts entscheidet. Jedes Feld gewinnt seinen Wert × deinen Spielbetrag.',
@@ -1425,6 +1432,7 @@
     },
     $replay: { bet: 'SPIELBETRAG', realCost: 'TATSÄCHLICHER SPIELWERT', costMult: 'Spielwert' },
     $rgs: {
+        errLaunch: 'Starte das Spiel über die Seite. Eine Spielsitzung ist erforderlich.',
       errVal: 'Anfrage abgelehnt: Die Sitzung ist abgelaufen oder die Runde ist ungültig. Bitte starte das Spiel erneut über die Website.',
       errIpb: 'Guthaben für diese Runde nicht ausreichend.', errGle: 'Limit erreicht: Diese Runde wird abgelehnt.',
       errNet: 'Netzwerk nicht verfügbar oder ungültige Antwort. Deine Runde wurde möglicherweise nicht berücksichtigt: Prüfe dein Guthaben.',
@@ -1445,6 +1453,7 @@
   };
   X.rgs.es = {
     connecting: 'Conectando con el servidor de juego…', retry: 'Reintentar', confirm: 'Confirmar', cancel: 'Cancelar',
+    errLaunch: 'Inicia el juego desde Stake. Se necesita una sesión de juego.',
     errUrl: 'No se puede conectar: la dirección del servidor de juego (rgs_url) o la sesión falta o no es válida. Vuelve a iniciar el juego desde el sitio.',
     errAuth: 'No se puede acceder al servidor de juego. Comprueba tu conexión y vuelve a iniciar el juego.',
     errVal: 'Solicitud rechazada: la sesión ha caducado o la apuesta no es válida. Vuelve a iniciar el juego desde el sitio.',
@@ -1516,7 +1525,7 @@
     buyBtn: 'OBTENER BONUS', buyTitle: 'OBTENER BONUS', buySub: 'Abre un bonus directamente, sin pasar por la rueda. Jugable por: importe de juego × multiplicador. La Furia de Anubis aún puede tomarlo.',
     buyPrice: 'JUGABLE POR', buyNow: 'OBTENER', buyOn: 'Acceso a bonus', resumed: 'Ronda interrumpida: premio añadido',
     scarabSub: 'Tres escarabajos caen en la oscuridad. Cada uno gana la casilla donde aterriza.',
-    splashDemo: 'Demo · monedas de juego · Juega con moderación', infoTitle: 'Reglas y tabla de premios', demo: 'Monedas de juego — demo, los importes mostrados no son reales.',
+    splashDemo: 'Demo · monedas de juego · Juega con moderación', curHint: 'Demo: 2 fichas (SC, GC); importes solo orientativos.', demoBuild: 'Demo local: no es la versión de producción. Los importes son ficticios.', infoTitle: 'Reglas y tabla de premios', demo: 'Monedas de juego — demo, los importes mostrados no son reales.',
     tableCols: { 2: 'Premio' }, currencyL: 'Ficha', handWrongSub: 'La cadena se detiene: se recoge el nivel actual',
     rules: {
       0: 'Un juego, un giro: la rueda del juicio decide. Cada casilla gana su valor × tu importe de juego.',
@@ -1536,6 +1545,7 @@
     },
     $replay: { bet: 'IMPORTE DE JUEGO', realCost: 'VALOR DE JUEGO REAL', costMult: 'Valor de juego' },
     $rgs: {
+        errLaunch: 'Inicia el juego desde el sitio. Se necesita una sesión de juego.',
       errVal: 'Solicitud rechazada: la sesión ha caducado o la jugada no es válida. Vuelve a iniciar el juego desde el sitio.',
       errIpb: 'Saldo insuficiente para esta jugada.', errGle: 'Límite alcanzado: esta jugada se rechaza.',
       errNet: 'Red no disponible o respuesta no válida. Es posible que tu jugada no se haya tenido en cuenta: comprueba tu saldo.',
@@ -1556,6 +1566,7 @@
   };
   X.rgs.fi = {
     connecting: 'Yhdistetään pelipalvelimeen…', retry: 'Yritä uudelleen', confirm: 'Vahvista', cancel: 'Peruuta',
+    errLaunch: 'Käynnistä peli Stakesta. Pelisessio vaaditaan.',
     errUrl: 'Yhteys ei onnistu: pelipalvelimen osoite (rgs_url) tai istunto puuttuu tai on virheellinen. Käynnistä peli uudelleen sivustolta.',
     errAuth: 'Pelipalvelimeen ei saada yhteyttä. Tarkista yhteytesi ja käynnistä peli uudelleen.',
     errVal: 'Pyyntö hylättiin: istunto on vanhentunut tai panos on virheellinen. Käynnistä peli uudelleen sivustolta.',
@@ -1627,7 +1638,7 @@
     buyBtn: 'AVAA BONUS', buyTitle: 'AVAA BONUS', buySub: 'Avaa bonus suoraan ohittaen rata. Pelattavissa arvolla: pelisumma × kerroin. Anubiksen raivo voi silti ottaa sen haltuunsa.',
     buyPrice: 'PELIARVO', buyNow: 'AVAA', buyOn: 'Suora bonuspääsy', resumed: 'Keskeytynyt kierros: voitto lisätty',
     scarabSub: 'Kolme skarabeusta syöksyy pimeyteen. Kukin voittaa ruudun, johon se putoaa.',
-    splashDemo: 'Demo · pelikolikot · Pelaa vastuullisesti', infoTitle: 'Säännöt & voittotaulukko', demo: 'Pelikolikot — demo, näytetyt summat eivät ole oikeita.',
+    splashDemo: 'Demo · pelikolikot · Pelaa vastuullisesti', curHint: 'Demo: 2 polettia (SC, GC); summat ovat vain suuntaa-antavia.', demoBuild: 'Paikallinen demo — ei ole tuotantoversio. Summat ovat kuvitteellisia.', infoTitle: 'Säännöt & voittotaulukko', demo: 'Pelikolikot — demo, näytetyt summat eivät ole oikeita.',
     tableCols: { 2: 'Voitto' }, currencyL: 'Poletti',
     rules: {
       0: 'Yksi peli, yksi pyöräytys: tuomion ratas ratkaisee. Jokainen ruutu antaa arvonsa × pelisummasi.',
@@ -1646,6 +1657,7 @@
     },
     $replay: { bet: 'PELISUMMA', realCost: 'TODELLINEN PELIARVO', costMult: 'Peliarvo' },
     $rgs: {
+        errLaunch: 'Käynnistä peli sivustolta. Pelisessio vaaditaan.',
       errVal: 'Pyyntö hylättiin: istunto on vanhentunut tai peli on virheellinen. Käynnistä peli uudelleen sivustolta.',
       errIpb: 'Saldo ei riitä tähän peliin.', errGle: 'Raja täyttyi: tämä peli hylätään.',
       errNet: 'Verkko ei ole käytettävissä tai vastaus on virheellinen. Peliäsi ei ehkä ole otettu huomioon: tarkista saldosi.',
@@ -1665,6 +1677,7 @@
   };
   X.rgs.hi = {
     connecting: 'गेम सर्वर से जुड़ रहे हैं…', retry: 'फिर कोशिश करें', confirm: 'पुष्टि करें', cancel: 'रद्द करें',
+    errLaunch: 'गेम को Stake से लॉन्च करें। गेम सत्र आवश्यक है।',
     errUrl: 'कनेक्ट नहीं हो सका: गेम सर्वर का पता (rgs_url) या सत्र गायब है या अमान्य है। कृपया साइट से गेम फिर से शुरू करें।',
     errAuth: 'गेम सर्वर तक पहुँचा नहीं जा सका। अपना कनेक्शन जाँचें और गेम फिर से शुरू करें।',
     errVal: 'अनुरोध अस्वीकृत: सत्र समाप्त हो गया है या दांव अमान्य है। कृपया साइट से गेम फिर से शुरू करें।',
@@ -1730,7 +1743,7 @@
     buyBtn: 'बोनस पाएँ', buyTitle: 'बोनस पाएँ', buySub: 'चक्र छोड़कर सीधे बोनस खोलें। खेलने योग्य: खेल राशि × गुणक। अनुबिस का क्रोध फिर भी इसे छीन सकता है।',
     buyPrice: 'खेल मूल्य', buyNow: 'पाएँ', buyOn: 'बोनस एक्सेस', resumed: 'अधूरा राउंड: जीत जोड़ दी गई',
     scarabSub: 'तीन स्कारब अंधकार में गिरते हैं। हर एक उस खाने की जीत पाता है जहाँ वह गिरता है।',
-    splashDemo: 'डेमो · खेल सिक्के · ज़िम्मेदारी से खेलें', infoTitle: 'नियम और जीत तालिका', demo: 'खेल सिक्के — डेमो, दिखाई गई राशियाँ असली नहीं हैं।',
+    splashDemo: 'डेमो · खेल सिक्के · ज़िम्मेदारी से खेलें', curHint: 'डेमो: 2 टोकन (SC, GC); राशियाँ केवल सांकेतिक हैं।', demoBuild: 'स्थानीय डेमो — यह प्रोडक्शन बिल्ड नहीं है। राशियाँ काल्पनिक हैं।', infoTitle: 'नियम और जीत तालिका', demo: 'खेल सिक्के — डेमो, दिखाई गई राशियाँ असली नहीं हैं।',
     tableCols: { 2: 'जीत' }, currencyL: 'टोकन', handWrongSub: 'श्रृंखला रुकी: मौजूदा स्तर जुड़ गया',
     rules: {
       0: 'एक खेल, एक स्पिन: न्याय का चक्र तय करता है। हर खाना अपना मान × आपकी खेल राशि जीतता है।',
@@ -1750,6 +1763,7 @@
     },
     $replay: { bet: 'खेल राशि', realCost: 'वास्तविक खेल मूल्य', costMult: 'खेल मूल्य' },
     $rgs: {
+        errLaunch: 'गेम को साइट से लॉन्च करें। गेम सत्र आवश्यक है।',
       errVal: 'अनुरोध अस्वीकृत: सत्र समाप्त हो गया है या खेल अमान्य है। कृपया साइट से गेम फिर से शुरू करें।',
       errIpb: 'इस खेल के लिए बैलेंस पर्याप्त नहीं है।', errGle: 'सीमा पूरी हो गई: यह खेल अस्वीकृत है।',
       errNet: 'नेटवर्क उपलब्ध नहीं है या प्रतिक्रिया अमान्य है। हो सकता है आपका खेल गिना न गया हो: अपना बैलेंस जाँचें।',
@@ -1770,6 +1784,7 @@
   };
   X.rgs.id = {
     connecting: 'Menghubungkan ke server permainan…', retry: 'Coba lagi', confirm: 'Konfirmasi', cancel: 'Batal',
+    errLaunch: 'Luncurkan permainan dari Stake. Sesi permainan diperlukan.',
     errUrl: 'Tidak dapat terhubung: alamat server permainan (rgs_url) atau sesi tidak ada atau tidak valid. Silakan luncurkan ulang permainan dari situs.',
     errAuth: 'Tidak dapat menjangkau server permainan. Periksa koneksimu lalu luncurkan ulang permainan.',
     errVal: 'Permintaan ditolak: sesi telah berakhir atau taruhan tidak valid. Silakan luncurkan ulang permainan dari situs.',
@@ -1841,7 +1856,7 @@
     buyBtn: 'AMBIL BONUS', buyTitle: 'AMBIL BONUS', buySub: 'Buka bonus langsung tanpa melewati roda. Dapat dimainkan seharga: jumlah main × pengali. Amarah Anubis tetap dapat mengambil alihnya.',
     buyPrice: 'NILAI MAIN', buyNow: 'AMBIL', buyOn: 'Akses bonus', resumed: 'Ronde terputus: kemenangan ditambahkan',
     scarabSub: 'Tiga kumbang menukik ke dalam gelap. Masing-masing memenangkan kotak tempatnya mendarat.',
-    splashDemo: 'Demo · koin permainan · Bermainlah dengan bijak', infoTitle: 'Aturan & Tabel kemenangan', demo: 'Koin permainan — demo, jumlah yang ditampilkan tidak nyata.',
+    splashDemo: 'Demo · koin permainan · Bermainlah dengan bijak', curHint: 'Demo: 2 token (SC, GC); jumlah hanya perkiraan.', demoBuild: 'Demo lokal — bukan build produksi. Jumlah yang ditampilkan bersifat fiktif.', infoTitle: 'Aturan & Tabel kemenangan', demo: 'Koin permainan — demo, jumlah yang ditampilkan tidak nyata.',
     tableCols: { 2: 'Menang' }, currencyL: 'Token', handWrongSub: 'Rantai berhenti: tingkat saat ini dikumpulkan',
     rules: {
       0: 'Satu permainan, satu putaran: roda penghakiman yang menentukan. Setiap kotak memberi nilainya × jumlah mainmu.',
@@ -1861,6 +1876,7 @@
     },
     $replay: { bet: 'JUMLAH MAIN', realCost: 'NILAI MAIN SEBENARNYA', costMult: 'Nilai main' },
     $rgs: {
+        errLaunch: 'Luncurkan permainan dari situs. Sesi permainan diperlukan.',
       errVal: 'Permintaan ditolak: sesi telah berakhir atau permainan tidak valid. Silakan luncurkan ulang permainan dari situs.',
       errIpb: 'Saldo tidak cukup untuk permainan ini.', errGle: 'Batas tercapai: permainan ini ditolak.',
       errNet: 'Jaringan tidak tersedia atau respons tidak valid. Permainanmu mungkin belum diperhitungkan: periksa saldomu.',
@@ -1880,6 +1896,7 @@
   };
   X.rgs.ja = {
     connecting: 'ゲームサーバーに接続中…', retry: '再試行', confirm: '確認', cancel: 'キャンセル',
+    errLaunch: 'Stakeからゲームを起動してください。ゲームセッションが必要です。',
     errUrl: '接続できません: ゲームサーバーのアドレス (rgs_url) またはセッションがないか、無効です。サイトからゲームを起動し直してください。',
     errAuth: 'ゲームサーバーに接続できません。接続を確認してゲームを起動し直してください。',
     errVal: 'リクエストが拒否されました: セッションの有効期限が切れたか、ベットが無効です。サイトからゲームを起動し直してください。',
@@ -1945,7 +1962,7 @@
     buyBtn: 'ボーナスを開く', buyTitle: 'ボーナスを開く', buySub: '輪を飛ばしてボーナスを直接開きます。プレイ価値 = プレイ額 × 倍率。アヌビスの怒りに奪われることもあります。',
     buyPrice: 'プレイ価値', buyNow: '開く', buyOn: 'ボーナス直接開放',
     scarabSub: '3匹のスカラベが闇へ落ちる。それぞれ落ちたマスの獲得分を得る。', sayWrong: 'もう一方の皿が重い: 獲得なし',
-    splashDemo: 'デモ · プレイ用コイン · 遊びすぎにご注意', infoTitle: 'ルールと獲得表', demo: 'プレイ用コイン — デモです。表示される額は本物ではありません。',
+    splashDemo: 'デモ · プレイ用コイン · 遊びすぎにご注意', curHint: 'デモ：トークン2種（SC、GC）。金額は目安です。', demoBuild: 'ローカルデモ — 本番ビルドではありません。金額は架空です。', infoTitle: 'ルールと獲得表', demo: 'プレイ用コイン — デモです。表示される額は本物ではありません。',
     maxWin: '最大獲得', noWin: '獲得なし', cryptCapped: '最大獲得に到達',
     tableCols: { 2: '獲得' }, currencyL: 'トークン',
     rules: {
@@ -1968,6 +1985,7 @@
     },
     $replay: { bet: 'プレイ額', realCost: '実際のプレイ価値', costMult: 'プレイ価値' },
     $rgs: {
+        errLaunch: 'サイトからゲームを起動してください。ゲームセッションが必要です。',
       errVal: 'リクエストが拒否されました: セッションの有効期限が切れたか、プレイが無効です。サイトからゲームを起動し直してください。',
       errIpb: 'このプレイには残高が足りません。', errGle: '上限に達しました: このプレイは拒否されました。',
       errNet: 'ネットワークが利用できないか、応答が無効です。プレイが反映されていない可能性があります: 残高をご確認ください。',
@@ -1987,6 +2005,7 @@
   };
   X.rgs.ko = {
     connecting: '게임 서버에 연결하는 중…', retry: '다시 시도', confirm: '확인', cancel: '취소',
+    errLaunch: 'Stake에서 게임을 실행하세요. 게임 세션이 필요합니다.',
     errUrl: '연결할 수 없습니다: 게임 서버 주소 (rgs_url) 또는 세션이 없거나 올바르지 않습니다. 사이트에서 게임을 다시 실행해 주세요.',
     errAuth: '게임 서버에 연결할 수 없습니다. 연결을 확인하고 게임을 다시 실행해 주세요.',
     errVal: '요청이 거부되었습니다: 세션이 만료되었거나 베팅이 올바르지 않습니다. 사이트에서 게임을 다시 실행해 주세요.',
@@ -2051,7 +2070,7 @@
     rulesPlus: '신탁+ 모드: 플레이 금액 ×1.1, 약 {opp}%의 회전에서 신탁이 나타납니다. RTP 동일 (약 96%).',
     buyBtn: '보너스 열기', buyTitle: '보너스 열기', buySub: '바퀴를 건너뛰고 보너스를 바로 엽니다. 플레이 가치 = 플레이 금액 × 배수. 아누비스의 분노가 가로챌 수도 있습니다.',
     buyPrice: '플레이 가치', buyNow: '열기', buyOn: '보너스 바로 열기',
-    splashDemo: '데모 · 플레이 코인 · 책임감 있게 즐기세요', infoTitle: '규칙 및 당첨표', demo: '플레이 코인 — 데모입니다. 표시된 금액은 실제가 아닙니다.',
+    splashDemo: '데모 · 플레이 코인 · 책임감 있게 즐기세요', curHint: '데모: 토큰 2종(SC, GC). 금액은 참고용입니다.', demoBuild: '로컬 데모입니다. 프로덕션 빌드가 아닙니다. 금액은 가상입니다.', infoTitle: '규칙 및 당첨표', demo: '플레이 코인 — 데모입니다. 표시된 금액은 실제가 아닙니다.',
     scarabSub: '스카라베 세 마리가 어둠 속으로 떨어집니다. 각각 떨어진 칸의 당첨을 받습니다.',
     tableCols: { 2: '당첨' }, currencyL: '토큰',
     rules: {
@@ -2072,6 +2091,7 @@
     },
     $replay: { bet: '플레이 금액', realCost: '실제 플레이 가치', costMult: '플레이 가치' },
     $rgs: {
+        errLaunch: '사이트에서 게임을 실행하세요. 게임 세션이 필요합니다.',
       errVal: '요청이 거부되었습니다: 세션이 만료되었거나 플레이가 올바르지 않습니다. 사이트에서 게임을 다시 실행해 주세요.',
       errIpb: '이 플레이에 필요한 잔액이 부족합니다.', errGle: '한도에 도달했습니다: 이 플레이는 거부되었습니다.',
       errNet: '네트워크를 사용할 수 없거나 응답이 올바르지 않습니다. 플레이가 반영되지 않았을 수 있습니다: 잔액을 확인해 주세요.',
@@ -2092,6 +2112,7 @@
   };
   X.rgs.pl = {
     connecting: 'Łączenie z serwerem gry…', retry: 'Spróbuj ponownie', confirm: 'Potwierdź', cancel: 'Anuluj',
+    errLaunch: 'Uruchom grę ze Stake. Wymagana jest sesja gry.',
     errUrl: 'Nie można się połączyć: adres serwera gry (rgs_url) lub sesja jest nieobecna albo nieprawidłowa. Uruchom grę ponownie ze strony.',
     errAuth: 'Nie można połączyć się z serwerem gry. Sprawdź połączenie i uruchom grę ponownie.',
     errVal: 'Żądanie odrzucone: sesja wygasła lub zakład jest nieprawidłowy. Uruchom grę ponownie ze strony.',
@@ -2163,7 +2184,7 @@
     buyBtn: 'WEŹ BONUS', buyTitle: 'WEŹ BONUS', buySub: 'Otwórz bonus od razu, z pominięciem koła. Do zagrania za: kwota gry × mnożnik. Gniew Anubisa nadal może go przejąć.',
     buyPrice: 'DO ZAGRANIA ZA', buyNow: 'WEŹ', buyOn: 'Dostęp do bonusów', resumed: 'Przerwana runda: wygrana dodana',
     scarabSub: 'Trzy skarabeusze spadają w ciemność. Każdy wygrywa pole, w które trafi.',
-    splashDemo: 'Demo · monety do gry · Graj odpowiedzialnie', infoTitle: 'Zasady i tabela wygranych', demo: 'Monety do gry — demo, wyświetlane kwoty nie są prawdziwe.',
+    splashDemo: 'Demo · monety do gry · Graj odpowiedzialnie', curHint: 'Demo: 2 żetony (SC, GC); kwoty tylko orientacyjne.', demoBuild: 'Lokalne demo — to nie wersja produkcyjna. Kwoty są fikcyjne.', infoTitle: 'Zasady i tabela wygranych', demo: 'Monety do gry — demo, wyświetlane kwoty nie są prawdziwe.',
     tableCols: { 2: 'Wygrana' }, currencyL: 'Żeton', handWrongSub: 'Łańcuch się kończy: zebrany obecny poziom',
     rules: {
       0: 'Jedna gra, jeden obrót: decyduje koło sądu. Każde pole daje swoją wartość × twoją kwotę gry.',
@@ -2183,6 +2204,7 @@
     },
     $replay: { bet: 'KWOTA GRY', realCost: 'RZECZYWISTA WARTOŚĆ GRY', costMult: 'Wartość gry' },
     $rgs: {
+        errLaunch: 'Uruchom grę ze strony. Wymagana jest sesja gry.',
       errVal: 'Żądanie odrzucone: sesja wygasła lub gra jest nieprawidłowa. Uruchom grę ponownie ze strony.',
       errIpb: 'Niewystarczające saldo na tę grę.', errGle: 'Osiągnięto limit: ta gra została odrzucona.',
       errNet: 'Sieć niedostępna lub nieprawidłowa odpowiedź. Twoja gra mogła nie zostać uwzględniona: sprawdź saldo.',
@@ -2203,6 +2225,7 @@
   };
   X.rgs.pt = {
     connecting: 'Conectando ao servidor de jogo…', retry: 'Tentar de novo', confirm: 'Confirmar', cancel: 'Cancelar',
+    errLaunch: 'Inicie o jogo pela Stake. É necessária uma sessão de jogo.',
     errUrl: 'Não foi possível conectar: o endereço do servidor de jogo (rgs_url) ou a sessão está ausente ou é inválido. Reinicie o jogo a partir do site.',
     errAuth: 'Não foi possível acessar o servidor de jogo. Verifique sua conexão e reinicie o jogo.',
     errVal: 'Solicitação recusada: a sessão expirou ou a aposta é inválida. Reinicie o jogo a partir do site.',
@@ -2274,7 +2297,7 @@
     buyBtn: 'OBTER BÔNUS', buyTitle: 'OBTER BÔNUS', buySub: 'Abra um bônus diretamente, sem passar pela roda. Jogável por: valor jogado × multiplicador. A Fúria de Anúbis ainda pode tomá-lo.',
     buyPrice: 'JOGÁVEL POR', buyNow: 'OBTER', buyOn: 'Acesso a bônus', resumed: 'Rodada interrompida: ganho adicionado',
     scarabSub: 'Três escaravelhos mergulham na escuridão. Cada um ganha a casa onde cai.',
-    splashDemo: 'Demo · moedas de jogo · Jogue com responsabilidade', infoTitle: 'Regras e tabela de ganhos', demo: 'Moedas de jogo — demo, os valores exibidos não são reais.',
+    splashDemo: 'Demo · moedas de jogo · Jogue com responsabilidade', curHint: 'Demo: 2 fichas (SC, GC); valores apenas indicativos.', demoBuild: 'Demo local: não é a versão de produção. Os valores são fictícios.', infoTitle: 'Regras e tabela de ganhos', demo: 'Moedas de jogo — demo, os valores exibidos não são reais.',
     tableCols: { 2: 'Ganho' }, currencyL: 'Ficha', handWrongSub: 'A sequência termina: nível atual coletado',
     rules: {
       0: 'Um jogo, um giro: a roda do julgamento decide. Cada casa ganha o seu valor × o valor jogado.',
@@ -2294,6 +2317,7 @@
     },
     $replay: { bet: 'VALOR JOGADO', realCost: 'VALOR DE JOGO REAL', costMult: 'Valor de jogo' },
     $rgs: {
+        errLaunch: 'Inicie o jogo pelo site. É necessária uma sessão de jogo.',
       errVal: 'Solicitação recusada: a sessão expirou ou a jogada é inválida. Reinicie o jogo a partir do site.',
       errIpb: 'Saldo insuficiente para esta jogada.', errGle: 'Limite atingido: esta jogada foi recusada.',
       errNet: 'Rede indisponível ou resposta inválida. Sua jogada pode não ter sido considerada: verifique seu saldo.',
@@ -2314,6 +2338,7 @@
   };
   X.rgs.ru = {
     connecting: 'Подключение к игровому серверу…', retry: 'Повторить', confirm: 'Подтвердить', cancel: 'Отмена',
+    errLaunch: 'Запустите игру из Stake. Требуется игровая сессия.',
     errUrl: 'Не удаётся подключиться: адрес игрового сервера (rgs_url) или сессия отсутствует или недействительна. Перезапустите игру с сайта.',
     errAuth: 'Не удаётся связаться с игровым сервером. Проверьте соединение и перезапустите игру.',
     errVal: 'Запрос отклонён: сессия истекла или ставка недействительна. Перезапустите игру с сайта.',
@@ -2385,7 +2410,7 @@
     buyBtn: 'ПОЛУЧИТЬ БОНУС', buyTitle: 'ПОЛУЧИТЬ БОНУС', buySub: 'Откройте бонус сразу, минуя колесо. Можно сыграть на: сумма игры × множитель. Ярость Анубиса всё равно может его перехватить.',
     buyPrice: 'ИГРА НА', buyNow: 'ПОЛУЧИТЬ', buyOn: 'Доступ к бонусам', resumed: 'Прерванный раунд: выигрыш добавлен',
     scarabSub: 'Три скарабея падают во тьму. Каждый получает выигрыш клетки, в которую упадёт.',
-    splashDemo: 'Демо · игровые монеты · Играйте ответственно', infoTitle: 'Правила и таблица выигрышей', demo: 'Игровые монеты — демо, показанные суммы не настоящие.',
+    splashDemo: 'Демо · игровые монеты · Играйте ответственно', curHint: 'Демо: 2 жетона (SC, GC); суммы ориентировочные.', demoBuild: 'Локальное демо — это не рабочая версия. Суммы условные.', infoTitle: 'Правила и таблица выигрышей', demo: 'Игровые монеты — демо, показанные суммы не настоящие.',
     tableCols: { 2: 'Выигрыш' }, currencyL: 'Жетон',
     rules: {
       0: 'Одна игра, одно вращение: решает колесо суда. Каждая клетка даёт своё значение × вашу сумму игры.',
@@ -2404,6 +2429,7 @@
     },
     $replay: { bet: 'СУММА ИГРЫ', realCost: 'РЕАЛЬНОЕ ЗНАЧЕНИЕ ИГРЫ', costMult: 'Значение игры' },
     $rgs: {
+        errLaunch: 'Запустите игру с сайта. Требуется игровая сессия.',
       errVal: 'Запрос отклонён: сессия истекла или игра недействительна. Перезапустите игру с сайта.',
       errIpb: 'Недостаточно средств на балансе для этой игры.', errGle: 'Достигнут лимит: эта игра отклонена.',
       errNet: 'Сеть недоступна или ответ недействителен. Ваша игра могла не быть учтена: проверьте баланс.',
@@ -2424,6 +2450,7 @@
   };
   X.rgs.tr = {
     connecting: 'Oyun sunucusuna bağlanılıyor…', retry: 'Yeniden dene', confirm: 'Onayla', cancel: 'İptal',
+    errLaunch: 'Oyunu Stake üzerinden başlatın. Bir oyun oturumu gereklidir.',
     errUrl: 'Bağlanılamıyor: oyun sunucusu adresi (rgs_url) veya oturum eksik ya da geçersiz. Lütfen oyunu siteden yeniden başlat.',
     errAuth: 'Oyun sunucusuna ulaşılamıyor. Bağlantını kontrol et ve oyunu yeniden başlat.',
     errVal: 'İstek reddedildi: oturum süresi doldu veya bahis geçersiz. Lütfen oyunu siteden yeniden başlat.',
@@ -2495,7 +2522,7 @@
     buyBtn: 'BONUS AÇ', buyTitle: 'BONUS AÇ', buySub: 'Çarkı atlayarak doğrudan bir bonus aç. Oynanabilir değer = oyun tutarı × çarpan. Anubis’in Gazabı yine de onu devralabilir.',
     buyPrice: 'OYUN DEĞERİ', buyNow: 'AÇ', buyOn: 'Bonus erişimi', resumed: 'Yarıda kalan tur: kazanç eklendi',
     scarabSub: 'Üç scarab karanlığa dalıyor. Her biri düştüğü hücreyi kazanır.',
-    splashDemo: 'Demo · oyun jetonları · Sorumlu oyna', infoTitle: 'Kurallar ve Kazanç tablosu', demo: 'Oyun jetonları — demo, gösterilen tutarlar gerçek değildir.',
+    splashDemo: 'Demo · oyun jetonları · Sorumlu oyna', curHint: 'Demo: 2 jeton (SC, GC); tutarlar yalnızca yaklaşıktır.', demoBuild: 'Yerel demo — üretim sürümü değildir. Tutarlar kurgusaldır.', infoTitle: 'Kurallar ve Kazanç tablosu', demo: 'Oyun jetonları — demo, gösterilen tutarlar gerçek değildir.',
     tableCols: { 2: 'Kazanç' }, currencyL: 'Jeton', handWrongSub: 'Zincir biter: mevcut kademe toplandı',
     rules: {
       0: 'Bir oyun, bir dönüş: yargı çarkı karar verir. Her hücre, değeri × oyun tutarın kadar kazandırır.',
@@ -2515,6 +2542,7 @@
     },
     $replay: { bet: 'OYUN TUTARI', realCost: 'GERÇEK OYUN DEĞERİ', costMult: 'Oyun değeri' },
     $rgs: {
+        errLaunch: 'Oyunu siteden başlatın. Bir oyun oturumu gereklidir.',
       errVal: 'İstek reddedildi: oturum süresi doldu veya oyun geçersiz. Lütfen oyunu siteden yeniden başlat.',
       errIpb: 'Bu oyun için bakiye yetersiz.', errGle: 'Limite ulaşıldı: bu oyun reddedildi.',
       errNet: 'Ağ kullanılamıyor veya geçersiz yanıt. Oyunun dikkate alınmamış olabilir: bakiyeni kontrol et.',
@@ -2535,6 +2563,7 @@
   };
   X.rgs.vi = {
     connecting: 'Đang kết nối tới máy chủ trò chơi…', retry: 'Thử lại', confirm: 'Xác nhận', cancel: 'Hủy',
+    errLaunch: 'Hãy khởi chạy trò chơi từ Stake. Cần có một phiên chơi.',
     errUrl: 'Không thể kết nối: địa chỉ máy chủ trò chơi (rgs_url) hoặc phiên bị thiếu hoặc không hợp lệ. Hãy khởi chạy lại trò chơi từ trang web.',
     errAuth: 'Không thể truy cập máy chủ trò chơi. Hãy kiểm tra kết nối rồi khởi chạy lại trò chơi.',
     errVal: 'Yêu cầu bị từ chối: phiên đã hết hạn hoặc mức cược không hợp lệ. Hãy khởi chạy lại trò chơi từ trang web.',
@@ -2606,7 +2635,7 @@
     buyBtn: 'NHẬN BONUS', buyTitle: 'NHẬN BONUS', buySub: 'Mở thẳng một bonus, bỏ qua bánh xe. Chơi được với: mức chơi × hệ số. Thịnh Nộ của Anubis vẫn có thể chiếm nó.',
     buyPrice: 'GIÁ TRỊ CHƠI', buyNow: 'NHẬN', buyOn: 'Truy cập bonus', resumed: 'Ván bị gián đoạn: phần thắng đã được cộng',
     scarabSub: 'Ba con bọ hung lao xuống bóng tối. Mỗi con thắng ô nó rơi vào.',
-    splashDemo: 'Bản demo · xu chơi · Hãy chơi có trách nhiệm', infoTitle: 'Luật chơi & Bảng thắng', demo: 'Xu chơi — bản demo, các mức hiển thị không có giá trị thật.',
+    splashDemo: 'Bản demo · xu chơi · Hãy chơi có trách nhiệm', curHint: 'Bản demo: 2 token (SC, GC); số hiển thị chỉ mang tính tham khảo.', demoBuild: 'Demo cục bộ — không phải bản chính thức. Các số hiển thị là giả định.', infoTitle: 'Luật chơi & Bảng thắng', demo: 'Xu chơi — bản demo, các mức hiển thị không có giá trị thật.',
     tableCols: { 2: 'Thắng' }, currencyL: 'Token', handWrongSub: 'Chuỗi dừng: đã thu bậc hiện tại', bonusWin: 'THẮNG BONUS',
     rules: {
       0: 'Một lần chơi, một lượt quay: bánh xe phán xét quyết định. Mỗi ô cho giá trị của nó × mức chơi của bạn.',
@@ -2627,6 +2656,7 @@
     },
     $replay: { bet: 'MỨC CHƠI', realCost: 'GIÁ TRỊ CHƠI THỰC', costMult: 'Giá trị chơi' },
     $rgs: {
+        errLaunch: 'Hãy khởi chạy trò chơi từ trang web. Cần có một phiên chơi.',
       errVal: 'Yêu cầu bị từ chối: phiên đã hết hạn hoặc ván chơi không hợp lệ. Hãy khởi chạy lại trò chơi từ trang web.',
       errIpb: 'Số dư không đủ cho ván chơi này.', errGle: 'Đã đạt giới hạn: ván chơi này bị từ chối.',
       errNet: 'Mạng không khả dụng hoặc phản hồi không hợp lệ. Ván chơi của bạn có thể chưa được ghi nhận: hãy kiểm tra số dư.',
@@ -2646,6 +2676,7 @@
   };
   X.rgs.zh = {
     connecting: '正在连接游戏服务器…', retry: '重试', confirm: '确认', cancel: '取消',
+    errLaunch: '请从 Stake 启动游戏。需要游戏会话。',
     errUrl: '无法连接：游戏服务器地址（rgs_url）或会话缺失或无效。请从网站重新启动游戏。',
     errAuth: '无法连接到游戏服务器。请检查网络连接后重新启动游戏。',
     errVal: '请求被拒绝：会话已过期或投注无效。请从网站重新启动游戏。',
@@ -2710,7 +2741,7 @@
     rulesPlus: '神谕+模式: 游玩额 ×1.1，神谕约在 {opp}% 的旋转中出现。RTP 相同 (约 96%)。',
     buyBtn: '开启奖励', buyTitle: '开启奖励', buySub: '跳过转轮，直接开启奖励。游玩价值 = 游玩额 × 倍数。阿努比斯之怒仍可能夺走它。',
     buyPrice: '游玩价值', buyNow: '开启', buyOn: '直接开启奖励', buyNoFunds: '余额不足，无法开启此奖励',
-    splashDemo: '演示 · 游戏金币 · 请理性游戏', infoTitle: '规则与获胜表', demo: '游戏金币 — 演示版，所示金额并非真实。',
+    splashDemo: '演示 · 游戏金币 · 请理性游戏', curHint: '演示：2 种代币（SC、GC）；金额仅供参考。', demoBuild: '本地演示版 — 不是正式生产版本。金额均为虚拟。', infoTitle: '规则与获胜表', demo: '游戏金币 — 演示版，所示金额并非真实。',
     tableCols: { 2: '赢得' }, currencyL: '代币',
     rules: {
       0: '一次游玩，一次旋转: 由审判之轮决定。每个格子赢得其数值 × 你的游玩额。',
@@ -2730,6 +2761,7 @@
     },
     $replay: { bet: '游玩额', realCost: '实际游玩价值', costMult: '游玩价值' },
     $rgs: {
+        errLaunch: '请从网站启动游戏。需要游戏会话。',
       errVal: '请求被拒绝：会话已过期或本次游玩无效。请从网站重新启动游戏。',
       errIpb: '余额不足，无法进行此次游玩。', errGle: '已达到限额：此次游玩被拒绝。',
       errNet: '网络不可用或响应无效。您的游玩可能未被计入：请检查余额。',

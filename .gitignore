@@ -5,3 +5,5 @@ tools/out/
 stake-math/library/
 __pycache__/
 *.pyc
+dist-stake/
+dist-stake.zip
