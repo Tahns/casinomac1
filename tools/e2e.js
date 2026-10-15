@@ -141,7 +141,7 @@ var server = http.createServer(function (req, res) {
   var bal = await p.evaluate("G.S.balance");
   ok(Math.abs(Math.round(bal * 100) - bal * 100) < 1e-6, '12 tours à 0,20 en Oracle+ (coût 0,22) : le solde reste au centime (' + bal + ')');
   // migration : ancienne sauvegarde en « crédits » (sans version) -> valeurs par défaut propres, gain en attente non converti
-  await p.evaluate(`localStorage.setItem('anubis_save_v1', JSON.stringify({balance:12345, bi:7, limit:5000, pending:300, lang:'fr', mode:'plus'}))`);
+  await p.evaluate(`localStorage.setItem('anubis_save_v1', JSON.stringify({balance:12345, bi:7, limit:5000, pending:300, lang:'fr', langSet:1, mode:'plus'}))`);
   await p.reload(); await p.waitForTimeout(500);
   var mg = await p.evaluate("({bal:G.S.balance,bi:G.S.bi,limit:G.S.limit,res:G.S.resumed||0,txt:document.getElementById('bal').textContent,bet:document.getElementById('bet').textContent})");
   ok(mg.bal === 1000 && mg.bi === 2 && mg.limit === 0 && !mg.res && mg.txt === '1 000,00 €', 'ancienne sauvegarde (crédits) : solde 1 000 €, mise 1,00 €, limite retirée (' + mg.txt + ' / ' + mg.bet + ')');

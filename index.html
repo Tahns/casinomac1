@@ -6,7 +6,7 @@
 (function(){var L='ar de en es fi fr hi id ja ko pl pt ru tr vi zh'.split(' '),l=null,d=document.documentElement;
 function n(c){c=String(c||'').toLowerCase().replace('_','-').split('-')[0];return L.indexOf(c)>=0?c:null}
 try{l=n(new URLSearchParams(location.search).get('lang'))}catch(e){}
-if(!l)try{var s=JSON.parse(localStorage.getItem('anubis_save_v1')||localStorage.getItem('hoa_save_v1')||'null');l=n(s&&s.lang)}catch(e){}
+if(!l)try{var s=JSON.parse(localStorage.getItem('anubis_save_v1')||localStorage.getItem('hoa_save_v1')||'null');l=s&&s.langSet?n(s.lang):null}catch(e){}
 l=l||'en';d.lang=l;d.setAttribute('data-lang',l);d.dir=l==='ar'?'rtl':'ltr'})();</script>
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="theme-color" content="#0b0907">

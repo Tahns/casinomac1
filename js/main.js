@@ -99,7 +99,7 @@
       var d = JSON.parse(localStorage.getItem(SAVE_KEY) || localStorage.getItem(OLD_SAVE_KEY) || 'null');
       if (d) {
         // ancienne sauvegarde (crédits, sans « v ») : solde, mise, gain en attente et limite repartent des valeurs par défaut
-        if (d.lang && !I18N.fromUrl) I18N.setLang(d.lang);   // ?lang= dans l'URL prime sur la sauvegarde
+        if (d.lang && d.langSet && !I18N.fromUrl) { I18N.setLang(d.lang); S.langSet = true; }   // ?lang= dans l'URL prime ; une langue enregistrée par défaut (anciennes versions : français) est ignorée, seul un choix du joueur compte
         if (root.CUR.known(d.cur)) { S.cur = d.cur; S.curSet = true; }
         S.balCur = root.CUR.known(d.balCur) ? d.balCur : 'EUR';   // devise dans laquelle le solde enregistré est exprimé
         if (d.v >= SAVE_VER && !LIVE) {   // en mode RGS : solde, mise et gain en attente viennent du serveur, jamais du stockage local
@@ -138,7 +138,7 @@
     if (REPLAY) return;
     try {
       S.synced = S.balance;
-      localStorage.setItem(SAVE_KEY, JSON.stringify({ v: SAVE_VER, t: Date.now(), cur: S.curSet ? S.cur : '', balCur: S.cur, pending: LIVE ? 0 : S.pending, balance: LIVE ? START_BAL : S.balance, bi: LIVE ? BET_DEFAULT : S.bi, lang: I18N.lang(), muted: Sfx.isMuted(), pitch: Sfx.getPitch(), vol: Sfx.getVolume(), tone: Sfx.getTone(), music: Sfx.isMusic(), turbo: G.turbo, ultra: !!G.ultra, sobV2: S.stopOnBonus, reduced: S.reduced, hist: S.hist, mode: S.mode, buyOn: S.buyOn, limit: S.limitB, quality: S.quality }));
+      localStorage.setItem(SAVE_KEY, JSON.stringify({ v: SAVE_VER, t: Date.now(), cur: S.curSet ? S.cur : '', balCur: S.cur, pending: LIVE ? 0 : S.pending, balance: LIVE ? START_BAL : S.balance, bi: LIVE ? BET_DEFAULT : S.bi, lang: I18N.lang(), langSet: S.langSet ? 1 : 0, muted: Sfx.isMuted(), pitch: Sfx.getPitch(), vol: Sfx.getVolume(), tone: Sfx.getTone(), music: Sfx.isMusic(), turbo: G.turbo, ultra: !!G.ultra, sobV2: S.stopOnBonus, reduced: S.reduced, hist: S.hist, mode: S.mode, buyOn: S.buyOn, limit: S.limitB, quality: S.quality }));
     } catch (e) {}
     saveSess();
   }
@@ -557,7 +557,7 @@
     I18N.langs.forEach(function (l) {
       var b = document.createElement('button'); b.type = 'button'; b.setAttribute('role', 'option'); b.setAttribute('lang', l[0]); b.setAttribute('data-l', l[0]);
       b.setAttribute('aria-selected', l[0] === I18N.lang() ? 'true' : 'false'); b.textContent = l[1];
-      b.addEventListener('click', function (e) { e.stopPropagation(); Sfx.click(); I18N.setLang(l[0]); applyLang(); save(); closeLangMenu(); $('btnLang').focus(); });
+      b.addEventListener('click', function (e) { e.stopPropagation(); Sfx.click(); I18N.setLang(l[0]); S.langSet = true; applyLang(); save(); closeLangMenu(); $('btnLang').focus(); });
       langMenu.appendChild(b);
     });
     document.body.appendChild(langMenu); $('btnLang').setAttribute('aria-expanded', 'true');
@@ -729,7 +729,7 @@
   function adoptSave(json) {
     var d; try { d = JSON.parse(json); } catch (e) { return; }
     if (!d || d.v < SAVE_VER) return;
-    if (d.lang && !I18N.fromUrl && d.lang !== I18N.lang()) { I18N.setLang(d.lang); applyLang(); }
+    if (d.lang && d.langSet && !I18N.fromUrl && d.lang !== I18N.lang()) { I18N.setLang(d.lang); applyLang(); }
     if (!!d.muted !== Sfx.isMuted()) Sfx.setMuted(!!d.muted);
     if (typeof d.pitch === 'number' && d.pitch !== Sfx.getPitch()) Sfx.setPitch(d.pitch);
     if (typeof d.vol === 'number') Sfx.setVolume(d.vol);
