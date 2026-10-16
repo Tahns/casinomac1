@@ -74,7 +74,7 @@
     },
     // texte social d'une langue (utilisé par les outils de vérification)
     // blocs séparés sociaux d'une langue (outils de vérification)
-    blocks: function (lang) { var cur = I18N.lang(); I18N.setLang(lang); var r = { rules: I18N.block('rules'), replay: I18N.block('replay'), ui: I18N.block('ui'), intro: I18N.block('intro'), rgs: I18N.rgs() }; I18N.setLang(cur); return r; },
+    blocks: function (lang) { var cur = I18N.lang(); I18N.setLang(lang); var r = { rules: I18N.block('rules'), replay: I18N.block('replay'), ui: I18N.block('ui'), intro: I18N.block('intro'), pact: I18N.block('pact'), rgs: I18N.rgs() }; I18N.setLang(cur); return r; },
     strings: function (lang) { var cur = I18N.lang(); I18N.setLang(lang); var d = baseT(); var r = strings(I18N.lang(), d); I18N.setLang(cur); return r; }
   };
   try { document.documentElement.setAttribute('data-social', on ? 'true' : 'false'); } catch (e) {}

@@ -1,18 +1,19 @@
-// node tools/export-parity.js [tours-par-mode=100] [bonus-par-type=60] [graine=2026] [sortie=stake-math/tests/parity_draws.json]
+// node tools/export-parity.js [tours-par-mode=56] [bonus-par-type=36] [graine=2026] [sortie=stake-math/tests/parity_draws.json]
 // Produit le fichier de PARITÉ lu par stake-math/tests/test_parity.py : des tirages uniformes pré-générés par js/math.js (entiers uint32 k,
 // valeur = k / 2^32, exacte) et, pour chaque tour ou bonus, ce que le JS en a fait (gain entier à l'échelle M.SCALE, cases, détails).
 // Le moteur Python rejoue les mêmes tirages et doit retrouver exactement les mêmes gains en consommant exactement les mêmes tirages.
-// Budget TOTAL plafonné à 1000 tours/tirages (tools/cap.js) : 6 modes x 100 tours + 5 bonus x 60 + 20 cas forcés = 920.
+// Budget TOTAL plafonné à 1000 tours/tirages (tools/cap.js) : 10 modes x 56 tours + Colère 6 x 11 + 5 bonus x 36 + bonus des pactes 8 x 12
+// + 16 cas forcés + 10 gains maximaux = 928.
 // Écrit aussi les résultats du calcul exact (tools/rtp-exact.js) pour que Python les compare à 1e-9 près.
 var fs = require('fs'), path = require('path');
 var M = require('../js/math.js');
 var cap = require('./cap');
 var exact = require('./rtp-exact');
 var I = M.toInt;
-var perMode = parseInt(process.argv[2] || '100', 10), perBonus = parseInt(process.argv[3] || '60', 10);
+var perMode = parseInt(process.argv[2] || '56', 10), perBonus = parseInt(process.argv[3] || '36', 10);
 var seed = parseInt(process.argv[4] || '2026', 10);
 var out = process.argv[5] || path.join(__dirname, '..', 'stake-math', 'tests', 'parity_draws.json');
-var MODES = ['std', 'plus', 'bonus_scarab', 'bonus_weigh', 'bonus_vault', 'bonus_fury'], BUYS = { bonus_scarab: 'scarab', bonus_weigh: 'weigh', bonus_vault: 'vault', bonus_fury: 'hand' };
+var MODES = M.BASE_MODES.concat(['bonus_scarab', 'bonus_weigh', 'bonus_vault', 'bonus_fury']), BUYS = { bonus_scarab: 'scarab', bonus_weigh: 'weigh', bonus_vault: 'vault', bonus_fury: 'hand' };
 var BUDGET = cap(1000), used = 0;
 function take(n) { if (used + n > BUDGET) throw new Error('budget de ' + BUDGET + ' tirages dépassé'); used += n; return n; }
 
@@ -46,11 +47,11 @@ MODES.forEach(function (name, mi) {
   }
   doc.modes[name] = { cost: r_cost(name), rounds: rounds };
 });
-// Colère d'Anubis (1 tour sur 500 : absente des 100 tours par mode) : tours dont le PREMIER tirage est imposé à 0 (< la chance de Colère),
-// la suite étant tirée par mulberry32 ; Python rejoue les mêmes tirages (le 0 compris)
+// Colère d'Anubis (1 tour sur 250 à 860 : absente des tours par mode) : tours dont le PREMIER tirage est imposé à 0 (< la chance de Colère),
+// la suite étant tirée par mulberry32 ; Python rejoue les mêmes tirages (le 0 compris). Les 6 modes de base : chaque pacte a son échelle.
 doc.wrath = {};
-['std', 'plus'].forEach(function (name, mi) {
-  var n = take(cap(Math.max(1, Math.round(perMode * 0.3)))), base = M.mulberry32(seed + 200 + mi), rounds = [];
+M.BASE_MODES.forEach(function (name, mi) {
+  var n = take(cap(Math.max(1, Math.round(perMode * 0.2)))), base = M.mulberry32(seed + 200 + mi), rounds = [];
   for (var i = 0; i < n; i++) {
     var first = true, rng = recorder(function () { if (first) { first = false; return 0; } return base(); });
     var r = M.playRound(rng, name);
@@ -67,6 +68,18 @@ var B = M._bonus;
   var n = take(cap(perBonus)), rng = recorder(M.mulberry32(seed + 100 + bi)), list = [];
   for (var i = 0; i < n; i++) { rng.draws.length = 0; var b = B[kind](rng, 'std'); list.push({ d: rng.draws.slice(), total: I(b.total), detail: bonusDetail(kind, b) }); }
   doc.bonuses[kind] = list;
+});
+// bonus des pactes Scribe (safe) et Chacal (bold) : profils Prudent / Audacieux, et Fureur dont les bandes suivent le pacte
+['safe', 'bold'].forEach(function (pf, pi) {
+  ['scarab', 'weigh', 'vault', 'hand'].forEach(function (kind, bi) {
+    var n = take(cap(Math.max(1, Math.round(perBonus / 3)))), rng = recorder(M.mulberry32(seed + 150 + pi * 10 + bi)), list = [];
+    for (var i = 0; i < n; i++) {
+      rng.draws.length = 0;
+      var c = i % 3, b = kind === 'hand' ? B.hand(rng, c, i % 2 ? null : [[0, 7, 12, 19][i % 4]], pf) : B[kind](rng, pf);   // Fureur : une bande imposée un tour sur deux
+      list.push({ d: rng.draws.slice(), colour: c, forced: kind === 'hand' && !(i % 2) ? [[0, 7, 12, 19][i % 4]] : null, total: I(b.total), detail: bonusDetail(kind, b) });
+    }
+    doc.bonuses[kind + '_' + pf] = list;
+  });
 });
 (function () {
   var n = take(cap(perBonus)), rng = recorder(M.mulberry32(seed + 110)), list = [];
@@ -112,16 +125,18 @@ var B = M._bonus;
   function uW(table, pred) { var s = 0, c = 0, i; table.forEach(function (t) { s += t[1]; }); for (i = 0; i < table.length; i++) { if (pred(table[i][0])) return (c + table[i][1] / 2) / s; c += table[i][1]; } throw new Error('valeur absente'); }
   var segs = M.HAND_SEGS, n = segs.length, d0 = [], w = -1;
   segs.forEach(function (sg, i) { if (sg.d === 0) d0.push(i); if (sg.b === 'weigh') w = i; });
-  var fury = [uIdx(d0[0], n), uIdx(d0[1], n), uIdx(d0[0], n), uIdx(w, n),
-    uW(M.WEIGH_PROFILES.std, function (p) { return p[0] === 60 && p[1] === 1000; }), 0.25, 0.75, 0.75, uIdx(1, n), uIdx(1, n)];
-  var pre = {   // pas de Colère d'Anubis, pas d'Oracle, bonus, pas de Sanctuaire, Fureur
-    std: [0.9999, 0.9999, uIdx(M.LAYOUT.indexOf('scarab'), M.N), 0.5, 0.01], plus: null, bonus_scarab: [0.01], bonus_weigh: [0.01], bonus_vault: [0.01], bonus_fury: []
-  };
-  pre.plus = pre.std;
+  // la bande Pesée joue le profil du pacte : on désigne sa paire au plus gros plateau (Balance 1000, Scribe 800, Chacal 3000)
+  function fury(pf) {
+    var tab = M.WEIGH_PROFILES[pf], best = tab.reduce(function (a, t) { return t[0][1] > a[1] ? t[0] : a; }, [0, 0]);
+    return [uIdx(d0[0], n), uIdx(d0[1], n), uIdx(d0[0], n), uIdx(w, n), uW(tab, function (p) { return p[0] === best[0] && p[1] === best[1]; }), 0.25, 0.75, 0.75, uIdx(1, n), uIdx(1, n)];
+  }
+  var base = [0.9999, 0.9999, uIdx(M.LAYOUT.indexOf('scarab'), M.N), 0.5, 0.01];   // pas de Colère d'Anubis, pas d'Oracle, bonus, pas de Sanctuaire, Fureur
+  var pre = { bonus_scarab: [0.01], bonus_weigh: [0.01], bonus_vault: [0.01], bonus_fury: [] };
+  M.BASE_MODES.forEach(function (m) { pre[m] = base; });
   doc.wincap = {};
   MODES.forEach(function (name, mi) {
     take(1);
-    var script = pre[name].concat(fury), pos = 0;
+    var script = pre[name].concat(fury(BUYS[name] ? 'std' : M.pactOf(name))), pos = 0;
     var rng = function () { return script[pos++]; };
     var r = BUYS[name] ? M.playBuy(rng, BUYS[name]) : M.playRound(rng, name);
     if (pos !== script.length) throw new Error('script de plafond mal consommé : ' + name + ' ' + pos + '/' + script.length);

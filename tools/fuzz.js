@@ -252,7 +252,7 @@ async function randomInput(p) {
 }
 
 async function perturb(p, url, ep) {
-  var k = pick(['reload', 'reload', 'lang', 'cur', 'resize', 'resize', 'hidden', 'freeze', 'mixer', 'mute', 'music', 'pitch', 'info', 'turbo', 'plus', 'buyclick', 'betclick', 'limit', 'reset']);
+  var k = pick(['reload', 'reload', 'lang', 'cur', 'resize', 'resize', 'hidden', 'freeze', 'mixer', 'mute', 'music', 'pitch', 'info', 'turbo', 'plus', 'pact', 'buyclick', 'betclick', 'limit', 'reset']);
   note('perturbation ' + k);
   if (k === 'reload') {
     // avant de recharger : le gain en attente enregistré doit correspondre au tour en cours (choix du joueur compris)
@@ -280,6 +280,7 @@ async function perturb(p, url, ep) {
   else if (k === 'info') { await fclick(p, '#btnInfo'); await p.waitForTimeout(60); if (chance(0.7)) await p.keyboard.press('Escape'); }
   else if (k === 'turbo') await fclick(p, '#btnTurbo');
   else if (k === 'plus') { await fclick(p, '#btnPlus', { force: true }); if (chance(0.6)) await fclick(p, '#plusYes', { force: true }); else await fclick(p, '#plusNo', { force: true }); }
+  else if (k === 'pact') { await fclick(p, '#btnPact', { force: true, timeout: 800 }).catch(function () {}); if (chance(0.7)) await fclick(p, '#pact_' + pick(['safe', 'std', 'bold']), { force: true, timeout: 800 }).catch(function () {}); else await p.keyboard.press('Escape'); }   // pacte : change le mode du tour suivant
   else if (k === 'buyclick') await fclick(p, '#btnBuy', { force: true, timeout: 800 }).catch(function () {});
   else if (k === 'betclick') await fclick(p, pick(['#betUp', '#betDn']), { force: true, timeout: 800 }).catch(function () {});
   else if (k === 'limit') { await ev(p, 'G.S.limit=' + pick([20, 50, 0]) + ';0'); }

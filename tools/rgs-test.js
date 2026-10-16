@@ -236,6 +236,19 @@ var FINISH = `(async()=>{ G.turbo=true; G.speed=1.6; var g=0; while(G.S.busy&&g<
   ok((await s.p.evaluate('G.S.mode')) === 'plus' && plays(mb).length === 1, '[conformité] Oracle+ : Confirmer active le mode, toujours aucune requête de jeu');
   await clk(s.p, '#btnPlus'); await s.p.waitForTimeout(150);
   ok((await s.p.evaluate('G.S.mode')) === 'std' && !(await s.p.evaluate("!document.getElementById('modal').hidden")), '[conformité] Oracle+ : la désactivation est immédiate, sans fenêtre');
+  // PACTES (docs/GAMEPLAY.md) : choisir un pacte n'envoie aucune requête ; le tour suivant est demandé dans le mode du pacte (bold, plus_safe…)
+  var basePact = plays(mb).length;
+  await clk(s.p, '#btnPact'); await s.p.waitForTimeout(250);
+  var cards = await s.p.evaluate("document.querySelectorAll('.pactCard').length");
+  await clk(s.p, '#pact_bold'); await s.p.waitForTimeout(250);
+  ok(cards === 3 && plays(mb).length === basePact && (await s.p.evaluate('G.S.pact')) === 'bold', 'Pacte : fenêtre à 3 cartes, Chacal scellé, aucune requête de jeu');
+  await s.p.evaluate('G.pactFx && G.pactFx.reset(); G.play(); 0'); await s.p.waitForFunction('G.S.busy'); await s.p.waitForTimeout(200);
+  ok(plays(mb).length === basePact + 1 && plays(mb)[basePact].body.mode === 'bold', 'Pacte : /wallet/play { mode: bold } ' + JSON.stringify(plays(mb).slice(basePact).map(function (l) { return l.body.mode; })));
+  await s.p.evaluate(FINISH); await s.p.waitForTimeout(250);
+  await s.p.evaluate("G.S.mode = 'plus'; G.setPact('safe', false); G.play(); 0"); await s.p.waitForFunction('G.S.busy'); await s.p.waitForTimeout(200);
+  ok(plays(mb).length === basePact + 2 && plays(mb)[basePact + 1].body.mode === 'plus_safe', 'Pacte : Oracle+ et Scribe : /wallet/play { mode: plus_safe }');
+  await s.p.evaluate(FINISH); await s.p.waitForTimeout(250);
+  await s.p.evaluate("G.S.mode = 'std'; G.setPact('std', false); G.updateHud(); 0");
   // Entrée MAINTENU sur une carte d'achat : la 1re frappe ouvre la confirmation (focus sur « Annuler »), les répétitions ne confirment rien
   var base31 = plays(mb).length;
   await clk(s.p, '#btnBuy'); await s.p.waitForTimeout(250);

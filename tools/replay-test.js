@@ -38,7 +38,14 @@ var wr0 = M.MODES.std.wrath, wrr = M.mulberry32(777), wn = 0;
 M.MODES.std.wrath = 1;
 while (wn++ < cap(300)) { var wq = M.playRound(wrr, 'std'); if (wq.wrath && wq.spins.length === 2 && wq.total > 0 && !wq.spins[1].secret && !wq.spins[1].upgraded && wq.spins[1].kind !== 'weigh') { books.wrath = wq; break; } }
 M.MODES.std.wrath = wr0;
+// Pacte du Chacal (mode bold) en Colère : échelle ×3 → ×250 portée par le book (même recherche, chance forcée puis rétablie)
+var wb0 = M.MODES.bold.wrath, wbr = M.mulberry32(778), wbn = 0;
+M.MODES.bold.wrath = 1;
+while (wbn++ < cap(300)) { var wbq = M.playRound(wbr, 'bold'); if (wbq.wrath && wbq.spins.length === 2 && wbq.total > 0 && !wbq.spins[1].secret && !wbq.spins[1].upgraded && wbq.spins[1].kind !== 'weigh') { books.jackal = wbq; break; } }
+M.MODES.bold.wrath = wb0;
+var M_LAD_BOLD = M.ladderOf('bold');
 var CASES = {
+  jackal: { mode: 'bold', cost: 1, round: books.jackal },
   wrath: { mode: 'std', cost: 1, round: books.wrath },
   fury: { mode: 'bonus_fury', cost: 27.28, round: books.fury },
   sanct: { mode: 'std', cost: 1, round: books.sanct },
@@ -197,6 +204,19 @@ async function playIt(p, label, expectText) {
     check(dw.done && vw.w.begin.length === 1 && JSON.stringify(vw.w.up) === JSON.stringify(wup) && wup.length === 1, 'replay Colère : chaînes brisées une fois, multiplicateur ×' + wup.join(' ×') + ' rejoué');
     check(!vw.on && vw.shade === 0, 'replay Colère : plaque et cases grisées retirées en fin de tour');
     check(vw.res.replace(/\D/g, '') === String(E.makeBook(1, books.wrath).payoutMultiplier), 'replay Colère : résultat = RGS (' + vw.res + ')');
+    check(!p.errs.length, 'aucune erreur JS (' + p.errs.join(' | ') + ')'); await p.close();
+
+    // Pacte du Chacal : book du mode « bold » en Colère ; la plaque suit l'échelle du pacte (×3 → ×5…), le pacte est nommé, le gain est celui du RGS
+    check(!!books.jackal && E.verify(E.makeBook(1, books.jackal)).length === 0 && E.bookEvents(books.jackal)[0].pact === 'bold', 'book du Pacte du Chacal valide (roundStart.pact = bold, ' + (books.jackal && books.jackal.total) + '×)');
+    p = await open(b, { ev: 'jackal', q: '&currency=EUR&lang=en&amount=1000000' });
+    await p.waitForFunction(function () { return Replay.state() === 'ready'; }, null, { timeout: 15000 });
+    await p.evaluate(function () { var ob = G.wrath.begin, ou = G.wrath.up; G.__w = { lad: null, up: [] }; G.wrath.begin = function (w) { G.__w.lad = w.ladder; return ob(w); }; G.wrath.up = function (m) { G.__w.up.push(m); return ou(m); }; });
+    var sub = await p.evaluate(function () { return document.getElementById('rpSub') ? document.getElementById('rpSub').textContent : document.body.textContent; });
+    var dj = await driveReplay(p, {});
+    var vj = await p.evaluate(function () { return { w: G.__w, res: document.getElementById('rpResV').textContent }; });
+    check(dj.done && JSON.stringify(vj.w.lad) === JSON.stringify(M_LAD_BOLD) && JSON.stringify(vj.w.up) === JSON.stringify(books.jackal.spins.filter(function (x) { return x.wrathUp; }).map(function (x) { return x.wrathUp; })), 'replay Chacal : Colère à l\'échelle du pacte (×' + (vj.w.lad || []).join(' ×') + '), crans ×' + vj.w.up.join(' ×'));
+    check(/JACKAL/.test(sub), 'replay Chacal : le pacte est nommé dans le bandeau');
+    check(vj.res.replace(/\D/g, '') === String(E.makeBook(1, books.jackal).payoutMultiplier), 'replay Chacal : résultat = RGS (' + vj.res + ')');
     check(!p.errs.length, 'aucune erreur JS (' + p.errs.join(' | ') + ')'); await p.close();
 
     p = await open(b, { ev: 'sanct', q: '&currency=EUR&lang=fr&amount=1000000' });

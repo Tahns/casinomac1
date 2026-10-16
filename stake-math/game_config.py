@@ -109,18 +109,53 @@ N = len(LAYOUT)                  # 64
 # ---------------------------------------------------------------------------------------------------------------------
 WRATH_KINDS = ["ankh", "scarab", "weigh", "vault"]
 WRATH_CELLS = [i for i, k in enumerate(LAYOUT) if k in WRATH_KINDS]
-WRATH_LADDER = [2, 3, 5, 10, 25, 50, 100]
-WRATH_START = [[0, 1]]           # [cran de départ, poids] : toujours x2
+# ---------------------------------------------------------------------------------------------------------------------
+# PACTES : décision du joueur AVANT le tour (profil de volatilité), un mode de mise par pacte, même coût et même RTP (docs/GAMEPLAY.md).
+#   safe (Pacte du Scribe) : bonus profil Prudent, Colère plus fréquente plafonnée à x10 ; std (Balance) : référence ;
+#   bold (Pacte du Chacal) : bonus profil Audacieux, Colère plus rare de x3 à x250. Le pacte gouverne tous les bonus du tour (bandes de la
+#   Fureur comprises), jamais les achats (profil Équilibré). Chances de Colère réglées par tools/tune-pacts.js (RTP exact 96,20 %).
+# ---------------------------------------------------------------------------------------------------------------------
+PACTS = {
+    "safe": {"ladder": [2, 3, 5, 10]},
+    "std":  {"ladder": [2, 3, 5, 10, 25, 50, 100]},
+    "bold": {"ladder": [3, 5, 10, 25, 50, 100, 250]},
+}
+PACT_ORDER = ["safe", "std", "bold"]
+WRATH_LADDER = PACTS["std"]["ladder"]   # échelle de référence (Balance) ; chaque pacte a la sienne, portée par l'événement « wrath »
+WRATH_START = [[0, 1]]           # [cran de départ, poids] : toujours le premier cran de l'échelle du pacte
 WRATH_TOP = len(WRATH_LADDER) - 1
+
+
+def ladder_of(pact):
+    return PACTS.get(pact or "std", PACTS["std"])["ladder"]
 
 # ---------------------------------------------------------------------------------------------------------------------
 # Modes de mise (cost = débit en multiples de la mise)
 # ---------------------------------------------------------------------------------------------------------------------
-MODES = {"std": {"cost": 1.0, "oracle": 0.0765, "wrath": 0.002}, "plus": {"cost": 1.1, "oracle": 0.27, "wrath": 0.002}}
+MODES = {
+    "std":       {"cost": 1.0, "oracle": 0.0765, "wrath": 0.002,     "pact": "std"},
+    "plus":      {"cost": 1.1, "oracle": 0.27,   "wrath": 0.002,     "pact": "std"},
+    "safe":      {"cost": 1.0, "oracle": 0.0765, "wrath": 0.0040715, "pact": "safe"},
+    "bold":      {"cost": 1.0, "oracle": 0.0765, "wrath": 0.0011626, "pact": "bold"},
+    "plus_safe": {"cost": 1.1, "oracle": 0.27,   "wrath": 0.0039719, "pact": "safe"},
+    "plus_bold": {"cost": 1.1, "oracle": 0.27,   "wrath": 0.0012062, "pact": "bold"},
+}
+BASE_MODES = ["std", "plus", "safe", "bold", "plus_safe", "plus_bold"]
 BUY = {"scarab": 9.26, "weigh": 10.31, "vault": 12.37, "hand": 27.30}   # « hand » = Fureur d'Anubis (identifiant interne conservé)
 BUY_NAMES = {"scarab": "bonus_scarab", "weigh": "bonus_weigh", "vault": "bonus_vault", "hand": "bonus_fury"}
 BUY_KIND_OF = {v: k for k, v in BUY_NAMES.items()}
-MODE_ORDER = ["std", "plus", "bonus_scarab", "bonus_weigh", "bonus_vault", "bonus_fury"]
+MODE_ORDER = BASE_MODES + ["bonus_scarab", "bonus_weigh", "bonus_vault", "bonus_fury"]
+
+
+def family_of(mode):
+    """Famille du mode : « plus » (Oracle+) ou « std » ; champ historique roundStart.mode du format v2."""
+    return "plus" if str(mode).startswith("plus") else "std"
+
+
+def mode_for(family, pact):
+    f = "plus" if family == "plus" else "std"
+    p = pact if pact in PACTS else "std"
+    return f if p == "std" else ("plus_" if f == "plus" else "") + p
 
 # ---------------------------------------------------------------------------------------------------------------------
 # Oracle : bénédiction scellée avant le tour, révélée à l'arrêt de la roue
@@ -303,6 +338,10 @@ def _dist(criteria, quota, **cond):
 QUOTAS = {
     "std":        [("wincap", 0.002), ("0", 0.25), ("epic", 0.01), ("big", 0.04), ("bonus", 0.25), ("basegame", 0.448)],
     "plus":       [("wincap", 0.002), ("0", 0.25), ("epic", 0.01), ("big", 0.04), ("bonus", 0.25), ("basegame", 0.448)],
+    "safe":       [("wincap", 0.002), ("0", 0.25), ("epic", 0.01), ("big", 0.04), ("bonus", 0.25), ("basegame", 0.448)],
+    "bold":       [("wincap", 0.002), ("0", 0.25), ("epic", 0.01), ("big", 0.04), ("bonus", 0.25), ("basegame", 0.448)],
+    "plus_safe":  [("wincap", 0.002), ("0", 0.25), ("epic", 0.01), ("big", 0.04), ("bonus", 0.25), ("basegame", 0.448)],
+    "plus_bold":  [("wincap", 0.002), ("0", 0.25), ("epic", 0.01), ("big", 0.04), ("bonus", 0.25), ("basegame", 0.448)],
     "bonus_scarab": [("wincap", 0.002), ("0", 0.003), ("epic", 0.01), ("big", 0.10), ("bonus", 0.885)],
     "bonus_weigh":  [("wincap", 0.002), ("0", 0.45), ("epic", 0.02), ("big", 0.08), ("bonus", 0.448)],
     "bonus_vault":  [("wincap", 0.002), ("0", 0.003), ("epic", 0.01), ("big", 0.08), ("bonus", 0.905)],

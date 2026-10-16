@@ -1,6 +1,6 @@
 // node tools/mock-rgs.js [port=8787] — faux RGS local (CORS ouvert) pour tester le client js/rgs.js. NE PAS utiliser en production.
 // Routes : POST /wallet/authenticate | /wallet/balance | /wallet/play | /wallet/end-round | /bet/event, GET /bet/replay/:jeu/:version/:mode/:event.
-// Les books (FORMAT v2, voir l'en-tête de tools/stake-export.js) viennent de AnubisMath : 100 books par mode, 6 modes = 600 books au total (jamais plus de 1000).
+// Les books (FORMAT v2, voir l'en-tête de tools/stake-export.js) viennent de AnubisMath : 100 books par mode historique (6 modes) + 40 par pacte (4 modes) = 760 books au total (jamais plus de 1000).
 // Réglage en cours de test (module) : mock.set({ balance, betLevels, defaultBetLevel, active, next, social, currency }) ; next = 'win' | 'zero' | null ;
 // mock.queueBook(mode, book) : le prochain /wallet/play de ce mode rend ce book (book = { id, events, payoutMultiplier }, ex. tools/stake-export.makeBook) ;
 // mock.set({ fail: { '/wallet/authenticate': 'ERR_IS' } }) : cette route répond ce code d'erreur (400) tant que fail la contient.
@@ -20,12 +20,17 @@ var MODES = [
 [['scarab', 'scarab'], ['weigh', 'weigh'], ['vault', 'vault'], ['fury', 'hand']].forEach(function (p) {
   MODES.push({ name: 'bonus_' + p[0], cost: M.BUY[p[1]].price, play: function (r) { return M.playBuy(r, p[1]); } });
 });
+// pactes (safe, bold, plus_safe, plus_bold) : ajoutés EN DERNIER (les graines des 6 modes historiques ne bougent pas), 40 books chacun au plus
+// (6 × 100 + 4 × 40 = 760 books, sous le plafond de 1000)
+M.BASE_MODES.filter(function (m) { return M.pactOf(m) !== 'std'; }).forEach(function (m) {
+  MODES.push({ name: m, cost: M.MODES[m].cost, n: Math.min(PER_MODE, 40), play: function (r) { return M.playRound(r, m); } });
+});
 
 function makePool(seed) {
   var pool = {};
   MODES.forEach(function (m, mi) {
     var rng = M.mulberry32(seed + mi), list = [];
-    for (var i = 0; i < PER_MODE; i++) {
+    for (var i = 0; i < (m.n || PER_MODE); i++) {
       var round = m.play(rng);
       list.push({ id: i + 1, events: exp.bookEvents(round), payoutMultiplier: M.toInt(round.total) });
     }

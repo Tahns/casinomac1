@@ -117,9 +117,12 @@ def cell_counts(wrath):
     return {k: d["count"] for k, d in C.KINDS.items() if not (d["respin"] or (wrath and k not in C.WRATH_KINDS))}
 
 
-def wrath_ladder():
+def wrath_ladder(pact="std"):
     """Loi EXACTE du multiplicateur final de la Colère : cran de départ (WRATH_START) + nombre L d'Ankh avant la case finale.
-    Sur la roue de la Colère, P(Ankh) = a ; L < MAX_CHAIN : a^L (1 - a) ; L = MAX_CHAIN : a^MAX_CHAIN (la dernière relance est retirée hors Ankh)."""
+    Sur la roue de la Colère, P(Ankh) = a ; L < MAX_CHAIN : a^L (1 - a) ; L = MAX_CHAIN : a^MAX_CHAIN (la dernière relance est retirée hors Ankh).
+    pact : échelle du pacte (x2..x100 Balance, x2..x10 Scribe, x3..x250 Chacal)."""
+    lad = C.ladder_of(pact)
+    top = len(lad) - 1
     n = sum(1 for k in C.LAYOUT if k in C.WRATH_KINDS)
     a = C.KINDS["ankh"]["count"] / n
     ws = sum(t[1] for t in C.WRATH_START)
@@ -127,9 +130,9 @@ def wrath_ladder():
     for st in C.WRATH_START:
         for l in range(C.MAX_CHAIN + 1):
             pl = a ** l * (1 - a) if l < C.MAX_CHAIN else a ** C.MAX_CHAIN
-            m = C.WRATH_LADDER[min(st[0] + l, C.WRATH_TOP)]
+            m = lad[min(st[0] + l, top)]
             pm[m] = pm.get(m, 0.0) + st[1] / ws * pl
-    return [[m, pm[m]] for m in C.WRATH_LADDER if pm.get(m)]
+    return [[m, pm[m]] for m in lad if pm.get(m)]
 
 
 @functools.lru_cache(maxsize=None)
@@ -332,10 +335,11 @@ def vault_dist(vp):
     return out
 
 
-def hand_dist():
+def hand_dist(prof="std"):
+    """prof : profil (pacte) des bandes de bonus imbriquées."""
     segs, n = C.HAND_SEGS, len(C.HAND_SEGS)
     q = sum(1 for sg in segs if sg.get("d") == 0) / n
-    bd = {"scarab": scarab_dist("std"), "weigh": weigh_dist("std"), "vault": vault_dist(C.VAULT_PROFILES["std"])}
+    bd = {"scarab": scarab_dist(prof), "weigh": weigh_dist(prof), "vault": vault_dist(C.VAULT_PROFILES[prof])}
 
     def seg(excl, m):
         lst = []
@@ -399,11 +403,17 @@ def crypt_dist():
 
 
 @functools.lru_cache(maxsize=None)
-def bonus_dists():
+def crypt_dist_cached():
+    return crypt_dist()
+
+
+@functools.lru_cache(maxsize=None)
+def bonus_dists(prof="std"):
+    """Lois des bonus pour un pacte (profil) ; le Sanctuaire n'a pas de profil (une seule loi)."""
     h, s = C.HAND_UPGRADE, C.SECRET_UPGRADE
-    hd, cd = hand_dist(), crypt_dist()
+    hd, cd = hand_dist(prof), crypt_dist_cached()
     o = {"hand": hd, "crypt": cd, "buy": {}, "wheel": {}}
-    for k, d in (("scarab", scarab_dist("std")), ("weigh", weigh_dist("std")), ("vault", vault_dist(C.VAULT_PROFILES["std"]))):
+    for k, d in (("scarab", scarab_dist(prof)), ("weigh", weigh_dist(prof)), ("vault", vault_dist(C.VAULT_PROFILES[prof]))):
         o[k] = d
         o["buy"][k] = d_mix([[d, 1 - h], [hd, h]])
         o["wheel"][k] = d_mix([[o["buy"][k], 1 - s], [cd, s]])
@@ -411,8 +421,8 @@ def bonus_dists():
     return o
 
 
-def spin_dist(qo, wrath):
-    cc, bd = cell_counts(wrath), bonus_dists()
+def spin_dist(qo, wrath, prof="std"):
+    cc, bd = cell_counts(wrath), bonus_dists(prof)
     wo = sum(t[1] for t in C.ORACLE_KIND_W)
     nn = sum(cc.values())
     lst = []
@@ -437,15 +447,17 @@ def spin_dist(qo, wrath):
 
 @functools.lru_cache(maxsize=None)
 def distribution(mode):
-    """Loi exacte du gain d'un tour du mode (dixièmes de mise, plafonné) : std | plus | bonus_scarab | bonus_weigh | bonus_vault | bonus_fury."""
+    """Loi exacte du gain d'un tour du mode (dixièmes de mise, plafonné) : std | plus | safe | bold | plus_safe | plus_bold (pactes)
+    | bonus_scarab | bonus_weigh | bonus_vault | bonus_fury (achats : toujours le profil Équilibré)."""
     if mode in C.BUY_KIND_OF:
-        return bonus_dists()["buy"][C.BUY_KIND_OF[mode]]
+        return bonus_dists("std")["buy"][C.BUY_KIND_OF[mode]]
     md = C.MODES[mode]
+    pf = md.get("pact", "std")
     qw = md.get("wrath", 0) or 0
-    lst = [[spin_dist(md["oracle"], False), 1 - qw]]
+    lst = [[spin_dist(md["oracle"], False, pf), 1 - qw]]
     if qw:
-        sw = spin_dist(md["oracle"], True)
-        for mult, pm in wrath_ladder():
+        sw = spin_dist(md["oracle"], True, pf)
+        for mult, pm in wrath_ladder(pf):
             lst.append([d_scale(sw, mult), qw * pm])
     return d_mix(lst)
 
@@ -574,12 +586,14 @@ def decompose(mode):
 
 
 def mode_rtp(name, res=None):
-    """RTP exact (plafond compris) d'un mode (clé du jeu : std, plus, bonus_scarab...)."""
+    """RTP exact (plafond compris) d'un mode (clé du jeu : std, plus, safe, bold, plus_safe, plus_bold, bonus_scarab...)."""
     res = res or compute()
     if name == "std":
         return res["std"]["mean"]
     if name == "plus":
         return res["plus"]["mean"]
+    if name in C.MODES:
+        return summary(name)["rtp"]
     return res["buy"][C.BUY_KIND_OF[name]]["rtp"]
 
 
@@ -589,6 +603,8 @@ def mode_hit(name, res=None):
         return res["std"]["hit"]
     if name == "plus":
         return res["plus"]["hit"]
+    if name in C.MODES:
+        return summary(name)["hit"]
     return res["buy"][C.BUY_KIND_OF[name]]["hit"]
 
 

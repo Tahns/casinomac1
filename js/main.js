@@ -43,7 +43,7 @@
   var SAVE_KEY = 'anubis_save_v1', OLD_SAVE_KEY = 'hoa_save_v1';   // ancienne clé lue une fois pour ne pas perdre les soldes
   var REPLAY = !!(root.Replay && root.Replay.active);   // mode replay (js/replay.js) : aucune sauvegarde lue ni écrite, pas d'écran d'accueil
 
-  var S = { pending: 0, balance: LIVE ? 0 : START_BAL, bi: BET_DEFAULT, cur: '', curSet: false, lastWin: 0, autoIdx: 0, auto: 0, stopOnBonus: false, busy: false, hist: [], blocked: false, pendingEnd: false, stopWin: 0, reduced: false, mode: 'std', buyOn: true, limit: 0, limitB: 0, quality: 'auto', limitHit: false, curLocked: false, balCur: 'EUR' };
+  var S = { pending: 0, balance: LIVE ? 0 : START_BAL, bi: BET_DEFAULT, cur: '', curSet: false, lastWin: 0, autoIdx: 0, auto: 0, stopOnBonus: false, busy: false, hist: [], blocked: false, pendingEnd: false, stopWin: 0, reduced: false, mode: 'std', pact: 'std', buyOn: true, limit: 0, limitB: 0, quality: 'auto', limitHit: false, curLocked: false, balCur: 'EUR' };
   var SESS = { start: Date.now(), spins: 0, wag: 0, won: 0, lastCheck: Date.now() };
   // La session (début, tours, mises, gains, dernier rappel) survit au rechargement : sinon recharger la page remettrait à zéro la limite de perte et
   // le temps de jeu (contournement). Elle est écrite dans sessionStorage (cet onglet) ET localStorage (nouvel onglet, page rouverte) ;
@@ -134,6 +134,8 @@
         if (Array.isArray(d.hist)) S.hist = d.hist.slice(0, 10);
         // [conformité] le mode Oracle+ (coût plus élevé) n'est jamais réactivé au chargement : il demande une confirmation à chaque activation
         if (d.buyOn === false) S.buyOn = false;
+        // pacte : même prix et même RTP que la Balance (aucune confirmation requise) : il est retenu d'une visite à l'autre
+        if (d.pact && M.PACTS && M.PACTS[d.pact]) S.pact = d.pact;
         if (d.quality) S.quality = d.quality;
       }
     } catch (e) {}
@@ -152,7 +154,7 @@
     if (REPLAY) return;
     try {
       S.synced = S.balance;
-      localStorage.setItem(SAVE_KEY, JSON.stringify({ v: SAVE_VER, t: Date.now(), cur: S.curSet ? S.cur : '', balCur: S.cur, pending: LIVE ? 0 : S.pending, balance: LIVE ? START_BAL : S.balance, bi: LIVE ? BET_DEFAULT : S.bi, lang: I18N.lang(), langSet: S.langSet ? 1 : 0, muted: Sfx.isMuted(), pitch: Sfx.getPitch(), vol: Sfx.getVolume(), tone: Sfx.getTone(), music: Sfx.isMusic(), sfx: Sfx.isSfx(), turbo: G.turbo, ultra: !!G.ultra, sobV2: S.stopOnBonus, reduced: S.reduced, hist: S.hist, mode: S.mode, buyOn: S.buyOn, limit: S.limitB, quality: S.quality }));
+      localStorage.setItem(SAVE_KEY, JSON.stringify({ v: SAVE_VER, t: Date.now(), cur: S.curSet ? S.cur : '', balCur: S.cur, pending: LIVE ? 0 : S.pending, balance: LIVE ? START_BAL : S.balance, bi: LIVE ? BET_DEFAULT : S.bi, lang: I18N.lang(), langSet: S.langSet ? 1 : 0, muted: Sfx.isMuted(), pitch: Sfx.getPitch(), vol: Sfx.getVolume(), tone: Sfx.getTone(), music: Sfx.isMusic(), sfx: Sfx.isSfx(), turbo: G.turbo, ultra: !!G.ultra, sobV2: S.stopOnBonus, reduced: S.reduced, hist: S.hist, mode: S.mode, pact: S.pact, buyOn: S.buyOn, limit: S.limitB, quality: S.quality }));
     } catch (e) {}
     saveSess();
   }
@@ -188,8 +190,10 @@
     setTimeout(function () { if (winQueue.length && $('modal').hidden) { var w = winQueue.shift(); w.open(); } }, 260);
   }
   function bet() { return BETS[S.bi]; }
-  function cost() { return r2(bet() * M.MODES[S.mode].cost); }
-  G.cost = cost;
+  // mode de mise du prochain tour : famille (Standard / Oracle+) × pacte (Scribe / Balance / Chacal) ; un pacte = un mode Stake distinct, même prix
+  function curMode() { return M.modeFor(S.mode, S.pact); }
+  function cost() { return r2(bet() * M.MODES[curMode()].cost); }
+  G.cost = cost; G.curMode = curMode;
   function say(txt) { $('statusText').textContent = txt || ''; }
   G.say = say;
 
@@ -240,6 +244,7 @@
     $('btnAuto').classList.toggle('on', S.auto > 0);
     $('btnTurbo').classList.toggle('on', G.turbo); $('btnTurbo').classList.toggle('ultra', !!G.ultra); $('btnTurbo').querySelector('span').textContent = G.ultra ? 'ULTRA' : T.turbo;
     $('btnPlus').classList.toggle('on', S.mode === 'plus'); $('plusText').textContent = T.oraclePlus + (S.mode === 'plus' ? ' · ' + G.money(cost()) : '');
+    pactButton();
     $('btnBuy').hidden = !S.buyOn; $('btnBuy').disabled = S.busy || S.blocked || tabOff || S.auto > 0; $('buyText').textContent = T.buyBtn;
   }
   function pushHistory(mult, bonus) {
@@ -264,7 +269,7 @@
   async function play(buyKind, resume) {
     if (S.busy || S.blocked || tabOff || (STAKE && !LIVE)) return;
     var T = I18N.t(), b = resume ? resume.bet : bet();
-    var priceMult = buyKind ? M.BUY[buyKind].price : resume ? M.MODES[resume.mode].cost : M.MODES[S.mode].cost;
+    var priceMult = buyKind ? M.BUY[buyKind].price : resume ? M.MODES[resume.mode].cost : M.MODES[curMode()].cost;
     var c = rr(b * priceMult);   // coût réel du mode = mise x coût du mode (barre d'espace, autoplay et achats passent tous par ici)
     if (!resume) {
       if (S.limitHit) { openLimit(); return; }
@@ -272,6 +277,7 @@
       if (S.balance < c) { say(T.noFunds); Sfx.curse(); stopAuto(); return; }   // jamais de requête /wallet/play sans le solde pour le coût réel
     }
     Sfx.unlock(); Sfx.startAmbient(); Sfx.spinStart();
+    if (G.pactFx) G.pactFx.reset();   // le sceau du pacte s'efface : le tour commence
     S.busy = true; G.speed = spd();
     var round, srv = null, hadBonus = false;
     if (LIVE) {
@@ -280,7 +286,7 @@
       try {
         srv = RG.readRound(resume ? resume.round : null);
         if (!resume) {
-          var res = await RG.play(b, RG.modeName(S.mode, buyKind));
+          var res = await RG.play(b, RG.modeName(S.mode, buyKind, S.pact));
           srv = RG.readRound(res.round); S.balance = G.r6(RG.fromMicro(res.balance.amount));
           SESS.spins++; SESS.wag = rr(SESS.wag + c); saveSess(); updateHud(true);
         }
@@ -291,7 +297,7 @@
       }
     } else {
       S.balance = r2(S.balance - c); SESS.spins++; SESS.wag = r2(SESS.wag + c); updateHud(true); setWin(0, false); setSpinBtn();
-      round = buyKind ? M.playBuy(rng, buyKind) : M.playRound(rng, S.mode);
+      round = buyKind ? M.playBuy(rng, buyKind) : M.playRound(rng, curMode());
       // le gain est connu avant l'animation : on le met en attente et on sauvegarde tout de suite la mise débitée
       S.pending = r2(Math.min(round.total, M.MAX_WIN) * b); save();
     }
@@ -447,6 +453,7 @@
       S.blocked = false; shown.bal = -1; applyLang(); updateHud(); setSpinBtn(); say(I18N.t().ready);
       if (rd) {
         var pm = RG.parseMode(rd.mode); if (!pm.buy && pm.mode === 'plus') S.mode = 'plus';
+        if (!pm.buy && pm.pact) S.pact = pm.pact;   // round repris : son pacte est celui du mode joué
         S.resume = { round: rd, bet: RG.fromMicro(rd.amount), mode: pm.mode, buy: pm.buy, mult: Number(rd.payoutMultiplier) || 0 };
         resumeRound();
       }
@@ -486,6 +493,61 @@
     showModal(); $('plusNo').focus();   // focus initial sur « Annuler »
   }
   $('btnPlus').addEventListener('click', function () { if (S.busy || S.blocked) return; if (S.mode === 'plus') setPlus(false); else confirmPlus(); });
+
+  /* ---------- PACTES : décision du joueur AVANT le tour (docs/GAMEPLAY.md) ----------
+   * Trois cartes (Scribe / Balance / Chacal) : chiffres tirés du calcul exact (js/stats.js) et de math.js. Choisir un pacte ne joue rien et n'envoie
+   * aucune requête : il change le mode de mise du PROCHAIN tour (M.modeFor), au même prix et au même RTP ; impossible pendant un tour. */
+  var PACT_ORDER = M.PACT_ORDER || ['safe', 'std', 'bold'];
+  function pactButton() {
+    var P = I18N.block('pact'), b = $('btnPact'); if (!b) return;
+    var key = S.pact + '|' + I18N.lang();
+    if (b.getAttribute('data-k') !== key) { b.setAttribute('data-k', key); $('pactIco').innerHTML = G.pactFx ? G.pactFx.icon(S.pact) : ''; $('pactText').textContent = P.short[S.pact]; b.setAttribute('aria-label', P.btn + ' : ' + P.name[S.pact]); }
+    b.disabled = S.busy || S.blocked || tabOff || S.auto > 0; b.classList.toggle('lv1', S.pact === 'safe'); b.classList.toggle('lv3', S.pact === 'bold');
+  }
+  function pactFacts(p) {
+    var P = I18N.block('pact'), T = I18N.t(), HS = root.HOA_STATS || {}, st = HS.pacts && HS.pacts[M.modeFor(S.mode, p)] || {};
+    var lad = M.ladderOf(p), md = M.MODES[M.modeFor(S.mode, p)], n = function (x) { return Math.round(x).toLocaleString(I18N.locale()); };
+    return [
+      [I18N.block('rules').wrathH, String(P.vWrath).replace('{n}', n(1 / md.wrath)).replace('{a}', lad[0]).replace('{b}', lad[lad.length - 1])],
+      [P.lBonus, String(T.kinds.scarab).replace('\n', ' ') + ' ×' + Math.max.apply(null, M.SCARAB_PROFILES[p]) + ' · ' + String(T.kinds.weigh).replace('\n', ' ') + ' ×' + Math.max.apply(null, M.WEIGH_PROFILES[p].map(function (q) { return q[0][1]; }))],
+      [String(P.lBig).replace('{x}', n(M.PACT_BIG)), st.big ? String(P.vBig).replace('{n}', n(st.big)) : '—'],
+      [P.lVol, P.vVol[p] + (st.sd ? ' (σ ' + st.sd.toLocaleString(I18N.locale(), { maximumFractionDigits: 1 }) + ')' : '')]
+    ];
+  }
+  function setPact(p, anim) {
+    if (!M.PACTS[p] || S.busy || S.blocked) return false;
+    var changed = S.pact !== p, P = I18N.block('pact');
+    S.pact = p; save(); updateHud(); setSpinBtn();
+    say(String(P.say).replace('{name}', P.name[p]));
+    if (anim !== false && G.pactFx) G.pactFx.seal(p);
+    else Sfx.click();
+    return changed;
+  }
+  G.setPact = setPact;
+  function openPact() {
+    if (S.busy || S.blocked || S.auto > 0) return;
+    var P = I18N.block('pact'), HS = root.HOA_STATS || {}, rtpTxt = HS.std ? Number(HS.std.rtp).toLocaleString(I18N.locale(), { minimumFractionDigits: 2 }) + ' %' : '96,2 %';
+    $('modalBody').innerHTML = '<h2>' + P.title + '</h2><p class="sub" id="pactSub"></p><div class="pactGrid" id="pactGrid" role="radiogroup"></div><p class="sub pactNote" id="pactNote"></p>';
+    $('pactSub').textContent = String(P.sub).replace('{rtp}', rtpTxt); $('pactNote').textContent = P.buyNote;
+    var grid = $('pactGrid');
+    PACT_ORDER.forEach(function (p, i) {
+      var on = S.pact === p, card = document.createElement('button');
+      card.type = 'button'; card.className = 'pactCard lv' + (i + 1) + (on ? ' on' : ''); card.id = 'pact_' + p;
+      card.setAttribute('role', 'radio'); card.setAttribute('aria-checked', on ? 'true' : 'false');
+      var ic = document.createElement('div'); ic.className = 'pIco'; ic.innerHTML = G.pactFx ? G.pactFx.icon(p) : ''; card.appendChild(ic);
+      var h = document.createElement('h4'); h.textContent = P.name[p]; card.appendChild(h);
+      var tg = document.createElement('small'); tg.textContent = P.tag[p]; card.appendChild(tg);
+      var dl = document.createElement('dl');
+      pactFacts(p).forEach(function (f) { var dt = document.createElement('dt'), dd = document.createElement('dd'); dt.textContent = f[0]; dd.textContent = f[1]; dl.appendChild(dt); dl.appendChild(dd); });
+      card.appendChild(dl);
+      var go = document.createElement('div'); go.className = 'go'; go.textContent = on ? P.active : P.seal; card.appendChild(go);
+      card.onclick = function () { hideModal(); setPact(p); };
+      grid.appendChild(card);
+    });
+    showModal(); Sfx.click();
+  }
+  G.openPact = openPact;
+  $('btnPact').addEventListener('click', function () { openPact(); });
   // [104] un appui sur AUTO n'engage aucun pari : il ouvre un panneau (nombre de tours, arrêts) à confirmer par « Démarrer »
   var STOP_WINS = [0, 10, 50, 100];
   function openAuto() {
@@ -977,9 +1039,9 @@
       } else if (i === 1) {   // 4 bonus + secret
         ['scarab', 'weigh', 'vault', 'hand'].forEach(function (n) { var m = img(n); if (m) box.appendChild(m); });
         box.appendChild(el('span', 'spQ', '?'));
-      } else if (i === 2) {   // choix : plume ou cœur, couleur de la Fureur
-        var m = img('weigh'); if (m) box.appendChild(m);
-        box.appendChild(chip(T.feather)); box.appendChild(chip(T.heart));
+      } else if (i === 2) {   // choix : pacte avant le tour (trois jauges), plume ou cœur, couleur de la Fureur
+        var PB = I18N.block('pact');
+        (M.PACT_ORDER || []).forEach(function (pp) { var c = chip(PB.short[pp]); if (G.pactFx) c.insertAdjacentHTML('afterbegin', G.pactFx.icon(pp)); c.classList.add('spPact'); box.appendChild(c); });
         ['#18b5a4', '#e6b94a', '#c8392b'].forEach(function (c) { var d = el('span', 'spDot3'); d.style.background = c; box.appendChild(d); });
       } else {   // accès direct + vitesses
         k = img('coin'); if (k) box.appendChild(k);
@@ -992,7 +1054,7 @@
       for (var i = 0; i < n; i++) (function (i) {
         var s = el('div', 'spSlide'), art = el('div', 'spArt'), lab = String(I.slideN).replace('{n}', i + 1).replace('{t}', n);
         s.setAttribute('role', 'group'); s.setAttribute('aria-roledescription', 'slide'); s.setAttribute('aria-label', lab);
-        slideArt(i, art, T); s.appendChild(art); s.appendChild(el('h2', '', I['s' + (i + 1) + 'T'])); s.appendChild(el('p', '', String(I['s' + (i + 1) + 'B']).replace('{ox}', ox)));
+        slideArt(i, art, T); s.appendChild(art); s.appendChild(el('h2', '', I['s' + (i + 1) + 'T'])); s.appendChild(el('p', '', i === 2 ? I18N.block('pact').slide : String(I['s' + (i + 1) + 'B']).replace('{ox}', ox)));
         track.appendChild(s);
         var d = el('button'); d.type = 'button'; d.setAttribute('aria-label', lab); d.addEventListener('click', function (e) { e.stopPropagation(); userTouched = true; go(i); }); dots.appendChild(d);
       })(i);

@@ -8,6 +8,9 @@ function r2(x) { return Math.round(x * 100) / 100; }
 function build() {
   var r = compute(), o = { maxWin: M.MAX_WIN, std: { cost: M.MODES.std.cost, rtp: r2(r.std.mean * 100), hit: Math.round(r.std.hit * 1000) / 10, bonusEvery: Math.round(r.bonusEvery * 10) / 10 }, plus: { cost: M.MODES.plus.cost, rtp: r2(r.plus.mean * 100) }, buy: {} };
   Object.keys(r.buy).forEach(function (k) { o.buy[k] = { cost: M.BUY[k].price, rtp: r2(r.buy[k].rtp * 100) }; });
+  // pactes (modes de base std, plus, safe, bold, plus_safe, plus_bold) : RTP, écart-type rapporté au coût, « 1 tour sur N » pour un gain ≥ M.PACT_BIG (×5000)
+  o.pacts = {};
+  M.BASE_MODES.forEach(function (m) { var S = compute.summary(m); o.pacts[m] = { cost: M.MODES[m].cost, rtp: r2(S.rtp * 100), sd: Math.round(S.sdRel * 10) / 10, big: Math.round(1 / S.atLeast(M.PACT_BIG)) }; });
   return o;
 }
 var want = '/* Généré par tools/gen-stats.js (calcul exact, tools/rtp-exact.js) — ne pas modifier à la main. */\nwindow.HOA_STATS = ' + JSON.stringify(build(), null, 1).replace(/\n\s*/g, ' ') + ';\n';

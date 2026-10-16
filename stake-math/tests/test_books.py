@@ -94,7 +94,7 @@ class TestFormat(unittest.TestCase):
             self.assertEqual(sorted(m), ["cost", "events", "name", "weights"])
             self.assertTrue(m["events"].startswith("books_%s.jsonl" % m["name"]))
             self.assertEqual(m["weights"], "lookUpTable_%s_0.csv" % m["name"])
-        self.assertEqual([m["cost"] for m in idx["modes"]], [1.0, 1.1, 9.26, 10.31, 12.37, 27.3])
+        self.assertEqual([m["cost"] for m in idx["modes"]], [1.0, 1.1, 1.0, 1.0, 1.1, 1.1, 9.26, 10.31, 12.37, 27.3])
 
     def test_lookup_trois_entiers_non_signes(self):
         tmp, _ = lib(10)
@@ -189,7 +189,7 @@ class TestEvenements(unittest.TestCase):
                     self.assertFalse(any(e["type"] == "wheelStop" for e in ev))
 
     def test_roue_et_oracle(self):
-        for mode in ("std", "plus"):
+        for mode in C.BASE_MODES:
             for b in load_books(self.tmp, mode):
                 ev = b["events"]
                 stops = [e for e in ev if e["type"] == "wheelStop"]
@@ -309,6 +309,21 @@ class TestEvenements(unittest.TestCase):
                 seen += 1
         self.assertGreater(seen, 20)
 
+    def test_pacte_dans_les_books(self):
+        # roundStart.pact = pacte du mode (achats : Balance) ; les Scarabées joués sur la roue paient les valeurs du profil du pacte
+        seen = {}
+        for mode in C.MODE_ORDER:
+            want = C.MODES[mode]["pact"] if mode in C.MODES else "std"
+            for bk in load_books(self.tmp, mode):
+                self.assertEqual(bk["events"][0]["pact"], want, mode)
+                for bn in self.split_bonus(bk["events"]):
+                    if bn["start"]["bonus"] != "scarab":
+                        continue
+                    for d in [e for e in bn["ev"] if e["type"] == "scarabDrop"]:
+                        self.assertEqual(d["win"], C.SCARAB_INT[want][d["slot"]], mode)
+                        seen[want] = seen.get(want, 0) + 1
+        self.assertTrue({"safe", "std", "bold"} <= set(seen), seen)
+
     def test_sanctuaire_rejoue(self):
         # le Sanctuaire est rare (1 bonus sur 25 sur la roue) : on le force avec des tirages imposés, puis on rejoue l'événement
         from rng import ScriptedRng
@@ -346,7 +361,7 @@ class TestColereEtFences(unittest.TestCase):
                     first[0] = False
                     return 0.0      # premier tirage < chance de Colère : la Colère se déclenche
                 return base()
-            r = G.play_mode(rng, "std" if k % 2 == 0 else "plus")
+            r = G.play_mode(rng, C.BASE_MODES[k % len(C.BASE_MODES)])   # les 6 modes de base : chaque pacte a son échelle
             books.append({"id": k + 1, "events": E.book_events(r, r["total"]), "payoutMultiplier": r["total"], "_r": r})
         return books
 
@@ -355,17 +370,20 @@ class TestColereEtFences(unittest.TestCase):
         for b in self.wrath_books():
             ev, r = b["events"], b["_r"]
             self.assertEqual(ev[1]["type"], "wrath")
+            lad = C.ladder_of(r["pact"])
+            self.assertEqual(ev[0]["pact"], r["pact"])
+            self.assertEqual(ev[1]["ladder"], lad)
             lv = ev[1]["level"]
-            self.assertEqual(ev[1]["mult"], C.WRATH_LADDER[lv])
+            self.assertEqual(ev[1]["mult"], lad[lv])
             orc = None
             for e in ev:
                 if e["type"] == "oracle":
                     orc = e
                 if e["type"] == "wheelStop":
                     self.assertIn(e["kind"], C.WRATH_KINDS)
-                    self.assertEqual(e["wrath"], C.WRATH_LADDER[lv])
+                    self.assertEqual(e["wrath"], lad[lv])
                     ob = orc["boost"] if orc and orc["spin"] == e["spin"] and orc["kind"] == e["kind"] else 1
-                    self.assertEqual(e["boost"], ob * C.WRATH_LADDER[lv])
+                    self.assertEqual(e["boost"], ob * lad[lv])
                 if e["type"] == "wrathUp":
                     self.assertEqual(e["level"], lv + 1)
                     lv = e["level"]
@@ -383,14 +401,14 @@ class TestColereEtFences(unittest.TestCase):
         node = shutil.which("node")
         if not node:
             self.skipTest("Node indisponible")
-        books = [{k: v for k, v in b.items() if k != "_r"} for b in self.wrath_books(40)]
+        books = [{k: v for k, v in b.items() if k != "_r"} for b in self.wrath_books(42)]
         js = ("var M=require('./js/math.js'),S=require('./tools/stake-export.js'),R=require('./js/rgs.js'),bad=0,n=0;"
               "JSON.parse(require('fs').readFileSync(0,'utf8')).forEach(function(b){n++;var v=S.verify(b),r=R.bookToRound(b.events,M);"
               "if(v.length||r.issues.length||M.toInt(r.total)!==b.payoutMultiplier||!r.wrath){bad++;console.error(JSON.stringify(v.concat(r.issues)));}});"
               "console.log(n+' '+bad);")
         out = subprocess.run([node, "-e", js], input=_json.dumps(books), capture_output=True, text=True, cwd=common.REPO, check=True)
         n, bad = map(int, out.stdout.split())
-        self.assertEqual((n, bad), (40, 0), out.stderr[:2000])
+        self.assertEqual((n, bad), (42, 0), out.stderr[:2000])
 
     def test_fences_par_palier_dans_math_config(self):
         tmp, _ = lib(10)

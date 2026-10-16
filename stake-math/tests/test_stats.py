@@ -18,11 +18,12 @@ HIT = {m: exact.mode_hit(m, RES) for m in C.MODE_ORDER}
 
 
 class TestRtp(unittest.TestCase):
-    def test_six_modes_declares(self):
+    def test_dix_modes_declares(self):
         cfg = C.GameConfig()
-        self.assertEqual([b.get_name() for b in cfg.bet_modes], ["std", "plus", "bonus_scarab", "bonus_weigh", "bonus_vault", "bonus_fury"])
-        self.assertEqual([b.get_cost() for b in cfg.bet_modes], [1.0, 1.1, 9.26, 10.31, 12.37, 27.3])
-        self.assertEqual([b.get_buybonus() for b in cfg.bet_modes], [False, False, True, True, True, True])
+        self.assertEqual([b.get_name() for b in cfg.bet_modes], ["std", "plus", "safe", "bold", "plus_safe", "plus_bold",
+                                                                 "bonus_scarab", "bonus_weigh", "bonus_vault", "bonus_fury"])
+        self.assertEqual([b.get_cost() for b in cfg.bet_modes], [1.0, 1.1, 1.0, 1.0, 1.1, 1.1, 9.26, 10.31, 12.37, 27.3])
+        self.assertEqual([b.get_buybonus() for b in cfg.bet_modes], [False] * 6 + [True] * 4)
         for b in cfg.bet_modes:
             self.assertEqual(b.get_wincap(), 25000)
             self.assertAlmostEqual(b.get_rtp(), 0.962)
@@ -51,6 +52,81 @@ class TestRtp(unittest.TestCase):
     def test_prix_d_achat_coherents(self):
         for kind, b in RES["buy"].items():
             self.assertLess(abs(b["rtp"] - 0.96), 0.001, kind)
+
+
+class TestPactes(unittest.TestCase):
+    """Décision du joueur avant le tour : trois pactes = trois profils de volatilité, chacun un mode de mise au même coût et au même RTP."""
+
+    def test_meme_rtp_que_la_balance(self):
+        # le choix du pacte ne change pas l'espérance : RTP exact identique à 0,005 point près (réglage tools/tune-pacts.js)
+        for fam in ("std", "plus"):
+            ref = RTP[fam]
+            for pf in ("safe", "bold"):
+                m = C.mode_for(fam, pf)
+                self.assertEqual(C.MODES[m]["cost"], C.MODES[fam]["cost"], m)
+                self.assertEqual(C.MODES[m]["oracle"], C.MODES[fam]["oracle"], m)
+                self.assertLess(abs(RTP[m] - ref), 0.00005, "%s : %.5f contre %.5f" % (m, RTP[m], ref))
+                self.assertLess(abs(RTP[m] - C.RTP_TARGET), 0.00005, m)
+
+    def test_volatilite_ordonnee_et_distincte(self):
+        # Scribe < Balance < Chacal, avec des écarts nets (au moins 25 % d'écart-type entre deux pactes voisins)
+        for fam in ("std", "plus"):
+            sd = [exact.summary(C.mode_for(fam, pf))["sdRel"] for pf in C.PACT_ORDER]
+            self.assertTrue(sd[0] * 1.25 < sd[1] and sd[1] * 1.25 < sd[2], (fam, sd))
+        # la queue suit : gros gains (>= 1000x) bien plus fréquents au Chacal qu'au Scribe
+        self.assertGreater(exact.at_least("bold", 1000), 2 * exact.at_least("safe", 1000))
+
+    def test_echelles_de_la_colere(self):
+        self.assertEqual(C.ladder_of("std"), C.WRATH_LADDER)
+        self.assertEqual(C.ladder_of("safe")[-1], 10)
+        self.assertEqual(C.ladder_of("bold")[0], 3)
+        self.assertEqual(C.ladder_of("bold")[-1], 250)
+        for pf in C.PACT_ORDER:
+            wl = exact.wrath_ladder(pf)
+            self.assertAlmostEqual(sum(p for _, p in wl), 1.0, places=12)
+            self.assertEqual([m for m, _ in wl], C.ladder_of(pf))
+
+    def test_mode_for(self):
+        self.assertEqual(C.mode_for("std", "std"), "std")
+        self.assertEqual(C.mode_for("plus", "std"), "plus")
+        self.assertEqual(C.mode_for("std", "safe"), "safe")
+        self.assertEqual(C.mode_for("plus", "bold"), "plus_bold")
+        self.assertEqual(C.mode_for("plus", "inconnu"), "plus")
+        for m in C.BASE_MODES:
+            self.assertEqual(C.mode_for(C.family_of(m), C.MODES[m]["pact"]), m)
+
+    def test_le_pacte_ne_change_ni_la_roue_ni_l_oracle(self):
+        # mêmes tirages, sans Colère : la roue, l'Oracle et le type de bonus sont identiques ; seul le profil du bonus change
+        from rng import mulberry32
+        diff = 0
+        for k in range(150):
+            out = {}
+            for m in ("std", "safe", "bold"):
+                base, first = mulberry32(900 + k), [True]
+
+                def rng(base=base, first=first):
+                    if first[0]:
+                        first[0] = False
+                        return 0.9999     # pas de Colère
+                    return base()
+                r = G.play_mode(rng, m)
+                s0 = r["spins"][0]
+                out[m] = (s0["index"], s0["oracle"] and s0["oracle"]["kind"], s0["bonus_kind"], s0["profile"])
+            self.assertEqual(out["std"][:3], out["safe"][:3])
+            self.assertEqual(out["std"][:3], out["bold"][:3])
+            if out["std"][2] in ("scarab", "weigh", "vault"):
+                self.assertEqual((out["safe"][3], out["bold"][3]), ("safe", "bold"))
+                diff += 1
+        self.assertGreater(diff, 0)
+
+    def test_achats_toujours_en_balance(self):
+        from rng import mulberry32
+        rng = mulberry32(4)
+        for mode in C.BUY_KIND_OF:
+            for _ in range(20):
+                r = G.play_mode(rng, mode)
+                self.assertEqual(r["pact"], "std")
+                self.assertIn(r["spins"][0]["profile"], ("std", "turq"))
 
 
 class TestGainMax(unittest.TestCase):

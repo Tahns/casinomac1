@@ -1,4 +1,4 @@
-// node tools/stake-export.js [books-au-total=1000 (plafonné à 1000, répartis sur les 6 modes)] [graine=2026]
+// node tools/stake-export.js [books-au-total=1000 (plafonné à 1000, répartis sur les 10 modes)] [graine=2026]
 // Démonstration du FORMAT Stake Engine à partir de js/math.js (ce n'est PAS la table de production : 1000 books au plus tirés au hasard,
 // poids tous égaux à 1, aucune optimisation de RTP). Sans dépendance. Écrit dans tools/out/ (ignoré par git) :
 //   index.json                         { format: 2, wheel: { cells, layout[] }, modes: [{ name, cost, events, weights, is_buybonus }] }
@@ -18,8 +18,12 @@
 //    jetons 'scepter' ×2) restent des nombres bruts (×N = N).
 //  - Chaque événement porte `seq` (compteur 0.., ordre de lecture) et `type` ; `wheelStop.index` est la case de la roue, pas le compteur.
 //  - Le coût d'un mode : roundStart.cost en entier ×100 (110 = ×1,1) ; index.json garde le multiple décimal (1.1) comme le SDK.
-//    Le RGS débite mise × coût. Les 6 modes : std (1), plus (1,1 : Oracle+), bonus_scarab (9,26), bonus_weigh (10,31), bonus_vault (12,37),
-//    bonus_fury (27,30). À l'achat il n'y a ni oracle ni wheelStop : roundStart.mode == 'bonus' et un seul bonusStart (bought:true).
+//    Le RGS débite mise × coût. Les 10 modes : std (1), plus (1,1 : Oracle+), les PACTES safe (1), bold (1), plus_safe (1,1), plus_bold (1,1),
+//    bonus_scarab (9,26), bonus_weigh (10,31), bonus_vault (12,37), bonus_fury (27,30). À l'achat il n'y a ni oracle ni wheelStop :
+//    roundStart.mode == 'bonus' et un seul bonusStart (bought:true).
+//  - PACTE (ajout compatible) : roundStart.pact = 'safe' | 'std' | 'bold' (absent = 'std'). C'est une décision prise AVANT la requête de jeu
+//    (le mode de mise), jamais pendant le tour : elle fixe le profil de tous les bonus du tour (Scarabées, Pesée, Trésor, bandes de la Fureur)
+//    et l'échelle de la Colère (événement wrath.ladder). Achats : toujours 'std'.
 //
 // CHOIX DU JOUEUR : RÈGLE D'OR = TOUTES LES VARIANTES SÉLECTIONNABLES D'UN BOOK PAIENT EXACTEMENT LE MÊME TOTAL (== payoutMultiplier).
 //  Le book contient toutes les variantes ; le choix du joueur ne fait que SÉLECTIONNER celle qui est affichée (aucun appel réseau). Comme
@@ -31,13 +35,15 @@
 //    la variante 0 où les cases DOUBLE sont remplacées par les cases équivalentes de la couleur c (même rôle, même palier, mêmes
 //    nombres, mêmes bandes). Le total est donc identique. Les bandes (bonus imbriqués) sont répétées dans chaque variante
 //    (champs `nested` + `color`).
-//  - Profils Prudent / Équilibré / Audacieux : NON conservés (tables différentes) ; tous les bonus se jouent en profil Équilibré (std).
+//  - Profils Prudent / Équilibré / Audacieux : ce ne sont PAS des variantes d'un book. Ils sont devenus les PACTES (modes de mise distincts,
+//    même coût, même RTP) : le book d'un mode ne contient que le profil de son pacte (roundStart.pact).
 //  - Chambre du Trésor (coffres) : l'ordre est tiré d'avance ; le coffre touché est neutre (le k-ième coffre ouvert révèle vaultPick k).
 //  - Sanctuaire des Marées : la k-ième tablette touchée révèle sanctuaryTablet k (tablettes indépendantes, ordre neutre).
 //
 // ÉVÉNEMENTS (dans l'ordre) — type et champs
-//  roundStart   { v:2, mode:'std'|'plus'|'bonus', cost, maxWin:2500000, cells:64 }       cells = taille de la roue (index.json donne layout[64])
-//  wrath        { level, mult, ladder:[2,3,5,10,25,50,100] }   COLÈRE D'ANUBIS (ajout compatible du format v2, absent sinon et jamais à l'achat) :
+//  roundStart   { v:2, mode:'std'|'plus'|'bonus', cost, maxWin:2500000, cells:64, pact:'safe'|'std'|'bold' }   cells = taille de la roue
+//  wrath        { level, mult, ladder }   COLÈRE D'ANUBIS (ajout compatible du format v2, absent sinon et jamais à l'achat) ; ladder = échelle du
+//                 pacte : [2,3,5,10,25,50,100] Balance, [2,3,5,10] Scribe, [3,5,10,25,50,100,250] Chacal :
 //                 les chaînes se brisent AVANT le premier tour ; multiplicateur allumé = ladder[level] ; pendant tout le tour la roue ne
 //                 s'arrête que sur une case de WRATH_KINDS (Ankh, Scarabées, Pesée, Trésor) ; chaque Ankh fait monter le cran (wrathUp)
 //  pour chaque tour n = 1.. (une relance Ankh = un tour de plus) :
@@ -123,8 +129,8 @@ function bonusEvents(kind, b) {
 }
 
 function bookEvents(round) {
-  var ev = [{ type: 'roundStart', v: FORMAT, mode: round.mode === 'buy' ? 'bonus' : round.mode, cost: I(round.cost), maxWin: I(M.MAX_WIN), cells: M.N }];
-  if (round.wrath) ev.push({ type: 'wrath', level: round.wrath.start, mult: M.WRATH_LADDER[round.wrath.start], ladder: M.WRATH_LADDER.slice() });
+  var ev = [{ type: 'roundStart', v: FORMAT, mode: round.mode === 'buy' ? 'bonus' : round.mode, cost: I(round.cost), maxWin: I(M.MAX_WIN), cells: M.N, pact: round.pact || 'std' }];
+  if (round.wrath) { var lad = round.wrath.ladder || M.WRATH_LADDER; ev.push({ type: 'wrath', level: round.wrath.start, mult: lad[round.wrath.start], ladder: lad.slice() }); }
   round.spins.forEach(function (s, k) {
     var n = k + 1;
     if (s.oracle) ev.push({ type: 'oracle', spin: n, kind: s.oracle.kind, boost: s.oracle.boost, sealed: true });
@@ -133,7 +139,7 @@ function bookEvents(round) {
       if (s.wrath) ws.wrath = s.wrath;
       ev.push(ws);
       if (s.oracle) ev.push({ type: 'oracleReveal', spin: n, kind: s.oracle.kind, boost: s.oracle.boost, hit: s.oracle.kind === s.kind });
-      if (s.wrathUp) ev.push({ type: 'wrathUp', spin: n, level: M.WRATH_LADDER.indexOf(s.wrathUp), mult: s.wrathUp });
+      if (s.wrathUp) ev.push({ type: 'wrathUp', spin: n, level: (round.wrath && round.wrath.ladder || M.WRATH_LADDER).indexOf(s.wrathUp), mult: s.wrathUp });
     }
     if (s.bonus) {
       var kind = s.secret ? 'crypt' : s.upgraded ? 'hand' : s.kind;
@@ -155,6 +161,9 @@ function verify(book) {
   var rs = ev[0];
   if (!rs || rs.type !== 'roundStart' || rs.v !== FORMAT) return ['roundStart v2 absent'];
   if (rs.cells !== M.N || rs.maxWin !== CAP) err('cells / maxWin');
+  var pact = rs.pact == null ? 'std' : rs.pact;
+  if (!M.PACTS[pact] || (rs.mode === 'bonus' && pact !== 'std')) err('pact');
+  var PVALS = M.SCARAB_PROFILES[pact] || M.SCARAB_VALUES;
   // total d'un bonus d'après ses événements (liste filtrée) ; null si inexploitable
   function totalOf(kind, list, color) {
     list = list.filter(function (e) { return color == null || e.color === color; });
@@ -164,7 +173,7 @@ function verify(book) {
         if (e.type !== 'scarabDrop') return;
         n++; t += e.win;
         var col = e.path.reduce(function (a, b) { return a + b; }, 0);
-        if (e.path.length !== M.SCARAB_ROWS || col !== e.slot || I(M.SCARAB_VALUES[e.slot]) !== e.win) err('scarabDrop ' + e.ball);
+        if (e.path.length !== M.SCARAB_ROWS || col !== e.slot || I(PVALS[e.slot]) !== e.win) err('scarabDrop ' + e.ball);
       });
       if (n !== M.SCARAB_BALLS) err('nombre de scarabées');
       return t;
@@ -234,7 +243,7 @@ function verify(book) {
     return null;
   }
   // Colère d'Anubis : événement « wrath » juste après roundStart (jamais à l'achat), cran courant `lv`
-  var sum = 0, i = 1, spin = 0, fin = null, lv = null, LAD = M.WRATH_LADDER;
+  var sum = 0, i = 1, spin = 0, fin = null, lv = null, LAD = M.ladderOf(pact), TOPL = LAD.length - 1;
   if (ev[1] && ev[1].type === 'wrath') {
     var we = ev[1]; lv = we.level;
     if (rs.mode === 'bonus' || LAD[lv] !== we.mult || JSON.stringify(we.ladder) !== JSON.stringify(LAD) || !M.WRATH_START.some(function (t) { return t[0] === lv; })) err('wrath');
@@ -259,7 +268,7 @@ function verify(book) {
       else if (bs && x.type !== 'oracleReveal') body.push(x);
       if (x.spin != null && x.type !== 'furySpin' && x.spin !== spin) err('numéro de tour ' + x.type);
     }
-    if (kind === 'ankh' && lv != null && !up && lv < M.WRATH_TOP) err('Colère : l\'Ankh ' + spin + ' n\'a pas fait monter le multiplicateur');
+    if (kind === 'ankh' && lv != null && !up && lv < TOPL) err('Colère : l\'Ankh ' + spin + ' n\'a pas fait monter le multiplicateur');
     if (up && kind !== 'ankh') err('wrathUp hors Ankh ' + spin);
     var sw = ev[i++];
     if (!sw || sw.type !== 'spinWin' || sw.spin !== spin) { err('spinWin ' + spin); break; }
@@ -282,12 +291,9 @@ function verify(book) {
 module.exports = { bookEvents: bookEvents, makeBook: makeBook, verify: verify, FORMAT: FORMAT };   // utilisé par tools/mock-rgs.js ; les fichiers ne sont écrits qu'en exécution directe
 if (require.main !== module) return;
 
-var N = Math.floor(cap(parseInt(process.argv[2] || '1000', 10)) / 6);   // 1000 books au total au plus (règle : jamais plus de 1000 tours simulés)
+var N = Math.floor(cap(parseInt(process.argv[2] || '1000', 10)) / 10);   // 1000 books au total au plus (règle : jamais plus de 1000 tours simulés)
 var seed = parseInt(process.argv[3] || '2026', 10);
-var MODES = [
-  { name: 'std', cost: M.MODES.std.cost, play: function (r) { return M.playRound(r, 'std'); } },
-  { name: 'plus', cost: M.MODES.plus.cost, play: function (r) { return M.playRound(r, 'plus'); } }
-];
+var MODES = M.BASE_MODES.map(function (m) { return { name: m, cost: M.MODES[m].cost, play: function (r) { return M.playRound(r, m); } }; });
 [['scarab', 'scarab'], ['weigh', 'weigh'], ['vault', 'vault'], ['fury', 'hand']].forEach(function (p) {
   MODES.push({ name: 'bonus_' + p[0], cost: M.BUY[p[1]].price, buy: true, play: function (r) { return M.playBuy(r, p[1]); } });
 });

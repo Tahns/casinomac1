@@ -47,9 +47,10 @@ class TestParity(unittest.TestCase):
         self.assertEqual(C.SCALE, PAR["scale"])
         self.assertEqual(C.WINCAP, PAR["max_win"])
 
-    def test_tours_des_six_modes(self):
+    def test_tours_des_dix_modes(self):
+        self.assertEqual(sorted(PAR["modes"]), sorted(C.MODE_ORDER))
         n = self.check_rounds(PAR)
-        self.assertGreaterEqual(n, 600)
+        self.assertGreaterEqual(n, 500)
         self.assertLessEqual(n, 1000)
 
     def test_colere_d_anubis(self):
@@ -67,6 +68,7 @@ class TestParity(unittest.TestCase):
                 self.assertTrue(all(C.LAYOUT[s["index"]] in C.WRATH_KINDS for s in r["spins"]), where)
                 ups += sum(1 for s in r["spins"] if s["wrath_up"])
                 n += 1
+        self.assertEqual(sorted(PAR["wrath"]), sorted(C.BASE_MODES))
         self.assertGreaterEqual(n, 40)
         self.assertGreater(ups, 0)
 
@@ -105,6 +107,27 @@ class TestParity(unittest.TestCase):
     def test_fureur_trois_couleurs(self):
         for b, rec in self.run_bonus("hand", lambda rng, rec: G.hand(rng, rec["colour"])):
             self.assertEqual([[s["idx"], s["kind"], s["mult"]] for s in b["spins"]], rec["detail"])
+
+    def test_bonus_des_pactes(self):
+        # profils Prudent (Scribe) et Audacieux (Chacal) ; Fureur : les bandes imbriquées jouent le profil du pacte
+        n = 0
+        for pf in ("safe", "bold"):
+            for b, rec in self.run_bonus("scarab_" + pf, lambda rng, rec, pf=pf: G.scarab(rng, pf)):
+                self.assertEqual([x["slot"] for x in b["balls"]], rec["detail"])
+                n += 1
+            for b, rec in self.run_bonus("weigh_" + pf, lambda rng, rec, pf=pf: G.weigh(rng, pf)):
+                self.assertEqual([b["mults"][0], b["mults"][1], b["heavy"], b["pick"]], rec["detail"])
+                n += 1
+            for b, rec in self.run_bonus("vault_" + pf, lambda rng, rec, pf=pf: G.vault(rng, pf)):
+                self.assertEqual([p["token"] for p in b["picks"]] + [b["ended"]], rec["detail"])
+                n += 1
+            bands = 0
+            for b, rec in self.run_bonus("hand_" + pf, lambda rng, rec, pf=pf: G.hand(rng, rec["colour"], rec["forced"], pf)):
+                self.assertEqual([[s["idx"], s["kind"], s["mult"]] for s in b["spins"]], rec["detail"])
+                bands += b["spins"][-1]["kind"] == "band"
+                n += 1
+            self.assertGreater(bands, 0, pf)
+        self.assertGreaterEqual(n, 40)
 
     def test_fureur_chaines_imposees_et_plafond(self):
         capped = 0
@@ -153,7 +176,7 @@ class TestParity(unittest.TestCase):
             self.skipTest("Node indisponible")
         with tempfile.TemporaryDirectory() as tmp:
             out = os.path.join(tmp, "p.json")
-            # 6 x 25 tours + 5 x 12 tirages + cas imposés : très en dessous de 1000
+            # 10 x 25 tours + Colère 6 x 5 + 5 x 12 tirages + pactes 8 x 4 + cas imposés : très en dessous de 1000
             subprocess.run([node, script, "25", "12", "9137", out], check=True, stdout=subprocess.DEVNULL, env={k: v for k, v in os.environ.items() if k not in ("ANUBIS_BIG", "HOA_BIG")})
             doc = common.load_parity(out)
             self.assertLess(self.check_rounds(doc), 1000)
