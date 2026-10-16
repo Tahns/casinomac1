@@ -132,8 +132,8 @@
   // bannière d'intro courte : toutes les valeurs affichées sont déjà multipliées
   async function boostIntro(S, sp, sec) {
     var B = bf(sp); if (B <= 1) return;
-    var T = I18N.t();
-    S.banner = { text: T.boostIntro + ' ×' + G.fmt(B), sub: T.boostIntroSub, t: 0 };
+    var T = I18N.t(), wl = G.wrath && G.wrath.boostLines(sp);   // Colère d'Anubis : « Colère ×N » séparée du boost de l'Oracle
+    S.banner = { text: wl ? wl.text : T.boostIntro + ' ×' + G.fmt(B), sub: wl ? wl.sub : T.boostIntroSub, t: 0 };
     Sfx.oracle(); FX.flash(0.4, '#ffe9a0'); FX.ring(G.cx, G.cy, '#ffe9a0', G.R, 1);
     await G.sleep(sec == null ? (quick() ? 1.0 : 1.7) : sec);
     S.banner = null;
@@ -1264,7 +1264,7 @@
       G.tween(0.6, function (k) { chipA = k; panelA = k; }, null);
       G.say(g.land ? T.handRule : T.handSpin);
       await G.sleep(0.5);
-      if (B > 1) { banner(T.boostIntro + ' ×' + G.fmt(B), T.boostIntroSub, '#ffd86a'); Sfx.oracle(); FX.flash(0.3, '#ffe9a0'); await endBanner(quick() ? 1.0 : 1.7); }
+      if (B > 1) { var wl2 = G.wrath && G.wrath.boostLines(sp); banner(wl2 ? wl2.text : T.boostIntro + ' ×' + G.fmt(B), wl2 ? wl2.sub : T.boostIntroSub, '#ffd86a'); Sfx.oracle(); FX.flash(0.3, '#ffe9a0'); await endBanner(quick() ? 1.0 : 1.7); }
       var mult = 1;
       for (var i = 0; i < data.spins.length; i++) {
         var sx = data.spins[i], seg = segs[sx.idx];
@@ -1709,7 +1709,7 @@
       var na = clamp((t - 0.7) / 0.4, 0, 1), ns = clamp(Math.min(w * 0.034, h * 0.05), 13, 32);
       ctx.save(); ctx.globalAlpha = na;
       G.txt(sp.secret ? T.kindsLong.crypt : sp.upgraded ? T.kindsLong.hand : T.kindsLong[sp.kind], G.cx, L.ny + (1 - na) * 14, { size: ns, weight: 900, fill: '#ffe08a', stroke: '#2a1802', sw: 4, spacing: 3, shadow: 'rgba(255,200,80,.6)', blur: 18 });
-      if (sp.boost > 1) G.txt(T.boostApplied + ' ×' + sp.boost, G.cx, L.ny + ns * 1.4, { size: clamp(w * 0.02, 12, 18), family: G.TEXT, weight: 800, fill: '#fff1b8' });
+      if (sp.boost > 1) G.txt((sp.wrath > 1 ? I18N.block('rules').wrathT + ' ×' + G.fmt(sp.wrath) + (sp.oracleBoost > 1 ? '  ·  ' + T.boostApplied + ' ×' + G.fmt(sp.oracleBoost) : '') : T.boostApplied + ' ×' + sp.boost), G.cx, L.ny + ns * 1.4, { size: clamp(w * 0.02, 12, 18), family: G.TEXT, weight: 800, fill: '#fff1b8' });
       ctx.restore();
       if (t > 1.0) {
         var ba = clamp((t - 1.0) / 0.4, 0, 1), bp = 1 + Math.sin(t * 5) * 0.035 + (hover ? 0.05 : 0), bx = btn.x + btn.w / 2, by = btn.y + btn.h / 2;

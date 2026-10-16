@@ -298,10 +298,13 @@
     G.wheel.clearHighlight(); G.wheel.clearOracle();
     say(resume ? I18N.rgs().resuming : T.spinning);
     var total = 0;
+    if (G.wrath) G.wrath.reset();
     // si le joueur choisit un autre profil de bonus, le gain en attente est recalculé et sauvegardé tout de suite
     G.onBonusChoice = function () { if (LIVE) return; var t = 0; round.spins.forEach(function (x) { t += x.pay; }); S.pending = r2(Math.min(t, M.MAX_WIN) * b); save(); };
-    try { for (var i = 0; i < round.spins.length; i++) {
+    try { if (round.wrath && G.wrath) await G.wrath.begin(round.wrath);   // Colère d'Anubis : les chaînes se brisent avant la première rotation
+    for (var i = 0; i < round.spins.length; i++) {
       var sp = round.spins[i];
+      if (sp.wrath && G.wrath) G.wrath.sync(sp.wrath);
       if (!buyKind && sp.oracle) {
         $('oracleText').textContent = T.oracleOn + ' ×? → ' + T.kinds[sp.oracle.kind].replace('\n', ' ');   // valeur scellée jusqu'à l'arrêt de la roue
         $('oracle').hidden = false;
@@ -316,6 +319,7 @@
       if (def.respin) {
         Sfx.shield(); say(T.ankhRespin); G.wheel.flashLamps = 1.0;
         await G.cellWin(sp);      // chaînes dorées qui cèdent, lumière divine : la roue est relancée
+        if (sp.wrathUp && G.wrath) await G.wrath.up(sp.wrathUp);   // Colère : l'Ankh brise une chaîne, le multiplicateur monte
         G.wheel.clearOracle(); G.wheel.clearHighlight(); $('oracle').hidden = true;
         continue;
       }
@@ -339,6 +343,7 @@
     } } catch (err) {   // une scène en erreur ne doit jamais bloquer le jeu ni perdre le gain déjà décidé
       if (root.console) console.error(err);
       if (hdr) hdr.reform();
+      if (G.wrath) G.wrath.reset();
       total = 0; round.spins.forEach(function (x) { total += x.pay; }); G.scene = null; G.eg = null; G.winOv = null; G.fade = 0; G.chain = null; G.fxScale = 1; G.setScene(null);
     }
     total = LIVE ? srv.mult : Math.min(total, M.MAX_WIN);   // en mode RGS le gain fait foi : payoutMultiplier du serveur, jamais recalculé par le jeu
@@ -347,6 +352,7 @@
     var mismatch = LIVE && (round.issues.length > 0 || Math.abs(round.sum - srv.mult) > 1e-6 || Math.abs(round.total - srv.mult) > 1e-6);
     if (mismatch) { stopAuto(); if (root.console) console.error('RGS book', srv.mult, round.sum, round.total, round.issues); }
     G.wheel.clearOracle(); $('oracle').hidden = true;
+    if (G.wrath && G.wrath.active()) await G.wrath.end();
     if (amount > 0) {
       var tier = tierOf(total / priceMult);
       if (tier >= 0) await G.showBigWin(total, amount, tier);

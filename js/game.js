@@ -309,6 +309,7 @@
   var BON = [];   // indices des cases bonus (suspense)
   M.LAYOUT.forEach(function (k, i) { if (M.KINDS[k].bonus) BON.push(i); });
 
+  function chordAt(r) { return r * step; }
   function wedge(f, i, ri, ro) {
     var a0 = i * step - Math.PI / 2, a1 = (i + 1) * step - Math.PI / 2;
     f.beginPath(); f.arc(0, 0, ro, a0, a1); f.arc(0, 0, ri, a1, a0, true); f.closePath();
@@ -675,6 +676,21 @@
         G.txt(o.revealed ? '×' + o.boost : '?', 0, br * 0.06, { size: br * 0.95, weight: 900, fill: '#3a2000' });   // bénédiction scellée : la valeur n'est révélée qu'à l'arrêt de la roue
         ctx.restore();
         if (o.num && o.ap > 0) wheelBoostLabel(i, am, o, R, (ri + ro) / 2);
+      }
+    }
+    if (W.wrath && W.wrath.shade > 0.01) {   // Colère d'Anubis : poussière et nombres grisés et enchaînés, cases libérées (Ankh, bonus) cerclées d'or
+      var wk = W.wrath, wsh = wk.shade, wp = FX.reduced ? 0.5 : 0.5 + 0.5 * Math.sin(G.t * 4), wfree = M.WRATH_KINDS;
+      for (i = 0; i < M.N; i++) {
+        if (wfree.indexOf(M.LAYOUT[i]) >= 0) {
+          wedge(ctx, i, ri * 1.02, ro * 0.995); ctx.lineWidth = R * 0.012; ctx.strokeStyle = 'rgba(255,236,150,' + wsh * (0.35 + 0.3 * wp) + ')'; ctx.stroke();
+          continue;
+        }
+        wedge(ctx, i, ri, ro); ctx.fillStyle = 'rgba(10,8,6,' + 0.7 * wsh + ')'; ctx.fill();
+        if (!FX.lite && wsh > 0.5) {
+          var wam = (i + 0.5) * step - Math.PI / 2;
+          ctx.save(); ctx.globalAlpha = Math.min(1, (wsh - 0.5) * 2); ctx.rotate(wam); ctx.translate(R * 0.62, 0);
+          FX.Chains.link(ctx, 0, 0, 0, Math.min(chordAt(R * 0.62) * 0.9, R * 0.12), i % 2 === 0); ctx.restore();
+        }
       }
     }
     if (su > 0.04 && W.nearIdx >= 0) {   // case bonus qui s'approche : elle s'éclaire de plus en plus fort

@@ -52,6 +52,8 @@
       rows: M.SCARAB_ROWS, tiles: M.CRYPT_CELLS, picks: M.VAULT_BASE_PICKS, keys: M.VAULT_KEY_PICKS, cap: M.VAULT_PICK_CAP, fin: M.VAULT_FINISH,
       tier: Math.pow(2, M.HAND_MAX_CHAIN), min: M.HAND_MIN_N, segs: segs.length, dbl: dbl, dblc: dbl / M.HAND_COLORS.length,
       bands: bandTxt.join(', '), spin: T.spin, stop: T.stop, auto: T.auto, turbo: T.turbo, buy: T.buyBtn, plus: T.oraclePlus,
+      wr: num(Math.round(1 / M.MODES.std.wrath), 0), w0: num(M.WRATH_LADDER[0], 0), wmax: num(M.WRATH_LADDER[M.WRATH_TOP], 0), lad: M.WRATH_LADDER.map(function (x) { return '×' + num(x, 0); }).join(' / '),
+      dust: KN('m0'), ankh: KN('ankh'), bk: ['scarab', 'weigh', 'vault'].map(KN).join(', '), std: R.modeStd, plus: T.oraclePlus,
       langs: (root.I18N.langs || []).length || 16,
       stopwin: (root.I18N.rgs().autoStopWin || ''), stops: (G && G.STOP_WINS ? G.STOP_WINS : [0, 10, 50, 100]).filter(function (x) { return x > 0; }).map(function (x) { return '×' + x; }).join(' / '),
       autos: (G && G.AUTO_STEPS ? G.AUTO_STEPS : [10, 25, 50, 100, Infinity]).filter(function (x) { return x > 0; }).map(function (x) { return isFinite(x) ? x : '∞'; }).join(', ')
@@ -100,6 +102,11 @@
     out += '<h4 class="rh">' + ic('skull') + esc(R.cryptH) + '</h4>' + p(esc(f(R.cryptP))) + table([R.colValue, R.colChance, R.colMax], ct.map(function (t) {
       var vals = M.CRYPT_VALUES[t[0]]; return [esc(cn[t[0]]), pct(t[1] / cw * 100, 1), vals ? '×' + list(vals.map(function (x) { return x[0]; })) : '—'];
     }));
+
+    /* Colère d'Anubis : chaînes brisées, multiplicateur qui monte à chaque Ankh ; loi exacte = (1 - a) a^k, le dernier cran absorbe a^k (a = part des Ankh parmi les cases libérées) */
+    var wl = M.WRATH_LADDER, wc = M.WRATH_CELLS, wa = wc.filter(function (i) { return M.LAYOUT[i] === 'ankh'; }).length / wc.length;
+    out += h3(R.wrathH) + R.wrathP.map(function (t) { return p(esc(f(t))); }).join('') + p(esc(R.wrathL)) +
+      table([R.colBoost, R.colChance], wl.map(function (x, k) { var w0 = M.WRATH_START[0][0]; if (k < w0) return null; var q = k === M.WRATH_TOP ? Math.pow(wa, k - w0) : Math.pow(wa, k - w0) * (1 - wa); return ['×' + num(x, 0), pct(q * 100, 2)]; }).filter(Boolean));
 
     /* relances et re-déclenchements, boutons, avertissement */
     out += h3(R.retrigH) + R.retrig.map(function (t) { return p('• ' + esc(f(t))); }).join('');

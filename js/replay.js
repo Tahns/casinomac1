@@ -138,9 +138,12 @@
     var round = prepare(), b = units(P.amount), total = 0;
     G.wheel.clearHighlight(); G.wheel.clearOracle(); $('oracle').hidden = true;
     G.say(L.spinning);
+    if (G.wrath) G.wrath.reset();
     try {
+      if (round.wrath && G.wrath) await G.wrath.begin(round.wrath);   // Colère d'Anubis : mêmes scènes que le jeu
       for (var i = 0; i < round.spins.length; i++) {
         var sp = round.spins[i], buy = sp.index === -1 || round.mode === 'buy';
+        if (sp.wrath && G.wrath) G.wrath.sync(sp.wrath);
         if (!buy && sp.oracle) {
           $('oracleText').textContent = L.oracleOn + ' ×? → ' + L.kinds[sp.oracle.kind].replace('\n', ' ');   // valeur scellée jusqu'à l'arrêt
           $('oracle').hidden = false;
@@ -153,6 +156,7 @@
           Sfx.shield(); FX.spark(G.cx, G.cy - G.R * 0.9, 30, '#ffe9a0', 300); FX.flash(0.3, '#ffe9a0');
           G.say(L.ankhRespin); G.wheel.flashLamps = 1.0;
           await G.sleep(1.3);
+          if (sp.wrathUp && G.wrath) await G.wrath.up(sp.wrathUp);
           G.wheel.clearOracle(); G.wheel.clearHighlight(); $('oracle').hidden = true;
           continue;
         }
@@ -172,8 +176,10 @@
     } catch (err) {   // une scène en erreur ne bloque jamais le replay : le résultat du livre reste affiché
       if (root.console) console.error(err);
       G.scene = null; G.eg = null; G.winOv = null; G.fade = 0; G.setScene(null);
+      if (G.wrath) G.wrath.reset();
     }
     G.wheel.clearOracle(); $('oracle').hidden = true;
+    if (G.wrath && G.wrath.active()) await G.wrath.end();
     var amount = showResult();
     if (data.payout > 0) {
       var tier = tierOf(data.payout / data.cost);

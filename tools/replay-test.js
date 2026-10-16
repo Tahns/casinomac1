@@ -33,7 +33,13 @@ books.sanct = roundOf(sp0('vault', { oracle: { kind: 'vault', boost: 5 }, index:
 // gain max : offrande 3 000 000× plafonnée à 25 000×
 var xb = M._bonus.crypt(M.mulberry32(8), [{ t: 'tide', v: 10 }, { t: 'tide', v: 10 }, { t: 'tide', v: 10 }, { t: 'tide', v: 10 }, { t: 'tab', v: 300 }]);
 books.max = roundOf(sp0('vault', { index: vi, bonus: xb, secret: true, profile: 'crypt', base: xb.total, pay: xb.total }), 'std', 1);
+// Colère d'Anubis : un Ankh puis un bonus (multiplicateur ×2 -> ×3) ; la chance est forcée à 1 le temps de la recherche (≤ 300 tours), puis rétablie
+var wr0 = M.MODES.std.wrath, wrr = M.mulberry32(777), wn = 0;
+M.MODES.std.wrath = 1;
+while (wn++ < cap(300)) { var wq = M.playRound(wrr, 'std'); if (wq.wrath && wq.spins.length === 2 && wq.total > 0 && !wq.spins[1].secret && !wq.spins[1].upgraded && wq.spins[1].kind !== 'weigh') { books.wrath = wq; break; } }
+M.MODES.std.wrath = wr0;
 var CASES = {
+  wrath: { mode: 'std', cost: 1, round: books.wrath },
   fury: { mode: 'bonus_fury', cost: 27.28, round: books.fury },
   sanct: { mode: 'std', cost: 1, round: books.sanct },
   max: { mode: 'std', cost: 1, round: books.max },
@@ -178,6 +184,19 @@ async function playIt(p, label, expectText) {
     check(v1.profile === 'ruby' && v1.first === f1.segment, 'replay Fureur : la touche 3 joue la variante rubis du book (case ' + v1.first + ')');
     check(v1.pick === 0 && v1.mine === fwev.variants[0].playerMult / 100 && Math.abs(v1.total - fwev.win / 100) < 1e-9, 'replay Pesée : la plume joue la variante « plume » du book (valeur du joueur ' + v1.mine + '×, gain figé ' + v1.total + '×)');
     check(v1.res.replace(/\D/g, '') === String(fb.payoutMultiplier), 'replay Fureur : résultat = payoutMultiplier du RGS (' + v1.res + ')');
+    check(!p.errs.length, 'aucune erreur JS (' + p.errs.join(' | ') + ')'); await p.close();
+
+    // Colère d'Anubis : les événements wrath / wrathUp du book sont rejoués (chaînes brisées, multiplicateur qui monte), puis la plaque disparaît
+    check(!!books.wrath && E.verify(E.makeBook(1, books.wrath)).length === 0, 'book Colère d\'Anubis valide (' + (books.wrath && books.wrath.total) + '×)');
+    p = await open(b, { ev: 'wrath', q: '&currency=EUR&lang=fr&amount=1000000' });
+    await p.waitForFunction(function () { return Replay.state() === 'ready'; }, null, { timeout: 15000 });
+    await p.evaluate(function () { var ob = G.wrath.begin, ou = G.wrath.up; G.__w = { begin: [], up: [] }; G.wrath.begin = function (w) { G.__w.begin.push(w.start); return ob(w); }; G.wrath.up = function (m) { G.__w.up.push(m); return ou(m); }; });
+    var dw = await driveReplay(p, {});
+    var vw = await p.evaluate(function () { return { w: G.__w, on: G.wrath.active(), shade: G.wheel.wrath.shade, res: document.getElementById('rpResV').textContent }; });
+    var wup = books.wrath.spins.filter(function (x) { return x.wrathUp; }).map(function (x) { return x.wrathUp; });
+    check(dw.done && vw.w.begin.length === 1 && JSON.stringify(vw.w.up) === JSON.stringify(wup) && wup.length === 1, 'replay Colère : chaînes brisées une fois, multiplicateur ×' + wup.join(' ×') + ' rejoué');
+    check(!vw.on && vw.shade === 0, 'replay Colère : plaque et cases grisées retirées en fin de tour');
+    check(vw.res.replace(/\D/g, '') === String(E.makeBook(1, books.wrath).payoutMultiplier), 'replay Colère : résultat = RGS (' + vw.res + ')');
     check(!p.errs.length, 'aucune erreur JS (' + p.errs.join(' | ') + ')'); await p.close();
 
     p = await open(b, { ev: 'sanct', q: '&currency=EUR&lang=fr&amount=1000000' });
