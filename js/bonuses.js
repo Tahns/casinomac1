@@ -890,6 +890,7 @@
     var S = newScene(T.handIntro), g = {}; S.bgImg = 'key'; var rot = 0, vel = 0, ptr = 0, ptrV = 0, lastIdx = -1, lastTick = 0;
     var charging = false, holding = false, power = 0, pdir = 1, handY = -9999, handAlpha = 1, crush = 0, wheelK = 0, multShown = B, multPop = 0, bolts = 0, iconAlpha = 1, iconK = 1, hl = -1, flyOrb = null;
     var beam = 0, tense = 0, rays = 0, raysCol = '#ffe9a0', aura = 0, shock = 0, vig = 0, shownMult = B, upPulse = 0, upSweep = -1, upCol = cc.a, hb = null, chipA = 0, panelA = 0;
+    var cPrev = B, cAnim = 0, lite = 0, zoom = 0, ptrTgt = 0, crawl = false, hope = 0, heartT = 0, hushed = true;   // suspense : halo, zoom caméra, pointeur retenu par la cheville, faux espoir, battements
     S.dim = 0.85; S.showTotal = false;
     S.layout = function () {
       var w = G.w, h = G.h, fs = h < 520 ? 16 : clamp(w * 0.034, 17, 34);
@@ -900,7 +901,7 @@
     };
     function counterPos() {
       if (g.land) return { x: 70, y: g.cy, s: 0.8 };
-      if (g.narrow) return { x: G.w - 62, y: g.plateB + 30, s: 0.62 };
+      if (g.narrow) return { x: G.w - 56, y: g.plateB + 34, s: 0.8 };
       return { x: Math.min(G.w * 0.14, 110) + 14, y: T0() + EX(130), s: 1 };
     }
     function chipPos() {
@@ -919,17 +920,31 @@
     function numColor(v) { return v >= 100 ? ['#f4f2ff', '#6e6e8a'] : v >= 40 ? ['#ff9a3a', '#8a3a08'] : v >= 20 ? ['#c28bff', '#5a2a86'] : v >= 10 ? ['#8a7bff', '#2e2a8a'] : v >= 6 ? ['#5b8cff', '#1a3a8a'] : ['#8d8470', '#443c2e']; }
     S.update = function (dt) {
       chromeUpdate(S, dt);
-      ptrV += (-520 * ptr - 15 * ptrV) * dt; ptr = clamp(ptr + ptrV * dt, -0.6, 0.2);
+      ptrV += (-520 * (ptr - ptrTgt) - 15 * ptrV) * dt; ptr = clamp(ptr + ptrV * dt, -0.6, 0.2);   // ressort ; ptrTgt : cheville qui retient le pointeur avant la case suivante
+      lite += ((S.spinning ? tense : 0) - lite) * Math.min(1, dt * (S.spinning ? 2.5 : 5)); zoom += ((S.spinning ? 0.055 * tense * tense : 0) - zoom) * Math.min(1, dt * (S.spinning ? 3 : 4));
       if (charging && holding) { power += pdir * dt * 1.15; if (power >= 1) { power = 1; pdir = -1; } if (power <= 0) { power = 0; pdir = 1; } }
-      multPop = Math.max(0, multPop - dt * 2.4); bolts = Math.max(0, bolts - dt * 4); shock = Math.max(0, shock - dt * 1.4); rays = Math.max(0, rays - dt * 0.45); vig = Math.max(0, vig - dt * 1.2); upPulse = Math.max(0, upPulse - dt * 1.1);
+      cAnim = Math.max(0, cAnim - dt * 1.8); multPop = Math.max(0, multPop - dt * 2.4); bolts = Math.max(0, bolts - dt * 4); shock = Math.max(0, shock - dt * 1.4); rays = Math.max(0, rays - dt * 0.45); vig = Math.max(0, vig - dt * 1.2); upPulse = Math.max(0, upPulse - dt * 1.1);
       if (hb) hb.t += dt;
       if (flyOrb && Math.random() < 0.9) { var fe = G.ease.inOut(clamp(flyOrb.t, 0, 1)); FX.spark(lerp(flyOrb.x0, flyOrb.x1, fe), lerp(flyOrb.y0, flyOrb.y1, fe) - Math.sin(Math.PI * fe) * 90, 2, flyOrb.c, 120); }
       if (tense > 0.5 && S.spinning && Math.random() < dt * 14 * tense) FX.spark(G.cx, g.cy - g.R * 1.05, 1, '#fff1b8', 140);
       if (S.spinning) {
-        var idx = Math.floor(mod(-rot, TAU) / st);
-        if (idx !== lastIdx) { if (lastIdx >= 0) { ptrV -= 5 + Math.min(Math.abs(vel), 18) * 0.4; if (G.t - lastTick > 0.03) { Sfx.tick(Math.min(1, Math.abs(vel) / 18)); lastTick = G.t; } } lastIdx = idx; }
-      }
+        var qq = mod(-rot, TAU) / st, idx = Math.floor(qq), slow = crawl && Math.abs(vel) < 4, nxt = mod(idx - 1, N);
+        if (slow) {   // fin de course : la cheville retient le pointeur, qui claque quand la case passe ; faux espoir si la case convoitée est grosse
+          var dd = qq - idx, near = clamp(1 - dd / 0.24, 0, 1);
+          ptrTgt = vel > 0.02 ? -0.34 * near : 0; hope += ((hotSeg(nxt) ? near : 0) - hope) * Math.min(1, dt * 8);
+        } else { ptrTgt = 0; hope += (0 - hope) * Math.min(1, dt * 8); }
+        if (!hushed && tense > 0.25) { heartT -= dt; if (heartT <= 0) { heartT = 1.05 - 0.4 * tense; Sfx.furyHeart && Sfx.furyHeart(tense); } }
+        if (idx !== lastIdx) {
+          if (lastIdx >= 0) {
+            var back = (idx > lastIdx && !(lastIdx === 0 && idx === N - 1)) || (lastIdx === N - 1 && idx === 0);   // la roue recule d'une case
+            if (slow) { ptrV -= (back ? -5 : 7 + 16 * tense); if (Sfx.furyTick) Sfx.furyTick(tense, hotSeg(idx), back); else Sfx.tick(0.2); lastTick = G.t; }
+            else { ptrV -= 3 + Math.min(Math.abs(vel), 18) * 0.25 + 6 * tense; if (G.t - lastTick > 0.03) { Sfx.tick(Math.min(1, Math.abs(vel) / 18)); lastTick = G.t; } }
+          }
+          lastIdx = idx;
+        }
+      } else { ptrTgt = 0; hope = 0; }
     };
+    function hotSeg(i) { var q = segs[mod(i, N)]; return !!(q.b || q.d === ci || q.n >= 25); }   // case qui fait espérer : bande, DOUBLE de votre couleur, gros nombre
     function wedgeH(i, ri, ro) { ctx.beginPath(); ctx.arc(0, 0, ro, i * st - Math.PI / 2, (i + 1) * st - Math.PI / 2); ctx.arc(0, 0, ri, (i + 1) * st - Math.PI / 2, i * st - Math.PI / 2, true); ctx.closePath(); }
     function drawSeg(i, R) {
       var s = segs[i], ri = R * 0.2, ro = R * 0.97;
@@ -977,8 +992,12 @@
       });
       sv(function () {
         ctx.translate(p.x, p.y); ctx.scale(ms, ms);
-        G.txt(T.handTier, 0, -34, { size: 10, family: G.TEXT, weight: 800, fill: '#b9a780', spacing: 3 });
-        G.goldText('×' + G.fmt(Math.round(multShown)), 0, 8, Math.min(64, G.w * 0.08, 56), { blur: 28 });
+        var cs = Math.min(64, G.w * 0.08, 56), e = G.ease.out3(1 - cAnim);
+        G.txt(T.handTier, 0, -cs * 0.78, { size: 11, family: G.TEXT, weight: 800, fill: '#b9a780', spacing: I18N.joined() ? 0 : 2 });
+        if (cAnim > 0.01) {   // le palier se transforme : l'ancien chiffre s'élargit et s'efface, le nouveau grandit à sa place (jamais superposés à l'arrêt)
+          sv(function () { ctx.globalAlpha = 1 - e; ctx.translate(0, 8); ctx.scale(1 + 0.35 * e, 1 + 0.35 * e); G.goldText('×' + G.fmt(Math.round(cPrev)), 0, 0, cs, { blur: 28 }); });
+          sv(function () { ctx.globalAlpha = e; ctx.translate(0, 8); ctx.scale(0.7 + 0.3 * e, 0.7 + 0.3 * e); G.goldText('×' + G.fmt(Math.round(multShown)), 0, 0, cs, { blur: 28 }); });
+        } else G.goldText('×' + G.fmt(Math.round(multShown)), 0, 8, cs, { blur: 28 });
       });
     }
     function drawChip(p) {
@@ -1028,7 +1047,7 @@
       });
     }
     S.draw = function () {
-      var u = g.u, cx = G.cx, cy = g.cy, Rb = g.R * G.ease.outBack(clamp(wheelK, 0, 1)), R = Rb * (1 + 0.08 * Math.sin(Math.PI * clamp(upPulse, 0, 1)));
+      var u = g.u, cx = G.cx, cy = g.cy, Rb = g.R * G.ease.outBack(clamp(wheelK, 0, 1)), R = Rb * (1 + 0.08 * Math.sin(Math.PI * clamp(upPulse, 0, 1)) + zoom);
       if (shock > 0.01) {   // onde de choc au sol
         sv(function () {
           ctx.translate(cx, cy); ctx.scale(1, 0.45);
@@ -1039,7 +1058,8 @@
       if (R > 4) {
         sv(function () {   // roue
           ctx.translate(cx, cy);
-          var gl = ctx.createRadialGradient(0, 0, R * 0.7, 0, 0, R * 1.6); gl.addColorStop(0, 'rgba(255,200,90,.35)'); gl.addColorStop(1, 'rgba(255,200,90,0)'); ctx.fillStyle = gl; ctx.fillRect(-R * 1.7, -R * 1.7, R * 3.4, R * 3.4);
+          var gl = ctx.createRadialGradient(0, 0, R * 0.7, 0, 0, R * 1.6); gl.addColorStop(0, 'rgba(255,200,90,' + (0.35 + 0.3 * lite) + ')'); gl.addColorStop(1, 'rgba(255,200,90,0)'); ctx.fillStyle = gl; ctx.fillRect(-R * 1.7, -R * 1.7, R * 3.4, R * 3.4);
+          if (lite > 0.02) { var lg = ctx.createRadialGradient(0, 0, R * 0.9, 0, 0, R * (1.3 + 0.5 * lite)); lg.addColorStop(0, 'rgba(255,236,170,' + (0.32 * lite + 0.25 * hope) + ')'); lg.addColorStop(1, 'rgba(255,200,90,0)'); ctx.globalCompositeOperation = 'lighter'; ctx.fillStyle = lg; ctx.fillRect(-R * 2, -R * 2, R * 4, R * 4); ctx.globalCompositeOperation = 'source-over'; }
           ctx.beginPath(); ctx.arc(-G.par.x * R * 0.014, R * 0.05, R * 1.07, 0, TAU); var hw = ctx.createLinearGradient(0, -R, 0, R * 1.1); hw.addColorStop(0, '#7a5612'); hw.addColorStop(0.6, '#3c2a08'); hw.addColorStop(1, '#0e0903'); ctx.fillStyle = hw; ctx.fill();
           ctx.beginPath(); ctx.arc(0, 0, R * 1.07, 0, TAU); ctx.fillStyle = '#120c05'; ctx.fill(); ctx.lineWidth = R * 0.022; ctx.strokeStyle = A.goldGrad(ctx, -R, -R, R, R); ctx.stroke();
           sv(function () { ctx.rotate(rot); for (var i = 0; i < N; i++) drawSeg(i, R); });
@@ -1070,9 +1090,9 @@
       }
       if (tense > 0.02 && R > 4) {   // suspense : le pointeur brille et bat au rythme d'un coeur
         sv(function () {
-          var pul = 0.5 + 0.5 * Math.sin(G.t * (10 + 14 * tense)), pr = R * (0.16 + 0.06 * pul), py = cy - R * 1.05;
+          var pul = 0.5 + 0.5 * Math.sin(G.t * (6 + 8 * tense)), pr = R * (0.16 + 0.06 * pul + 0.08 * hope), py = cy - R * 1.05;
           ctx.globalCompositeOperation = 'lighter'; var pgl = ctx.createRadialGradient(cx, py, 0, cx, py, pr * 2.2);
-          pgl.addColorStop(0, 'rgba(255,245,200,' + (0.55 * tense) + ')'); pgl.addColorStop(1, 'rgba(255,200,80,0)'); ctx.fillStyle = pgl; ctx.fillRect(cx - pr * 2.2, py - pr * 2.2, pr * 4.4, pr * 4.4);
+          pgl.addColorStop(0, 'rgba(255,245,200,' + Math.min(1, 0.55 * tense + 0.45 * hope) + ')'); pgl.addColorStop(1, 'rgba(255,200,80,0)'); ctx.fillStyle = pgl; ctx.fillRect(cx - pr * 2.2, py - pr * 2.2, pr * 4.4, pr * 4.4);
           ctx.lineWidth = R * 0.03; ctx.strokeStyle = 'rgba(255,230,150,' + (0.25 + 0.45 * pul) * tense + ')'; ctx.beginPath(); ctx.arc(cx, cy, R * 1.12, 0, TAU); ctx.stroke();
         });
       }
@@ -1147,12 +1167,61 @@
       });
     }
     var lastBeat = -1;
+    function smooth(x) { x = clamp(x, 0, 1); return x * x * (3 - 2 * x); }
+    // plan de la rotation (r = cases restant à parcourir, 0 = arrêt sur la case tirée) : une longue décélération, puis un « crawl » case par case
+    // où la roue hésite devant chaque cheville (faux espoirs : elle frôle une grosse case, recule, dépasse presque la case voisine puis revient)
+    function planSpin(idx, off, pw, R0) {
+      var turbo = G.turbo, qk = turbo ? 0.4 : quick() ? 0.75 : 0.85, Tm = turbo ? 2.0 : quick() ? 3.2 : 4.0 + pw * 0.6, cap = turbo ? 4.6 : quick() ? 7 : 10.6 + pw * 0.8, rc0 = (turbo ? 2.4 : 3.4) + Math.random() * 0.5;
+      function b(j) { return j - off; }   // cheville entre la case idx+j et idx+j-1
+      function hot(k) { return hotSeg(idx + k); }
+      var tg = [];   // cibles : { r, dwell }
+      function stall(j) {   // s'arrête juste avant la cheville ; si la case convoitée est grosse : frôlement, recul, nouvel essai
+        var h = hot(j - 1);
+        if (h && Math.random() < 0.85) { tg.push({ r: b(j) + 0.05, dwell: 0.45 }); tg.push({ r: b(j) + 0.34, dwell: 0.12 }); tg.push({ r: b(j) + 0.025, dwell: 0.7 }); }
+        else tg.push({ r: b(j) + (j === 1 ? 0.07 : 0.12), dwell: j === 1 ? 0.65 : 0.22 + Math.random() * 0.2 });
+      }
+      if (!turbo) { stall(3); stall(2); }
+      stall(1);
+      if (hot(-1) || Math.random() < 0.55) tg.push({ r: -off - 0.1 - Math.random() * 0.06, dwell: 0.5 });   // la roue entre dans la case voisine…
+      else tg.push({ r: -off + 0.05, dwell: 0.45 });                                                          // …ou s'en faut d'un cheveu
+      tg.push({ r: 0, dwell: 0 });
+      var segs2 = [], t = Tm, cur = rc0, hushAt = t;
+      tg.forEach(function (w, i) {
+        var dist = Math.abs(w.r - cur), last = i === tg.length - 1, dur = (0.4 + 0.65 * dist) * (1 + 0.1 * i) * qk * (last ? 1.5 : 1);
+        if (last) hushAt = t;
+        segs2.push({ t0: t, t1: t + dur, a: cur, b: w.r }); t += dur; cur = w.r;
+        if (w.dwell > 0) { var dw = w.dwell * qk; segs2.push({ t0: t, t1: t + dw, a: cur, b: cur }); t += dw; }
+      });
+      var kk = t > cap ? (cap - Tm) / (t - Tm) : 1;   // jamais plus long que prévu : le crawl se resserre si les faux espoirs s'enchaînent
+      if (kk < 1) { segs2.forEach(function (q) { q.t0 = Tm + (q.t0 - Tm) * kk; q.t1 = Tm + (q.t1 - Tm) * kk; }); hushAt = Tm + (hushAt - Tm) * kk; t = Tm + (t - Tm) * kk; }
+      var T = t;
+      return {
+        T: T, Tm: Tm, hushAt: hushAt,
+        at: function (tt) {
+          if (tt >= T) return 0;
+          if (tt < Tm) return rc0 + (R0 - rc0) * Math.pow(1 - tt / Tm, 3.4);
+          for (var i = 0; i < segs2.length; i++) { var q = segs2[i]; if (tt < q.t1) return q.a + (q.b - q.a) * smooth((tt - q.t0) / (q.t1 - q.t0)); }
+          return 0;
+        },
+        tense: function (tt) { return clamp((tt - Tm * 0.45) / (T - Tm * 0.45), 0, 1); }
+      };
+    }
     function spinTo(idx, pw) {
       pw = pw == null ? 0.5 : pw;
-      var off = 0.2 + Math.random() * 0.6, target = -(idx + off) * st, rot0 = rot, delta = mod(target - rot0, TAU) + (G.turbo ? 3 : Math.round(2 + pw * 3)) * TAU, prev = rot, pT = G.t;
-      S.spinning = true; hl = -1; Sfx.whoosh(); Sfx.furyCharge && Sfx.furyCharge();
-      return G.tween(G.turbo ? 2.4 : 8.5 + pw * 4, function (u) { var e = 1 - Math.pow(1 - u, 4.4), nr = rot0 + delta * e; vel = (nr - prev) / Math.max(1 / 240, G.t - pT); prev = nr; pT = G.t; rot = nr; var tn = clamp((u - 0.55) / 0.45, 0, 1), bt = Math.floor(tn * 6); if (tn > 0.3 && bt !== lastBeat) { lastBeat = bt; Sfx.drum(0.15 + 0.3 * tn); } tense = tn; vig = Math.max(vig, tn * 0.8); }, null).then(function () {
-        tense = 0; lastBeat = -1; S.spinning = false; vel = 0; rot = mod(rot, TAU); ptrV -= 4; Sfx.drum(0.3); Sfx.furyHit && Sfx.furyHit(); hl = idx;
+      var off = 0.2 + Math.random() * 0.6, target = -(idx + off) * st, rot0 = rot, delta = mod(target - rot0, TAU) + (G.turbo ? 3 : Math.round(3 + pw * 3)) * TAU, prev = rot, pT = G.t;
+      var plan = planSpin(idx, off, pw, delta / st);
+      S.spinning = true; hl = -1; hushed = false; crawl = false; heartT = 0.4; lastIdx = -1; Sfx.whoosh(); Sfx.furyCharge && Sfx.furyCharge();
+      Sfx.furyTense && Sfx.furyTense(plan.T / Math.max(1, G.speed));
+      return G.tween(plan.T, function (u) {
+        var tt = u * plan.T, nr = rot0 + delta - plan.at(tt) * st;
+        vel = (nr - prev) / Math.max(1 / 240, G.t - pT); prev = nr; pT = G.t; rot = nr;
+        tense = plan.tense(tt); crawl = tt >= plan.Tm; vig = Math.max(vig, tense * 0.8);
+        if (!hushed && tt >= plan.hushAt) { hushed = true; Sfx.furyHush && Sfx.furyHush(); }
+      }, null).then(function () {
+        rot = rot0 + delta; vel = 0; S.spinning = false; crawl = false; ptrTgt = 0; hushed = true; Sfx.furyHush && Sfx.furyHush();
+        return G.sleep(G.turbo ? 0.08 : quick() ? 0.2 : 0.4);   // silence, puis l'impact
+      }).then(function () {
+        tense = 0; lastBeat = -1; rot = mod(rot, TAU); ptrV -= 6; Sfx.drum(0.3); Sfx.furyHit && Sfx.furyHit(); hl = idx;
       });
     }
     function banner(text, sub, col) { hb = { text: text, sub: sub, col: col, t: 0 }; }
@@ -1211,8 +1280,8 @@
           banner(T.handUp, T.handUpSub, cc.a);
           await G.tween(0.7, function (k) { flyOrb.t = k; }, null);
           var ox2 = flyOrb.x1, oy2 = flyOrb.y1;
-          flyOrb = null; mult = sx.mult; multShown = mult * B; multPop = 1; aura = Math.min(10, mult); Sfx.chime(mult * 4); Sfx.thud();
-          FX.ring(ox2, oy2, cc.a, 90 + 30 * lvl, 0.8); FX.ring(ox2, oy2, '#ffffff', 60 + 20 * lvl, 0.6); FX.spark(ox2, oy2, 30 + 14 * lvl, cc.a, 360); FX.flash(0.25 + 0.12 * lvl, cc.a); FX.shake(8 + 6 * lvl, 0.4); FX.float('×' + G.fmt(mult * B), ox2, oy2 + 40, cc.a, 30 + 6 * lvl);
+          flyOrb = null; mult = sx.mult; cPrev = multShown; cAnim = 1; multShown = mult * B; multPop = 1; aura = Math.min(10, mult); Sfx.chime(mult * 4); Sfx.thud();
+          FX.ring(ox2, oy2, cc.a, 90 + 30 * lvl, 0.8); FX.ring(ox2, oy2, '#ffffff', 60 + 20 * lvl, 0.6); FX.spark(ox2, oy2, 30 + 14 * lvl, cc.a, 360); FX.flash(0.25 + 0.12 * lvl, cc.a); FX.shake(8 + 6 * lvl, 0.4);
           // la roue s'améliore : elle gonfle, un arc de lumière en fait le tour, les nombres défilent jusqu'à leur valeur doublée
           upCol = cc.a; upPulse = 1; Sfx.shield(); FX.shake(10, 0.6); FX.ring(G.cx, g.cy, cc.a, g.R * 1.5, 1.1); FX.spark(G.cx, g.cy, 60, cc.a, 520); FX.rain(G.w, 30);
           await G.tween(1.2, function (k) { shownMult = lerp(m0 * B, mult * B, G.ease.out3(k)); upSweep = k < 1 ? k : -1; }, null);
