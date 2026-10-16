@@ -25,7 +25,11 @@ var P = [
   ['Roue : Scarabées sur cornaline',                  '#fff6e6', '#c02c1c', 3],
   ['Roue : Pesée (texte sombre sur ivoire)',          '#4a3410', '#e8cf86', 3],
   ['Roue : Trésor sur améthyste',                     '#fff6ff', '#7a30b8', 3],
-  ['Bonus : sous-titre du bandeau',                   '#cdb98a', '#0a0704', 4.5]
+  ['Bonus : sous-titre du bandeau',                   '#cdb98a', '#0a0704', 4.5],
+  ['Accueil : texte du carrousel (pire cas : image claire sous la carte)', '#e6d7ae', '#403c37', 4.5],
+  ['Accueil : bouton Passer',                         '#cdb98a', '#403c37', 4.5],
+  ['Accueil : sous-titre et mention de démo',          '#a89874', '#161616', 4.5],
+  ['Accueil : bouton principal (texte sombre, bas du dégradé)', '#140a00', '#c8901e', 4.5]
 ];
 var fails = 0, fs = require('fs'), path = require('path');
 // garde-fou : les couleurs testées ci-dessus doivent être celles réellement utilisées
