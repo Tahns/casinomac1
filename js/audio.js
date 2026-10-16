@@ -19,19 +19,30 @@
     if (!AC) return null;
     ctx = new AC();
     master = ctx.createGain(); master.gain.value = muted ? 0 : 0.85 * vol;
-    var comp = ctx.createDynamicsCompressor(); comp.threshold.value = -16; comp.ratio.value = 3.5; comp.attack.value = 0.004; comp.release.value = 0.25;
-    master.connect(comp); comp.connect(ctx.destination);
+    // chaîne de mastering : passe-haut 26 Hz (retire le continu/sub inutile), compresseur « colle » doux, puis limiteur brique (pas d'écrêtage même quand 10 couches se superposent)
+    var hp = ctx.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 26; hp.Q.value = 0.6;
+    var comp = ctx.createDynamicsCompressor(); comp.threshold.value = -16; comp.ratio.value = 3.5; comp.attack.value = 0.004; comp.release.value = 0.25; comp.knee.value = 12;
+    var lim = ctx.createDynamicsCompressor(); lim.threshold.value = -2.5; lim.knee.value = 0; lim.ratio.value = 20; lim.attack.value = 0.001; lim.release.value = 0.09;
+    master.connect(hp); hp.connect(comp); comp.connect(lim); lim.connect(ctx.destination);
     // adoucit les aigus durs de tous les effets
     // pas de sons aigus : deux filtres passe-bas en cascade (24 dB/oct), réglables avec « Aigus »
     softB = ctx.createBiquadFilter(); softB.type = 'lowpass'; softB.frequency.value = toneHz(); softB.Q.value = 0.5; softB.connect(master);
     softA = ctx.createBiquadFilter(); softA.type = 'lowpass'; softA.frequency.value = toneHz(); softA.Q.value = 0.5; softA.connect(softB);
     sfxBus = ctx.createGain(); sfxBus.gain.value = 0.9; sfxBus.connect(softA);
     musBus = ctx.createGain(); musBus.gain.value = 0.5; musBus.connect(softA);
-    // réverbération : bruit décroissant, filtré pour rester chaud
-    var len = ctx.sampleRate * 2.2, imp = ctx.createBuffer(2, len, ctx.sampleRate);
-    for (var c = 0; c < 2; c++) { var d = imp.getChannelData(c), lp = 0; for (var i = 0; i < len; i++) { lp += ((Math.random() * 2 - 1) - lp) * 0.35; d[i] = lp * Math.pow(1 - i / len, 2.8); } }
+    // réverbération de « salle de pierre » : pré-délai, réflexions précoces espacées, queue stéréo décorrélée dont les aigus s'éteignent plus vite que les graves
+    var sr = ctx.sampleRate, len = Math.floor(sr * 2.8), imp = ctx.createBuffer(2, len, sr), er = [0.011, 0.017, 0.023, 0.031, 0.043, 0.057, 0.071];
+    for (var c = 0; c < 2; c++) {
+      var d = imp.getChannelData(c), lo = 0, hi = 0, sd = 9301 + c * 7717, pre = Math.floor(sr * 0.018);
+      for (var i = 0; i < len; i++) {
+        sd = (sd * 1103515245 + 12345) & 0x7fffffff; var w = sd / 0x3fffffff - 1, u = i / len;
+        lo += (w - lo) * 0.5; hi += (w - hi) * (0.08 + 0.4 * (1 - u));         // le filtre se ferme avec le temps : queue de plus en plus sombre
+        d[i] = i < pre ? 0 : (hi * Math.pow(1 - u, 3.1) * Math.min(1, (i - pre) / (sr * 0.012)) + lo * 0.15 * Math.pow(1 - u, 6));
+      }
+      er.forEach(function (t, k) { var at = Math.floor(sr * (t + c * 0.0023)); if (at < len) d[at] += (k % 2 ? -1 : 1) * 0.5 / (1 + k * 0.6); });
+    }
     verb = ctx.createConvolver(); verb.buffer = imp;
-    var vg = ctx.createGain(); vg.gain.value = 0.34; verb.connect(vg); vg.connect(master);
+    var vh = ctx.createBiquadFilter(); vh.type = 'highpass'; vh.frequency.value = 180; var vg = ctx.createGain(); vg.gain.value = 0.34; verb.connect(vh); vh.connect(vg); vg.connect(master);
     return ctx;
   }
 
@@ -107,7 +118,11 @@
   function winNote(i, oct) { return WIN[((i % 7) + 7) % 7] * Math.pow(2, Math.floor(i / 7) + (oct || 0)); }
   var lastShower = 0;
   // impact grave : sinus qui plonge + claque filtrée
-  function boom(vol0, delay) { tone(110, 0.8, 'sine', vol0, delay, 32); tone(55, 1.1, 'sine', vol0 * 0.8, delay, 28); noise(0.35, vol0 * 0.5, delay, 900, 'lowpass', 120); }
+  function boom(vol0, delay) { tone(110, 0.8, 'sine', vol0, delay, 32); tone(55, 1.1, 'sine', vol0 * 0.8, delay, 28); noise(0.35, vol0 * 0.5, delay, 900, 'lowpass', 120);
+    tone(34, 1.5, 'sine', vol0 * 0.55, delay, 24, true); tone(220, 0.12, 'triangle', vol0 * 0.18, delay, 90); noise(0.03, vol0 * 0.22, delay, 3200, 'bandpass', undefined, 1);   // sous-grave profond + « corps » + attaque sèche
+  }
+  // métal inharmonique (chaîne, anneau, cuivre frappé) : plusieurs partiels non entiers qui s'éteignent à des vitesses différentes
+  function metal(f, dur, vol0, delay) { [1, 2.76, 5.4, 8.93].forEach(function (r, k) { bell(f * r, dur / (1 + k * 0.7), vol0 / (1 + k * 0.8), delay, true, 1.4 + k * 0.3); }); }
 
   // ----- briques « épiques » : basse saturée, taïko, cuivres, voix -----
   function shaperCurve(k) { var n = 1024, c = new Float32Array(n); for (var i = 0; i < n; i++) { var x = i * 2 / n - 1; c[i] = (1 + k) * x / (1 + k * Math.abs(x)); } return c; }
@@ -305,6 +320,16 @@
       o.connect(og); og.connect(lp); o.start(t0); nodes.push(o);
     });
     lfo.start(t0); lp.connect(dg); dg.connect(musBus);
+    // souffle du désert : bruit passe-bande qui ondule très lentement + halo aigu désaccordé (quinte et octave) pour l'« air » de la salle
+    var wn = ctx.createBufferSource(), wf = ctx.createBiquadFilter(), wg = ctx.createGain(), wl = ctx.createOscillator(), wlg = ctx.createGain(), wv = ctx.createGain();
+    wn.buffer = noiseBuf(); wn.loop = true; wf.type = 'bandpass'; wf.frequency.value = 520; wf.Q.value = 0.9; wg.gain.setValueAtTime(0.0001, t0); wg.gain.exponentialRampToValueAtTime(0.022, t0 + 6);
+    wl.frequency.value = 0.045; wlg.gain.value = 260; wl.connect(wlg); wlg.connect(wf.frequency); wn.connect(wf); wf.connect(wg); wg.connect(musBus); wg.connect(wv); wv.gain.value = 0.6; wv.connect(verb);
+    wn.start(t0, Math.random()); wl.start(t0); nodes.push(wn, wl);
+    [[329.63 * 2, 0.0035], [493.88 * 2, 0.0022], [659.26 * 2, 0.0014]].forEach(function (p, k) {
+      var o = ctx.createOscillator(), og = ctx.createGain(), l2 = ctx.createOscillator(), lg2 = ctx.createGain(); o.type = 'sine'; o.frequency.value = p[0] * PK * (1 + 0.0012 * (k - 1));
+      og.gain.setValueAtTime(0.0001, t0); og.gain.exponentialRampToValueAtTime(p[1], t0 + 8); l2.frequency.value = 0.05 + k * 0.03; lg2.gain.value = p[1] * 0.8; l2.connect(lg2); lg2.connect(og.gain);
+      o.connect(og); og.connect(musBus); og.connect(verb); o.start(t0); l2.start(t0); nodes.push(o, l2);
+    });
     MU = { alive: true, step: 0, next: t0 + 0.12, mood: mood || 'base', tense: 0, g: dg, nodes: nodes, timer: setInterval(musicSched, 60) };
     return true;
   }
@@ -404,7 +429,7 @@
       var tEnd = 0.1 + n * st;
       pad([winNote(0, -1), winNote(2, -1), winNote(4, -1), winNote(0, 0), winNote(2, 0)], 2.0 + tier * 0.5, 0.2, tEnd - 0.1, 0.25);
       [0, 2, 4].forEach(function (k, j) { horn(winNote(k, 0), 1.2 + tier * 0.3, 0.06, tEnd, true); bell(winNote(k, 2), 1.4, 0.05, tEnd + j * 0.05, true); });
-      boom(0.36 + tier * 0.03, tEnd);
+      boom(0.36 + tier * 0.03, tEnd); metal(winNote(0, 1), 1.8, 0.02 + tier * 0.006, tEnd);
       for (i = 0; i < tier * 2 + 2; i++) { tone(95, 0.18, 'sine', 0.2, 0.02 + i * 0.065, 48); noise(0.07, 0.06, 0.02 + i * 0.065, 500); }          // roulement de timbale
       if (tier >= 3) for (i = 0; i < 12; i++) bell(900 + Math.random() * 600, 0.5, 0.03, tEnd + 0.1 + i * 0.07, true, 3.1);
     },
@@ -412,7 +437,7 @@
     winLand: function (tier) {
       tier = Math.max(1, Math.min(4, tier || 1));
       [0, 2, 4].forEach(function (k, j) { bell(winNote(k, 1), 1.4, 0.09, j * 0.04, true); });
-      bell(winNote(0, 2), 1.8, 0.06, 0.12, true); pad([winNote(0, 0), winNote(4, 0)], 1.4, 0.1, 0, 0.1);
+      bell(winNote(0, 2), 1.8, 0.06, 0.12, true); pad([winNote(0, 0), winNote(4, 0)], 1.4, 0.1, 0, 0.1); bell(winNote(0, 3), 2.2, 0.02 + tier * 0.006, 0.16, true, 5.2); tone(winNote(0, -2), 1.1, 'sine', 0.08, 0, null, true);
       if (tier >= 2) A.sparkle();
     },
     // montée en puissance pendant le décompte (EXTRA, MEGA, DIVIN) : souffle grave qui s'ouvre, nappe qui monte, roulement de timbales qui s'accélère. Doux, sans aigu.
@@ -481,8 +506,9 @@
     bonusTheme: function (kind) {
       if (!ensure()) return; var T = THEMES[kind]; if (!T) return;
       stopTheme(); ambWas = !!ambNodes; A.stopAmbient(); themeLevel = 0;
+      var bed = { scarab: [SCALE[0] / 2, SCALE[4] / 2], weigh: [SCALE[0] / 2, SCALE[4] / 2, SCALE[0]], vault: [SCALE[0] / 2, SCALE[2] / 2], hand: [WIN[0] / 4, WIN[0] / 2], crypt: [SCALE[0] / 4, SCALE[1] / 2] }[kind];
       var tm = theme = { kind: kind, step: 0, alive: true, timer: null }, ms = 60000 / T.bpm / 2;
-      tm.timer = setInterval(function () { if (!tm.alive || muted || !musicOn || document.hidden) return; inMusic = true; try { T.step(tm.step++, themeLevel); } catch (e) {} inMusic = false; }, ms);
+      tm.timer = setInterval(function () { if (!tm.alive || muted || !musicOn || document.hidden) return; inMusic = true; try { if (bed && tm.step % Math.max(1, Math.round(6000 / ms)) === 0) pad(bed, 7.5, 0.1, 0, 3, musBus); T.step(tm.step++, themeLevel); } catch (e) {} inMusic = false; }, ms);
     },
     stopBonusTheme: function () { stopTheme(); if (musicOn && !muted) setTimeout(function () { if (!theme) A.startAmbient(); }, 900); },
     bonusUp: function () { themeLevel = Math.min(4, themeLevel + 1); },
@@ -520,7 +546,7 @@
       if (musBus) musBus.gain.setTargetAtTime(0.5, t + 0.4, 0.5);
     },
     tensionHit: function () {                    // la roue s'arrête sur un bonus : le silence se brise
-      boom(0.5); noise(0.3, 0.2, 0, 5000, 'highpass'); swell(0.5, 0.14, 0, 300, 4500);
+      boom(0.5); noise(0.3, 0.2, 0, 5000, 'highpass'); swell(0.5, 0.14, 0, 300, 4500); metal(SCALE[0] * 2, 1.6, 0.03, 0.02);
       [0, 2, 4, 6].forEach(function (k, i) { bell(SCALE[k] * 4, 1.2, 0.07, 0.08 + i * 0.06, true); });
     },
     nearMiss: function () {                      // faux espoir : le bonus est frôlé puis perdu
@@ -564,13 +590,13 @@
     furySlam: function () {                      // la Main s'abat : impact colossal
       taiko(0.7, 0, true); taiko(0.55, 0.12, true); growl(55, 1.6, 0.3, 0); boom(0.7, 0);
       [0, 2, 4].forEach(function (k) { horn(WIN[k] * 0.5, 1.4, 0.1, 0.02, true); horn(WIN[k], 1.2, 0.07, 0.02, true); });
-      noise(1.6, 0.2, 0, 4000, 'lowpass', 120); swell(0.9, 0.14, 0, 5000, 300);
+      noise(1.6, 0.2, 0, 4000, 'lowpass', 120); swell(0.9, 0.14, 0, 5000, 300); tone(30, 2.2, 'sine', 0.3, 0, 20, true); metal(110, 2.2, 0.04, 0.01);
     },
     furyCharge: function () {                    // la roue est lancée : tambours qui s'accélèrent + souffle
       swell(2.4, 0.18, 0, 150, 6000); drumRoll(16, 2.4, 0.26, 0); growl(41.2, 2.4, 0.2, 0);
     },
     furyHit: function () {                       // la roue s'arrête : coup de tonnerre
-      taiko(0.55, 0, true); boom(0.5, 0.02); horn(WIN[0], 0.9, 0.1, 0, true); horn(WIN[2], 0.9, 0.08, 0, true); noise(0.5, 0.18, 0, 5200, 'highpass');
+      taiko(0.55, 0, true); boom(0.5, 0.02); horn(WIN[0], 0.9, 0.1, 0, true); horn(WIN[2], 0.9, 0.08, 0, true); noise(0.5, 0.18, 0, 5200, 'highpass'); tone(32, 1.4, 'sine', 0.22, 0, 22, true); metal(98, 1.6, 0.03, 0.01);
     },
     furyDouble: function (lvl) {                 // DOUBLE de votre couleur : explosion de puissance, de plus en plus grosse
       lvl = Math.max(1, Math.min(3, lvl || 1)); A.bonusUp();
@@ -620,7 +646,7 @@
     chainBreak: function (light) {   // light : version courte (chaîne d'en-tête à l'ouverture d'un bonus, déjà couverte par l'annonce du bonus)
       if (!ensure()) return; duck(light ? 0.6 : 0.25, light ? 1.2 : 2.4);
       noise(0.09, 0.2, 0, 5200, 'highpass'); noise(0.22, 0.16, 0, 2400, 'bandpass', 900, 1.2);                       // claque du métal
-      bell(1180, 0.9, 0.09, 0, true, 5.4); bell(1760, 0.7, 0.06, 0.01, true, 6.1); tone(210, 0.18, 'square', 0.04, 0, 70);
+      bell(1180, 0.9, 0.09, 0, true, 5.4); bell(1760, 0.7, 0.06, 0.01, true, 6.1); tone(210, 0.18, 'square', 0.04, 0, 70); metal(620, 1.4, 0.05, 0.005); tone(48, 0.9, 'sine', 0.2, 0, 28, true);
       for (var i = 0; i < 11; i++) bell(1500 + Math.random() * 3800, 0.18 + Math.random() * 0.25, 0.05 * (1 - i / 14), 0.06 + i * 0.055 + Math.random() * 0.03, true, 5.8 + Math.random());   // maillons qui rebondissent
       if (light) { boom(0.25, 0); return; }
       swell(0.7, 0.16, 0.02, 500, 8000);                                                                             // éclat
@@ -653,6 +679,7 @@
       var v = strong ? 1 : 0.7;
       tone(190, 0.14, 'triangle', 0.1 * v, 0, 80); noise(0.07, 0.1 * v, 0, 1800, 'bandpass', 900, 1.5);
       tone(70, 0.4, 'sine', 0.14 * v, 0, 42, true); bell(SCALE[0] * 4, 0.6, 0.03 * v, 0.02, true, 2.6);
+      tone(46, 0.7, 'sine', 0.12 * v, 0, 30, true); noise(0.025, 0.09 * v, 0, 4200, 'bandpass', undefined, 2); metal(SCALE[4] * 2, 0.7, 0.02 * v, 0.01);   // sous-grave, claquement de bois, anneau de la cheville
     },
     // ---- réglages joueur ----
     // effets sonores : coupés séparément de la musique (« Son » = tout couper reste le réglage général exigé par Stake)
