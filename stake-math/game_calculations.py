@@ -247,14 +247,20 @@ def draw_options(rng, kind):
     return o
 
 
-def play_spin(rng, chance):
+def play_spin(rng, chance, wrath=None):
+    """wrath : état de la Colère d'Anubis du tour ({"level"}) ou None ; pendant la Colère la roue ne s'arrête que sur C.WRATH_CELLS."""
     oracle = roll_oracle(rng, chance)
-    index = int(math.floor(rng() * C.N))
+    if wrath:
+        index = C.WRATH_CELLS[int(math.floor(rng() * len(C.WRATH_CELLS)))]
+    else:
+        index = int(math.floor(rng() * C.N))
     kind = C.LAYOUT[index]
     d = C.KINDS[kind]
-    boost = oracle["boost"] if (oracle and oracle["kind"] == kind) else 1
-    s = {"oracle": oracle, "index": index, "kind": kind, "boost": boost, "bonus": None, "bonus_kind": None,
-         "base": 0, "pay": 0, "secret": False, "upgraded": False, "options": None, "profile": None}
+    oboost = oracle["boost"] if (oracle and oracle["kind"] == kind) else 1
+    wm = C.WRATH_LADDER[wrath["level"]] if wrath else 1
+    s = {"oracle": oracle, "index": index, "kind": kind, "boost": oboost * wm, "oracle_boost": oboost, "wrath": wm if wrath else None,
+         "wrath_up": None, "bonus": None, "bonus_kind": None, "base": 0, "pay": 0, "secret": False, "upgraded": False, "options": None, "profile": None}
+    boost = s["boost"]
     if d["bonus"]:
         if rng() < C.SECRET_UPGRADE:        # Sanctuaire des Marées : prioritaire sur la Fureur, aucun choix
             s["secret"] = True
@@ -282,22 +288,31 @@ def play_spin(rng, chance):
 def play_round(rng, mode="std"):
     md = C.MODES.get(mode) or C.MODES["std"]
     chance = md["oracle"]
-    spins, total = [], 0
+    spins, total, wrath = [], 0, None
+    if rng() < md["wrath"]:   # Colère d'Anubis : un tirage par tour, avant la roue
+        lv = weighted(rng, C.WRATH_START)
+        wrath = {"level": lv, "start": lv, "mult": C.WRATH_LADDER[lv]}
     for i in range(C.MAX_CHAIN + 1):
-        s = play_spin(rng, chance)
+        s = play_spin(rng, chance, wrath)
         if s["kind"] == "ankh" and i == C.MAX_CHAIN:   # plus de relance possible : on retire
             while True:
-                s = play_spin(rng, chance)
+                s = play_spin(rng, chance, wrath)
                 if s["kind"] != "ankh":
                     break
         spins.append(s)
         total += s["pay"]
         if s["kind"] != "ankh":
             break
+        if wrath and wrath["level"] < C.WRATH_TOP:   # l'Ankh brise une chaîne : le multiplicateur monte d'un cran
+            wrath["level"] += 1
+            s["wrath_up"] = C.WRATH_LADDER[wrath["level"]]
+    if wrath:
+        wrath["mult"] = C.WRATH_LADDER[wrath["level"]]
     capped = total > C.WINCAP_INT
     if capped:
         total = C.WINCAP_INT
-    return {"spins": spins, "total": total, "capped": capped, "cost": md["cost"], "mode": "plus" if md is C.MODES["plus"] else "std"}
+    return {"spins": spins, "total": total, "capped": capped, "cost": md["cost"], "mode": "plus" if md is C.MODES["plus"] else "std",
+            "wrath": wrath}
 
 
 def play_buy(rng, kind):
@@ -309,7 +324,7 @@ def play_buy(rng, kind):
     else:
         opts = draw_options(rng, kind)
         b = opts["std"]
-    s = {"oracle": None, "index": -1, "kind": kind, "boost": 1, "bonus": b, "bonus_kind": "hand" if upgraded else kind,
+    s = {"oracle": None, "index": -1, "kind": kind, "boost": 1, "oracle_boost": 1, "wrath": None, "wrath_up": None, "bonus": b, "bonus_kind": "hand" if upgraded else kind,
          "upgraded": upgraded, "secret": False, "base": b["total"], "pay": b["total"], "options": opts,
          "profile": "turq" if upgraded else "std"}
     total = min(s["pay"], C.WINCAP_INT)

@@ -1,2 +1,2 @@
 /* Généré par tools/gen-stats.js (calcul exact, tools/rtp-exact.js) — ne pas modifier à la main. */
-window.HOA_STATS = { "maxWin": 25000, "std": { "cost": 1, "rtp": 96.21, "hit": 42.6, "bonusEvery": 20 }, "plus": { "cost": 1.1, "rtp": 96.1 }, "buy": { "scarab": { "cost": 9.26, "rtp": 96.02 }, "weigh": { "cost": 10.31, "rtp": 96.02 }, "vault": { "cost": 12.37, "rtp": 96.03 }, "hand": { "cost": 27.3, "rtp": 96.01 } } };
+window.HOA_STATS = { "maxWin": 25000, "std": { "cost": 1, "rtp": 96.2, "hit": 32.7, "bonusEvery": 19.3 }, "plus": { "cost": 1.1, "rtp": 96.2 }, "buy": { "scarab": { "cost": 9.26, "rtp": 96.02 }, "weigh": { "cost": 10.31, "rtp": 96.01 }, "vault": { "cost": 12.37, "rtp": 96.03 }, "hand": { "cost": 27.3, "rtp": 96 } } };

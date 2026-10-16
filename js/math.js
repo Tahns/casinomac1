@@ -40,12 +40,12 @@
   /* ---------- La roue (64 cases, très haute volatilité) ---------- */
   // kind: identifiant ; mult: gain direct (cases « nombre ») ; count: nombre de cases sur la roue
   var KINDS = {
-    m0:    { id: 'm0',    mult: 0,   count: 34, tier: 0 },
+    m0:    { id: 'm0',    mult: 0,   count: 40, tier: 0 },
     m025:  { id: 'm025',  mult: 0.3, count: 5,  tier: 1 },   // identifiant historique « 0,25 » conservé ; la valeur est 0,3× (tous les gains sont des multiples de 0,1×)
-    m05:   { id: 'm05',   mult: 0.5, count: 7,  tier: 1 },
-    m1:    { id: 'm1',    mult: 1,   count: 6,  tier: 2 },
-    m2:    { id: 'm2',    mult: 2,   count: 3,  tier: 3 },
-    m3:    { id: 'm3',    mult: 3,   count: 2,  tier: 4 },
+    m05:   { id: 'm05',   mult: 0.5, count: 6,  tier: 1 },
+    m1:    { id: 'm1',    mult: 1,   count: 3,  tier: 2 },
+    m2:    { id: 'm2',    mult: 2,   count: 2,  tier: 3 },
+    m3:    { id: 'm3',    mult: 3,   count: 1,  tier: 4 },
     ankh:  { id: 'ankh',  mult: 0,   count: 4,  tier: 7, respin: true },
     scarab:{ id: 'scarab',count: 1,  tier: 8, bonus: true },
     weigh: { id: 'weigh', count: 1,  tier: 9, bonus: true },
@@ -88,15 +88,30 @@
   }
   var LAYOUT = buildLayout();
   var N = LAYOUT.length;
+  var WRATH_KINDS = ['ankh', 'scarab', 'weigh', 'vault'];   // cases libérées par la Colère d'Anubis (les autres restent enchaînées)
+  var WRATH_CELLS = [];
+  LAYOUT.forEach(function (k, i) { if (WRATH_KINDS.indexOf(k) >= 0) WRATH_CELLS.push(i); });
 
   /* ---------- Oracle (bénédiction scellée avant le tour : la valeur n'est révélée qu'à l'arrêt de la roue) ---------- */
-  var MODES = { std: { cost: 1, oracle: 0.29 }, plus: { cost: 1.1, oracle: 0.698 } };
+  // wrath : chance de la Colère d'Anubis (feature aléatoire du jeu de base, voir plus bas), tirée une fois au début du tour
+  var MODES = { std: { cost: 1, oracle: 0.0765, wrath: 0.002 }, plus: { cost: 1.1, oracle: 0.27, wrath: 0.002 } };
   var ORACLE_CHANCE = MODES.std.oracle;
   var ORACLE_KIND_W = [['m05', 3], ['m1', 4], ['m2', 3], ['m3', 2], ['scarab', 3], ['weigh', 3], ['vault', 3]];
   var ORACLE_BOOST = {
-    num:   [[2, 70], [3, 20], [5, 7], [10, 2.5], [25, 0.5]],
-    bonus: [[2, 66], [3, 21], [5, 8.5], [10, 3.4], [25, 0.8], [100, 0.06]]
+    num:   [[2, 50], [3, 25], [5, 15], [10, 8], [25, 2]],
+    bonus: [[2, 40], [3, 25], [5, 18], [10, 12], [25, 4], [100, 1]]
   };
+
+  /* ---------- Colère d'Anubis (feature aléatoire du jeu de base : « les chaînes se brisent ») ---------- */
+  // Au début d'un tour Standard ou Oracle+, avec la chance MODES[mode].wrath, Anubis brise ses chaînes AVANT que la roue ne tourne :
+  //  - un multiplicateur s'allume sur l'échelle WRATH_LADDER, au cran tiré dans WRATH_START (probabilités explicites) ;
+  //  - la poussière et les nombres restent enchaînés : la roue ne s'arrête que sur les cases de WRATH_KINDS (Ankh et bonus : WRATH_CELLS, tirage uniforme) ;
+  //  - chaque Ankh (relance) brise une chaîne de plus : le multiplicateur monte d'un cran (×2 → ×3 → ×5 → ×10 → ×25 → ×50 → ×100, plafonné au dernier) ;
+  //  - le gain de la case finale (nombre ou bonus, Oracle compris) est multiplié par le cran atteint. Jamais à l'achat de bonus.
+  // Le multiplicateur est intégré au boost du tour (s.boost = boost de l'Oracle × multiplicateur de la Colère) : le gain reste s.pay = s.base × s.boost.
+  var WRATH_LADDER = [2, 3, 5, 10, 25, 50, 100];
+  var WRATH_START = [[0, 1]];   // [cran de départ, poids] : la Colère s'allume toujours à ×2
+  var WRATH_TOP = WRATH_LADDER.length - 1;
 
   /* ---------- Bonus 1 : Chute du Scarabée (cascade de chevilles, 8 rangées, 3 scarabées) ---------- */
   var SCARAB_ROWS = 8;
@@ -317,13 +332,16 @@
     return round.total;
   }
 
-  function playSpin(rng, chance) {
+  // wrath : état de la Colère d'Anubis du tour ({ level }) ou null ; pendant la Colère la roue ne s'arrête que sur WRATH_CELLS
+  function playSpin(rng, chance, wrath) {
     var oracle = rollOracle(rng, chance);
-    var index = Math.floor(rng() * N);
+    var index = wrath ? WRATH_CELLS[Math.floor(rng() * WRATH_CELLS.length)] : Math.floor(rng() * N);
     var kind = LAYOUT[index];
     var def = KINDS[kind];
-    var boost = (oracle && oracle.kind === kind) ? oracle.boost : 1;
-    var s = { oracle: oracle, index: index, kind: kind, boost: boost, bonus: null, base: 0, pay: 0 };
+    var oboost = (oracle && oracle.kind === kind) ? oracle.boost : 1;
+    var wm = wrath ? WRATH_LADDER[wrath.level] : 1;
+    var s = { oracle: oracle, index: index, kind: kind, boost: oboost * wm, oracleBoost: oboost, bonus: null, base: 0, pay: 0 };
+    if (wrath) s.wrath = wm;
     if (def.bonus) {
       if (rng() < SECRET_UPGRADE) { s.secret = true; s.bonus = crypt(rng); s.profile = 'crypt'; }   // bonus SECRET (prioritaire sur la Fureur) : aucun choix, script unique
       else if (rng() < HAND_UPGRADE) { s.options = handOptions(rng); s.bonus = s.options.turq; s.profile = 'turq'; s.upgraded = true; }
@@ -332,26 +350,29 @@
     } else if (!def.respin) {
       s.base = def.mult;
     }
-    s.pay = s.base * boost;
+    s.pay = s.base * s.boost;
     return s;
   }
 
   // renvoie { spins:[...], total, capped }
   function playRound(rng, mode) {
     var md = MODES[mode] || MODES.std, chance = md.oracle;
-    var spins = [], total = 0;
+    var spins = [], total = 0, wrath = null;
+    if (rng() < md.wrath) { var lv = weighted(rng, WRATH_START); wrath = { level: lv, start: lv, mult: WRATH_LADDER[lv] }; }   // Colère d'Anubis : un tirage par tour, avant la roue
     for (var i = 0; i <= MAX_CHAIN; i++) {
-      var s = playSpin(rng, chance);
+      var s = playSpin(rng, chance, wrath);
       if (s.kind === 'ankh' && i === MAX_CHAIN) { // plus de relance possible : on retire
-        do { s = playSpin(rng, chance); } while (s.kind === 'ankh');
+        do { s = playSpin(rng, chance, wrath); } while (s.kind === 'ankh');
       }
       spins.push(s);
       total += s.pay;
       if (s.kind !== 'ankh') break;
+      if (wrath && wrath.level < WRATH_TOP) { wrath.level++; s.wrathUp = WRATH_LADDER[wrath.level]; }   // l'Ankh brise une chaîne : le multiplicateur monte d'un cran
     }
+    if (wrath) wrath.mult = WRATH_LADDER[wrath.level];
     var capped = total > MAX_WIN;
     if (capped) total = MAX_WIN;
-    return { spins: spins, total: total, capped: capped, cost: md.cost, mode: md === MODES.plus ? 'plus' : 'std' };
+    return { spins: spins, total: total, capped: capped, cost: md.cost, mode: md === MODES.plus ? 'plus' : 'std', wrath: wrath };
   }
 
   /* ---------- Achat de bonus ---------- */
@@ -371,7 +392,8 @@
   return {
     BUY: BUY, playBuy: playBuy, applyChoice: applyChoice, drawOptions: drawOptions, PROFILES: PROFILES,
     SCARAB_PROFILES: SCARAB_PROFILES, WEIGH_PROFILES: WEIGH_PROFILES, VAULT_PROFILES: VAULT_PROFILES,
-    MAX_WIN: MAX_WIN, MODES: MODES, ORACLE_KIND_W: ORACLE_KIND_W, ORACLE_BOOST: ORACLE_BOOST, N: N, LAYOUT: LAYOUT, KINDS: KINDS,
+    MAX_WIN: MAX_WIN, MODES: MODES, ORACLE_KIND_W: ORACLE_KIND_W, ORACLE_BOOST: ORACLE_BOOST, N: N, LAYOUT: LAYOUT, KINDS: KINDS, MAX_CHAIN: MAX_CHAIN,
+    WRATH_LADDER: WRATH_LADDER, WRATH_START: WRATH_START, WRATH_TOP: WRATH_TOP, WRATH_CELLS: WRATH_CELLS, WRATH_KINDS: WRATH_KINDS,
     SCARAB_ROWS: SCARAB_ROWS, SCARAB_VALUES: SCARAB_VALUES, SCARAB_BALLS: SCARAB_BALLS,
     WEIGH_PAIRS: WEIGH_PAIRS, weighGain: weighGain, VAULT_TILES: VAULT_TILES, VAULT_MAX_PICKS: VAULT_MAX_PICKS, VAULT_BASE_PICKS: VAULT_BASE_PICKS, VAULT_KEY_PICKS: VAULT_KEY_PICKS, VAULT_PICK_CAP: VAULT_PICK_CAP, VAULT_FINISH: VAULT_FINISH,
     CRYPT_CELLS: CRYPT_CELLS, CRYPT_ROWS: CRYPT_ROWS, CRYPT_COLS: CRYPT_COLS, CRYPT_START: CRYPT_START, CRYPT_TYPES: CRYPT_TYPES, CRYPT_VALUES: CRYPT_VALUES, SECRET_UPGRADE: SECRET_UPGRADE, cryptReplay: cryptReplay,

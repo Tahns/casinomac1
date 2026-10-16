@@ -46,6 +46,19 @@ MODES.forEach(function (name, mi) {
   }
   doc.modes[name] = { cost: r_cost(name), rounds: rounds };
 });
+// Colère d'Anubis (1 tour sur 500 : absente des 100 tours par mode) : tours dont le PREMIER tirage est imposé à 0 (< la chance de Colère),
+// la suite étant tirée par mulberry32 ; Python rejoue les mêmes tirages (le 0 compris)
+doc.wrath = {};
+['std', 'plus'].forEach(function (name, mi) {
+  var n = take(cap(Math.max(1, Math.round(perMode * 0.3)))), base = M.mulberry32(seed + 200 + mi), rounds = [];
+  for (var i = 0; i < n; i++) {
+    var first = true, rng = recorder(function () { if (first) { first = false; return 0; } return base(); });
+    var r = M.playRound(rng, name);
+    if (!r.wrath) throw new Error('Colère non déclenchée');
+    rounds.push({ d: rng.draws.slice(), total: I(r.total), capped: !!r.capped, spins: r.spins.map(spinInfo), wrath: [r.wrath.start, r.wrath.level] });
+  }
+  doc.wrath[name] = rounds;
+});
 function r_cost(name) { return BUYS[name] ? M.BUY[BUYS[name]].price : M.MODES[name].cost; }
 
 // bonus pris isolément (profil Équilibré ; la Fureur et le Sanctuaire couvrent leurs variantes)
@@ -101,8 +114,8 @@ var B = M._bonus;
   segs.forEach(function (sg, i) { if (sg.d === 0) d0.push(i); if (sg.b === 'weigh') w = i; });
   var fury = [uIdx(d0[0], n), uIdx(d0[1], n), uIdx(d0[0], n), uIdx(w, n),
     uW(M.WEIGH_PROFILES.std, function (p) { return p[0] === 60 && p[1] === 1000; }), 0.25, 0.75, 0.75, uIdx(1, n), uIdx(1, n)];
-  var pre = {
-    std: [0.9999, uIdx(M.LAYOUT.indexOf('scarab'), M.N), 0.5, 0.01], plus: null, bonus_scarab: [0.01], bonus_weigh: [0.01], bonus_vault: [0.01], bonus_fury: []
+  var pre = {   // pas de Colère d'Anubis, pas d'Oracle, bonus, pas de Sanctuaire, Fureur
+    std: [0.9999, 0.9999, uIdx(M.LAYOUT.indexOf('scarab'), M.N), 0.5, 0.01], plus: null, bonus_scarab: [0.01], bonus_weigh: [0.01], bonus_vault: [0.01], bonus_fury: []
   };
   pre.plus = pre.std;
   doc.wincap = {};
@@ -121,8 +134,14 @@ var ex = exact();
 doc.exact = {
   std: ex.std, plus: ex.plus, buy: ex.buy, hand: ex.hand, replaced: ex.replaced, bonusEvery: ex.bonusEvery,
   bonus: ex.bonus, crypt: exact.cryptMoments(),
-  vault: { safe: exact.vaultOf(M.VAULT_PROFILES.safe), std: exact.vaultOf(M.VAULT_PROFILES.std), bold: exact.vaultOf(M.VAULT_PROFILES.bold) }
+  vault: { safe: exact.vaultOf(M.VAULT_PROFILES.safe), std: exact.vaultOf(M.VAULT_PROFILES.std), bold: exact.vaultOf(M.VAULT_PROFILES.bold) },
+  uncapped: ex.uncapped, wrath: ex.wrath, summary: {}
 };
+// loi exacte (plafond compris) de chaque mode : moments, taux de zéro, paliers de gain, taille du support
+exact.MODES.forEach(function (m) {
+  var S = exact.summary(m);
+  doc.exact.summary[m] = { mean: S.mean, rtp: S.rtp, sd: S.sd, zero: S.zero, support: S.support, tiers: S.tiers };
+});
 fs.mkdirSync(path.dirname(out), { recursive: true });
 fs.writeFileSync(out, JSON.stringify(doc) + '\n');
 console.log('Parité : ' + used + ' tours/tirages (plafond ' + BUDGET + '), écrit ' + out + ' (' + (fs.statSync(out).size / 1024).toFixed(0) + ' Ko)');

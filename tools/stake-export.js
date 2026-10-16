@@ -18,8 +18,8 @@
 //    jetons 'scepter' ×2) restent des nombres bruts (×N = N).
 //  - Chaque événement porte `seq` (compteur 0.., ordre de lecture) et `type` ; `wheelStop.index` est la case de la roue, pas le compteur.
 //  - Le coût d'un mode : roundStart.cost en entier ×100 (110 = ×1,1) ; index.json garde le multiple décimal (1.1) comme le SDK.
-//    Le RGS débite mise × coût. Les 6 modes : std (1), plus (1,1 : Oracle+), bonus_scarab (9,24), bonus_weigh (10,31), bonus_vault (12,37),
-//    bonus_fury (27,28). À l'achat il n'y a ni oracle ni wheelStop : roundStart.mode == 'bonus' et un seul bonusStart (bought:true).
+//    Le RGS débite mise × coût. Les 6 modes : std (1), plus (1,1 : Oracle+), bonus_scarab (9,26), bonus_weigh (10,31), bonus_vault (12,37),
+//    bonus_fury (27,30). À l'achat il n'y a ni oracle ni wheelStop : roundStart.mode == 'bonus' et un seul bonusStart (bought:true).
 //
 // CHOIX DU JOUEUR : RÈGLE D'OR = TOUTES LES VARIANTES SÉLECTIONNABLES D'UN BOOK PAIENT EXACTEMENT LE MÊME TOTAL (== payoutMultiplier).
 //  Le book contient toutes les variantes ; le choix du joueur ne fait que SÉLECTIONNER celle qui est affichée (aucun appel réseau). Comme
@@ -37,11 +37,17 @@
 //
 // ÉVÉNEMENTS (dans l'ordre) — type et champs
 //  roundStart   { v:2, mode:'std'|'plus'|'bonus', cost, maxWin:2500000, cells:64 }       cells = taille de la roue (index.json donne layout[64])
+//  wrath        { level, mult, ladder:[2,3,5,10,25,50,100] }   COLÈRE D'ANUBIS (ajout compatible du format v2, absent sinon et jamais à l'achat) :
+//                 les chaînes se brisent AVANT le premier tour ; multiplicateur allumé = ladder[level] ; pendant tout le tour la roue ne
+//                 s'arrête que sur une case de WRATH_KINDS (Ankh, Scarabées, Pesée, Trésor) ; chaque Ankh fait monter le cran (wrathUp)
 //  pour chaque tour n = 1.. (une relance Ankh = un tour de plus) :
 //   oracle        { spin, kind, boost, sealed:true }     bénédiction scellée AVANT l'arrêt : boost est dans le book mais le front l'affiche
 //                                                          « ×? » jusqu'à l'arrêt de la roue (absent si pas d'Oracle ce tour, absent à l'achat)
-//   wheelStop     { spin, index:0..63, kind, boost }     case atteinte (kind == layout[index]) ; boost = boost APPLIQUÉ (1 si l'Oracle a manqué)
+//   wheelStop     { spin, index:0..63, kind, boost, wrath? }  case atteinte (kind == layout[index]) ; boost = boost APPLIQUÉ = (boost de l'Oracle
+//                                                          s'il a visé cette case, sinon 1) × (multiplicateur de la Colère, sinon 1) ; wrath = ce multiplicateur
 //   oracleReveal  { spin, kind, boost, hit }             après l'arrêt : valeur révélée (hit = l'Oracle visait le type de la case atteinte)
+//   wrathUp       { spin, level, mult }                  Colère : l'Ankh de ce tour brise une chaîne, le multiplicateur passe à mult = ladder[level]
+//                                                          (absent au dernier cran) ; s'applique aux tours suivants
 //   bonusStart    { spin, kind, bonus, secret, upgraded, bought }
 //                   kind = type nominal de la case (scarab|weigh|vault) ; bonus = bonus réellement joué : scarab|weigh|vault|hand (Fureur
 //                   d'Anubis, upgraded:true) | crypt (Sanctuaire des Marées, secret:true) ; bought:true à l'achat
@@ -118,12 +124,16 @@ function bonusEvents(kind, b) {
 
 function bookEvents(round) {
   var ev = [{ type: 'roundStart', v: FORMAT, mode: round.mode === 'buy' ? 'bonus' : round.mode, cost: I(round.cost), maxWin: I(M.MAX_WIN), cells: M.N }];
+  if (round.wrath) ev.push({ type: 'wrath', level: round.wrath.start, mult: M.WRATH_LADDER[round.wrath.start], ladder: M.WRATH_LADDER.slice() });
   round.spins.forEach(function (s, k) {
     var n = k + 1;
     if (s.oracle) ev.push({ type: 'oracle', spin: n, kind: s.oracle.kind, boost: s.oracle.boost, sealed: true });
     if (s.index >= 0) {
-      ev.push({ type: 'wheelStop', spin: n, index: s.index, kind: s.kind, boost: s.boost });
+      var ws = { type: 'wheelStop', spin: n, index: s.index, kind: s.kind, boost: s.boost };
+      if (s.wrath) ws.wrath = s.wrath;
+      ev.push(ws);
       if (s.oracle) ev.push({ type: 'oracleReveal', spin: n, kind: s.oracle.kind, boost: s.oracle.boost, hit: s.oracle.kind === s.kind });
+      if (s.wrathUp) ev.push({ type: 'wrathUp', spin: n, level: M.WRATH_LADDER.indexOf(s.wrathUp), mult: s.wrathUp });
     }
     if (s.bonus) {
       var kind = s.secret ? 'crypt' : s.upgraded ? 'hand' : s.kind;
@@ -223,19 +233,34 @@ function verify(book) {
     }
     return null;
   }
-  // tours
-  var sum = 0, i = 1, spin = 0, fin = null;
+  // Colère d'Anubis : événement « wrath » juste après roundStart (jamais à l'achat), cran courant `lv`
+  var sum = 0, i = 1, spin = 0, fin = null, lv = null, LAD = M.WRATH_LADDER;
+  if (ev[1] && ev[1].type === 'wrath') {
+    var we = ev[1]; lv = we.level;
+    if (rs.mode === 'bonus' || LAD[lv] !== we.mult || JSON.stringify(we.ladder) !== JSON.stringify(LAD) || !M.WRATH_START.some(function (t) { return t[0] === lv; })) err('wrath');
+    i = 2;
+  }
   while (i < ev.length) {
     if (ev[i].type === 'finalWin') { fin = ev[i]; break; }
-    var wheel = null, bs = null, body = [], boost = 1, kind = null;
+    var wheel = null, bs = null, body = [], boost = 1, kind = null, orc = null, up = null;
     spin++;
     while (i < ev.length && ev[i].type !== 'spinWin' && ev[i].type !== 'finalWin') {
       var x = ev[i++];
-      if (x.type === 'wheelStop') { wheel = x; boost = x.boost; kind = x.kind; if (M.LAYOUT[x.index] !== x.kind) err('wheelStop ' + spin); }
+      if (x.type === 'oracle') orc = x;
+      else if (x.type === 'wheelStop') {
+        wheel = x; boost = x.boost; kind = x.kind;
+        if (M.LAYOUT[x.index] !== x.kind) err('wheelStop ' + spin);
+        var wm = lv == null ? 1 : LAD[lv], ob = orc && orc.kind === x.kind ? orc.boost : 1;
+        if (x.boost !== ob * wm) err('boost ' + spin + ' (' + x.boost + ' ≠ Oracle ' + ob + ' × Colère ' + wm + ')');
+        if (lv == null ? x.wrath != null : (x.wrath !== wm || M.WRATH_KINDS.indexOf(x.kind) < 0)) err('Colère : case ' + spin);
+      }
+      else if (x.type === 'wrathUp') { up = x; if (lv == null || kind !== 'ankh' || x.level !== lv + 1 || LAD[x.level] !== x.mult) err('wrathUp ' + spin); else lv = x.level; }
       else if (x.type === 'bonusStart') { bs = x; if (!wheel) kind = x.kind; }
-      else if (bs && x.type !== 'oracle' && x.type !== 'oracleReveal') body.push(x);
+      else if (bs && x.type !== 'oracleReveal') body.push(x);
       if (x.spin != null && x.type !== 'furySpin' && x.spin !== spin) err('numéro de tour ' + x.type);
     }
+    if (kind === 'ankh' && lv != null && !up && lv < M.WRATH_TOP) err('Colère : l\'Ankh ' + spin + ' n\'a pas fait monter le multiplicateur');
+    if (up && kind !== 'ankh') err('wrathUp hors Ankh ' + spin);
     var sw = ev[i++];
     if (!sw || sw.type !== 'spinWin' || sw.spin !== spin) { err('spinWin ' + spin); break; }
     var base;

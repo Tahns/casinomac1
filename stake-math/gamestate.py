@@ -27,23 +27,31 @@ def has_bonus(r):
 def meets(criteria, r):
     """Le tour appartient-il à la classe de critère `criteria` ? (classes exclusives, dans l'ordre de priorité de l'optimiseur)"""
     total = r["total"]
+    big, epic = 100 * C.SCALE, 1000 * C.SCALE   # paliers des gros gains (game_events.win_tier)
     if criteria == "wincap":
         return total >= C.WINCAP_INT
     if criteria == "0":
         return total == 0
+    if criteria == "epic":
+        return epic <= total < C.WINCAP_INT
+    if criteria == "big":
+        return big <= total < epic
     if criteria == "bonus":
-        return has_bonus(r) and 0 < total < C.WINCAP_INT
+        return has_bonus(r) and 0 < total < big
     if criteria == "basegame":
-        return (not has_bonus(r)) and 0 < total
+        return (not has_bonus(r)) and 0 < total < big
     raise KeyError(criteria)
 
 
 class GameState:
-    def __init__(self, config=None, payout_step=None, seed=2026):
+    def __init__(self, config=None, payout_step=None, seed=2026, natural_rare=False):
         self.config = config or C.GameConfig()
         self.payout_step = C.PAYOUT_STEP if payout_step is None else payout_step
         self.seed = seed
         self.repeat_count = 0
+        # natural_rare : les critères rares (big, epic, 0 des achats) sont tirés par rejet selon la loi du jeu (production, HOA_BIG=1) ;
+        # sinon un chemin réel imposé suffit (démonstration plafonnée à 1000 books : pas de dizaines de milliers de tours de rejet)
+        self.natural_rare = natural_rare
 
     def mode_index(self, mode_name):
         return C.MODE_ORDER.index(mode_name)
@@ -66,11 +74,16 @@ class GameState:
 
     def run_spin(self, sim, mode_name, criteria):
         """Simule jusqu'à obtenir un tour de la classe `criteria`. Renvoie (book, descripteurs force, nombre d'essais)."""
-        if criteria == "wincap":
-            rng = force.wincap_rng(mode_name, fallback_seed=sim_seed(self.seed, self.mode_index(mode_name), sim))
+        scripted = criteria in ("big", "epic") or (criteria == "0" and mode_name in C.BUY_KIND_OF)
+        if criteria == "wincap" or (scripted and not self.natural_rare):
+            fb = sim_seed(self.seed, self.mode_index(mode_name), sim)
+            if criteria == "wincap":
+                rng = force.wincap_rng(mode_name, fallback_seed=fb)
+            else:   # palier rare avec le plafond de 1000 tours : chemin réel imposé (force.tier_script), pas de tirage par rejet
+                rng = force.tier_rng(mode_name, "zero" if criteria == "0" else criteria, fallback_seed=fb)
             rnd = self.play(rng, mode_name)
-            if not meets("wincap", rnd):
-                raise RuntimeError("le script de gain maximal n'atteint pas le plafond (%s : %d)" % (mode_name, rnd["total"]))
+            if not meets(criteria, rnd):
+                raise RuntimeError("le script imposé n'atteint pas le critère %s (%s : %d)" % (criteria, mode_name, rnd["total"]))
             tries = 1
         else:
             rng = mulberry32(sim_seed(self.seed, self.mode_index(mode_name), sim))

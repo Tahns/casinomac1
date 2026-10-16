@@ -52,6 +52,24 @@ class TestParity(unittest.TestCase):
         self.assertGreaterEqual(n, 600)
         self.assertLessEqual(n, 1000)
 
+    def test_colere_d_anubis(self):
+        # tours forcés en Colère par le JS (premier tirage = 0) : mêmes gains, cases, multiplicateurs et tirages consommés
+        n, ups = 0, 0
+        for mode, rounds in PAR["wrath"].items():
+            for k, rd in enumerate(rounds):
+                rng = ScriptedRng(rd["d"], ints=True, strict=True)
+                r = G.play_round(rng, mode)
+                where = "Colère %s tour %d" % (mode, k)
+                self.assertEqual(r["total"], rd["total"], where)
+                self.assertEqual(rng.consumed, len(rd["d"]), where)
+                self.assertEqual([spin_sig(s) for s in r["spins"]], [list(x) for x in rd["spins"]], where)
+                self.assertEqual([r["wrath"]["start"], r["wrath"]["level"]], rd["wrath"], where)
+                self.assertTrue(all(C.LAYOUT[s["index"]] in C.WRATH_KINDS for s in r["spins"]), where)
+                ups += sum(1 for s in r["spins"] if s["wrath_up"])
+                n += 1
+        self.assertGreaterEqual(n, 40)
+        self.assertGreater(ups, 0)
+
     def test_tous_types_de_cases_et_bonus_couverts(self):
         kinds, bonuses = set(), set()
         for block in PAR["modes"].values():

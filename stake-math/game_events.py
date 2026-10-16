@@ -104,14 +104,20 @@ def book_events(rnd, payout_int):
     log = EventLog()
     log.add("roundStart", v=2, mode="bonus" if rnd["mode"] == "buy" else rnd["mode"], modeName=rnd.get("mode_name", rnd["mode"]), cost=C.S(rnd["cost"]),
             scale=C.SCALE, maxWin=C.WINCAP_INT, wincap=C.WINCAP_INT, cells=C.N)
+    wr = rnd.get("wrath")
+    if wr:   # Colère d'Anubis : les chaînes se brisent avant le premier tour (format v2, ajout compatible : tools/stake-export.js)
+        log.add("wrath", level=wr["start"], mult=C.WRATH_LADDER[wr["start"]], ladder=list(C.WRATH_LADDER))
     for k, s in enumerate(rnd["spins"]):
         n = k + 1
         if s["oracle"]:
             log.add("oracle", spin=n, kind=s["oracle"]["kind"], boost=s["oracle"]["boost"], sealed=True, revealOn="wheelStop")
         if s["index"] >= 0:
-            log.add("wheelStop", spin=n, index=s["index"], kind=s["kind"], boost=s["boost"], respin=s["kind"] == "ankh")
+            extra = {"wrath": s["wrath"]} if s.get("wrath") else {}
+            log.add("wheelStop", spin=n, index=s["index"], kind=s["kind"], boost=s["boost"], respin=s["kind"] == "ankh", **extra)
             if s["oracle"]:
                 log.add("oracleReveal", spin=n, kind=s["oracle"]["kind"], boost=s["oracle"]["boost"], hit=s["oracle"]["kind"] == s["kind"])
+            if s.get("wrath_up"):
+                log.add("wrathUp", spin=n, level=C.WRATH_LADDER.index(s["wrath_up"]), mult=s["wrath_up"])
         if s["bonus"] is not None:
             kind = s["bonus_kind"]
             log.add("bonusStart", spin=n, bonus=kind, name=BONUS_EVENT_NAME[kind], secret=bool(s["secret"]),
@@ -123,12 +129,25 @@ def book_events(rnd, payout_int):
     return log.events
 
 
+def win_tier(total_int):
+    """Palier de gain d'un book (clé « tier » des descripteurs) : les fences « epic » (>= 1000x) et « big » (100-999,9x) de
+    game_optimization.py le cherchent pour imposer à la table la fréquence EXACTE des gros gains (exact.summary)."""
+    if total_int >= C.WINCAP_INT:
+        return "max"
+    if total_int >= 1000 * C.SCALE:
+        return "epic"
+    if total_int >= 100 * C.SCALE:
+        return "big"
+    return "small" if total_int > 0 else "zero"
+
+
 def describe_book(rnd):
     """Descripteurs « force » du book (optimiseur : fences par recherche de clés)."""
     kinds = []
     for s in rnd["spins"]:
         if s["bonus"] is not None:
             kinds.append(BONUS_EVENT_NAME[s["bonus_kind"]])
-    if kinds:
-        return {"bonus": "yes", "kind": kinds[-1]}
-    return {"bonus": "no"}
+    out = {"bonus": "yes", "kind": kinds[-1]} if kinds else {"bonus": "no"}
+    out["tier"] = win_tier(rnd["total"])
+    out["wrath"] = "yes" if rnd.get("wrath") else "no"
+    return out

@@ -48,7 +48,7 @@ def main(argv=None):
     config = C.GameConfig()
     game_optimization.OptimizationSetup(config)
     config.payout_step = args.step
-    state = GameState(config, payout_step=args.step, seed=args.seed)
+    state = GameState(config, payout_step=args.step, seed=args.seed, natural_rare=cap.big_allowed())
     lib = Library(args.out)
     files, compressed_all = {}, True
     t0 = time.time()

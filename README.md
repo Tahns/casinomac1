@@ -4,7 +4,7 @@ Jeu de roue à bonus (démo, crédits fictifs) dans l'univers du jugement d'Anub
 
 ```bash
 python3 -m http.server 8000      # puis ouvrir http://localhost:8000
-node tools/rtp-exact.js           # RTP, écart-type, taux de gain et prix d'achat EXACTS (très haute volatilité : les simulations de 2 M de tours ne donnent le RTP qu'à ± 2 pts)
+node tools/rtp-exact.js --loi --variance  # RTP, écart-type, taux de gain, fréquence des gros gains, prix d'achat EXACTS (loi complète, plafond compris) et part de la variance par source — voir docs/VOLATILITE.md
 node tools/simulate.js 1000 1 plus  # (plafonné à 1000 tours, ANUBIS_BIG=1 pour lever) RTP, taux de gain, distribution (graine, puis mode std | plus | bonus-scarab | bonus-weigh | bonus-vault | bonus-fury)
 node tools/tune.js               # espérance de chaque bonus isolé
 node tools/check.js              # invariants des maths (sortie 1 si échec)
@@ -12,7 +12,7 @@ node tools/contrast.js           # contraste WCAG AA des couples texte/fond
 node tools/i18n-check.js         # 16 langues Stake complètes (clés, marqueurs {x}, longueurs), pas de français en dur, chiffres affichés = maths
 node tools/stake-export.js       # démonstration du format Stake (books .jsonl.zst, lookup CSV, index.json) dans tools/out/, <= 1000 books par mode
 node tools/export-parity.js    # tirages de parité JS pour stake-math/tests (≤ 1000 tours au total)
-python3 -m unittest discover -s stake-math/tests   # portage Python (math-sdk) : parité avec le JS, moments exacts, format des books (54 tests, ≈ 1 s)
+python3 -m unittest discover -s stake-math/tests   # portage Python (math-sdk) : parité avec le JS, loi exacte, Colère d'Anubis, format des books (66 tests, ≈ 6 s)
 python3 stake-math/run.py       # books + lookup + index.json au format math-sdk dans stake-math/library/ (≤ 1000 books par mode ; HOA_BIG=1 réservé à une vraie production)
 node tools/social-check.js       # mode social (Stake.US) : aucun mot interdit dans tous les textes sociaux, 10.00 SC / GC sans « $ » ; avec PLAYWRIGHT_CORE, scanne aussi le DOM et le canvas (?social=true&currency=XSC)
 PLAYWRIGHT_CORE=... node tools/layout.js # mises en page sur 10 tailles d'écran (portrait, paysage, grand écran)
@@ -36,6 +36,7 @@ node tools/tune-profiles.js     # espérance des profils Prudent / Équilibré /
 | `tools/build-stake.py` · `tools/stake-build-test.js` | Build de production Stake (`dist-stake/`, `dist-stake.zip`, sans démo locale) et son test Playwright — voir « Build de production Stake » |
 | `fonts/` | Cinzel (lettrage) et Philosopher (chiffres, textes), OFL 1.1, sous-ensemble latin ≈ 90 Ko — détail dans `docs/ANALYSE.md` |
 | `stake-math/` | Portage Python des maths au format math-sdk de Stake (game_config, books, lookup, index.json, optimiseur, tests de parité) — voir `stake-math/README.md` |
+| `docs/VOLATILITE.md` | Volatilité : diagnostic de l'écart-type mesuré par Stake, relèvement, Colère d'Anubis (feature du jeu de base), commande pour refaire la table de production |
 | `docs/ANALYSE.md` | SWOT, benchmark GitHub, DA, mathématiques, chemin vers Stake |
 | `docs/STAKE_ENGINE_CONFORMITE.md` | Checklist de conformité Stake Engine, risques brevets/marques/droits, plan d'action (pas un avis juridique) |
 | `docs/GUIDE_PUBLICATION.md` · `docs/DOSSIER_PI.md` | Guide pas à pas de publication sur Stake Engine (qui fait quoi, cases à cocher) · dossier à remettre à un conseil en propriété industrielle (pas un avis juridique) |

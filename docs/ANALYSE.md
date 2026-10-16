@@ -463,3 +463,11 @@ Thème « Anubis, or poli, obsidienne, lettrage gravé » : le lettrage reste en
 Remplacées : Oswald (chiffres, trop condensée, jurait avec les capitales gravées) et Manrope (sans-serif géométrique, étrangère au thème). Écartées après essai : Marcellus (une seule graisse, « 0 » confondu avec « O »), Cinzel pour les chiffres (le « 1 » ressemble à un I), Cinzel Decorative (fioritures illisibles en petit), Forum (trop fine).
 
 Source unique : variables CSS `--f-title`, `--f-num`, `--f-text` (`css/style.css`) et `G.TITLE`, `G.NUM`, `G.TEXT` (`js/game.js`) pour le canvas ; `G.NUM_K` compense la hauteur de chiffre plus faible de Philosopher. Le jeu ne démarre (`G.start`) qu'une fois les cinq graisses chargées (`document.fonts.load`, filet de sécurité à 3 s), pour qu'aucun texte de secours ne s'affiche. `tools/build-single.py` inline toujours les polices telles quelles (aucune adaptation nécessaire).
+
+## Itération 21 — volatilité relevée et Colère d'Anubis (2026-10-16)
+
+Retour Stake : écart-type mesuré 9,24 (jauge « faible ») sur la table de 200 000 books ; calcul exact de l'époque 14,5 (plafond compris). Cause : l'optimiseur Rust façonne chaque fence par des gaussiennes et aplatissait la queue noyée dans la fence « bonus » (81 % de la variance hors gain max perdue). Corrections (détail : `docs/VOLATILITE.md`) :
+- maths : roue 40 « 0 » / 5×0,3 / 6×0,5 / 3×1 / 2×2 / 1×3 ; Oracle 7,65 % (Oracle+ 27 %) aux boosts plus forts ; **Colère d'Anubis** (1 tour sur 500 : bonus garanti, multiplicateur ×2 → ×100 qui monte à chaque Ankh) ;
+- optimiseur : fences gain max / 0 / ≥ 1000× / 100-999,9× / bonus / cases aux probabilités exactes ; plancher garanti de l'écart-type de la table : 24,9 ;
+- résultat exact Standard : RTP 96,20 %, écart-type 31,2 (14,5 avant), gain non nul 32,7 % (42,6 %), ≥ 100× 1 tour sur 882, ≥ 1000× 1 sur 10 392, 25 000× 1 sur 1,88 million ; Oracle+ 96,20 %, 33,2 × le coût ; achats inchangés (96,00-96,03 %) ;
+- reste : scène et règles (16 langues) de la Colère ; refaire la table de production (commande : `docs/VOLATILITE.md` §4).

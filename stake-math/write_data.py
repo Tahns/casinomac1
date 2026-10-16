@@ -162,8 +162,8 @@ class Library:
             fences = []
             for name, fo in obj["conditions"].items():
                 fi = {"name": name}
-                for src, dst in (("av_win", "avg_win"), ("hr", "hr"), ("rtp", "rtp")):
-                    if fo.get(src) is not None:
+                for src, dst in (("av_win", "avg_win"), ("hr", "hr"), ("rtp", "rtp"), ("min_m2m", "min_mean_to_median"), ("max_m2m", "max_mean_to_median")):
+                    if fo.get(src) is not None:   # bornes moyenne / médiane par fence : champs optionnels de FenceJson (optimization_program/src/main.rs)
                         fi[dst] = str(fo[src])
                 fi["identity_condition"] = {
                     "search": [{"name": str(k), "value": str(v)} for k, v in fo["force_search"].items()],

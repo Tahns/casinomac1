@@ -61,46 +61,52 @@ except Exception:
         for mode in opt_dict:
             assert any(bm.get_name() == mode for bm in game_config.bet_modes), "mode inconnu : %s" % mode
 
-WINCAP_RTP = 0.002     # part de RTP du gain maximal (hr = 25000 / 0.002 = 1 sur 12,5 millions)
+FENCE_SEARCH = {"epic": {"tier": "epic"}, "big": {"tier": "big"}, "bonus": {"bonus": "yes"}}
+M2M_BAND = (0.8, 1.25)   # bornes moyenne / médiane d'une fence : la valeur EXACTE du jeu × [0,8 ; 1,25]
 
 
 def class_targets(mode):
-    """RTP et taux de gain visés par critère pour un mode (valeurs de départ issues du calcul exact)."""
-    res = exact.compute()
-    target = C.RTP_TARGET
-    if mode in ("std", "plus"):
-        r = res["std"] if mode == "std" else res["plus"]
-        cost = C.MODES[mode]["cost"]
-        cls = r["classes"]
-        base_rtp = cls["basegame"][1] / cost if mode == "plus" else cls["basegame"][1]
-        base_p = cls["basegame"][0]
-        # probabilité d'un bonus payant : la Pesée perdue (50 % hors Fureur et Sanctuaire) est classée « 0 »
-        weigh_zero = (1 / (C.N - C.KINDS["ankh"]["count"])) * 0.5 * (1 - C.SECRET_UPGRADE) * (1 - C.HAND_UPGRADE)
-        bonus_p = cls["bonus"][0] - weigh_zero
-        return {
-            "wincap": {"rtp": WINCAP_RTP},
-            "0": {},
-            "bonus": {"rtp": round(target - base_rtp - WINCAP_RTP, 5), "hr": round(1 / bonus_p, 3)},
-            "basegame": {"rtp": round(base_rtp, 5), "hr": round(1 / base_p, 3)},
-        }
-    kind = C.BUY_KIND_OF[mode]
-    hit = res["buy"][kind]["hit"]
-    out = {"wincap": {"rtp": WINCAP_RTP},
-           "bonus": {"rtp": round(target - WINCAP_RTP, 5), "hr": round(1 / (hit if mode == "bonus_weigh" else 1.0), 3)}}
-    if mode == "bonus_weigh":
-        out["0"] = {}
+    """Cibles de chaque fence (ordre de priorité de l'optimiseur), tirées de la loi EXACTE du jeu (exact.fence_targets) :
+    probabilité (hr = 1 / p) et part de RTP rapportée au coût. Chaque palier de gain (gain max, 0, >= 1000 x, 100-999,9 x, bonus, cases)
+    garde SA fréquence naturelle : l'optimiseur ne peut plus aplatir la queue de distribution (docs/VOLATILITE.md). Seule la fence
+    « bonus » absorbe l'écart entre le RTP naturel du mode et la cible commune (96,2 %), en gardant sa fréquence."""
+    ft = exact.fence_targets(mode)
+    cost = exact.mode_cost(mode)
+    out = {}
+    for name, st in ft.items():
+        if name == "0":
+            out[name] = {"p": st["p"]}
+            continue
+        if st["p"] <= 0:
+            continue
+        t = {"p": st["p"], "rtp": st["p"] * st["mean"] / cost, "hr": 1 / st["p"], "mean": st["mean"], "median": st["median"]}
+        if st["median"] > 0 and st["values"] >= 3:
+            r = st["mean"] / st["median"]
+            t["m2m"] = (round(r * M2M_BAND[0], 3), round(r * M2M_BAND[1], 3))
+        out[name] = t
+    total = sum(t.get("rtp", 0) for t in out.values())
+    out["bonus"]["rtp"] += C.RTP_TARGET - total
+    for t in out.values():
+        if "rtp" in t:
+            t["rtp"] = round(t["rtp"], 7)
+        if "hr" in t:
+            t["hr"] = round(t["hr"], 3)
     return out
 
 
 def mode_opt_params(mode):
     t = class_targets(mode)
-    cond = {"wincap": ConstructConditions(rtp=t["wincap"]["rtp"], av_win=C.WINCAP, search_conditions=C.WINCAP).return_dict()}
-    if "0" in t:
-        cond["0"] = ConstructConditions(rtp=0, av_win=0, search_conditions=0).return_dict()
-    cond["bonus"] = ConstructConditions(rtp=t["bonus"]["rtp"], hr=t["bonus"]["hr"], search_conditions={"bonus": "yes"}).return_dict()
+    cond = {"wincap": ConstructConditions(rtp=t["wincap"]["rtp"], av_win=C.WINCAP, search_conditions=C.WINCAP).return_dict(),
+            "0": ConstructConditions(rtp=0, av_win=0, search_conditions=0).return_dict()}
+    for name in ("epic", "big", "bonus", "basegame"):
+        if name not in t:
+            continue
+        cd = ConstructConditions(rtp=t[name]["rtp"], hr=t[name]["hr"], search_conditions=FENCE_SEARCH.get(name)).return_dict()
+        if "m2m" in t[name]:   # bornes moyenne / médiane propres à la fence (clés lues par optimization_program, voir write_data.py)
+            cd["min_m2m"], cd["max_m2m"] = t[name]["m2m"]
+        cond[name] = cd
     scaling = [{"criteria": "bonus", "scale_factor": 1, "win_range": (1, 1), "probability": 1.0}]
     if "basegame" in t:
-        cond["basegame"] = ConstructConditions(rtp=t["basegame"]["rtp"], hr=t["basegame"]["hr"]).return_dict()
         scaling.append({"criteria": "basegame", "scale_factor": 1, "win_range": (1, 1), "probability": 1.0})
     return {
         "conditions": cond,
