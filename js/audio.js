@@ -3,7 +3,7 @@
  * Réglages joueur : hauteur globale (demi-tons), volume, ambiance on/off. */
 (function (root) {
   'use strict';
-  var ctx = null, master, sfxBus, musBus, verb, muted = false, ambNodes = null, tens = null;
+  var ctx = null, master, sfxBus, musBus, verb, muted = false, ambNodes = null, tens = null, tenseNodes = null;
   var pitchSemi = 0, PK = 1, vol = 1, musicOn = true, toneV = 0.3, softA = null, softB = null;
   var sfxOn = true, inMusic = false;   // effets sonores (hors musique) : coupés à part ; inMusic = les sons d'un thème de bonus comptent comme musique
   function gate(bus) { return !sfxOn && !inMusic && (!bus || bus === sfxBus); }   // vrai : cet effet est coupé
@@ -579,6 +579,38 @@
       for (var i = 0; i < 4 + lvl * 2; i++) horn(winNote(i, 0) * (i > 4 ? 2 : 1), 0.4, 0.08, 0.15 + i * 0.08, true);
       pad([WIN[0] / 2, WIN[2] / 2, WIN[4] / 2, WIN[0], WIN[2], WIN[4]], 3.2, 0.26, 0.1, 0.3);
       for (i = 0; i < 6 + lvl * 3; i++) bell(2000 + Math.random() * 3000, 0.6, 0.03, 0.3 + i * 0.05, true, 3.1);
+    },
+    // ---- Fureur d'Anubis : suspense de la roue (nappe qui monte, tic espacés, battements, silence puis impact) ----
+    furyTense: function (dur) {                  // nappe grave (deux scies désaccordées + tierce mineure) qui s'ouvre sur toute la durée de la rotation
+      A.furyHush(true);
+      if (!ensure() || muted) return;
+      try {
+        dur = Math.max(0.6, dur || 4); var t = ctx.currentTime, g = ctx.createGain(), f = ctx.createBiquadFilter(), oscs = [];
+        f.type = 'lowpass'; f.Q.value = 3; f.frequency.setValueAtTime(180 * PK, t); f.frequency.exponentialRampToValueAtTime(2400 * PK, t + dur * 0.92);
+        g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.13, t + dur * 0.92);
+        [[55, 'sawtooth', 1], [55.7, 'sawtooth', 1], [65.4 * 1.19, 'sine', 1], [27.5, 'sine', 1]].forEach(function (d) {
+          var o = ctx.createOscillator(); o.type = d[1]; o.frequency.setValueAtTime(d[0] * PK, t); o.frequency.exponentialRampToValueAtTime(d[0] * PK * 2.1, t + dur * 0.95);
+          o.connect(f); o.start(t); o.stop(t + dur + 1); oscs.push(o);
+        });
+        f.connect(g); g.connect(sfxBus); g.connect(verb);
+        tenseNodes = { g: g, oscs: oscs };
+      } catch (e) { tenseNodes = null; }
+    },
+    furyHush: function (quiet) {                 // coupe net la nappe : le silence juste avant l'arrêt
+      var n = tenseNodes; tenseNodes = null;
+      if (!n || !ctx) return;
+      try { var t = ctx.currentTime; n.g.gain.cancelScheduledValues(t); n.g.gain.setValueAtTime(Math.max(0.0001, n.g.gain.value), t); n.g.gain.exponentialRampToValueAtTime(0.0001, t + (quiet ? 0.05 : 0.12)); n.oscs.forEach(function (o) { try { o.stop(t + 0.2); } catch (e) {} }); } catch (e) {}
+    },
+    furyTick: function (level, hot, back) {      // tic de la roue en fin de course : de plus en plus gros et grave ; cloche si la case convoitée passe
+      level = Math.max(0, Math.min(1, level || 0));
+      var v = 0.05 + 0.09 * level, fq = (back ? 0.7 : 1) * (1500 - 650 * level);
+      tone(fq, 0.06, 'triangle', v * 0.8); tone(300 - 110 * level, 0.14, 'sine', v * 1.6, 0, 150); noise(0.04, v * 0.8, 0, 2200, 'bandpass', 900, 2);
+      if (level > 0.5) tone(70, 0.22, 'sine', 0.06 * level, 0, 45);
+      if (hot) bell(1568, 0.7, 0.025 + 0.03 * level, 0.01, true, 3.5);
+    },
+    furyHeart: function (level) {                // battement de coeur sourd
+      level = Math.max(0, Math.min(1, level || 0));
+      tone(72, 0.22, 'sine', 0.12 + 0.1 * level, 0, 40); tone(64, 0.24, 'sine', 0.08 + 0.08 * level, 0.17, 36);
     },
     furyFail: function () {                      // mauvaise couleur : tout retombe
       tone(130, 1.5, 'sawtooth', 0.12, 0, 30, true); growl(41.2, 1.6, 0.22, 0); taiko(0.4, 0.2, true); noise(1.2, 0.12, 0, 900, 'lowpass', 90);
