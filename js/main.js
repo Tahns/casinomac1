@@ -25,8 +25,10 @@
     return;
   }
 
-  // Statistiques mesurées par tools/simulate.js (RTP exact par calcul des moments + simulation 2 M de tours par mode ; Pesée à choix plume/cœur : gain 1 fois sur 2) — affichées dans la table des gains
-  var STATS = { rtp: '96.2', rtpPlus: '96.1', hit: '42.6', bonusEvery: '20.0' };
+  // Statistiques EXACTES (loi exacte, plafond compris) : window.HOA_STATS de js/stats.js, généré par tools/gen-stats.js — affichées dans la table des gains
+  var HS = (typeof window !== 'undefined' && window.HOA_STATS) || null;
+  var STATS = HS ? { rtp: String(HS.std.rtp), rtpPlus: String(HS.plus.rtp), hit: String(HS.std.hit), bonusEvery: HS.std.bonusEvery.toFixed(1) }
+    : { rtp: '96.2', rtpPlus: '96.2', hit: '32.7', bonusEvery: '19.3' };
   // argent de la démo : niveaux de mise, solde de départ et plafonds de perte sont donnés en « unités de base » puis adaptés à la devise
   // (applyScale : ×1 pour € $ CA$ SC GC, ×100 pour le yen : mises entières de 20 à 100 000…) ; arrondi au centime (r2) à chaque opération.
   // Avec le RGS, les niveaux viennent de la configuration et sont remplacés sur place (BETS.length = 0 puis push).

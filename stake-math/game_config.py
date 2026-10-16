@@ -39,12 +39,12 @@ RTP_TARGET = 0.962               # RTP cible de TOUS les modes (l'optimiseur de 
 # ---------------------------------------------------------------------------------------------------------------------
 # id -> (mult en x la mise, nombre de cases, bonus ?, relance ?)
 KINDS = {
-    "m0":     {"mult": 0.0,  "count": 34, "bonus": False, "respin": False},
+    "m0":     {"mult": 0.0,  "count": 40, "bonus": False, "respin": False},
     "m025":   {"mult": 0.3,  "count": 5,  "bonus": False, "respin": False},
-    "m05":    {"mult": 0.5,  "count": 7,  "bonus": False, "respin": False},
-    "m1":     {"mult": 1.0,  "count": 6,  "bonus": False, "respin": False},
-    "m2":     {"mult": 2.0,  "count": 3,  "bonus": False, "respin": False},
-    "m3":     {"mult": 3.0,  "count": 2,  "bonus": False, "respin": False},
+    "m05":    {"mult": 0.5,  "count": 6,  "bonus": False, "respin": False},
+    "m1":     {"mult": 1.0,  "count": 3,  "bonus": False, "respin": False},
+    "m2":     {"mult": 2.0,  "count": 2,  "bonus": False, "respin": False},
+    "m3":     {"mult": 3.0,  "count": 1,  "bonus": False, "respin": False},
     "ankh":   {"mult": 0.0,  "count": 4,  "bonus": False, "respin": True},
     "scarab": {"mult": None, "count": 1,  "bonus": True,  "respin": False},
     "weigh":  {"mult": None, "count": 1,  "bonus": True,  "respin": False},
@@ -103,9 +103,20 @@ LAYOUT = build_layout()
 N = len(LAYOUT)                  # 64
 
 # ---------------------------------------------------------------------------------------------------------------------
+# Colère d'Anubis : feature aléatoire du jeu de base (« les chaînes se brisent »), copie de js/math.js
+#   chance MODES[mode]["wrath"] par tour (un tirage avant la roue) ; la roue ne s'arrête que sur WRATH_KINDS (bonus et Ankh) ;
+#   le multiplicateur démarre au cran WRATH_START et monte d'un cran à chaque Ankh ; il multiplie le gain de la case finale.
+# ---------------------------------------------------------------------------------------------------------------------
+WRATH_KINDS = ["ankh", "scarab", "weigh", "vault"]
+WRATH_CELLS = [i for i, k in enumerate(LAYOUT) if k in WRATH_KINDS]
+WRATH_LADDER = [2, 3, 5, 10, 25, 50, 100]
+WRATH_START = [[0, 1]]           # [cran de départ, poids] : toujours x2
+WRATH_TOP = len(WRATH_LADDER) - 1
+
+# ---------------------------------------------------------------------------------------------------------------------
 # Modes de mise (cost = débit en multiples de la mise)
 # ---------------------------------------------------------------------------------------------------------------------
-MODES = {"std": {"cost": 1.0, "oracle": 0.29}, "plus": {"cost": 1.1, "oracle": 0.698}}
+MODES = {"std": {"cost": 1.0, "oracle": 0.0765, "wrath": 0.002}, "plus": {"cost": 1.1, "oracle": 0.27, "wrath": 0.002}}
 BUY = {"scarab": 9.26, "weigh": 10.31, "vault": 12.37, "hand": 27.30}   # « hand » = Fureur d'Anubis (identifiant interne conservé)
 BUY_NAMES = {"scarab": "bonus_scarab", "weigh": "bonus_weigh", "vault": "bonus_vault", "hand": "bonus_fury"}
 BUY_KIND_OF = {v: k for k, v in BUY_NAMES.items()}
@@ -116,8 +127,8 @@ MODE_ORDER = ["std", "plus", "bonus_scarab", "bonus_weigh", "bonus_vault", "bonu
 # ---------------------------------------------------------------------------------------------------------------------
 ORACLE_KIND_W = [["m05", 3], ["m1", 4], ["m2", 3], ["m3", 2], ["scarab", 3], ["weigh", 3], ["vault", 3]]
 ORACLE_BOOST = {
-    "num":   [[2, 70], [3, 20], [5, 7], [10, 2.5], [25, 0.5]],
-    "bonus": [[2, 66], [3, 21], [5, 8.5], [10, 3.4], [25, 0.8], [100, 0.06]],
+    "num":   [[2, 50], [3, 25], [5, 15], [10, 8], [25, 2]],
+    "bonus": [[2, 40], [3, 25], [5, 18], [10, 12], [25, 4], [100, 1]],
 }
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -280,18 +291,22 @@ def _dist(criteria, quota, **cond):
         return Distribution(**kw)
 
 
-# Critères (ordre = priorité de l'optimiseur : le gain max d'abord, puis les tours à 0, puis les bonus, puis le reste)
-#   wincap   : payout = WINCAP x ; construit par un script de tirages imposés (impossible par tirage au hasard, ~1 sur 10^8)
+# Critères (ordre = priorité de l'optimiseur : le gain max d'abord, puis les tours à 0, puis les gros gains, puis les bonus, puis le reste)
+#   wincap   : payout = WINCAP x ; construit par un script de tirages imposés (de l'ordre de 1 sur 10^6 à 10^8 : hors de portée du tirage au hasard)
 #   0        : payout nul
-#   bonus    : un bonus a été joué (hors gain max, hors 0)
-#   basegame : gain de la roue seule, sans bonus
+#   epic     : gros gain >= 1000 x (hors plafond) ; big : 100 x à 999,9 x   — fences dédiées (game_optimization.py) : la table garde la
+#              fréquence EXACTE des gros gains au lieu de la laisser au façonnage gaussien de l'optimiseur (docs/VOLATILITE.md)
+#   bonus    : un bonus a été joué, gain < 100 x (hors 0)
+#   basegame : gain de la roue seule, sans bonus, < 100 x
+# Quotas = part des books produits (pas des probabilités : l'optimiseur fixe les poids) ; les critères rares reçoivent assez de books pour que
+# chaque palier de gain soit représenté (tirage par rejet : ~1 sur 10 000 tours pour « epic » en Standard).
 QUOTAS = {
-    "std":        [("wincap", 0.002), ("0", 0.25), ("bonus", 0.30), ("basegame", 0.448)],
-    "plus":       [("wincap", 0.002), ("0", 0.25), ("bonus", 0.30), ("basegame", 0.448)],
-    "bonus_scarab": [("wincap", 0.002), ("bonus", 0.998)],
-    "bonus_weigh":  [("wincap", 0.002), ("0", 0.45), ("bonus", 0.548)],
-    "bonus_vault":  [("wincap", 0.002), ("bonus", 0.998)],
-    "bonus_fury":   [("wincap", 0.002), ("bonus", 0.998)],
+    "std":        [("wincap", 0.002), ("0", 0.25), ("epic", 0.01), ("big", 0.04), ("bonus", 0.25), ("basegame", 0.448)],
+    "plus":       [("wincap", 0.002), ("0", 0.25), ("epic", 0.01), ("big", 0.04), ("bonus", 0.25), ("basegame", 0.448)],
+    "bonus_scarab": [("wincap", 0.002), ("0", 0.003), ("epic", 0.01), ("big", 0.10), ("bonus", 0.885)],
+    "bonus_weigh":  [("wincap", 0.002), ("0", 0.45), ("epic", 0.02), ("big", 0.08), ("bonus", 0.448)],
+    "bonus_vault":  [("wincap", 0.002), ("0", 0.003), ("epic", 0.01), ("big", 0.08), ("bonus", 0.905)],
+    "bonus_fury":   [("wincap", 0.002), ("0", 0.02), ("epic", 0.02), ("big", 0.10), ("bonus", 0.858)],
 }
 
 
@@ -299,7 +314,7 @@ def make_distributions(mode):
     out = []
     for crit, q in QUOTAS[mode]:
         cond = {"force_wincap": crit == "wincap", "force_bonus": crit in ("wincap", "bonus"),
-                "force_zero": crit == "0", "force_basegame": crit == "basegame"}
+                "force_zero": crit == "0", "force_basegame": crit == "basegame", "force_big": crit in ("big", "epic")}
         out.append(_dist(crit, q, win_criteria=(WINCAP if crit == "wincap" else (0.0 if crit == "0" else None)), **cond))
     return out
 

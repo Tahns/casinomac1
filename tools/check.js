@@ -30,7 +30,10 @@ var rng = M.mulberry32(99), bad = 0, maxChain = 0, capped = 0, N = cap(300000);
       if (j < sp.length - 1 && s.kind !== 'ankh') bad++;
       if (M.KINDS[s.kind].bonus && !s.bonus) bad++;
       if (!M.KINDS[s.kind].bonus && s.bonus) bad++;
-      if (s.boost > 1 && !(s.oracle && s.oracle.kind === s.kind)) bad++;
+      // boost appliqué = boost de l'Oracle (s'il visait cette case) × multiplicateur de la Colère d'Anubis (1 hors Colère)
+      var ob = s.oracle && s.oracle.kind === s.kind ? s.oracle.boost : 1;
+      if (s.boost !== ob * (s.wrath || 1) || s.oracleBoost !== ob) bad++;
+      if (!!r.wrath !== !!s.wrath) bad++;
       if (s.pay !== s.base * s.boost) bad++;
     });
     if (Math.min(sum, M.MAX_WIN) !== r.total) bad++;
@@ -38,6 +41,34 @@ var rng = M.mulberry32(99), bad = 0, maxChain = 0, capped = 0, N = cap(300000);
   }
 });
 ok(bad === 0, 'invariants de structure sur ' + 2 * N + ' tours (anomalies: ' + bad + ', chaîne Ankh max: ' + maxChain + ')');
+
+// 3b. Colère d'Anubis (1 tour sur 500 : forcée ici par un premier tirage à 0) : roue limitée aux cases libérées, multiplicateur ×2 qui monte
+// d'un cran à chaque Ankh, appliqué au gain de la case finale ; jamais à l'achat
+var rw0 = M.mulberry32(4242), badWr = 0, nWr = cap(400), wrUp = 0, wrTop = 0, wrKinds = {};
+ok(M.WRATH_CELLS.length === M.WRATH_KINDS.reduce(function (a, k) { return a + M.KINDS[k].count; }, 0) && M.WRATH_CELLS.every(function (i) { return M.WRATH_KINDS.indexOf(M.LAYOUT[i]) >= 0; }),
+  'Colère : ' + M.WRATH_CELLS.length + ' cases libérées (' + M.WRATH_KINDS.join(', ') + '), échelle ×' + M.WRATH_LADDER.join(' → ×'));
+['std', 'plus'].forEach(function (mode) {
+  for (var i = 0; i < nWr; i++) {
+    var first = true, rr = M.playRound(function () { if (first) { first = false; return 0; } return rw0(); }, mode), lvl = rr.wrath ? rr.wrath.start : -1, t = 0;
+    if (!rr.wrath || M.WRATH_START.every(function (s0) { return s0[0] !== rr.wrath.start; })) { badWr++; continue; }
+    rr.spins.forEach(function (sp, j) {
+      wrKinds[sp.kind] = 1;
+      if (M.WRATH_KINDS.indexOf(sp.kind) < 0 || sp.wrath !== M.WRATH_LADDER[lvl]) badWr++;
+      if (sp.boost !== (sp.oracle && sp.oracle.kind === sp.kind ? sp.oracle.boost : 1) * M.WRATH_LADDER[lvl]) badWr++;
+      if (sp.kind === 'ankh' && j < rr.spins.length - 1) {
+        if (lvl < M.WRATH_TOP) { lvl++; wrUp++; if (sp.wrathUp !== M.WRATH_LADDER[lvl]) badWr++; } else if (sp.wrathUp) badWr++;
+      } else if (sp.wrathUp) badWr++;
+      t += sp.pay;
+    });
+    if (lvl === M.WRATH_TOP) wrTop++;
+    if (rr.wrath.level !== lvl || rr.wrath.mult !== M.WRATH_LADDER[lvl] || rr.total !== Math.min(t, M.MAX_WIN)) badWr++;
+  }
+});
+ok(badWr === 0 && wrUp > 0, 'Colère : ' + 2 * nWr + ' tours forcés, roue limitée aux cases libérées, ×' + M.WRATH_LADDER[0] + ' puis +1 cran par Ankh, gain = base × Oracle × Colère (anomalies: ' + badWr + ', crans gagnés ' + wrUp + ', cran maximal atteint ' + wrTop + ' fois)');
+var rwb = M.mulberry32(9), wrBuy = 0; ['scarab', 'weigh', 'vault', 'hand'].forEach(function (k) { for (var i = 0; i < cap(200); i++) { var rb0 = M.playBuy(function () { return 0; }, k); if (rb0.wrath || rb0.spins[0].wrath) wrBuy++; rb0 = M.playBuy(rwb, k); if (rb0.wrath) wrBuy++; } });
+ok(wrBuy === 0, 'Colère : jamais à l\'achat d\'un bonus');
+var WX = require('./rtp-exact'), wl = WX.wrathLadder(), wsum = wl.reduce(function (a, x) { return a + x[1]; }, 0), aW = M.KINDS.ankh.count / M.WRATH_CELLS.length;
+ok(Math.abs(wsum - 1) < 1e-12 && Math.abs(wl[wl.length - 1][1] - Math.pow(aW, M.WRATH_TOP)) < 1e-12, 'Colère : loi exacte du multiplicateur final (somme 1, ×' + M.WRATH_LADDER[M.WRATH_TOP] + ' = a^' + M.WRATH_TOP + ' avec a = ' + M.KINDS.ankh.count + '/' + M.WRATH_CELLS.length + ') : ' + wl.map(function (x) { return '×' + x[0] + ' ' + (x[1] * 100).toFixed(2) + ' %'; }).join(' · '));
 
 // 4. achats
 var rb = M.mulberry32(7), badBuy = 0;
@@ -195,14 +226,14 @@ ok(Math.abs(eS / nE - replaced) < secTol, 'Secret : espérance ≈ ' + (eS / nE)
 var VXc = require('./rtp-exact'), cm = VXc.cryptMoments(), rpl = VXc().replaced;
 ok(Math.abs(cm[0] - rpl) < 0.01, 'Sanctuaire : espérance EXACTE ' + cm[0].toFixed(4) + '× = bonus remplacé ' + rpl.toFixed(4) + '× (écart < 0,01×, secret neutre sur le RTP ; écart-type exact ' + Math.sqrt(cm[1] - cm[0] * cm[0]).toFixed(1) + '×)');
 
-// 5. RTP. Très haute volatilité (écart-type ≈ 16) : 1000 tours ne donnent le RTP qu'à ± 200 points, donc la référence est le calcul EXACT (tools/rtp-exact.js, moments des
+// 5. RTP. Très haute volatilité (écart-type exact ≈ 31 depuis la Colère d'Anubis ; ≈ 16 avant) : 1000 tours ne donnent le RTP qu'à ± 200 points, donc la référence est le calcul EXACT (tools/rtp-exact.js, moments des
 // tables de js/math.js, aucun tirage). La simulation n'est qu'un test de fumée (≤ 1000 tours, tolérance = 4 écarts-types). Mesures de réglage (2 M de tours, hors test) :
 // Standard 97,8 % ± 2,2 (exact 96,19), Oracle+ 97,0 % ± 2,5 (exact 96,13), achats 96,0-96,5 % ± 0,5-0,9.
 var EXR = require('./rtp-exact')();
 ok(EXR.std.mean > 0.960 && EXR.std.mean < 0.9630, 'RTP exact Standard ' + (EXR.std.mean * 100).toFixed(2) + ' % (cible 96,0-96,3)');
-ok(EXR.plus.mean > 0.958 && EXR.plus.mean < 0.9630, 'RTP exact Oracle+ ' + (EXR.plus.mean * 100).toFixed(2) + ' % (cible ≈ 96)');
-ok(EXR.std.sd > 15 && EXR.std.sd < 20 && EXR.plus.sdRel > 15 && EXR.plus.sdRel < 22, 'volatilité très haute : écart-type exact ' + EXR.std.sd.toFixed(1) + '× (Standard), ' + EXR.plus.sdRel.toFixed(1) + '× (Oracle+, rapporté au coût)');
-ok(EXR.std.hit > 0.40 && EXR.std.hit < 0.45 && EXR.bonusEvery > 18, 'taux de gain exact ' + (EXR.std.hit * 100).toFixed(1) + ' % (cible 40-45), bonus 1 tour sur ' + EXR.bonusEvery.toFixed(1));
+ok(EXR.plus.mean > 0.960 && EXR.plus.mean < 0.9630, 'RTP exact Oracle+ ' + (EXR.plus.mean * 100).toFixed(2) + ' % (cible ≈ 96)');
+ok(EXR.std.sd > 25 && EXR.std.sd < 40 && EXR.plus.sdRel > 25 && EXR.plus.sdRel < 45, 'volatilité très haute : écart-type exact (plafond compris) ' + EXR.std.sd.toFixed(1) + '× (Standard), ' + EXR.plus.sdRel.toFixed(1) + '× (Oracle+, rapporté au coût)');
+ok(EXR.std.hit > 0.30 && EXR.std.hit < 0.36 && EXR.bonusEvery > 18, 'taux de gain exact ' + (EXR.std.hit * 100).toFixed(1) + ' % (cible 30-36), bonus 1 tour sur ' + EXR.bonusEvery.toFixed(1));
 Object.keys(EXR.buy).forEach(function (k) { ok(Math.abs(EXR.buy[k].rtp - 0.96) < 0.005, 'RTP exact achat ' + k + ' ' + (EXR.buy[k].rtp * 100).toFixed(2) + ' % (prix ×' + M.BUY[k].price + ')'); });
 ok(M.MAX_WIN === 25000, 'gain maximum 25 000× la mise');
 function tol(sd, n) { return 4 * sd / Math.sqrt(n) * 100; }
@@ -211,7 +242,7 @@ var r1 = M.mulberry32(11), n = cap(2000000);
 var std = rtp(function () { return M.playRound(r1, 'std'); }, 1, n);
 var plus = rtp(function () { return M.playRound(r1, 'plus'); }, M.MODES.plus.cost, n);
 ok(Math.abs(std - 96.2) < tol(EXR.std.sd, n), 'RTP Standard simulé ≈ ' + std.toFixed(2) + ' % (test de fumée, 96,2 ± ' + tol(EXR.std.sd, n).toFixed(0) + ', ' + n + ' tours)');
-ok(Math.abs(plus - 96.1) < tol(EXR.plus.sdRel, n), 'RTP Oracle+ simulé ≈ ' + plus.toFixed(2) + ' % (test de fumée, 96,1 ± ' + tol(EXR.plus.sdRel, n).toFixed(0) + ', ' + n + ' tours)');
+ok(Math.abs(plus - 96.2) < tol(EXR.plus.sdRel, n), 'RTP Oracle+ simulé ≈ ' + plus.toFixed(2) + ' % (test de fumée, 96,1 ± ' + tol(EXR.plus.sdRel, n).toFixed(0) + ', ' + n + ' tours)');
 Object.keys(M.BUY).forEach(function (k) {
   var nb = cap(1000000), v = rtp(function () { return M.playBuy(r1, k); }, M.BUY[k].price, nb);
   ok(Math.abs(v - 96) < tol(EXR.buy[k].sdRel, nb), 'RTP achat ' + k + ' simulé ≈ ' + v.toFixed(2) + ' % (test de fumée, tolérance ± ' + tol(EXR.buy[k].sdRel, nb).toFixed(0) + ')');
@@ -239,5 +270,17 @@ for (var si = 0; si < nS; si++) {
   if (!bs || !bs.secret || bs.bonus.drops.length !== M.CRYPT_CELLS || M.toInt(bs.bonus.total) !== M.toInt(cb.total) || M.toInt(back.total) !== M.toInt(cb.total)) badSanct++;
 }
 ok(badSanct === 0, 'RGS.bookToRound relit le Sanctuaire des Marées (sanctuaryTablet : type, valeur) avec le même gain sur ' + nS + ' bonus (écarts : ' + badSanct + ')');
+// 9. Colère d'Anubis dans les books : événements wrath / wheelStop.wrath / wrathUp vérifiés par verify() et relus par RGS.bookToRound (même gain)
+var rWb = M.mulberry32(77), badWb = 0, nWb = Math.min(cap(1000), 200), upsWb = 0;
+for (var wi2 = 0; wi2 < nWb; wi2++) {
+  var f1 = true, rdw = M.playRound(function () { if (f1) { f1 = false; return 0; } return rWb(); }, wi2 % 2 ? 'plus' : 'std'), bkw = SEc.makeBook(wi2 + 1, rdw);
+  upsWb += bkw.events.filter(function (e) { return e.type === 'wrathUp'; }).length;
+  var vw = SEc.verify(bkw), back2 = RGc.bookToRound(bkw.events, M);
+  if (vw.length || back2.issues.length || M.toInt(back2.total) !== bkw.payoutMultiplier || !back2.wrath || back2.wrath.mult !== rdw.wrath.mult) badWb++;
+}
+// un book altéré (multiplicateur de la Colère faussé) doit être refusé par verify()
+var fw = true, rdx = M.playRound(function () { if (fw) { fw = false; return 0; } return rWb(); }, 'std'), bkx = SEc.makeBook(1, rdx);
+bkx.events.forEach(function (e) { if (e.type === 'wheelStop') e.wrath = 7; });
+ok(badWb === 0 && upsWb > 0 && SEc.verify(bkx).length > 0, 'Colère : ' + nWb + ' books vérifiés (verify) et relus par RGS.bookToRound au même gain (' + upsWb + ' wrathUp) ; un multiplicateur faussé est refusé');
 console.log(fails ? '\n' + fails + ' échec(s)' : '\ntout est bon');
 process.exit(fails ? 1 : 0);

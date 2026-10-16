@@ -3,7 +3,7 @@
 Portage de `js/math.js` (référence) vers un dossier qui produit ce que le RGS de Stake attend : books (`.jsonl.zst`), tables de lookup (CSV)
 et `index.json`, plus les fichiers lus par l'optimiseur du SDK officiel (`StakeEngine/math-sdk`, lu en juin 2026 depuis GitHub).
 
-**État honnête** : le portage et les contrôles de parité sont faits et testés. **Une table de production a été produite le 2026-10-15** (200 000 books par mode, optimiseur Rust de Stake lancé mode par mode : RTP 96,20 % dans les 6 modes, taux de gain 42,59 % en Standard/Oracle+, gain max 1 sur 12,5 millions en Standard ; contrôle de format du dossier : aucune erreur). Elle n'est pas dans git (62 Mo) et n'a pas été éprouvée contre un vrai RGS. Pour la refaire : l'utilisateur avec la grosse simulation puis l'optimiseur Rust de Stake (section « Produire la table de production »). Ce que
+**État honnête** : le portage et les contrôles de parité sont faits et testés. **Une table de production a été produite le 2026-10-15** (200 000 books par mode, optimiseur Rust de Stake lancé mode par mode : RTP 96,20 % dans les 6 modes, taux de gain 42,59 % en Standard/Oracle+, gain max 1 sur 12,5 millions en Standard ; contrôle de format du dossier : aucune erreur). Elle n'est pas dans git (62 Mo) et n'a pas été éprouvée contre un vrai RGS. **Elle est périmée depuis le 2026-10-16** (nouvelles maths : Colère d'Anubis, roue, Oracle, fences par palier) : à refaire, voir `docs/VOLATILITE.md` §4. Pour la refaire : l'utilisateur avec la grosse simulation puis l'optimiseur Rust de Stake (section « Produire la table de production »). Ce que
 `run.py` écrit par défaut (≤ 1000 books par mode, poids tous égaux) ne sert qu'à montrer le format. Le programme Rust de l'optimiseur n'a **pas** été
 lancé ici ; aucun test, aucune simulation ne dépasse 1000 tours (`cap.py`).
 
@@ -17,15 +17,15 @@ lancé ici ; aucun test, aucune simulation ne dépasse 1000 tours (`cap.py`).
 | `gamestate.py` | `GameState.run_spin` : un tour → un book, critères de distribution par rejet (comme `check_repeat` du SDK) |
 | `force.py` | Construction du book au gain maximal (critère `wincap`) par tirages imposés passant par le même moteur |
 | `game_optimization.py` | `opt_params` de l'optimiseur (valeurs de départ tirées du calcul exact) |
-| `exact.py` | Calcul exact du RTP, de l'écart-type, du taux de gain (port de `tools/rtp-exact.js`) |
+| `exact.py` | Calcul exact (loi complète du gain, plafond compris) : RTP, écart-type, taux de gain, fréquence des gros gains, cibles des fences (port de `tools/rtp-exact.js`) |
 | `write_data.py`, `verify.py` | Écriture de `library/…` et contrôle de format (repris de `utils/rgs_verification.py`) |
 | `run.py` | Point d'entrée (≤ 1000 books par mode ; `HOA_BIG=1` pour une production) |
 | `rng.py`, `cap.py` | `mulberry32` identique au JS, tirages imposés ; plafond de 1000 |
-| `tests/` | 54 tests `unittest` (parité JS, moments exacts, statistiques, format, événements) |
+| `tests/` | 66 tests `unittest` (parité JS, moments exacts, statistiques, format, événements) |
 | `../tools/export-parity.js` | Produit `tests/parity_draws.json` (tirages JS + gains JS, ≤ 1000 tours au total) |
 
 ```bash
-python3 -m unittest discover -s stake-math/tests          # 54 tests, ~1 s
+python3 -m unittest discover -s stake-math/tests          # 66 tests, ~6 s
 python3 stake-math/exact.py                              # RTP exact de chaque mode (aucun tirage)
 python3 stake-math/run.py                                # 1000 books par mode dans stake-math/library/ (ignoré par git)
 python3 stake-math/run.py --books 200 --modes std,bonus_fury
@@ -38,14 +38,18 @@ compresser les books ; sans aucun d'eux, `run.py` écrit des `.jsonl` bruts et l
 
 ## Les 6 modes
 
-| Mode | Coût (× mise) | RTP exact | Taux de gain | Écart-type (× mise) |
-|---|---|---|---|---|
-| `std` | 1 | 96,21 % | 42,6 % | 16,1 |
-| `plus` (Oracle+) | 1,1 | 96,10 % | 42,6 % | 18,8 |
-| `bonus_scarab` | 9,26 | 96,02 % | 100 % | 4,03 × le prix |
-| `bonus_weigh` | 10,31 | 96,02 % | 54,0 % | 6,72 × le prix |
-| `bonus_vault` | 12,37 | 96,03 % | 100 % | 3,49 × le prix |
-| `bonus_fury` | 27,30 | 96,01 % | 100 % | 4,37 × le prix |
+| Mode | Coût (× mise) | RTP exact (plafond compris) | Taux de gain | Écart-type | ≥ 100× | ≥ 1000× | 25 000× |
+|---|---|---|---|---|---|---|---|
+| `std` | 1 | 96,20 % | 32,7 % | 31,2 | 1/882 | 1/10 392 | 1/1,88 M |
+| `plus` (Oracle+) | 1,1 | 96,20 % | 32,7 % | 33,2 × le coût | 1/801 | 1/9 271 | 1/1,29 M |
+| `bonus_scarab` | 9,26 | 96,02 % | 99,8 % | 3,99 × le prix | 1/38 | 1/8 394 | 1/1,1·10⁸ |
+| `bonus_weigh` | 10,31 | 96,01 % | 53,8 % | 6,71 × le prix | 1/62 | 1/282 | 1/1,1·10⁸ |
+| `bonus_vault` | 12,37 | 96,03 % | 99,7 % | 3,47 × le prix | 1/114 | 1/5 015 | 1/1,1·10⁸ |
+| `bonus_fury` | 27,30 | 96,00 % | 97,7 % | 4,33 × le prix | 1/16 | 1/671 | 1/8,8 M |
+
+Depuis le 2026-10-16 (volatilité relevée, **Colère d'Anubis**, fences par palier de gain) : détail, diagnostic de l'écart-type 9,24 mesuré par Stake et
+format des événements `wrath` / `wrathUp` dans `docs/VOLATILITE.md`. `exact.py` calcule la **loi complète** du gain (dixièmes de mise, plafond compris :
+`distribution`, `summary`, `fence_targets`, `table_floor_sd`), plus seulement ses deux premiers moments.
 
 RTP cible déclaré : **96,2 %** pour tous les modes (`BetMode.rtp`). Les RTP exacts ci-dessus sont ceux des lois NON optimisées (écart maximal entre modes
 0,2 point, sous les 0,5 point de la source tierce) ; l'optimiseur les ramène à la cible en réglant les poids. Gain maximal : **25 000 ×**
@@ -104,7 +108,7 @@ identique dans les deux langages (`test_gain_maximal_meme_chemin_dans_les_deux_l
 
 1. `git clone https://github.com/StakeEngine/math-sdk`, Python ≥ 3.12 (`pip install -r requirements.txt`), Rust/Cargo.
 2. Générer les books **dans l'arborescence du SDK** (le programme Rust lit `../games/<game_id>/library/…`) :
-   `HOA_BIG=1 python3 stake-math/run.py --books 300000 --prepare-optimizer --out <math-sdk>/games/anubis_unchained/library`
+   `HOA_BIG=1 python3 stake-math/run.py --books 200000 --prepare-optimizer --out <math-sdk>/games/anubis_unchained/library`
    (≈ 1 Ko par book avant compression ; compter 100 000 à 1 000 000 books par mode, quelques minutes par million). Cela écrit `lookup_tables/lookUpTable_<mode>.csv`, `forces/force_record_<mode>.json`,
    `configs/math_config.json` et `optimization_files/setup_<mode>.toml`.
 3. Pour chaque mode : copier `library/optimization_files/setup_<mode>.toml` sur `<math-sdk>/optimization_program/src/setup.toml`, puis `cd <math-sdk>/optimization_program && cargo run --release`.

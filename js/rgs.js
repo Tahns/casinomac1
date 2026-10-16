@@ -119,7 +119,7 @@
   var TOL = 1e-6;
   function bookToRound(events, M) {
     var S = M.SCALE || 100, f = function (n) { return n / S; };
-    var rs = null, spins = [], spin = null, bev = null, bstart = null, oracle = null, fin = null, issues = [];
+    var rs = null, spins = [], spin = null, bev = null, bstart = null, oracle = null, fin = null, issues = [], wrath = null;
     function blank() { return { oracle: null, index: -1, kind: 'm0', boost: 1, bonus: null, base: 0, pay: 0 }; }
     function of(list, type) { return list.filter(function (e) { return e.type === type; }); }
 
@@ -203,10 +203,14 @@
           if (e.cells !== M.N) throw bookError('wheel of ' + e.cells + ' cells (' + M.N + ' expected)');
           break;
         case 'oracle': oracle = { kind: e.kind, boost: e.boost }; break;
+        case 'wrath': wrath = { level: e.level, start: e.level, mult: e.mult }; break;   // Colère d'Anubis : multiplicateur allumé avant la roue
         case 'wheelStop':
           spin = blank(); spin.oracle = oracle; oracle = null; spin.index = e.index; spin.kind = e.kind; spin.boost = e.boost || 1;
+          spin.oracleBoost = spin.oracle && spin.oracle.kind === e.kind ? spin.oracle.boost : 1;
+          if (e.wrath) spin.wrath = e.wrath;   // boost = Oracle × Colère (le gain reste base × boost)
           if (M.LAYOUT[e.index] !== e.kind) issues.push('wheel: cell ' + e.index + ' = ' + M.LAYOUT[e.index] + ' != ' + e.kind);
           break;
+        case 'wrathUp': if (spin) spin.wrathUp = e.mult; if (wrath) { wrath.level = e.level; wrath.mult = e.mult; } break;   // un Ankh brise une chaîne
         case 'bonusStart': if (!spin) spin = blank(); bstart = e; bev = []; break;
         case 'spinWin': closeSpin(e); break;
         case 'finalWin': fin = e; break;
@@ -220,7 +224,7 @@
     sum = Math.min(Math.round(sum * S) / S, M.MAX_WIN);
     var total = f(fin.amount);
     if (Math.abs(total - sum) > TOL) issues.push('finalWin ' + total + ' != sum of spins ' + sum);
-    return { spins: spins, total: total, sum: sum, capped: !!fin.capped, cost: f(rs.cost), mode: rs.mode === 'bonus' ? 'buy' : rs.mode, issues: issues, version: 2 };
+    return { spins: spins, total: total, sum: sum, capped: !!fin.capped, cost: f(rs.cost), mode: rs.mode === 'bonus' ? 'buy' : rs.mode, issues: issues, version: 2, wrath: wrath };
   }
   RGS.bookToRound = bookToRound;
 

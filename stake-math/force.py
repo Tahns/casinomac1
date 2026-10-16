@@ -45,19 +45,49 @@ def fury_script():
     return turq + other + other
 
 
-def wincap_script(mode_name):
-    """Liste de tirages à imposer pour que le tour du mode `mode_name` paie exactement le plafond."""
-    fury = fury_script()
+def fury_prefix(mode_name):
+    """Tirages qui mènent à la Fureur d'Anubis sans Colère ni Oracle (tour de base), ou par un achat."""
     if mode_name in ("std", "plus"):
         bonus_idx = C.LAYOUT.index("scarab")
-        return [0.9999,                      # pas d'Oracle (>= sa chance)
+        return [0.9999,                      # pas de Colère d'Anubis (>= sa chance)
+                0.9999,                      # pas d'Oracle (>= sa chance)
                 u_index(bonus_idx, C.N),     # la roue s'arrête sur un bonus
                 0.5,                         # pas de Sanctuaire (>= 4 %)
-                0.01] + fury                 # Fureur d'Anubis (< 8 %)
+                0.01]                        # Fureur d'Anubis (< 8 %)
     if mode_name == "bonus_fury":
-        return fury
-    return [0.01] + fury                     # achat d'un autre bonus, saisi par la Fureur (< 8 %)
+        return []
+    return [0.01]                            # achat d'un autre bonus, saisi par la Fureur (< 8 %)
+
+
+def wincap_script(mode_name):
+    """Liste de tirages à imposer pour que le tour du mode `mode_name` paie exactement le plafond."""
+    return fury_prefix(mode_name) + fury_script()
 
 
 def wincap_rng(mode_name, fallback_seed=1):
     return ScriptedRng(wincap_script(mode_name), fallback_seed=fallback_seed)
+
+
+def tier_script(mode_name, tier):
+    """Books d'exemple des paliers rares quand le plafond de 1000 tours est actif (démonstration du format, tests) : un chemin RÉEL du
+    moteur, comme le gain maximal, sans tirage par rejet (qui coûterait ~10 000 tours par book « epic »). En production (HOA_BIG=1),
+    gamestate tire ces books par rejet selon la loi naturelle du jeu.
+      big  : Fureur, premier lancer sur le nombre 180 -> 180 x
+      epic : Fureur, bande Pesée x6, plateau 1000 x choisi et gagnant -> 6 000 x
+      zero : Fureur, bande Pesée x6, plateau choisi perdant -> 0 (achats : le seul chemin vers 0 hors Pesée achetée)"""
+    n = len(C.HAND_SEGS)
+    seg_weigh = next(i for i, s in enumerate(C.HAND_SEGS) if s.get("b") == "weigh")
+    seg_180 = next(i for i, s in enumerate(C.HAND_SEGS) if s.get("n") == 180)
+    best = max(C.WEIGH_INT["std"], key=lambda e: e[0][1])[0]
+    other = [u_index(1, n)]                                         # or / rubis : un nombre (6) et fin
+    if tier == "big":
+        turq = [u_index(seg_180, n)]
+    elif tier in ("epic", "zero"):
+        turq = [u_index(seg_weigh, n), u_weighted(C.WEIGH_INT["std"], best), 0.25, 0.75, 0.75 if tier == "epic" else 0.25]
+    else:
+        raise KeyError(tier)
+    return fury_prefix(mode_name) + turq + other + other
+
+
+def tier_rng(mode_name, tier, fallback_seed=1):
+    return ScriptedRng(tier_script(mode_name, tier), fallback_seed=fallback_seed)

@@ -141,13 +141,17 @@ class TestFormat(unittest.TestCase):
         for mode in C.MODE_ORDER:
             for bk in load_books(tmp, mode):
                 crit, pm = bk["criteria"], bk["payoutMultiplier"]
-                self.assertIn(crit, ("wincap", "0", "bonus", "basegame"))
+                self.assertIn(crit, ("wincap", "0", "epic", "big", "bonus", "basegame"))
                 if crit == "wincap":
                     self.assertEqual(pm, C.WINCAP_INT)
                 elif crit == "0":
                     self.assertEqual(pm, 0)
+                elif crit == "epic":
+                    self.assertTrue(1000 * C.SCALE <= pm < C.WINCAP_INT)
+                elif crit == "big":
+                    self.assertTrue(100 * C.SCALE <= pm < 1000 * C.SCALE)
                 else:
-                    self.assertGreater(pm, 0)
+                    self.assertTrue(0 < pm < 100 * C.SCALE)
             self.assertTrue(any(b["criteria"] == "wincap" for b in load_books(tmp, mode)), mode)
 
 
@@ -311,7 +315,7 @@ class TestEvenements(unittest.TestCase):
         import game_events as E
         import force
         for k in range(1, 40):
-            rng = ScriptedRng([0.9999, force.u_index(C.LAYOUT.index("vault"), C.N), 0.01] + [(k * 37 % 97) / 97.0] * 40, strict=False, fallback_seed=k)
+            rng = ScriptedRng([0.9999, 0.9999, force.u_index(C.LAYOUT.index("vault"), C.N), 0.01] + [(k * 37 % 97) / 97.0] * 40, strict=False, fallback_seed=k)
             r = G.play_mode(rng, "std")
             if not r["spins"][-1]["secret"]:
                 continue
@@ -325,6 +329,81 @@ class TestEvenements(unittest.TestCase):
             self.assertEqual(ev[-1]["amount"], r["total"])
             return
         self.fail("aucun Sanctuaire obtenu avec les tirages imposés")
+
+
+class TestColereEtFences(unittest.TestCase):
+    """Colère d'Anubis dans les books (événements wrath / wheelStop.wrath / wrathUp) et fences par palier de gain."""
+
+    def wrath_books(self, n=60):
+        from rng import mulberry32
+        import game_events as E
+        books = []
+        for k in range(n):
+            base, first = mulberry32(500 + k), [True]
+
+            def rng():
+                if first[0]:
+                    first[0] = False
+                    return 0.0      # premier tirage < chance de Colère : la Colère se déclenche
+                return base()
+            r = G.play_mode(rng, "std" if k % 2 == 0 else "plus")
+            books.append({"id": k + 1, "events": E.book_events(r, r["total"]), "payoutMultiplier": r["total"], "_r": r})
+        return books
+
+    def test_evenements_de_la_colere(self):
+        ups = 0
+        for b in self.wrath_books():
+            ev, r = b["events"], b["_r"]
+            self.assertEqual(ev[1]["type"], "wrath")
+            lv = ev[1]["level"]
+            self.assertEqual(ev[1]["mult"], C.WRATH_LADDER[lv])
+            orc = None
+            for e in ev:
+                if e["type"] == "oracle":
+                    orc = e
+                if e["type"] == "wheelStop":
+                    self.assertIn(e["kind"], C.WRATH_KINDS)
+                    self.assertEqual(e["wrath"], C.WRATH_LADDER[lv])
+                    ob = orc["boost"] if orc and orc["spin"] == e["spin"] and orc["kind"] == e["kind"] else 1
+                    self.assertEqual(e["boost"], ob * C.WRATH_LADDER[lv])
+                if e["type"] == "wrathUp":
+                    self.assertEqual(e["level"], lv + 1)
+                    lv = e["level"]
+                    ups += 1
+            wins = [e["win"] for e in ev if e["type"] == "spinWin"]
+            self.assertEqual(min(sum(wins), C.WINCAP_INT), ev[-1]["amount"])
+            self.assertEqual(lv, r["wrath"]["level"])
+        self.assertGreater(ups, 0)
+
+    def test_books_python_relus_par_le_js(self):
+        # le JS (verify de tools/stake-export.js et RGS.bookToRound de js/rgs.js) relit les books Python de la Colère au même gain
+        import json as _json
+        import shutil
+        import subprocess
+        node = shutil.which("node")
+        if not node:
+            self.skipTest("Node indisponible")
+        books = [{k: v for k, v in b.items() if k != "_r"} for b in self.wrath_books(40)]
+        js = ("var M=require('./js/math.js'),S=require('./tools/stake-export.js'),R=require('./js/rgs.js'),bad=0,n=0;"
+              "JSON.parse(require('fs').readFileSync(0,'utf8')).forEach(function(b){n++;var v=S.verify(b),r=R.bookToRound(b.events,M);"
+              "if(v.length||r.issues.length||M.toInt(r.total)!==b.payoutMultiplier||!r.wrath){bad++;console.error(JSON.stringify(v.concat(r.issues)));}});"
+              "console.log(n+' '+bad);")
+        out = subprocess.run([node, "-e", js], input=_json.dumps(books), capture_output=True, text=True, cwd=common.REPO, check=True)
+        n, bad = map(int, out.stdout.split())
+        self.assertEqual((n, bad), (40, 0), out.stderr[:2000])
+
+    def test_fences_par_palier_dans_math_config(self):
+        tmp, _ = lib(10)
+        cfg = read_json(os.path.join(tmp, "configs", "math_config.json"))
+        for fe in cfg["fences"]:
+            names = [f["name"] for f in fe["fences"]]
+            self.assertEqual(names[:4], ["wincap", "0", "epic", "big"], fe["bet_mode"])
+            epic = fe["fences"][2]
+            self.assertEqual(epic["identity_condition"]["search"], [{"name": "tier", "value": "epic"}])
+            self.assertIn("min_mean_to_median", epic)
+        rec = read_json(os.path.join(tmp, "forces", "force_record_std.json"))
+        tiers = {s["value"] for r in rec for s in r["search"] if s["name"] == "tier"}
+        self.assertTrue({"epic", "big", "small", "zero", "max"} <= tiers, tiers)
 
 
 if __name__ == "__main__":

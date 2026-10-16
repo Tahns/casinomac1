@@ -46,7 +46,7 @@ class TestRtp(unittest.TestCase):
     def test_taux_de_gain_au_moins_un_sur_vingt(self):
         for m, h in HIT.items():
             self.assertGreaterEqual(h, 1 / 20, m)
-        self.assertGreater(HIT["std"], 0.4)   # 42,6 %
+        self.assertGreater(HIT["std"], 0.30)   # 32,7 % depuis la Colère d'Anubis (42,6 % avant) : plancher demandé 30 %
 
     def test_prix_d_achat_coherents(self):
         for kind, b in RES["buy"].items():
@@ -74,8 +74,9 @@ class TestGainMax(unittest.TestCase):
             w = cond["wincap"]
             self.assertEqual(tuple(w["search_range"]), (25000, 25000), mode)
             self.assertGreater(w["rtp"], 0)
-            hr = w["av_win"] / w["rtp"]            # « 1 sur hr »
-            self.assertTrue(1e5 <= hr <= 1e8, "%s : gain max 1 sur %.0f" % (mode, hr))
+            hr = w["av_win"] / w["rtp"] / self.cfg.mode_cost(mode)   # « 1 sur hr » par pari (rtp rapporté au coût du mode)
+            # fréquence NATURELLE du gain max (loi exacte) : 1 sur 1,9 million en Standard, 1 sur 1,1 x 10^8 aux achats Scarabées / Pesée / Trésor
+            self.assertTrue(1e5 <= hr <= 2e8, "%s : gain max 1 sur %.0f" % (mode, hr))
             # le total des parts de RTP des critères vaut la cible
             self.assertAlmostEqual(sum(c["rtp"] for c in cond.values()), C.RTP_TARGET, places=4, msg=mode)
 
