@@ -876,7 +876,7 @@
       cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
       var side = W > H * 1.2; sp.classList.toggle('side', side);
       var txt = sp.querySelector('.spTxt').getBoundingClientRect(), top = txt.top - sp.getBoundingClientRect().top;
-      var key = side || W > H ? 'splash' : 'splashp', zoom = side ? 1.35 : key === 'splash' ? 1.22 : 1, fx = key === 'splash' ? 0.575 : 0.5, fy = key === 'splash' ? 0.4 : 0.36;
+      var key = side || W > H ? 'splash' : 'splashp', zoom = side ? 1.35 : key === 'splash' ? 1.22 : 1, fx = 0.5, fy = key === 'splash' ? 0.42 : 0.37;
       var ls = clamp(Math.min(W, H) * 0.17, 52, 124), ax = side ? W * 0.74 : W / 2, ay = side ? H * 0.5 : Math.max(H * 0.16, top - ls * 0.68 - 22);   // le cadenas se pose juste au-dessus du titre
       var im = pics[key], iw = im ? im.width : key === 'splash' ? 1344 : 752, ih = im ? im.height : key === 'splash' ? 752 : 1344, sc0 = Math.max(W / iw, H / ih);
       zoom = clamp(Math.max(zoom, (H - ay) / ((1 - fy) * ih * sc0)), 1, 1.8);   // assez de zoom pour pouvoir remonter l'image jusqu'à cette hauteur
