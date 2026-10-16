@@ -406,14 +406,14 @@
         var gap = R * 0.025, tot = nlen + gap + isz, r1 = RC + tot / 2;      // r1 : bord extérieur de l'icône
         var iy = r1 - isz / 2, nEnd = r1 - isz - gap;                         // fin du nom (côté icône)
         f.save(); f.rotate(Math.PI / 2);
-        if (v.glyph !== 'ankh' && ART['ic_' + ({ scarab: 'scarab', feather: 'weigh', pyramid: 'vault' })[v.glyph]]) {
+        if (ART['ic_' + ({ scarab: 'scarab', feather: 'weigh', pyramid: 'vault', ankh: 'amulet' })[v.glyph]]) {
           // médaillon d'obsidienne sous l'icône : l'or patiné se lit sur tous les fonds de case ; filet d'or biseauté
           f.beginPath(); f.arc(0, -iy + isz * 0.02, isz * 0.52, 0, TAU); f.fillStyle = 'rgba(14,10,6,.78)'; f.fill();
           f.lineWidth = Math.max(1, isz * 0.035); f.strokeStyle = 'rgba(207,169,76,.85)'; f.stroke();
           f.lineWidth = Math.max(1, isz * 0.02); f.strokeStyle = 'rgba(239,223,168,.5)'; f.beginPath(); f.arc(0, -iy + isz * 0.02, isz * 0.52 - isz * 0.03, Math.PI, Math.PI * 1.6); f.stroke();
         }
-        if (v.glyph === 'ankh') A.ankh(f, 0, -iy + isz * 0.02, isz * 0.74, '#3a2706');
-        else if (G.icon(f, ({ scarab: 'scarab', feather: 'weigh', pyramid: 'vault' })[v.glyph], 0, -iy, isz)) { /* logo illustré */ }
+        if (G.icon(f, ({ scarab: 'scarab', feather: 'weigh', pyramid: 'vault', ankh: 'amulet' })[v.glyph], 0, -iy, isz)) { /* logo illustré */ }
+        else if (v.glyph === 'ankh') A.ankh(f, 0, -iy + isz * 0.02, isz * 0.74, '#3a2706');
         else if (v.glyph === 'scarab') A.scarab(f, 0, -iy, isz * 0.8, '#ffd86a', 'rgba(0,0,0,.5)');
         else if (v.glyph === 'feather') A.feather(f, 0, -iy, isz * 0.9, '#4a3410', 'rgba(255,255,255,.7)');
         else if (v.glyph === 'pyramid') A.pyramid(f, 0, -iy, isz * 0.85, '#ffe9a0', 'rgba(0,0,0,.45)');

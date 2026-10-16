@@ -166,7 +166,7 @@
   function scarabScene(sp, bet) {
     var T = I18N.t(), data = sp.bonus, rows = M.SCARAB_ROWS, vals = data.values || M.SCARAB_VALUES, B = bf(sp);   // B : boost, appliqué à tout ce qui s'affiche
     var S = newScene(T.scarabIntro), g = {}; S.bgImg = 'scarabwall'; S.dim = 0.9; S.showTotal = false; var ball = null, pegFlash = {}, slotPulse = [], used = 0, floats = [], ent = 0, landed = [], beam = null, pegRings = [], sparkAcc = 0, lastPulse = 0;
-    function slotColor(v) { return v >= 25 ? ['#ffe08a', '#b8861e'] : v >= 6 ? ['#c28bff', '#5a2a86'] : v >= 2.5 ? ['#ff7a5a', '#8a1b10'] : v >= 1 ? ['#5b8cff', '#1a3a8a'] : ['#6a5a40', '#2a2118']; }
+    function slotColor(v) { return v >= 25 ? ['#ffe08a', '#b8861e'] : v >= 6 ? ['#a08cc8', '#3f3060'] : v >= 2.5 ? ['#d9735a', '#6b2418'] : v >= 1 ? ['#5b84d0', '#1b377a'] : ['#6a5a40', '#2a2118']; }
     S.layout = function () {
       // grand plateau « mur de chevilles » : sous le bandeau, jusqu'au menu du bas ; scarabées restants et total sont dans l'en-tête du cadre
       var w = G.w, h = G.h, bot = h - hudH() - (h < 520 ? 6 : 24), py0 = T0() + (h < 520 ? 40 : clamp(w * 0.034, 17, 34) * 1.9 + 10);
@@ -713,7 +713,7 @@
       g.x0 = G.cx - (cols * g.t + (cols - 1) * g.gap) / 2; g.y0 = top + ((bot - top) - (rows * g.t + (rows - 1) * g.gap)) / 2;
     };
     function rect(i) { var c = i % cols, r = Math.floor(i / cols); return { x: g.x0 + c * (g.t + g.gap), y: g.y0 + r * (g.t + g.gap), s: g.t }; }
-    var colorOf = { num: ['#f3cf6a', '#7a5a12'], scepter: ['#6a95ff', '#1a3a8a'], key: ['#4ff0d8', '#0b6f64'], seal: ['#b8895a', '#3a1d0c'] };
+    var colorOf = { num: ['#f3cf6a', '#7a5a12'], scepter: ['#6a95ff', '#1b377a'], key: ['#4ff0d8', '#0b6f64'], seal: ['#b8895a', '#3a1d0c'] };
     S.update = function (dt) {
       chromeUpdate(S, dt); shake = Math.max(0, shake - dt * 2); vig = Math.max(0, vig - dt * 0.9); endGlow = Math.max(0, endGlow - dt * 0.6); leftPop = Math.max(0, leftPop - dt * 2); entry = Math.min(1.6, entry + dt * 1.4);
       for (var bi = beams.length - 1; bi >= 0; bi--) { beams[bi].t += dt; if (beams[bi].t > beams[bi].life) beams.splice(bi, 1); }
@@ -865,7 +865,7 @@
    *    (rejoue un script pré-tiré par couleur ; les bonus imbriqués sont ceux déjà tirés dans ce script)
    * ====================================================================== */
   var HCOL = [{ a: '#6ff0dd', b: '#0b6d62', ink: '#04302b' }, { a: '#ffe08a', b: '#a8741a', ink: '#3a2603' }, { a: '#ff6a7a', b: '#7a0f20', ink: '#3a0610' }];
-  var HBAND = { scarab: ['#c28bff', '#3a1a66'], weigh: ['#fff1c8', '#6a5030'], vault: ['#ff9a3a', '#6a2a08'] };
+  var HBAND = { scarab: ['#a08cc8', '#3a1a66'], weigh: ['#fff1c8', '#6a5030'], vault: ['#d99a3c', '#6a2a08'] };
   function sv(fn) { ctx.save(); try { fn(); } finally { ctx.restore(); } }   // save / restore toujours équilibrés (une fuite décale tout le reste de l'image)
   function gem(x, y, r, ci) {   // gemme de couleur (turquoise / or / rubis)
     var c = HCOL[ci];
@@ -917,7 +917,7 @@
       else A.pyramid(ctx, x, y, s * 1.2, '#e8c4ff', 'rgba(60,20,90,.6)');
     }
     // palette des nombres : aucune teinte proche de la turquoise, de l'or ou du rubis (réservés aux cases DOUBLE)
-    function numColor(v) { return v >= 100 ? ['#f4f2ff', '#6e6e8a'] : v >= 40 ? ['#ff9a3a', '#8a3a08'] : v >= 20 ? ['#c28bff', '#5a2a86'] : v >= 10 ? ['#8a7bff', '#2e2a8a'] : v >= 6 ? ['#5b8cff', '#1a3a8a'] : ['#8d8470', '#443c2e']; }
+    function numColor(v) { return v >= 100 ? ['#f4ecd6', '#7a7160'] : v >= 40 ? ['#d99a3c', '#5e3a10'] : v >= 20 ? ['#a08cc8', '#3f3060'] : v >= 10 ? ['#6d78c0', '#242a66'] : v >= 6 ? ['#5b84d0', '#1b377a'] : ['#8d8470', '#443c2e']; }
     S.update = function (dt) {
       chromeUpdate(S, dt);
       ptrV += (-520 * (ptr - ptrTgt) - 15 * ptrV) * dt; ptr = clamp(ptr + ptrV * dt, -0.6, 0.2);   // ressort ; ptrTgt : cheville qui retient le pointeur avant la case suivante
@@ -1347,7 +1347,7 @@
         for (var k = 0; k < segs.length; k++) {
           var a = k / segs.length * TAU - Math.PI / 2, s = segs[k], x = cx + Math.cos(a) * r, y = cy + Math.sin(a) * r, dr = r * 0.12;
           if (s.d != null) { var own = s.d === ownI; ctx.beginPath(); ctx.arc(x, y, dr * (own ? 1.5 : 1), 0, TAU); ctx.fillStyle = HCOL[s.d].a; ctx.globalAlpha = own ? 1 : 0.4; ctx.fill(); if (own) { ctx.lineWidth = 1.5; ctx.strokeStyle = '#fff'; ctx.stroke(); } ctx.globalAlpha = 1; }
-          else { ctx.beginPath(); ctx.arc(x, y, dr * 0.8, 0, TAU); ctx.fillStyle = s.b ? '#c28bff' : 'rgba(205,185,138,.55)'; ctx.fill(); }
+          else { ctx.beginPath(); ctx.arc(x, y, dr * 0.8, 0, TAU); ctx.fillStyle = s.b ? '#a08cc8' : 'rgba(205,185,138,.55)'; ctx.fill(); }
         }
       });
     }
@@ -1640,7 +1640,7 @@
       G.txt(line(p), tx, ty + fs * 2.7, { size: Math.max(11, fs * 0.66), family: G.TEXT, weight: 800, fill: '#fff1b8', align: al });
       // volatilité : 1 à 3 gemmes
       var vy = c.row ? y + c.h * 0.84 : y + c.h * 0.9;
-      for (var k = 0; k < 3; k++) { ctx.beginPath(); ctx.arc((c.row ? tx + 7 : c.x + c.w / 2 - 22) + k * 22, vy, 6, 0, TAU); ctx.fillStyle = k <= i ? (i === 2 ? '#ff7a5a' : i === 1 ? '#ffd86a' : '#6ff0dd') : 'rgba(255,255,255,.12)'; ctx.fill(); }
+      for (var k = 0; k < 3; k++) { ctx.beginPath(); ctx.arc((c.row ? tx + 7 : c.x + c.w / 2 - 22) + k * 22, vy, 6, 0, TAU); ctx.fillStyle = k <= i ? (i === 2 ? '#d9735a' : i === 1 ? '#ffd86a' : '#6ff0dd') : 'rgba(255,255,255,.12)'; ctx.fill(); }
       ctx.restore();
     }
     S.draw = function () {
