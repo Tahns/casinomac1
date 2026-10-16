@@ -1047,7 +1047,7 @@
       errMaint: 'Maintenance en cours. Réessayez dans quelques minutes.',
       errSum: 'Le résultat affiché ne correspond pas au montant du serveur de jeu : le montant du serveur est appliqué.',
       resuming: 'Reprise du tour en cours…',
-      buyConfirm: 'Acheter {name} pour {price} ?', buyConfirmTitle: 'CONFIRMER L\'ACHAT',
+      buyConfirm: 'Acheter {name} pour {price} ?', buyConfirmTitle: 'CONFIRMER L\'ACHAT', plusConfirmTitle: 'CONFIRMER LE MODE', plusConfirm: 'Activer {name} ? Chaque tour sera joué à {price}.',
       autoTitle: 'JEU AUTOMATIQUE', autoSub: 'Choisissez le nombre de tours et les conditions d\'arrêt, puis confirmez.',
       autoRounds: 'Nombre de tours', autoStopWin: 'Arrêt sur un gain d\'au moins', autoStart: 'Démarrer', autoCost: 'Coût par tour'
     },
@@ -1069,7 +1069,7 @@
       errMaint: 'Maintenance in progress. Please try again in a few minutes.',
       errSum: 'The result shown does not match the amount from the game server: the server amount is applied.',
       resuming: 'Resuming the round in progress…',
-      buyConfirm: 'Buy {name} for {price}?', buyConfirmTitle: 'CONFIRM PURCHASE',
+      buyConfirm: 'Buy {name} for {price}?', buyConfirmTitle: 'CONFIRM PURCHASE', plusConfirmTitle: 'CONFIRM MODE', plusConfirm: 'Turn on {name}? Each round will be played at {price}.',
       autoTitle: 'AUTOPLAY', autoSub: 'Choose the number of rounds and the stop conditions, then confirm.',
       autoRounds: 'Number of rounds', autoStopWin: 'Stop on a win of at least', autoStart: 'Start', autoCost: 'Cost per round'
     }
@@ -1261,7 +1261,7 @@
     errMaint: 'الصيانة جارية. يرجى المحاولة بعد بضع دقائق.',
     errSum: 'النتيجة المعروضة لا تطابق المبلغ الصادر عن خادم اللعبة: يُطبَّق مبلغ الخادم.',
     resuming: 'استئناف الجولة الجارية…',
-    buyConfirm: 'شراء {name} مقابل {price}؟', buyConfirmTitle: 'تأكيد الشراء',
+    buyConfirm: 'شراء {name} مقابل {price}؟', buyConfirmTitle: 'تأكيد الشراء', plusConfirmTitle: 'تأكيد الوضع', plusConfirm: 'تفعيل {name}؟ ستُلعب كل جولة بقيمة {price}.',
     autoTitle: 'لعب تلقائي', autoSub: 'اختر عدد الجولات وشروط الإيقاف ثم أكّد.',
     autoRounds: 'عدد الجولات', autoStopWin: 'أوقف عند ربح لا يقل عن', autoStart: 'ابدأ', autoCost: 'التكلفة لكل جولة'
   };
@@ -1374,7 +1374,7 @@
     errMaint: 'Wartungsarbeiten laufen. Bitte versuche es in einigen Minuten erneut.',
     errSum: 'Das angezeigte Ergebnis stimmt nicht mit dem Betrag des Spielservers überein: Der Serverbetrag wird übernommen.',
     resuming: 'Laufende Runde wird fortgesetzt…',
-    buyConfirm: '{name} für {price} kaufen?', buyConfirmTitle: 'KAUF BESTÄTIGEN',
+    buyConfirm: '{name} für {price} kaufen?', buyConfirmTitle: 'KAUF BESTÄTIGEN', plusConfirmTitle: 'MODUS BESTÄTIGEN', plusConfirm: '{name} aktivieren? Jede Runde wird zu {price} gespielt.',
     autoTitle: 'AUTOSPIEL', autoSub: 'Wähle die Anzahl der Runden und die Stoppbedingungen, dann bestätige.',
     autoRounds: 'Anzahl der Runden', autoStopWin: 'Stopp bei einem Gewinn ab', autoStart: 'Start', autoCost: 'Kosten pro Runde'
   };
@@ -1488,7 +1488,7 @@
     errMaint: 'Mantenimiento en curso. Inténtalo de nuevo en unos minutos.',
     errSum: 'El resultado mostrado no coincide con el importe del servidor de juego: se aplica el importe del servidor.',
     resuming: 'Reanudando la ronda en curso…',
-    buyConfirm: '¿Comprar {name} por {price}?', buyConfirmTitle: 'CONFIRMAR COMPRA',
+    buyConfirm: '¿Comprar {name} por {price}?', buyConfirmTitle: 'CONFIRMAR COMPRA', plusConfirmTitle: 'CONFIRMAR MODO', plusConfirm: '¿Activar {name}? Cada ronda se jugará por {price}.',
     autoTitle: 'JUEGO AUTOMÁTICO', autoSub: 'Elige el número de rondas y las condiciones de parada, y confirma.',
     autoRounds: 'Número de rondas', autoStopWin: 'Parar con un premio de al menos', autoStart: 'Iniciar', autoCost: 'Coste por ronda'
   };
@@ -1601,7 +1601,7 @@
     errMaint: 'Huolto käynnissä. Yritä uudelleen muutaman minuutin kuluttua.',
     errSum: 'Näytetty tulos ei vastaa pelipalvelimen summaa: palvelimen summa otetaan käyttöön.',
     resuming: 'Käynnissä olevaa kierrosta jatketaan…',
-    buyConfirm: 'Ostetaanko {name} hintaan {price}?', buyConfirmTitle: 'VAHVISTA OSTO',
+    buyConfirm: 'Ostetaanko {name} hintaan {price}?', buyConfirmTitle: 'VAHVISTA OSTO', plusConfirmTitle: 'VAHVISTA TILA', plusConfirm: 'Otetaanko {name} käyttöön? Jokainen kierros pelataan arvolla {price}.',
     autoTitle: 'AUTOMAATTIPELI', autoSub: 'Valitse kierrosten määrä ja pysäytysehdot ja vahvista sitten.',
     autoRounds: 'Kierrosten määrä', autoStopWin: 'Pysäytä vähintään tällä voitolla', autoStart: 'Aloita', autoCost: 'Hinta kierrosta kohti'
   };
@@ -1706,7 +1706,7 @@
     errGen: 'गेम सर्वर में त्रुटि। कृपया थोड़ी देर में फिर कोशिश करें।',
     errNet: 'नेटवर्क उपलब्ध नहीं है या प्रतिक्रिया अमान्य है। हो सकता है आपका दांव गिना न गया हो: अपना बैलेंस जाँचें।',
     errBook: 'राउंड का नतीजा पढ़ा नहीं जा सका। कृपया सहायता से संपर्क करें।',
-    buyConfirm: '{name} को {price} में खरीदें?', buyConfirmTitle: 'खरीद की पुष्टि करें',
+    buyConfirm: '{name} को {price} में खरीदें?', buyConfirmTitle: 'खरीद की पुष्टि करें', plusConfirmTitle: 'मोड की पुष्टि करें', plusConfirm: '{name} चालू करें? हर राउंड {price} में खेला जाएगा।',
     autoTitle: 'ऑटोप्ले', autoSub: 'राउंड की संख्या और रुकने की शर्तें चुनें, फिर पुष्टि करें।',
     autoRounds: 'राउंड की संख्या', autoStopWin: 'कम से कम इतनी जीत पर रुकें', autoStart: 'शुरू करें', autoCost: 'प्रति राउंड लागत'
   };
@@ -1819,7 +1819,7 @@
     errMaint: 'Pemeliharaan sedang berlangsung. Silakan coba lagi dalam beberapa menit.',
     errSum: 'Hasil yang ditampilkan tidak sesuai dengan jumlah dari server permainan: jumlah server diterapkan.',
     resuming: 'Melanjutkan ronde yang sedang berjalan…',
-    buyConfirm: 'Beli {name} seharga {price}?', buyConfirmTitle: 'KONFIRMASI PEMBELIAN',
+    buyConfirm: 'Beli {name} seharga {price}?', buyConfirmTitle: 'KONFIRMASI PEMBELIAN', plusConfirmTitle: 'KONFIRMASI MODE', plusConfirm: 'Aktifkan {name}? Setiap ronde dimainkan seharga {price}.',
     autoTitle: 'MAIN OTOMATIS', autoSub: 'Pilih jumlah ronde dan kondisi berhenti, lalu konfirmasi.',
     autoRounds: 'Jumlah ronde', autoStopWin: 'Berhenti pada kemenangan minimal', autoStart: 'Mulai', autoCost: 'Biaya per ronde'
   };
@@ -1925,7 +1925,7 @@
     errGen: 'ゲームサーバーのエラーです。しばらくしてからもう一度お試しください。',
     errNet: 'ネットワークが利用できないか、応答が無効です。ベットが反映されていない可能性があります: 残高をご確認ください。',
     errBook: 'ラウンドの結果を読み取れませんでした。サポートにお問い合わせください。',
-    buyConfirm: '{name} を {price} で購入しますか?', buyConfirmTitle: '購入の確認',
+    buyConfirm: '{name} を {price} で購入しますか?', buyConfirmTitle: '購入の確認', plusConfirmTitle: 'モードの確認', plusConfirm: '{name} をオンにしますか? 各ラウンドは {price} でプレイされます。',
     autoTitle: 'オートプレイ', autoSub: 'ラウンド数と停止条件を選んで、確認してください。',
     autoRounds: 'ラウンド数', autoStopWin: '次の勝利額以上で停止', autoStart: '開始', autoCost: '1ラウンドあたりのコスト'
   };
@@ -2034,7 +2034,7 @@
     errGen: '게임 서버 오류입니다. 잠시 후 다시 시도해 주세요.',
     errNet: '네트워크를 사용할 수 없거나 응답이 올바르지 않습니다. 베팅이 반영되지 않았을 수 있습니다: 잔액을 확인해 주세요.',
     errBook: '라운드 결과를 읽을 수 없습니다. 고객 지원에 문의해 주세요.',
-    buyConfirm: '{name}을(를) {price}에 구매할까요?', buyConfirmTitle: '구매 확인',
+    buyConfirm: '{name}을(를) {price}에 구매할까요?', buyConfirmTitle: '구매 확인', plusConfirmTitle: '모드 확인', plusConfirm: '{name}을(를) 켤까요? 각 라운드는 {price}(으)로 플레이됩니다.',
     autoTitle: '자동 플레이', autoSub: '라운드 수와 중지 조건을 선택한 다음 확인하세요.',
     autoRounds: '라운드 수', autoStopWin: '다음 당첨 이상에서 중지', autoStart: '시작', autoCost: '라운드당 비용'
   };
@@ -2147,7 +2147,7 @@
     errMaint: 'Trwają prace konserwacyjne. Spróbuj ponownie za kilka minut.',
     errSum: 'Wyświetlony wynik nie zgadza się z kwotą z serwera gry: stosowana jest kwota serwera.',
     resuming: 'Wznawianie trwającej rundy…',
-    buyConfirm: 'Kupić {name} za {price}?', buyConfirmTitle: 'POTWIERDŹ ZAKUP',
+    buyConfirm: 'Kupić {name} za {price}?', buyConfirmTitle: 'POTWIERDŹ ZAKUP', plusConfirmTitle: 'POTWIERDŹ TRYB', plusConfirm: 'Włączyć {name}? Każda runda będzie grana za {price}.',
     autoTitle: 'GRA AUTOMATYCZNA', autoSub: 'Wybierz liczbę rund i warunki zatrzymania, a następnie potwierdź.',
     autoRounds: 'Liczba rund', autoStopWin: 'Zatrzymaj przy wygranej co najmniej', autoStart: 'Start', autoCost: 'Koszt rundy'
   };
@@ -2260,7 +2260,7 @@
     errMaint: 'Manutenção em andamento. Tente novamente em alguns minutos.',
     errSum: 'O resultado exibido não corresponde ao valor do servidor do jogo: o valor do servidor é aplicado.',
     resuming: 'Retomando a rodada em andamento…',
-    buyConfirm: 'Comprar {name} por {price}?', buyConfirmTitle: 'CONFIRMAR COMPRA',
+    buyConfirm: 'Comprar {name} por {price}?', buyConfirmTitle: 'CONFIRMAR COMPRA', plusConfirmTitle: 'CONFIRMAR MODO', plusConfirm: 'Ativar {name}? Cada rodada será jogada por {price}.',
     autoTitle: 'JOGO AUTOMÁTICO', autoSub: 'Escolha o número de rodadas e as condições de parada e confirme.',
     autoRounds: 'Número de rodadas', autoStopWin: 'Parar com um ganho de pelo menos', autoStart: 'Iniciar', autoCost: 'Custo por rodada'
   };
@@ -2373,7 +2373,7 @@
     errMaint: 'Идут технические работы. Повторите попытку через несколько минут.',
     errSum: 'Показанный результат не совпадает с суммой игрового сервера: применяется сумма сервера.',
     resuming: 'Продолжаем текущий раунд…',
-    buyConfirm: 'Купить {name} за {price}?', buyConfirmTitle: 'ПОДТВЕРДИТЕ ПОКУПКУ',
+    buyConfirm: 'Купить {name} за {price}?', buyConfirmTitle: 'ПОДТВЕРДИТЕ ПОКУПКУ', plusConfirmTitle: 'ПОДТВЕРДИТЕ РЕЖИМ', plusConfirm: 'Включить {name}? Каждый раунд будет сыгран за {price}.',
     autoTitle: 'АВТОИГРА', autoSub: 'Выберите число раундов и условия остановки, затем подтвердите.',
     autoRounds: 'Число раундов', autoStopWin: 'Остановить при выигрыше от', autoStart: 'Старт', autoCost: 'Стоимость раунда'
   };
@@ -2485,7 +2485,7 @@
     errMaint: 'Bakım çalışması sürüyor. Lütfen birkaç dakika sonra tekrar deneyin.',
     errSum: 'Gösterilen sonuç oyun sunucusunun tutarıyla eşleşmiyor: sunucu tutarı uygulanır.',
     resuming: 'Devam eden tur sürdürülüyor…',
-    buyConfirm: '{name} {price} karşılığında satın alınsın mı?', buyConfirmTitle: 'SATIN ALMAYI ONAYLA',
+    buyConfirm: '{name} {price} karşılığında satın alınsın mı?', buyConfirmTitle: 'SATIN ALMAYI ONAYLA', plusConfirmTitle: 'MODU ONAYLA', plusConfirm: '{name} açılsın mı? Her tur {price} değeriyle oynanır.',
     autoTitle: 'OTOMATİK OYUN', autoSub: 'Tur sayısını ve durdurma koşullarını seç, sonra onayla.',
     autoRounds: 'Tur sayısı', autoStopWin: 'En az şu kazançta dur', autoStart: 'Başlat', autoCost: 'Tur başına maliyet'
   };
@@ -2598,7 +2598,7 @@
     errMaint: 'Đang bảo trì. Vui lòng thử lại sau vài phút.',
     errSum: 'Kết quả hiển thị không khớp với giá trị từ máy chủ trò chơi: áp dụng giá trị của máy chủ.',
     resuming: 'Đang tiếp tục ván đang diễn ra…',
-    buyConfirm: 'Mua {name} với giá {price}?', buyConfirmTitle: 'XÁC NHẬN MUA',
+    buyConfirm: 'Mua {name} với giá {price}?', buyConfirmTitle: 'XÁC NHẬN MUA', plusConfirmTitle: 'XÁC NHẬN CHẾ ĐỘ', plusConfirm: 'Bật {name}? Mỗi ván chơi với giá {price}.',
     autoTitle: 'CHƠI TỰ ĐỘNG', autoSub: 'Chọn số ván và điều kiện dừng, rồi xác nhận.',
     autoRounds: 'Số ván', autoStopWin: 'Dừng khi thắng tối thiểu', autoStart: 'Bắt đầu', autoCost: 'Chi phí mỗi ván'
   };
@@ -2705,7 +2705,7 @@
     errGen: '游戏服务器出错，请稍后再试。',
     errNet: '网络不可用或响应无效。您的投注可能未被计入：请检查余额。',
     errBook: '无法读取本回合的结果。请联系客服。',
-    buyConfirm: '以 {price} 购买 {name}？', buyConfirmTitle: '确认购买',
+    buyConfirm: '以 {price} 购买 {name}？', buyConfirmTitle: '确认购买', plusConfirmTitle: '确认模式', plusConfirm: '开启 {name}？每回合以 {price} 游玩。',
     autoTitle: '自动游戏', autoSub: '选择回合数和停止条件，然后确认。',
     autoRounds: '回合数', autoStopWin: '获胜达到以下金额时停止', autoStart: '开始', autoCost: '每回合费用'
   };

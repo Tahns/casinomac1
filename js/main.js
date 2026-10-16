@@ -4,6 +4,16 @@
   var M = root.AnubisMath, G = root.G, FX = root.FX, Sfx = root.Sfx;
   var RG = root.RGS, LIVE = !!(RG && RG.enabled);   // LIVE = mode RGS (sessionID / rgs_url dans l'adresse) ; sinon démo locale
   function $(id) { return document.getElementById(id); }
+  // [conformité] zoom mobile désactivé : pincement, double toucher, gestes Safari (gesturestart), Ctrl + molette ; la page ne défile jamais
+  (function () {
+    var d = document, opt = { passive: false };
+    ['gesturestart', 'gesturechange', 'gestureend'].forEach(function (n) { d.addEventListener(n, function (e) { e.preventDefault(); }, opt); });
+    d.addEventListener('touchmove', function (e) { if (e.touches && e.touches.length > 1) e.preventDefault(); }, opt);
+    d.addEventListener('dblclick', function (e) { e.preventDefault(); }, opt);
+    root.addEventListener('wheel', function (e) { if (e.ctrlKey) e.preventDefault(); }, opt);
+    var last = 0;   // double toucher (ancien iOS) : un second toucher en moins de 350 ms ne produit pas de zoom
+    d.addEventListener('touchend', function (e) { var n = Date.now(); if (n - last < 350 && !(e.target && e.target.closest && e.target.closest('button,input,a'))) e.preventDefault(); last = n; }, opt);
+  })();
   // build de production Stake (js/build.js, tools/build-stake.py) : pas de démo locale. Sans session RGS ni replay : écran « Lancez le jeu depuis Stake », rien d'autre
   var STAKE = root.ANUBIS_BUILD === 'stake';
   if (STAKE && !LIVE && !(root.Replay && root.Replay.active)) {
@@ -120,7 +130,7 @@
         if (typeof d.sobV2 === 'boolean') S.stopOnBonus = d.sobV2;   // (l'ancienne clé valait « oui » par défaut : ignorée)
         if (d.reduced) { S.reduced = true; FX.reduced = true; }
         if (Array.isArray(d.hist)) S.hist = d.hist.slice(0, 10);
-        if (d.mode === 'plus') S.mode = 'plus';
+        // [conformité] le mode Oracle+ (coût plus élevé) n'est jamais réactivé au chargement : il demande une confirmation à chaque activation
         if (d.buyOn === false) S.buyOn = false;
         if (d.quality) S.quality = d.quality;
       }
@@ -457,7 +467,17 @@
     if (!G.turbo) { G.turbo = true; G.ultra = false; } else if (!G.ultra) G.ultra = true; else { G.turbo = false; G.ultra = false; }
     G.speed = spd(); Sfx.click(); setSpinBtn(); save();
   });
-  $('btnPlus').addEventListener('click', function () { if (S.busy) return; S.mode = S.mode === 'plus' ? 'std' : 'plus'; Sfx.click(); updateHud(); setSpinBtn(); save(); say(S.mode === 'plus' ? I18N.t().plusHint : I18N.t().ready); });
+  function setPlus(on) { S.mode = on ? 'plus' : 'std'; Sfx.click(); updateHud(); setSpinBtn(); save(); say(S.mode === 'plus' ? I18N.t().plusHint : I18N.t().ready); }
+  // [conformité] mode à coût plus élevé (Oracle+, mise x1,1) : confirmation avant ACTIVATION (rien n'est joué ni envoyé avant « Confirmer ») ; la désactivation est immédiate
+  function confirmPlus() {
+    var R = I18N.rgs(), T = I18N.t();
+    $('modalBody').innerHTML = '<h2>' + R.plusConfirmTitle + '</h2><p id="plusConfirmTxt"></p><div class="acts"><button type="button" class="chip" id="plusNo">' + R.cancel + '</button><button type="button" class="btn-go" id="plusYes">' + R.confirm + '</button></div>';
+    $('plusConfirmTxt').textContent = R.plusConfirm.replace('{name}', T.oraclePlus).replace('{price}', G.money(r2(bet() * M.MODES.plus.cost)));
+    $('plusNo').onclick = function () { hideModal(); };
+    $('plusYes').onclick = function () { hideModal(); setPlus(true); };
+    showModal(); $('plusNo').focus();   // focus initial sur « Annuler »
+  }
+  $('btnPlus').addEventListener('click', function () { if (S.busy || S.blocked) return; if (S.mode === 'plus') setPlus(false); else confirmPlus(); });
   // [104] un appui sur AUTO n'engage aucun pari : il ouvre un panneau (nombre de tours, arrêts) à confirmer par « Démarrer »
   var STOP_WINS = [0, 10, 50, 100];
   function openAuto() {
@@ -593,7 +613,7 @@
     }
     // un bouton qui a le focus (navigation clavier) garde son comportement natif ; sinon Espace/Entrée = tourner
     if ((e.code === 'Space' || e.code === 'Enter') && e.target && e.target.tagName === 'BUTTON') return;
-    if (e.code === 'Space' || e.code === 'Enter') { e.preventDefault(); if (!$('modal').hidden) return; if (G.skipWinOv()) return; if (S.busy && G.wheel.spinning) { G.speed = 3.2; return; } if (!S.busy) { Sfx.unlock(); play(); } }
+    if (e.code === 'Space' || e.code === 'Enter') { e.preventDefault(); if (e.repeat) return; if (!$('modal').hidden) return; if (G.skipWinOv()) return; if (S.busy && G.wheel.spinning) { G.speed = 3.2; return; } if (!S.busy) { Sfx.unlock(); play(); } }
     else if (e.code === 'ArrowUp') stepBet(1); else if (e.code === 'ArrowDown') stepBet(-1);
     else if (e.code === 'Escape') hideModal();
   });
@@ -643,7 +663,7 @@
   document.addEventListener('keydown', function (e) {
     if (!e.repeat || !(e.key === 'Enter' || e.key === ' ' || e.code === 'Space')) return;
     var t = e.target, id = t && t.id;
-    if (id === 'buyNo' || id === 'buyYes' || (t && t.classList && t.classList.contains('buyCard'))) { e.preventDefault(); e.stopPropagation(); }
+    if (id === 'buyNo' || id === 'buyYes' || id === 'plusNo' || id === 'plusYes' || (t && t.classList && t.classList.contains('buyCard'))) { e.preventDefault(); e.stopPropagation(); }
   }, true);
   $('btnBuy').addEventListener('click', openBuy);
 

@@ -422,7 +422,6 @@ html[data-lang=vi],html[data-lang=pl],html[data-lang=tr],html[data-lang=ru],html
 .spBtn{color:#140a00;border:1px solid #4f3a12;background:var(--go);box-shadow:var(--bevel-gold),0 5px 0 rgba(0,0,0,.8);animation:spPulse 2.2s ease-in-out infinite}
 @keyframes spPulse{50%{filter:brightness(1.18)}}
 .spSub{color:#cdb98a}.spDemo{color:#a4946f}
-=======
 /* ===== splash & règles ===== */
 /* écran d'accueil « Unchained » : décor et chaînes dessinés sur #spCv (main.js + js/chains.js), texte et carrousel en HTML */
 #splash{position:fixed;inset:0;z-index:50;background:#050308;overflow:hidden;display:flex;align-items:flex-end;justify-content:center;transition:opacity .9s ease;cursor:pointer;touch-action:pan-y;-webkit-tap-highlight-color:transparent}
@@ -494,3 +493,42 @@ html[dir=rtl] .spArr svg{transform:scaleX(-1)}
 .exBox .rIc{height:44px;width:44px}
 .exBox p{margin:0}
 @media (prefers-reduced-motion:reduce){#splash{transition-duration:.2s}.spBtn{animation:none}.spTxt{transition:none}.spDots button::after{transition:none}}
+/* ===== conformité ===== */
+/* pas de zoom (pincement, double toucher) : seul le défilement interne des fenêtres reste permis ; le canvas ne défile ni ne zoome ; la fenêtre principale ne défile jamais */
+html,body{touch-action:pan-x pan-y;overflow:hidden;overscroll-behavior:none;-webkit-text-size-adjust:100%;text-size-adjust:100%}
+#stage{touch-action:none}
+#ui,#hud,#top,#status,#history{touch-action:pan-x pan-y}
+/* Popout S (≈ 400×300) : mêmes réglages compacts que la fenêtre ≤ 260 px de haut (le HUD à 5 colonnes de la règle « paysage » débordait : AUTO et ORACLE+ hors écran) */
+@media (max-width:520px) and (min-height:261px) and (max-height:340px){
+  #top{padding:max(9px,calc(env(safe-area-inset-top) + 6px)) 8px 0}
+  .brand .b-big{font-size:14px;letter-spacing:.06em}.brand .b-small{display:none}
+  .top-right{gap:4px}.ibtn{width:26px;height:26px;font-size:11px}.ibtn svg{width:15px;height:15px}#btnCur{font-size:12px}
+  .pill{top:30px;font-size:10px;padding:3px 9px 3px 6px;gap:5px}.pill svg{width:22px;height:11px}
+  #status{bottom:calc(var(--hud-h,64px) + 2px)}
+  #statusText{font-size:8px;padding:2px 8px;max-width:34vw;letter-spacing:.08em}
+  #hud{grid-template-columns:minmax(0,1fr) minmax(0,1.5fr) auto minmax(0,1.9fr) minmax(0,1fr);gap:3px;padding:8px 13px calc(2px + var(--safe-b))}
+  #hud::before{border-width:6px 12px;border-image-width:6px 12px}
+  .stat,.betbox{min-width:0;padding:8px 5px 3px}.stat label{font-size:8px;letter-spacing:.04em}.stat b{font-size:11px}
+  .betbox{padding:9px 9px 3px;gap:2px}.betbox .step{width:17px;height:17px;font-size:12px;margin-top:0}.betval b{font-size:12px}
+  .betval label{font-size:8px;letter-spacing:.04em}
+  #spin{width:46px!important}#spin .spin-t{font-size:8px;bottom:20%;letter-spacing:0}#spin .ring{display:none}
+  .toggles{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:2px 2px}.tgl.plus,.tgl.buy{grid-column:1/-1}
+  .tgl{height:16px;font-size:8px;letter-spacing:.03em;border-width:0 9px;border-image-width:0 9px;gap:0}.tgl i{display:none}
+  .autoCount{font-size:9px}
+  .sheet{border-width:10px 16px;border-image-width:10px 16px;max-height:100%;padding:6px 6px 8px}
+  .sheet h2{font-size:12px}.sheet h3{margin:10px 0 4px;font-size:9px}.sheet p,.opt,.sheet table{font-size:10px;line-height:1.35}
+  .sheet p{margin:3px 0}.sheet p.sub{padding-right:34px}   /* [195] le texte d'introduction ne passe pas sous le bouton × */
+  .opt{padding:3px 0;gap:2px 8px}.acts{margin-top:6px}
+  #modalBody:has(#apGo)>p.sub:first-of-type{display:none}   /* AUTO : seule l'explication générale est masquée, les réglages et « Démarrer » restent */   /* panneau AUTO compact : « Démarrer » visible sans défilement */
+  .x{width:30px;height:30px;font-size:16px}
+  :root{--tap:28px}
+  .buyGrid{grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;margin-top:6px}.buyCard{padding:12px 4px 14px;gap:2px}.buyCard canvas{display:none}.buyCard h4{font-size:8px;min-height:20px}.buyCard small{display:none}.buyCard .pr{font-size:10px}.buyCard .go{min-height:20px;font-size:8px;padding:0 6px}
+  .chips button,.chip{min-height:24px;padding:0 8px;font-size:9px}.btn-go{min-height:24px;padding:0 14px;font-size:9px}
+  #mixer{top:40px;width:min(380px,calc(100vw - 16px));max-height:calc(100dvh - 46px)}
+  #mixer h2{min-height:22px;font-size:12px}.mx-row{min-height:24px;font-size:10px}.mx-row input[type=range]{height:24px}.mx-btns{padding-top:2px}.mx-chips .chip{font-size:9px}
+  .kv{grid-template-columns:repeat(2,minmax(0,1fr));gap:4px}.kv div{padding:4px 8px}.kv b{font-size:12px}
+}
+/* bouton Fermer des fenetres : reste visible quand le contenu défile (règles longues sur mobile) */
+#modal .sheet>.x{position:sticky;top:2px;right:auto;left:auto;float:right;margin:-8px -10px calc(-1*var(--tap)) 0;z-index:5}
+html[dir=rtl] #modal .sheet>.x{float:left;margin:-8px 0 calc(-1*var(--tap)) -10px}
+/* ===== fin conformité ===== */
