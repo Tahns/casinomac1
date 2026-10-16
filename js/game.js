@@ -223,7 +223,7 @@
   function backdropGrads() {   // dégradés qui dépendent de la taille de l'écran : recréés seulement après buildBackdrop
     if (BG) return BG;
     var w = G.w, h = G.h, vg = ctx.createLinearGradient(0, 0, 0, h * 0.6), vv = ctx.createRadialGradient(w / 2, h * 0.5, Math.min(w, h) * 0.35, w / 2, h * 0.5, Math.max(w, h) * 0.8);
-    vg.addColorStop(0, 'rgba(20,36,78,1)'); vg.addColorStop(1, 'rgba(20,36,78,0)');
+    vg.addColorStop(0, 'rgba(14,26,52,1)'); vg.addColorStop(1, 'rgba(14,26,52,0)');
     vv.addColorStop(0, 'rgba(6,8,16,0)'); vv.addColorStop(1, 'rgba(6,9,20,.6)');
     return BG = { vg: vg, vv: vv };
   }
@@ -233,32 +233,32 @@
   function drawBackdrop(dim, img) {
     var w = G.w, h = G.h, t = G.t, bgG = backdropGrads();
     ctx.drawImage(bg, 0, 0, w, h);
-    if (img && ART[img]) { ctx.globalAlpha = Math.min(1, dim * 1.2 + 0.2); cover(ctx, ART[img], w, h); ctx.globalAlpha = 1; ctx.fillStyle = 'rgba(0,0,0,.4)'; ctx.fillRect(0, 0, w, h); }
+    if (img && ART[img]) { ctx.globalAlpha = Math.min(1, dim * 1.2 + 0.2); cover(ctx, ART[img], w, h); ctx.globalAlpha = 1; ctx.fillStyle = 'rgba(2,3,8,.4)'; ctx.fillRect(0, 0, w, h); }
     // rayons rotatifs derrière la roue
-    A.rays(ctx, G.cx, G.cy, Math.max(w, h) * 0.9, 16, t * 0.05, '#ffd86a', 0.05 * (1 - dim * 0.6));
-    blob(unitGrad('glow', 0.4 / 1.9, [[0, 'rgba(255,200,90,1)'], [1, 'rgba(255,200,90,0)']]), G.cx, G.cy, G.R * 1.9, G.R * 1.9, 0.20 * (1 - dim * 0.5));
+    A.rays(ctx, G.cx, G.cy, Math.max(w, h) * 0.9, 16, t * 0.05, '#b8934a', 0.04 * (1 - dim * 0.6));
+    blob(unitGrad('glow', 0.4 / 1.9, [[0, 'rgba(206,150,70,1)'], [1, 'rgba(206,150,70,0)']]), G.cx, G.cy, G.R * 1.9, G.R * 1.9, 0.13 * (1 - dim * 0.5));
     // braseros + yeux des gardiens
     if (G.guard) {
       [-1, 1].forEach(function (sd) {
         var x = G.cx + sd * G.guard.x, fl = 0.85 + Math.sin(t * 9 + sd) * 0.1 + Math.sin(t * 23) * 0.05, bw = G.R * 0.16;
-        blob(unitGrad('brazier', 0, [[0, 'rgba(255,240,170,.95)'], [0.3, 'rgba(255,170,50,.55)'], [1, 'rgba(255,100,20,0)']]), x, G.guard.bowlY - bw * 0.7, bw * 2.4 * fl, bw * 2.4 * fl, 1);
-        ctx.fillStyle = 'rgba(255,225,120,.95)';
+        blob(unitGrad('brazier', 0, [[0, 'rgba(236,200,130,.8)'], [0.3, 'rgba(206,130,52,.42)'], [1, 'rgba(160,70,24,0)']]), x, G.guard.bowlY - bw * 0.7, bw * 2.4 * fl, bw * 2.4 * fl, 1);
+        ctx.fillStyle = 'rgba(226,176,92,.95)';
         ctx.beginPath(); ctx.moveTo(x - bw * 0.5, G.guard.bowlY); ctx.quadraticCurveTo(x - bw * 0.4, G.guard.bowlY - bw * 1.7 * fl, x + Math.sin(t * 7 + sd) * bw * 0.2, G.guard.bowlY - bw * 2.1 * fl);
         ctx.quadraticCurveTo(x + bw * 0.5, G.guard.bowlY - bw * 1.5 * fl, x + bw * 0.5, G.guard.bowlY); ctx.fill();
         var s = G.guard.s, ey = G.guard.top - G.R * 0.22 + s * 0.1;
         [-1, 1].forEach(function (e) {
           var ex = x + e * s * 0.31, p = 0.55 + 0.45 * Math.sin(t * 2.2 + sd);
-          blob(unitGrad('eye', 0, [[0, 'rgba(255,255,255,1)'], [0.3, 'rgba(111,240,221,1)'], [1, 'rgba(24,181,164,0)']]), ex, ey, s * 0.28, s * 0.28, p);
+          blob(unitGrad('eye', 0, [[0, 'rgba(214,240,232,1)'], [0.3, 'rgba(84,196,180,1)'], [1, 'rgba(24,140,128,0)']]), ex, ey, s * 0.28, s * 0.28, p);
         });
       });
     }
     // brume : deux nappes qui dérivent à des profondeurs différentes
     if (!FX.lite) [[0.0, 0.62, 0.9, 26], [0.5, 0.78, 0.7, -42]].forEach(function (fg, n) {
       var fx = ((t * 0.012 * (n ? -1 : 1) + fg[0]) % 1) * w * 1.6 - w * 0.3 + G.par.x * fg[3], fy = h * fg[1];
-      blob(unitGrad('fog', 0, [[0, 'rgba(255,214,140,1)'], [1, 'rgba(255,214,140,0)']]), fx, fy, w * 0.45, w * 0.45 * 0.35, 0.07 * fg[2]);
+      blob(unitGrad('fog', 0, [[0, 'rgba(176,150,110,1)'], [1, 'rgba(176,150,110,0)']]), fx, fy, w * 0.45, w * 0.45 * 0.35, 0.06 * fg[2]);
     });
     // poussière d'or
-    ctx.fillStyle = '#ffd86a';
+    ctx.fillStyle = '#c9a65c';
     for (var i = 0; i < dust.length; i++) {
       var d = dust[i], yy = mod(d.y - t * d.v, 1) * h, xx = (d.x + Math.sin(t * 0.3 + d.p) * 0.02) * w + G.par.x * d.s * 9;
       ctx.globalAlpha = 0.18 + 0.22 * Math.sin(t * 1.3 + d.p) * Math.sin(t * 1.3 + d.p);
@@ -268,14 +268,14 @@
     // étalonnage « Anubis Unchained » : ombres violettes en haut, lueur turquoise du sol, braises qui montent
     var fk = 0.92 + Math.sin(t * 7.3) * 0.045 + Math.sin(t * 17.1) * 0.03;
     ctx.save(); ctx.globalCompositeOperation = 'screen';
-    ctx.globalAlpha = 0.34 * (1 - dim * 0.4); ctx.fillStyle = bgG.vg; ctx.fillRect(0, 0, w, h * 0.6); ctx.globalAlpha = 1;
-    blob(unitGrad('teal', 0, [[0, 'rgba(32,210,190,1)'], [1, 'rgba(32,210,190,0)']]), G.cx, h * 1.02, Math.max(w, h) * 0.55, Math.max(w, h) * 0.55, 0.09 * fk);
+    ctx.globalAlpha = 0.26 * (1 - dim * 0.4); ctx.fillStyle = bgG.vg; ctx.fillRect(0, 0, w, h * 0.6); ctx.globalAlpha = 1;
+    blob(unitGrad('teal', 0, [[0, 'rgba(32,210,190,1)'], [1, 'rgba(32,210,190,0)']]), G.cx, h * 1.02, Math.max(w, h) * 0.55, Math.max(w, h) * 0.55, 0.05 * fk);
     ctx.restore();
     if (!FX.lite) {
       for (var ej = 0; ej < embers.length; ej++) {
         var em = embers[ej], ey = (1 - mod(em.y + t * em.v, 1)) * h, ex = (em.x + Math.sin(t * 0.5 + em.p) * 0.03) * w + G.par.x * em.s * 14, ea = Math.sin(Math.PI * (1 - ey / h)) * (0.35 + 0.35 * Math.sin(t * 2 + em.p));
-        ctx.globalAlpha = Math.max(0, ea); ctx.fillStyle = em.teal ? '#6ff0dd' : '#ffb347';
-        ctx.shadowColor = ctx.fillStyle; ctx.shadowBlur = 8; ctx.beginPath(); ctx.arc(ex, ey, em.s, 0, TAU); ctx.fill();
+        ctx.globalAlpha = Math.max(0, ea); ctx.fillStyle = em.teal ? '#5fb8a8' : '#d9893c';
+        ctx.beginPath(); ctx.arc(ex, ey, em.s, 0, TAU); ctx.fill();
       }
       ctx.shadowBlur = 0; ctx.globalAlpha = 1;
     }
