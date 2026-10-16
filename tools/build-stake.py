@@ -49,7 +49,7 @@ for m in re.finditer(r'<(?:link|script)\b[^>]*?(?:href|src)="([^"]+)"', html):
 for css in sorted(f for f in list(files) if f.endswith('.css')):
     for m in re.finditer(r'url\(\s*[\'"]?([^)\'"]+)[\'"]?\s*\)', rd(css)):
         u = m.group(1).strip()
-        if u.startswith('data:') or u.startswith('#'):
+        if u.startswith('data:') or u.startswith('#') or u.startswith('%23'):
             continue
         if re.match(r'^[a-z][a-z0-9+.-]*:|^//|^/', u, re.I):
             fail('%s : url non relative (%s)' % (css, u))
