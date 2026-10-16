@@ -226,9 +226,16 @@ var FINISH = `(async()=>{ G.turbo=true; G.speed=1.6; var g=0; while(G.S.busy&&g<
   ok(plays(mb).length === 1 && plays(mb)[0].body.mode === 'bonus_vault' && plays(mb)[0].body.amount === 1 * MICRO, '[31] Confirmer : /wallet/play { amount: 1000000, mode: bonus_vault } (le serveur facture mise × coût) ' + JSON.stringify(plays(mb).map(function (l) { return l.body; })));
   await s.p.evaluate(FINISH); await s.p.waitForTimeout(250);
   ok(Math.abs((await s.p.evaluate('G.S.balance')) - mb.state.balance / MICRO) < 1e-6, '[31] solde après achat = solde du serveur');
-  // Oracle+ (×1,1) : pas de confirmation, un bascule seulement le mode ; l'espace mise ensuite
-  await clk(s.p, '#btnPlus'); await s.p.waitForTimeout(100);
-  ok(plays(mb).length === 1 && !(await s.p.evaluate("!document.getElementById('modal').hidden")), '[31] Oracle+ (×1,1) : simple bascule de mode, aucune fenêtre ni requête');
+  // [conformité] Oracle+ (×1,1, coût plus élevé) : l'activation demande une confirmation (Annuler / Confirmer), aucune requête avant ; la désactivation est immédiate
+  await clk(s.p, '#btnPlus'); await s.p.waitForTimeout(250);
+  var pc = await s.p.evaluate("({t:(document.getElementById('plusConfirmTxt')||{}).textContent, yes:!!document.getElementById('plusYes'), no:!!document.getElementById('plusNo'), mode:G.S.mode, foc:document.activeElement&&document.activeElement.id})");
+  ok(plays(mb).length === 1 && pc.yes && pc.no && pc.mode === 'std' && pc.foc === 'plusNo' && /1[,.]10/.test(pc.t), '[conformité] Oracle+ : fenêtre « ' + pc.t + ' », focus sur Annuler, mode inchangé, aucune requête');
+  await clk(s.p, '#plusNo'); await s.p.waitForTimeout(250);
+  ok((await s.p.evaluate('G.S.mode')) === 'std' && plays(mb).length === 1, '[conformité] Oracle+ : Annuler laisse le mode Standard');
+  await clk(s.p, '#btnPlus'); await s.p.waitForTimeout(250); await clk(s.p, '#plusYes'); await s.p.waitForTimeout(250);
+  ok((await s.p.evaluate('G.S.mode')) === 'plus' && plays(mb).length === 1, '[conformité] Oracle+ : Confirmer active le mode, toujours aucune requête de jeu');
+  await clk(s.p, '#btnPlus'); await s.p.waitForTimeout(150);
+  ok((await s.p.evaluate('G.S.mode')) === 'std' && !(await s.p.evaluate("!document.getElementById('modal').hidden")), '[conformité] Oracle+ : la désactivation est immédiate, sans fenêtre');
   // Entrée MAINTENU sur une carte d'achat : la 1re frappe ouvre la confirmation (focus sur « Annuler »), les répétitions ne confirment rien
   var base31 = plays(mb).length;
   await clk(s.p, '#btnBuy'); await s.p.waitForTimeout(250);

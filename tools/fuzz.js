@@ -123,7 +123,7 @@ function fclick(p, sel, o) { return p.click(sel, Object.assign({ force: true, ti
 async function setup(p) {
   // mode Standard / Oracle+
   var mode = chance(0.4) ? 'plus' : 'std';
-  if ((await ev(p, 'G.S.mode')) !== mode) await fclick(p, '#btnPlus');
+  if ((await ev(p, 'G.S.mode')) !== mode) { await fclick(p, '#btnPlus'); await fclick(p, '#plusYes'); }   // [conformité] activation d'Oracle+ : confirmation
   // mise : extrêmes très fréquents
   var bi = chance(0.3) ? 0 : chance(0.2) ? 11 : Math.floor(rnd() * 12);
   await ev(p, 'G.S.bi=' + bi + ';G.updateHud();0'); note('mise ' + bi + ' mode ' + mode);
@@ -279,7 +279,7 @@ async function perturb(p, url, ep) {
   else if (k === 'pitch') { await ev(p, "var m=document.getElementById('mxPitch');m.value=" + Math.floor(rnd() * 25 - 12) + ";m.dispatchEvent(new Event('input'));0"); }
   else if (k === 'info') { await fclick(p, '#btnInfo'); await p.waitForTimeout(60); if (chance(0.7)) await p.keyboard.press('Escape'); }
   else if (k === 'turbo') await fclick(p, '#btnTurbo');
-  else if (k === 'plus') await fclick(p, '#btnPlus', { force: true });
+  else if (k === 'plus') { await fclick(p, '#btnPlus', { force: true }); if (chance(0.6)) await fclick(p, '#plusYes', { force: true }); else await fclick(p, '#plusNo', { force: true }); }
   else if (k === 'buyclick') await fclick(p, '#btnBuy', { force: true, timeout: 800 }).catch(function () {});
   else if (k === 'betclick') await fclick(p, pick(['#betUp', '#betDn']), { force: true, timeout: 800 }).catch(function () {});
   else if (k === 'limit') { await ev(p, 'G.S.limit=' + pick([20, 50, 0]) + ';0'); }

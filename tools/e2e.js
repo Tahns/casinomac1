@@ -24,7 +24,7 @@ var server = http.createServer(function (req, res) {
 
   // 1. enchaînement de tours (les deux modes), jamais bloqué, solde cohérent
   var soak = await p.evaluate(`(async()=>{ G.turbo=true; G.speed=1.6; var stuck=0, neg=0;
-    for(var r=0;r<30;r++){ if(r%2) document.getElementById('btnPlus').click(); G.play(); var g=0;
+    for(var r=0;r<30;r++){ if(r%2){ document.getElementById('btnPlus').click(); var py=document.getElementById('plusYes'); if(py) py.click(); } G.play(); var g=0;
       while(G.S.busy&&g<3000){ await G.advance(0.25); g++; if(G.winOv) G.skipWinOv(); }
       if(G.S.busy){stuck++;break;} if(G.S.balance<0) neg++; } return {stuck:stuck,neg:neg}; })()`);
   ok(soak.stuck === 0 && soak.neg === 0, '30 tours (Standard + Oracle+) sans blocage ni solde négatif');
