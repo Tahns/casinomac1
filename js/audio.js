@@ -3,7 +3,7 @@
  * Réglages joueur : hauteur globale (demi-tons), volume, ambiance on/off. */
 (function (root) {
   'use strict';
-  var ctx = null, master, sfxBus, musBus, verb, muted = false, ambNodes = null;
+  var ctx = null, master, sfxBus, musBus, verb, muted = false, ambNodes = null, tens = null;
   var pitchSemi = 0, PK = 1, vol = 1, musicOn = true, toneV = 0.3, softA = null, softB = null;
   function toneHz() { return 1200 * Math.pow(7.5, toneV); }     // 0 = très sourd (1,2 kHz) … 1 = brillant (9 kHz)
   // gamme phrygienne dominante (couleur « orientale ») : E F G# A B C D
@@ -368,7 +368,79 @@
     bonusUp: function () { themeLevel = Math.min(4, themeLevel + 1); },
     bonusLevel: function (n) { themeLevel = Math.max(0, Math.min(4, n | 0)); },
     swell: function (dur, v, d, f0, f1) { swell(dur, v, d, f0, f1); },
-    // ---- Fureur d'Anubis : les temps forts ----
+    // ---- animations de la roue : départ, arrêt, suspense ----
+    windup: function () {                        // le bois se tend : grincement grave + craquements
+      tone(150, 0.5, 'triangle', 0.07, 0, 70, true); noise(0.5, 0.06, 0, 1400, 'bandpass', 300, 3);
+      for (var i = 0; i < 5; i++) noise(0.03, 0.03, 0.05 + i * 0.09, 3000 - i * 350, 'bandpass', undefined, 4);
+    },
+    clack: function (v) {                        // le pointeur claque contre la cheville
+      v = v == null ? 1 : v; noise(0.05, 0.16 * v, 0, 2600, 'bandpass', 900, 3); tone(1500, 0.05, 'square', 0.03 * v, 0, 700); tone(180, 0.14, 'sine', 0.2 * v, 0, 70);
+    },
+    tickTense: function (x) {                    // tic de suspense : de plus en plus grave et espacé (le visuel fait l'espacement)
+      x = Math.max(0, Math.min(1, x || 0));
+      tone(330 - x * 90, 0.16, 'sine', 0.1 + 0.08 * x, 0, 150, true); noise(0.05, 0.05 + 0.05 * x, 0, 1800, 'bandpass', 900, 2);
+      if (x > 0.55) bell(SCALE[0] * 4, 0.7, 0.03 + 0.03 * x, 0.02, true);
+    },
+    tensionStart: function () {                  // bourdon qui monte pendant l'approche d'une case bonus ; l'ambiance se tait
+      if (!ensure() || tens) return; var t = ctx.currentTime;
+      var o = ctx.createOscillator(), o2 = ctx.createOscillator(), f = ctx.createBiquadFilter(), g = ctx.createGain();
+      o.type = 'sawtooth'; o.frequency.value = 48 * PK; o2.type = 'sine'; o2.frequency.value = 96 * PK;
+      f.type = 'lowpass'; f.Q.value = 5; f.frequency.value = 160; g.gain.value = 0.0001;
+      o.connect(f); o2.connect(f); f.connect(g); g.connect(sfxBus); g.connect(verb); o.start(t); o2.start(t);
+      tens = { o: o, o2: o2, f: f, g: g }; if (musBus) musBus.gain.setTargetAtTime(0.03, t, 0.3);
+    },
+    tensionSet: function (x) {                   // 0..1 ; valeur négative = silence total
+      if (!tens || !ctx) return; var t = ctx.currentTime;
+      if (x < 0) { tens.g.gain.setTargetAtTime(0.0001, t, 0.05); return; }
+      tens.g.gain.setTargetAtTime(0.012 + 0.1 * x * x, t, 0.1); tens.o.frequency.setTargetAtTime((48 + 70 * x) * PK, t, 0.15); tens.o2.frequency.setTargetAtTime((96 + 140 * x) * PK, t, 0.15); tens.f.frequency.setTargetAtTime(160 + 1000 * x, t, 0.15);
+    },
+    tensionStop: function () {
+      if (!tens || !ctx) return; var t = ctx.currentTime, k = tens; tens = null;
+      k.g.gain.setTargetAtTime(0.0001, t, 0.08); try { k.o.stop(t + 0.5); k.o2.stop(t + 0.5); } catch (e) {}
+      if (musBus) musBus.gain.setTargetAtTime(0.5, t + 0.4, 0.5);
+    },
+    tensionHit: function () {                    // la roue s'arrête sur un bonus : le silence se brise
+      boom(0.5); noise(0.3, 0.2, 0, 5000, 'highpass'); swell(0.5, 0.14, 0, 300, 4500);
+      [0, 2, 4, 6].forEach(function (k, i) { bell(SCALE[k] * 4, 1.2, 0.07, 0.08 + i * 0.06, true); });
+    },
+    nearMiss: function () {                      // faux espoir : le bonus est frôlé puis perdu
+      tone(420, 0.7, 'triangle', 0.08, 0, 130, true); pad([SCALE[2] / 2, SCALE[0]], 0.9, 0.08, 0, 0.1); noise(0.4, 0.05, 0, 900, 'lowpass', 150);
+    },
+    // ---- chaînes (transition de bonus) ----
+    chainSlam: function () {
+      boom(0.3); noise(0.25, 0.16, 0, 5000, 'highpass');
+      for (var i = 0; i < 7; i++) tone(2200 + Math.random() * 1800, 0.09, 'triangle', 0.03, i * 0.022, 1100, true);
+    },
+    chainTense: function (dur) {
+      dur = Math.max(0.3, dur || 0.6); swell(dur, 0.1, 0, 200, 2600); tone(180, dur, 'sawtooth', 0.025, 0, 520, true);
+      for (var i = 0; i < 9; i++) noise(0.035, 0.02 + i * 0.004, dur * (i / 9) * 0.95, 2800 + i * 250, 'bandpass', undefined, 5);
+    },
+    chainBreak: function () {
+      noise(0.5, 0.26, 0, 6000, 'highpass', 1500); boom(0.5); swell(0.8, 0.14, 0, 400, 6000);
+      for (var i = 0; i < 14; i++) tone(1800 + Math.random() * 2600, 0.12, 'triangle', 0.045, i * 0.03, 900, true);
+      pad([SCALE[0] * 2, SCALE[4] * 2, SCALE[0] * 4], 2.0, 0.16, 0.05, 0.2);
+      [0, 2, 4, 6, 4].forEach(function (k, j) { bell(SCALE[k] * 4, 1.3, 0.07, 0.1 + j * 0.07, true); });
+    },
+    chainForge: function () {                    // sortie de bonus : les maillons se rassemblent, le verrou claque
+      swell(0.55, 0.12, 0, 3200, 300);
+      for (var i = 0; i < 8; i++) tone(1400 + i * 260, 0.08, 'triangle', 0.03 + i * 0.004, 0.05 + i * 0.05, 800, true);
+      boom(0.34, 0.58); noise(0.2, 0.14, 0.58, 4200, 'bandpass', 1500, 3); bell(SCALE[0] * 4, 1.4, 0.06, 0.62, true);
+    },
+    // ---- victoires par case ----
+    dustFall: function () { noise(0.7, 0.09, 0, 1100, 'lowpass', 160); tone(220, 0.6, 'sine', 0.06, 0, 70, true); },
+    divine: function () {                        // Ankh : lumière divine, les chaînes cèdent
+      pad([SCALE[0], SCALE[4], SCALE[0] * 2], 1.8, 0.14, 0, 0.3); swell(0.8, 0.1, 0, 400, 5000);
+      [0, 2, 4, 6, 7].forEach(function (k, i) { bell(SCALE[k % 7] * (k > 6 ? 8 : 4), 1.2, 0.07, 0.2 + i * 0.1, true); });
+    },
+    scarabFly: function () { swell(0.9, 0.14, 0, 300, 5000); for (var i = 0; i < 12; i++) noise(0.04, 0.025, 0.1 + i * 0.05, 4500 + Math.random() * 2500, 'bandpass', undefined, 3); },
+    featherDrop: function () { tone(1320, 0.9, 'sine', 0.05, 0, 520, true); bell(SCALE[4] * 4, 1.0, 0.05, 0.05, true); bell(SCALE[2] * 8, 1.1, 0.04, 0.3, true); },
+    featherLand: function () { boom(0.22); bell(SCALE[0] * 8, 1.4, 0.07, 0, true); noise(0.2, 0.06, 0, 5000, 'highpass'); },
+    pyramidOpen: function () { noise(0.9, 0.16, 0, 500, 'lowpass', 120); tone(70, 0.9, 'sine', 0.22, 0, 40, true); swell(0.8, 0.1, 0.4, 300, 4000); [0, 1, 2, 3, 4].forEach(function (j) { A.coin(1 + j * 0.12); }); },
+    anubisBolt: function () { A.thunder(); growl(58, 0.9, 0.2, 0.05); boom(0.4, 0.1); noise(0.5, 0.12, 0.1, 6000, 'highpass'); },
+    runes: function () { pad([SCALE[0] / 2, SCALE[1] / 2, SCALE[3] / 2], 1.8, 0.16, 0, 0.3); for (var j = 0; j < 7; j++) bell(1200 + Math.random() * 1400, 1.0, 0.035, j * 0.1, true, 2.7); },
+    // ---- gros gains ----
+    hitStop: function () { noise(0.08, 0.25, 0, 300, 'lowpass', 100); tone(60, 0.25, 'sine', 0.3, 0, 30); },
+    // ---- fureur d'Anubis : les temps forts ----
     furySlam: function () {                      // la Main s'abat : impact colossal
       taiko(0.7, 0, true); taiko(0.55, 0.12, true); growl(55, 1.6, 0.3, 0); boom(0.7, 0);
       [0, 2, 4].forEach(function (k) { horn(WIN[k] * 0.5, 1.4, 0.1, 0.02, true); horn(WIN[k], 1.2, 0.07, 0.02, true); });

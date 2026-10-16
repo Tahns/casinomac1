@@ -1679,10 +1679,10 @@
     // Anubis surgit du centre de la roue : une apparition différente par bonus (scarabées, plume + cœur, coffre d'or, yeux rouges, crânes)
     if (G.emerge) await G.emerge(sp.secret ? 'crypt' : sp.upgraded ? 'hand' : sp.kind, quick());
     else await G.sleep(G.turbo ? 0.5 : 1.1);
-    await G.setFade(1, 0.35);
-    var is = introScene(sp);
-    G.setScene(is); await G.setFade(0, 0.4);
-    await is.run();
+    // entrée : les chaînes dorées d'Unchained se tendent, se brisent dans un flash de lumière divine, le décor du bonus se révèle dessous
+    var is = introScene(sp), introRun = null;
+    await G.chainBreak(function () { G.setScene(is); introRun = is.run(); });
+    await introRun;
     await G.setFade(1, 0.35);
     if (sp.options && sp.upgraded) {   // Fureur d'Anubis : le joueur choisit sa couleur (au hasard en turbo / auto : les trois sont équivalentes)
       var ck = M.HAND_COLORS[Math.floor(Math.random() * 3)];
@@ -1704,9 +1704,8 @@
     await G.setFade(0, 0.5);
     if (Sfx.bonusTheme) Sfx.bonusTheme(sp.secret ? 'crypt' : sp.upgraded ? 'hand' : sp.kind);   // musique propre à chaque bonus
     try { await scene.run(); } finally { if (Sfx.stopBonusTheme) Sfx.stopBonusTheme(); G.speed = speed0; }
-    await G.setFade(1, 0.35);
-    G.setScene(null); G.say('');
-    await G.setFade(0, 0.5);
+    // sortie : les maillons se rassemblent, les portes d'obsidienne se referment puis s'ouvrent sur la roue
+    await G.chainForge(function () { G.setScene(null); G.say(''); });
     G.speed = speed0;
   };
 

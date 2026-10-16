@@ -9,7 +9,7 @@
   var G = root.G = {
     w: 0, h: 0, dpr: 1, t: 0, speed: 1, turbo: false, scene: null, ctx: ctx,
     cx: 0, cy: 0, R: 0, timers: [], tweens: [], fade: 0, winOv: null,
-    quality: 'auto', mod: mod, clamp: clamp, txt: null, ease: FX.ease, onFrame: []
+    quality: 'auto', mod: mod, clamp: clamp, txt: null, ease: FX.ease, onFrame: [], fxScale: 1, chain: null
   };
 
   /* ---------- temps : sleep / tween pilotés par la boucle (donc accélérables) ---------- */
@@ -302,9 +302,12 @@
   G.kindColor = function (k) { return VIS[k].c[0]; };
 
   var W = G.wheel = {
-    rot: 0, vel: 0, mode: 'idle', ptr: { a: 0, v: 0 }, oracle: null, hl: null, face: null, lastIdx: -1, lastTick: 0, flashLamps: 0, spinning: false
+    rot: 0, vel: 0, mode: 'idle', ptr: { a: 0, v: 0 }, oracle: null, hl: null, face: null, lastIdx: -1, lastTick: 0, flashLamps: 0, spinning: false,
+    dark: 0, sweep: -1, susp: 0, nearIdx: -1, plan: null, phase: '', beatT: 0
   };
   var step = TAU / M.N;
+  var BON = [];   // indices des cases bonus (suspense)
+  M.LAYOUT.forEach(function (k, i) { if (M.KINDS[k].bonus) BON.push(i); });
 
   function wedge(f, i, ri, ro) {
     var a0 = i * step - Math.PI / 2, a1 = (i + 1) * step - Math.PI / 2;
@@ -446,26 +449,53 @@
         var sp = Math.abs(W.vel);
         p.v -= 5.5 + Math.min(sp, 22) * 0.45;   // la cheville entraîne la pointe dans le sens de la roue (vers la droite en haut)
         var now = G.t;
-        if (now - W.lastTick > 0.028) { Sfx.tick(Math.min(1, sp / 25)); W.lastTick = now; }
+        if (W.plan && W.plan.hush) { /* silence avant l'arrêt : plus aucun tic */ }
+        else if (now - W.lastTick > 0.028) { if (W.plan && W.plan.active && W.susp > 0.12) Sfx.tickTense(W.susp); else Sfx.tick(Math.min(1, sp / 25)); W.lastTick = now; }
       }
       W.lastIdx = idx;
     }
     if (W.hl) W.hl.t += dt;
     if (W.oracle) W.oracle.t += dt;
     W.flashLamps = Math.max(0, W.flashLamps - dt);
+    if (W.sweep >= 0) { W.sweep += dt * 3.4; if (W.sweep > 1.7) W.sweep = -1; }
+    updateSusp(dt);
   };
+  // suspense : toute case bonus qui s'approche du pointeur quand la roue est lente fait monter l'éclairage ; le plan du tour (bonus d'arrivée,
+  // bonus frôlé) impose une approche au ralenti (voir W.spinTo). Purement visuel : l'issue est déjà tirée.
+  function updateSusp(dt) {
+    var target = 0, ni = -1;
+    if (W.mode === 'spin' && W.phase === 'run') {
+      var c = mod(-W.rot / step, M.N), slow = clamp(1 - Math.abs(W.vel) / step / 34, 0, 1);
+      for (var b = 0; b < BON.length; b++) {
+        var dd = mod(c - (BON[b] + 0.5), M.N), g = dd < 6 ? (1 - dd / 6) * slow : 0;
+        if (g > target) { target = g; ni = BON[b]; }
+      }
+      if (W.plan && W.plan.tens > target) target = W.plan.tens;
+    }
+    if (ni >= 0) W.nearIdx = ni; else if (W.susp < 0.02) W.nearIdx = -1;
+    W.susp += (target - W.susp) * Math.min(1, dt * (target > W.susp ? 6 : 3));
+    if (W.susp < 0.003) W.susp = 0;
+    if (W.plan && W.plan.level && W.susp > 0.5 && W.phase === 'run' && !W.plan.hush) {   // battements de cœur de plus en plus rapprochés
+      W.beatT -= dt; if (W.beatT <= 0) { W.beatT = 1.05 - 0.6 * W.susp; Sfx.heartbeat(W.susp); }
+    }
+  }
 
   function drawLamps(R) {
-    var n = M.N, t = G.t, spin = W.mode === 'spin' ? 1 : 0;
+    var n = M.N, t = G.t, spin = W.mode === 'spin' ? 1 : 0, su = W.susp, sw = W.sweep, dk = W.dark;
     for (var i = 0; i < n; i++) {
       var a = i * step - Math.PI / 2 - step / 2 * 0, x = G.cx + Math.cos(a) * R * 1.035, y = G.cy + Math.sin(a) * R * 1.035;
-      var lv;
+      var lv, pop = 1;
       if (W.flashLamps > 0) lv = 0.5 + 0.5 * Math.sin(t * 22 + (i % 2) * Math.PI);
       else if (spin) lv = 0.5 + 0.5 * Math.sin(t * 16 - i * 0.55);
       else lv = 0.4 + 0.6 * Math.max(0, Math.sin(t * 2.2 - i * 0.28));
-      var sz = R * 0.052;
+      if (su > 0.03) lv += (1 - lv) * su * (0.55 + 0.45 * Math.sin(t * (7 + 10 * su) - i * 0.4));   // l'éclairage monte avec le suspense
+      if (sw >= 0) {   // départ : les lampes s'allument en chenillard autour de la roue
+        var q = sw - i / n * 0.9;
+        lv *= clamp(q * 7, 0, 1); if (q > 0 && q < 0.18) { lv = 1; pop = 1.3; }
+      } else if (dk > 0) lv *= 1 - dk * 0.94;       // anticipation : les lampes s'éteignent
+      var sz = R * 0.052 * pop;
       ctx.globalAlpha = 1; ctx.drawImage(lampOff, x - sz, y - sz, sz * 2, sz * 2);
-      ctx.globalAlpha = lv; ctx.drawImage(lampOn, x - sz * 1.5, y - sz * 1.5, sz * 3, sz * 3);
+      ctx.globalAlpha = clamp(lv, 0, 1); ctx.drawImage(lampOn, x - sz * 1.5, y - sz * 1.5, sz * 3, sz * 3);
     }
     ctx.globalAlpha = 1;
   }
@@ -580,8 +610,18 @@
   }
 
   W.draw = function (alpha) {
-    var R = G.R, cx = G.cx, cy = G.cy;
+    var R = G.R, cx = G.cx, cy = G.cy, su = W.susp;
     ctx.save();
+    if (su > 0.03) {   // suspense : le décor s'assombrit autour de la roue (projecteur) et la caméra avance très légèrement
+      var sk = cx + '|' + cy + '|' + R + '|' + G.w + '|' + G.h;
+      if (!W.spot || W.spot.k !== sk) {
+        var rr = Math.hypot(G.w, G.h) * 0.62, sg0 = ctx.createRadialGradient(cx, cy, R * 0.9, cx, cy, rr);
+        sg0.addColorStop(0, 'rgba(0,0,0,0)'); sg0.addColorStop(0.28, 'rgba(0,0,0,.35)'); sg0.addColorStop(1, 'rgba(0,0,0,.92)');
+        W.spot = { k: sk, g: sg0 };
+      }
+      ctx.globalAlpha = Math.min(1, su * 0.85); ctx.fillStyle = W.spot.g; ctx.fillRect(0, 0, G.w, G.h); ctx.globalAlpha = 1;
+      var zm = 1 + (FX.reduced ? 0 : 0.035 * su * su); ctx.translate(cx, cy); ctx.scale(zm, zm); ctx.translate(-cx, -cy);
+    }
     if (alpha != null) ctx.globalAlpha = alpha;
     // ombre portée
     var sg = ctx.createRadialGradient(cx, cy + R * 0.05, R * 0.9, cx, cy + R * 0.05, R * 1.3);
@@ -599,10 +639,11 @@
     // disque rotatif (avec flou de mouvement à haute vitesse)
     var half = R + 6, sp = Math.abs(W.vel);
     ctx.save(); ctx.translate(cx, cy);
-    if (sp > 9 && !FX.reduced && !FX.lite) {
-      for (var gi = 3; gi >= 1; gi--) {
-        ctx.save(); ctx.rotate(W.rot - Math.sign(W.vel || 1) * gi * Math.min(0.1, sp * 0.0045));
-        ctx.globalAlpha = 0.22; ctx.drawImage(W.face, -half, -half, half * 2, half * 2); ctx.restore();
+    if (sp > 7 && !FX.reduced) {   // flou de mouvement : copies étalées derrière la roue, écart et nombre selon la vitesse (une seule copie en qualité basse)
+      var ng = FX.lite ? 1 : sp > 16 ? 4 : 3, gap = Math.min(0.11, sp * 0.0048), sgn = Math.sign(W.vel || 1), blurA = Math.min(0.26, 0.08 + sp * 0.01);
+      for (var gi = ng; gi >= 1; gi--) {
+        ctx.save(); ctx.rotate(W.rot - sgn * gi * gap);
+        ctx.globalAlpha = blurA * (1 - (gi - 1) / (ng + 1)); ctx.drawImage(W.face, -half, -half, half * 2, half * 2); ctx.restore();
       }
     }
     ctx.rotate(W.rot); ctx.drawImage(W.face, -half, -half, half * 2, half * 2);
@@ -635,6 +676,12 @@
         ctx.restore();
         if (o.num && o.ap > 0) wheelBoostLabel(i, am, o, R, (ri + ro) / 2);
       }
+    }
+    if (su > 0.04 && W.nearIdx >= 0) {   // case bonus qui s'approche : elle s'éclaire de plus en plus fort
+      var hp2 = 0.5 + 0.5 * Math.sin(G.t * (5 + 9 * su));
+      wedge(ctx, W.nearIdx, ri * 0.98, ro); ctx.fillStyle = 'rgba(255,244,200,' + (0.1 + 0.42 * su * hp2) + ')'; ctx.fill();
+      ctx.lineWidth = R * 0.02 * (0.5 + su); ctx.strokeStyle = 'rgba(255,248,215,' + (0.45 + 0.55 * su) + ')';
+      if (!FX.lite) { ctx.shadowColor = '#ffe58a'; ctx.shadowBlur = 8 + 24 * su; } ctx.stroke(); ctx.shadowBlur = 0;
     }
     if (W.hl) {
       var h = W.hl, hp = 0.5 + 0.5 * Math.sin(h.t * 9);
@@ -680,28 +727,279 @@
   };
   W.clearHighlight = function () { W.hl = null; };
 
+  /* ---- départ / arrêt de la roue : anticipation, accélération, approche (suspense), claquement, rebond ----
+     Tout est visuel : indice d arrivée (spin.index) déjà tiré, rien ici ne touche aux maths. */
+  // plan d'un tour. level 2 : la roue va s'arrêter sur un BONUS (approche au ralenti, silence, éclairage qui monte) ;
+  // level 1 : faux espoir (un bonus juste passé ou juste avant la case d'arrivée, frôlé au ralenti)
+  function planSpin(spin) {
+    var N = M.N, idx = spin.index, pl = { level: 0, crawl: 0, ricochet: false, tens: 0, hush: false, active: false, behind: 0, ahead: 0 };
+    function bon(j) { return !!M.KINDS[M.LAYOUT[mod(j, N)]].bonus; }
+    if (bon(idx)) { pl.level = 2; pl.crawl = 4.6; }
+    else {
+      for (var k = 2; k >= 1; k--) { if (bon(idx + k)) pl.behind = k; if (bon(idx - k)) pl.ahead = k; }   // les cases passent sous le pointeur dans l'ordre d'index décroissant
+      if (pl.behind || pl.ahead) { pl.level = 1; pl.crawl = pl.behind ? pl.behind + 1.6 : 2.6; pl.ricochet = pl.ahead === 1; }
+    }
+    return pl;
+  }
+  // profil de rotation : vitesse = loi de frottement de la distance restante (arrêt progressif), limitée en accélération au départ,
+  // plafonnée près de l'arrivée quand le plan impose une approche lente. Renvoie la table des angles parcourus (pas fixe).
+  function buildProfile(D, vs, cm, pl) {
+    var dt = 1 / 120, a = 0.75, vmax = 22 * vs, acc = 90 * vs, pos = [0], x = 0, v = 0, r = D, n = 0, floorV = 0.9 * step * cm;
+    while (r > 1e-4 && n < 6000) {
+      var vl = Math.max(vmax * Math.pow(r / D, a), floorV), rc = r / step;
+      if (pl.crawl && rc < pl.crawl) {
+        var q = rc / pl.crawl, cv = pl.level === 2 ? (0.5 + 3.0 * q) * (rc < 1 ? 0.45 + 0.55 * rc : 1) : 0.8 + 2.6 * q;
+        vl = Math.min(vl, cv * step * cm);
+      }
+      v = Math.min(vl, v + acc * dt); x = Math.min(D, x + v * dt); r = D - x; pos.push(x); n++;
+    }
+    pos.push(D);
+    return { pos: pos, T: (pos.length - 1) * dt };
+  }
   W.spinTo = function (spin) {
-    var off = 0.2 + Math.random() * 0.6, target = -(spin.index + off) * step;
-    var turns = G.turbo ? 3 : 6, dur = G.ultra ? 2 : G.turbo ? 2.5 : 6.2;
-    W.hl = null; W.mode = 'spin'; W.spinning = true;
-    Sfx.whoosh();
-    var wind = G.turbo ? Promise.resolve() : G.tween(0.5, function (u) { var e = G.ease.inOut(u); W.vel = 0; W.rot = W.r0 - 0.2 * e; }, null);
-    W.r0 = W.rot;
+    var pl = planSpin(spin), red = FX.reduced, offF = 0.46 + Math.random() * 0.18, target = -(spin.index + offF) * step;
+    var overF = pl.level === 2 ? 0.12 + Math.random() * 0.12 : (pl.ricochet || Math.random() < 0.22) ? offF + 0.08 + Math.random() * 0.1 : 0.05 + Math.random() * 0.15;   // dépassement (en cases) ; > offF : le pointeur franchit la cheville puis revient
+    var over = overF * step, crosses = overF > offF;
+    var turns = G.ultra ? 2 : G.turbo ? 3 : 4, vs = G.ultra ? 2.4 : G.turbo ? 1.6 : 1, cm = G.ultra ? 3 : G.turbo ? 1.8 : 1;
+    W.hl = null; W.mode = 'spin'; W.spinning = true; W.plan = pl; W.phase = 'wind'; W.dark = 0; W.sweep = -1; W.beatT = 0;
+    if (!red) Sfx.windup();
+    var r0 = W.rot, rest = 0;
+    // 1) anticipation : la roue recule contre le sens du tour, les lampes s'éteignent
+    var wind = G.tween(red ? 0.2 : 0.55, function (u) { var e = G.ease.inOut(u); W.vel = 0; W.rot = r0 - (red ? 0.04 : 0.17) * e; W.dark = u; }, null);
     return wind.then(function () {
-      var rot0 = W.rot, delta = mod(target - rot0, TAU) + turns * TAU, prev = rot0, prevT = G.t;
-      return G.tween(dur, function (u) {
-        var e = 1 - Math.pow(1 - u, 3.6);
-        var nr = rot0 + delta * e, dtf = Math.max(1 / 240, G.t - prevT);
+      // 2) lancement : chenillard de lampes, souffle, accélération progressive
+      W.dark = 0; W.sweep = 0; W.phase = 'run'; Sfx.whoosh();
+      if (!red) { FX.shake(2.5, 0.25); FX.ring(G.cx, G.cy, '#ffe9a0', G.R * 1.15, 0.5); }
+      var rot0 = W.rot, delta = mod(target + over - rot0, TAU) + turns * TAU, prof = buildProfile(delta, vs, cm, pl), pos = prof.pos, nP = pos.length - 1;
+      rest = rot0 + delta - over;      // angle de repos final (congruent à target)
+      var prev = rot0, prevT = G.t, lastSet = 0;
+      return G.tween(prof.T, function (u) {
+        var f = u * nP, i0 = Math.min(nP - 1, Math.floor(f)), x = pos[i0] + (pos[i0 + 1] - pos[i0]) * (f - i0);
+        var nr = rot0 + x, dtf = Math.max(1 / 240, G.t - prevT);
         W.vel = (nr - prev) / dtf; prev = nr; prevT = G.t; W.rot = nr;
+        if (pl.level) {   // suspense : monte quand la distance restante passe sous la longueur d'approche
+          var rc = (delta - x) / step;
+          pl.tens = rc < pl.crawl ? Math.pow(clamp(1 - rc / pl.crawl, 0, 1), 0.8) * (pl.level === 2 ? 1 : 0.6) : 0;
+          if (pl.tens > 0 && !pl.active) { pl.active = true; Sfx.tensionStart(); }
+          if (pl.active && G.t - lastSet > 0.1) { lastSet = G.t; Sfx.tensionSet(pl.tens); }
+          if (pl.level === 2 && rc < 0.85 && !pl.hush) { pl.hush = true; Sfx.tensionSet(-1); }   // silence juste avant l'arrêt
+        }
       }, null);
     }).then(function () {
-      W.rot = mod(W.rot, TAU); W.vel = 0; W.mode = 'idle'; W.spinning = false;
-      W.ptr.v -= 3; Sfx.drum(0.3);
-      W.hl = { idx: spin.index, t: 0 };
+      // 3) arrêt : la roue vient claquer contre le pointeur, puis rebondit (contre-mouvement amorti)
+      W.phase = 'recoil'; W.vel = 0; pl.tens = 0;
+      if (pl.active) Sfx.tensionStop();
+      W.ptr.v -= 9; Sfx.clack(pl.level === 2 ? 1 : 0.8); W.flashLamps = 0.3;
+      FX.spark(G.cx, G.cy - G.R * 1.06, 8, '#fff1b8', 200, 0.5);
+      if (!red) FX.shake(pl.level === 2 ? 7 : 2.5, 0.3);
+      return G.tween(red ? 0.25 : 0.75, function (u) { W.rot = rest + (red ? 0 : over * Math.exp(-7 * u) * Math.cos(11 * u)); }, null);
+    }).then(function () {
+      W.rot = mod(rest, TAU); W.vel = 0; W.mode = 'idle'; W.spinning = false; W.phase = ''; W.plan = null;
+      W.ptr.v -= 3;
       var cell = M.LAYOUT[spin.index];
-      if (!M.KINDS[cell].bonus) FX.spark(G.cx, G.cy - G.R * 0.9, 14, '#ffe9a0', 220, 0.7);
+      W.hl = { idx: spin.index, t: 0 };
+      if (pl.level === 2) { Sfx.tensionHit(); FX.flash(0.4, '#fff1b8'); FX.shake(10, 0.5); FX.ring(G.cx, G.cy - G.R * 0.6, '#fff1b8', G.R * 0.9, 0.8); W.flashLamps = 0.8; }
+      else {
+        Sfx.drum(0.3);
+        if (pl.level === 1) Sfx.nearMiss();     // faux espoir : le bonus a été frôlé
+        if (!M.KINDS[cell].bonus) FX.spark(G.cx, G.cy - G.R * 0.9, 14, '#ffe9a0', 220, 0.7);
+      }
       return G.sleep(0.25);
     });
+  };
+
+
+  /* ============ ANIMATION DE VICTOIRE PROPRE À CHAQUE CASE ============
+     G.cellWin(sp) : joue l animation de la case atteinte, se résout à sa fin (temps de jeu = G.speed : Turbo / Ultra écourtent,
+     jamais d'attente du joueur). FX.reduced : pas de secousse ni d'éclair, effets réduits à un fondu / un compteur. */
+  var CA = null;
+  var CA_DUR = { m0: 0.9, m025: 1.0, m05: 1.1, m1: 1.3, m2: 1.5, m3: 1.7, ankh: 1.7, scarab: 1.5, weigh: 1.8, vault: 1.7, hand: 1.9, secret: 1.9 };
+  function cellPos() {
+    var a = W.rot + (CA.idx + 0.5) * step - Math.PI / 2, rc = G.R * 0.6175;
+    return { x: G.cx + Math.cos(a) * rc, y: G.cy + Math.sin(a) * rc, a: a };
+  }
+  function ico(name, x, y, size, fb) { if (!G.icon(ctx, name, x, y, size)) fb(); }
+  G.cellWin = function (sp) {
+    return new Promise(function (res) {
+      var k = sp.secret ? 'secret' : sp.upgraded ? 'hand' : sp.kind;
+      CA = { kind: k, idx: sp.index, t: 0, dur: CA_DUR[k] || 1, res: res, pay: sp.pay || 0, ev: {}, acc: 0 };
+      if (G.wheel) G.wheel.flashLamps = Math.max(G.wheel.flashLamps, k === 'm0' ? 0 : 0.5);
+    });
+  };
+  G.cellBusy = function () { return !!CA; };
+  function coinsFor(pay) { return clamp(Math.round(6 + pay * 10), 6, 64); }
+  function updateCell(sdt) {
+    var c = CA; if (!c) return;
+    var u = c.t / c.dur, p = cellPos(), k = c.kind, R = G.R, red = FX.reduced, ev = c.ev;
+    c.t += sdt;
+    function once(name, cond, fn) { if (cond && !ev[name]) { ev[name] = 1; fn(); } }
+    if (k === 'm0') {
+      once('s', true, function () { Sfx.dustFall(); FX.ash(p.x, p.y, 22, '#c9b185'); FX.dust(p.x, p.y, 12, '#b79c6b'); });
+      if (u < 0.75) { c.acc += sdt * 40; while (c.acc >= 1) { c.acc--; FX.ash(p.x, p.y, 1, '#c9b185'); } }
+    } else if (k === 'm025' || k === 'm05' || k === 'm1' || k === 'm2' || k === 'm3') {
+      var big = k === 'm2' || k === 'm3', lvl = { m025: 0, m05: 1, m1: 2, m2: 3, m3: 4 }[k];
+      once('s', true, function () {
+        Sfx.chime(c.pay); FX.coins(p.x, p.y, coinsFor(c.pay), 760 + lvl * 90, 34); FX.spark(p.x, p.y, 10 + lvl * 6, '#ffd86a', 300);
+        FX.ring(p.x, p.y, '#ffe9a0', R * (0.35 + 0.1 * lvl), 0.7); if (!red && lvl >= 2) FX.shake(2 + lvl, 0.3);
+      });
+      once('w', u > 0.4 && lvl >= 2, function () { W.flashLamps = 0.5 + 0.2 * lvl; FX.ring(p.x, p.y, lvl >= 3 ? '#6ff0dd' : '#ffd86a', R * 0.7, 0.8); });
+      once('r', u > 0.35 && big, function () { FX.rain(G.w, k === 'm3' ? 26 : 14); FX.coins(G.cx, G.cy - R * 0.2, k === 'm3' ? 30 : 16, 900, R * 0.8); });
+      once('e', u > 0.72, function () { FX.spark(G.cx, G.cy - R * 0.55, 10 + lvl * 4, '#fff1b8', 260); });
+    } else if (k === 'ankh') {
+      once('s', true, function () { Sfx.divine(); FX.flash(0.25, '#fff1b8'); });
+      once('b', u > 0.4, function () { Sfx.chainSlam(); FX.links(p.x, p.y, 16, 520); FX.ring(p.x, p.y, '#fff1b8', R * 0.9, 0.9); FX.flash(0.3, '#fff1b8'); if (!red) FX.shake(8, 0.4); FX.spark(p.x, p.y, 36, '#ffd86a', 480); });
+      if (u > 0.4 && u < 0.85) { c.acc += sdt * 26; while (c.acc >= 1) { c.acc--; FX.spark(p.x + (Math.random() - 0.5) * R * 0.2, p.y, 1, '#fff1b8', 120, 1.0); } }
+    } else if (k === 'scarab') {
+      once('s', true, function () { Sfx.scarabFly(); FX.ring(p.x, p.y, '#ff7058', R * 0.5, 0.6); });
+      var e = G.ease.inOut(clamp((u - 0.1) / 0.7, 0, 1)), q = scarabPos(p, e);
+      if (u > 0.1 && u < 0.82) { c.acc += sdt * 70; while (c.acc >= 1) { c.acc--; FX.spark(q.x + (Math.random() - 0.5) * 10, q.y + (Math.random() - 0.5) * 10, 1, Math.random() < 0.5 ? '#5cf0c0' : '#ff7058', 80, 0.5); } }
+      once('a', u > 0.82, function () { FX.ring(G.cx, G.cy, '#5cf0c0', R * 1.1, 0.8); FX.flash(0.3, '#5cf0c0'); if (!red) FX.shake(8, 0.4); FX.spark(G.cx, G.cy, 30, '#ffd86a', 400); });
+    } else if (k === 'weigh') {
+      once('s', u > 0.04, function () { Sfx.featherDrop(); });
+      once('l', u > 0.55, function () { Sfx.featherLand(); FX.ring(p.x, p.y, '#fff4d0', R * 0.8, 0.9); FX.ring(p.x, p.y, '#ffd86a', R * 0.5, 0.7); FX.spark(p.x, p.y, 26, '#fff4d0', 300); FX.flash(0.25, '#fff4d0'); if (!red) FX.shake(5, 0.35); });
+      if (u > 0.04 && u < 0.55) { c.acc += sdt * 24; while (c.acc >= 1) { c.acc--; var fp = featherPos(p, u); FX.spark(fp.x, fp.y, 1, '#fff4d0', 40, 0.7); } }
+    } else if (k === 'vault') {
+      once('o', u > 0.28, function () { Sfx.pyramidOpen(); FX.coins(p.x, p.y, 44, 900, 30); FX.flash(0.35, '#ffd86a'); FX.ring(p.x, p.y, '#ffd86a', R * 0.9, 0.9); if (!red) FX.shake(7, 0.45); FX.spark(p.x, p.y, 30, '#ffe9a0', 420); });
+    } else if (k === 'hand') {
+      once('s', u > 0.1, function () { Sfx.anubisBolt(); FX.flash(0.6, '#ff5a3a'); if (!red) FX.shake(15, 0.7); FX.ring(p.x, p.y, '#ff3a2a', R * 1.0, 0.9); FX.spark(p.x, p.y, 40, '#ff6a3a', 520); });
+    } else if (k === 'secret') {
+      once('s', true, function () { Sfx.runes(); FX.flash(0.25, '#a07bff'); FX.ring(p.x, p.y, '#a07bff', R * 0.7, 0.9); });
+      once('b', u > 0.5, function () { FX.flash(0.4, '#c28bff'); if (!red) FX.shake(8, 0.4); FX.spark(p.x, p.y, 30, '#c28bff', 400); });
+      if (u > 0.2 && u < 0.85) { c.acc += sdt * 30; while (c.acc >= 1) { c.acc--; FX.spark(p.x + (Math.random() - 0.5) * R * 0.2, p.y, 1, '#a07bff', 100, 1.0); } }
+    }
+    if (c.t >= c.dur) { var r = c.res; CA = null; r(); }
+  }
+  function scarabPos(p, e) {   // courbe de Bézier de la case vers le centre, avec un arc de côté
+    var mx = (p.x + G.cx) / 2 + (G.cx > p.x ? -1 : 1) * G.R * 0.35, my = (p.y + G.cy) / 2 - G.R * 0.1, a = 1 - e;
+    return { x: a * a * p.x + 2 * a * e * mx + e * e * G.cx, y: a * a * p.y + 2 * a * e * my + e * e * G.cy };
+  }
+  function featherPos(p, u) {   // la plume tombe de haut en balançant, se pose sur la case
+    var e = G.ease.out3(clamp((u - 0.04) / 0.51, 0, 1)), sw = Math.sin(u * 15) * G.R * 0.2 * (1 - e);
+    return { x: p.x + sw, y: -G.R * 0.1 + (p.y + G.R * 0.1) * e, rot: Math.sin(u * 15 + 1) * 0.6 * (1 - e) };
+  }
+  function drawCell() {
+    var c = CA; if (!c) return;
+    var u = clamp(c.t / c.dur, 0, 1), p = cellPos(), k = c.kind, R = G.R, ri = R * 0.3, ro = R * 0.935, red = FX.reduced, i;
+    ctx.save();
+    // lueur de la case
+    if (k !== 'm0') {
+      ctx.save(); ctx.translate(G.cx, G.cy); ctx.rotate(W.rot); wedge(ctx, c.idx, ri, ro);
+      ctx.fillStyle = 'rgba(255,241,184,' + (0.45 * Math.sin(Math.PI * clamp(u * 1.4, 0, 1))) + ')'; ctx.fill(); ctx.restore();
+    }
+    if (k === 'm0') {   // la case s'assombrit, des fissures la parcourent
+      ctx.save(); ctx.translate(G.cx, G.cy); ctx.rotate(W.rot); wedge(ctx, c.idx, ri, ro); ctx.fillStyle = 'rgba(225,205,160,' + (0.42 * Math.max(0, 1 - u * 3.2)) + ')'; ctx.fill(); wedge(ctx, c.idx, ri, ro); ctx.fillStyle = 'rgba(8,5,2,' + (0.62 * Math.sin(Math.PI * clamp(u * 1.1, 0, 1))) + ')'; ctx.fill();
+      ctx.rotate((c.idx + 0.5) * step - Math.PI / 2); ctx.strokeStyle = 'rgba(240,222,170,' + (0.95 * (1 - u * 0.8)) + ')'; ctx.lineWidth = Math.max(1.5, R * 0.013); ctx.lineCap = 'round';
+      var cr = [[-0.14, 0.0], [-0.07, 0.02], [-0.02, -0.025], [0.04, 0.018], [0.09, -0.012], [0.15, 0.01]], nc = Math.ceil(cr.length * clamp(u * 3, 0, 1));
+      ctx.beginPath(); for (i = 0; i < nc; i++) { var mx = R * (0.6175 + cr[i][0]), my = R * cr[i][1]; if (i) ctx.lineTo(mx, my); else ctx.moveTo(mx, my); } ctx.stroke(); ctx.restore();
+    } else if (k === 'ankh') {
+      var lw = R * 0.5 * Math.sin(Math.PI * clamp(u * 1.15, 0, 1)), bg = ctx.createLinearGradient(p.x - lw, 0, p.x + lw, 0);   // colonne de lumière divine
+      bg.addColorStop(0, 'rgba(255,241,184,0)'); bg.addColorStop(0.5, 'rgba(255,248,220,.8)'); bg.addColorStop(1, 'rgba(255,241,184,0)');
+      ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.fillStyle = bg; ctx.fillRect(p.x - lw, 0, lw * 2, FX.floorY < 9000 ? FX.floorY : G.h); ctx.restore();
+      var rr = R * (0.21 + 0.02 * Math.sin(u * 20)), nl = FX.lite ? 8 : 12;
+      if (u < 0.4) for (i = 0; i < nl; i++) { var an = TAU * i / nl + u * 4; FX.Chains.link(ctx, p.x + Math.cos(an) * rr, p.y + Math.sin(an) * rr, an + Math.PI / 2, R * 0.11, i % 2 === 0); }
+      var ap = G.ease.outBack(clamp(u / 0.35, 0, 1)), as = R * 0.34 * ap * (1 + 0.04 * Math.sin(u * 30));
+      ctx.save(); ctx.globalAlpha = 1 - clamp((u - 0.8) / 0.2, 0, 1); ctx.shadowColor = 'rgba(255,230,150,.95)'; ctx.shadowBlur = FX.lite ? 0 : 26;
+      A.ankh(ctx, p.x, p.y - R * 0.02, as, '#fff1b8', '#8a5e12'); ctx.restore();
+    } else if (k === 'scarab') {
+      var e = G.ease.inOut(clamp((u - 0.1) / 0.7, 0, 1)), q = scarabPos(p, e), sz = R * (0.17 + 0.33 * e), fade = 1 - clamp((u - 0.88) / 0.12, 0, 1);
+      for (i = 3; i >= 0; i--) {   // traîne : copies de plus en plus pâles le long de la courbe
+        var qq = scarabPos(p, Math.max(0, e - i * 0.05)); ctx.globalAlpha = (i ? 0.22 / i : 1) * fade;
+        ctx.save(); ctx.translate(qq.x, qq.y); ctx.rotate(Math.sin(c.t * 22 + i) * 0.18); ico('scarab', 0, 0, sz * (1 - i * 0.06), function () { A.scarab(ctx, 0, 0, sz * 0.8, '#ffd86a', 'rgba(0,0,0,.5)'); }); ctx.restore();
+      }
+    } else if (k === 'weigh') {
+      var fp = featherPos(p, u), lit = u > 0.55 ? 1 : 0, glow = lit ? Math.sin(Math.PI * clamp((u - 0.55) / 0.45, 0, 1)) : 0, fs = R * (0.36 + 0.12 * glow);
+      if (lit) { ctx.save(); ctx.globalCompositeOperation = 'lighter'; var rg = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, R * 0.5); rg.addColorStop(0, 'rgba(255,248,225,' + 0.7 * glow + ')'); rg.addColorStop(1, 'rgba(255,248,225,0)'); ctx.fillStyle = rg; ctx.fillRect(p.x - R * 0.5, p.y - R * 0.5, R, R); ctx.restore(); }
+      ctx.save(); ctx.globalAlpha = 1 - clamp((u - 0.88) / 0.12, 0, 1); ctx.translate(fp.x, fp.y); ctx.rotate(fp.rot);
+      ico('weigh', 0, 0, fs, function () { A.feather(ctx, 0, 0, fs * 0.9, '#4a3410', 'rgba(255,255,255,.7)'); }); ctx.restore();
+    } else if (k === 'vault') {
+      var sp2 = G.ease.outBack(clamp((u - 0.28) / 0.4, 0, 1)), ps = R * (0.3 + 0.1 * clamp(u / 0.28, 0, 1)), fa = 1 - clamp((u - 0.8) / 0.2, 0, 1);
+      if (u > 0.28) {   // rayons d'or par la fente de la pyramide
+        ctx.save(); ctx.globalCompositeOperation = 'lighter'; A.rays(ctx, p.x, p.y, R * 0.9, 12, u * 2, '#ffd86a', 0.3 * Math.sin(Math.PI * clamp((u - 0.28) / 0.72, 0, 1)));
+        var vg = ctx.createLinearGradient(p.x - R * 0.06 * sp2, 0, p.x + R * 0.06 * sp2, 0); vg.addColorStop(0, 'rgba(255,225,130,0)'); vg.addColorStop(0.5, 'rgba(255,240,170,.9)'); vg.addColorStop(1, 'rgba(255,225,130,0)');
+        ctx.fillStyle = vg; ctx.fillRect(p.x - R * 0.12, p.y - R * 0.5, R * 0.24, R * 1.0); ctx.restore();
+      }
+      [-1, 1].forEach(function (sg) {   // deux moitiés qui s'écartent
+        ctx.save(); ctx.globalAlpha = fa; ctx.beginPath(); ctx.rect(sg < 0 ? p.x - ps : p.x, p.y - ps, ps, ps * 2); ctx.clip();
+        ctx.translate(p.x + sg * R * 0.1 * sp2, p.y + R * 0.03 * sp2); ctx.rotate(sg * 0.16 * sp2);
+        ico('vault', 0, 0, ps, function () { A.pyramid(ctx, 0, 0, ps * 0.85, '#ffe9a0', 'rgba(0,0,0,.45)'); }); ctx.restore();
+      });
+    } else if (k === 'hand') {
+      var big2 = ART.medal, hp = G.ease.outBack(clamp((u - 0.2) / 0.35, 0, 1)), hsz = R * 0.95 * hp, hfa = 1 - clamp((u - 0.82) / 0.18, 0, 1);
+      if (u > 0.08 && u < 0.7) {   // éclairs rouges sur la case, un nouveau tracé ~15 fois par seconde
+        var sd = Math.floor(c.t * 15) * 97 + 13;
+        FX.bolt(ctx, p.x - R * 0.35, -10, p.x, p.y, '#ff5a3a', R * 0.05, sd); FX.bolt(ctx, p.x + R * 0.4, -10, p.x, p.y, '#ff3a2a', R * 0.035, sd + 5);
+      }
+      if (big2 && hsz > 2) {
+        var HE = HEADS.medal;
+        ctx.save(); ctx.globalAlpha = hfa; ctx.translate(p.x, p.y + R * 0.05); if (!FX.lite) { ctx.shadowColor = 'rgba(255,40,20,.85)'; ctx.shadowBlur = 30; }
+        ctx.beginPath(); ctx.arc(0, 0, hsz * 0.43, 0, TAU); ctx.fillStyle = '#050102'; ctx.fill(); ctx.shadowBlur = 0;
+        ctx.save(); ctx.beginPath(); ctx.arc(0, 0, hsz * HE.emClip, 0, TAU); ctx.clip(); ctx.drawImage(big2, -hsz / 2, -hsz / 2, hsz, hsz);
+        ctx.globalCompositeOperation = 'lighter'; var ep = clamp((u - 0.35) / 0.2, 0, 1) * (0.75 + 0.25 * Math.sin(c.t * 22));
+        HE.eyes.forEach(function (pe) { var ex = pe[0] * hsz, ey = pe[1] * hsz, er = hsz * 0.1 * ep, g2 = ctx.createRadialGradient(ex, ey, 0, ex, ey, Math.max(1, er)); g2.addColorStop(0, 'rgba(255,230,200,' + ep + ')'); g2.addColorStop(0.3, 'rgba(255,60,30,' + 0.8 * ep + ')'); g2.addColorStop(1, 'rgba(255,40,20,0)'); ctx.fillStyle = g2; ctx.beginPath(); ctx.arc(ex, ey, Math.max(1, er), 0, TAU); ctx.fill(); });
+        ctx.restore(); ctx.restore();
+      }
+    } else if (k === 'secret') {
+      var rs = R * (0.12 + 0.3 * G.ease.out3(clamp(u / 0.6, 0, 1))), na = 1 - clamp((u - 0.8) / 0.2, 0, 1);
+      ctx.save(); ctx.globalAlpha = na; ctx.shadowColor = '#a07bff'; ctx.shadowBlur = FX.lite ? 0 : 14;
+      for (i = 0; i < 8; i++) {   // couronne de runes
+        var ra = TAU * i / 8 + u * 3; ctx.save(); ctx.translate(p.x + Math.cos(ra) * rs, p.y + Math.sin(ra) * rs); ctx.rotate(ra + Math.PI / 4); ctx.fillStyle = i % 2 ? '#c28bff' : '#ffd86a'; ctx.fillRect(-R * 0.018, -R * 0.018, R * 0.036, R * 0.036); ctx.restore();
+      }
+      ctx.shadowBlur = 0;
+      if (u > 0.15 && u < 0.7) FX.bolt(ctx, p.x - R * 0.3, p.y - R * 0.5, p.x + R * 0.05, p.y, '#a07bff', R * 0.04, Math.floor(c.t * 14) * 53 + 3);
+      var am = G.ease.out3(clamp((u - 0.1) / 0.5, 0, 1)); ctx.globalAlpha = na * am;
+      ico('amulet', p.x, p.y - R * 0.15 * am, R * 0.3, function () { ctx.fillStyle = '#c28bff'; ctx.beginPath(); ctx.arc(p.x, p.y, R * 0.06, 0, TAU); ctx.fill(); });
+      ctx.restore();
+    }
+    // compteur de gain qui défile (cases numériques)
+    if (c.pay > 0 && (k === 'm025' || k === 'm05' || k === 'm1' || k === 'm2' || k === 'm3')) {
+      var cu = clamp(u / 0.65, 0, 1), val = c.pay * (1 - Math.pow(1 - cu, 3)), txt = '×' + G.fmt(cu >= 1 ? c.pay : (c.pay % 1 === 0 || c.pay >= 10 ? Math.round(val) : Math.round(val * 10) / 10));
+      var pop = cu >= 1 ? 1 + 0.3 * Math.exp(-(u - 0.65) * 14) * Math.cos((u - 0.65) * 40) : 1, ca = u < 0.85 ? 1 : 1 - (u - 0.85) / 0.15, cs = Math.min(R * 0.26, G.w * 0.16);
+      ctx.save(); ctx.globalAlpha = ca; ctx.translate(G.cx, G.cy - R * 0.5 - u * R * 0.06); ctx.scale(pop, pop); G.goldText(txt, 0, 0, cs, { blur: 22 }); ctx.restore();
+    }
+    ctx.restore();
+  }
+
+  /* ============ TRANSITIONS DE BONUS : chaînes d'Unchained ============
+     G.chainBreak(swap) : entrée. Les chaînes dorées se tendent, se brisent en éclats dans un flash de lumière divine ; swap() est appelé
+     sous le flash (le décor du bonus se révèle). G.chainForge(swap) : sortie. Les maillons se rassemblent, les portes d'obsidienne se referment,
+     swap() sous les portes, puis le rideau se rouvre sur la roue. FX.reduced : simple fondu doré, sans chaînes ni secousse. */
+  G.chainBreak = function (swap) {
+    var red = FX.reduced, D = red ? 0.7 : 1.9, st = G.chain = { r: red ? 0 : 0, tense: 0, brk: -1, t: G.t, veil: 0, doors: 0, flash: 0, light: 0, lite: FX.lite }, d = {};
+    return G.tween(D, function (u) {
+      st.t = G.t;
+      if (red) { st.flash = (u < 0.45 ? u / 0.45 : 1 - (u - 0.45) / 0.55) * 0.9; if (u >= 0.45 && !d.sw) { d.sw = 1; swap(); } return; }
+      var q = clamp(u / 0.26, 0, 1);
+      if (u < 0.5) {
+        st.r = G.ease.out3(q); st.veil = 0.62 * q;
+        if (u >= 0.26) { st.tense = (u - 0.26) / 0.24; st.light = st.tense * 0.35; FX.shake(1 + 3 * st.tense, 0.08); }
+        if (u >= 0.26 && !d.slam) { d.slam = 1; Sfx.chainSlam(); FX.shake(10, 0.4); FX.spark(G.cx, G.cy, 18, '#ffd86a', 320); FX.ring(G.cx, G.cy, '#ffd86a', G.R * 0.8, 0.5); Sfx.chainTense(D * 0.24 / Math.max(1, G.speed)); }
+      } else {
+        if (!d.brk) { d.brk = 1; Sfx.chainBreak(); FX.shake(22, 0.7); FX.ring(G.cx, G.cy, '#fff1b8', Math.max(G.w, G.h) * 0.7, 1.0); FX.spark(G.cx, G.cy, 60, '#ffd86a', 700); FX.links(G.cx, G.cy, 20, 760); }
+        st.r = 1; st.tense = 1; st.brk = (u - 0.5) * D;
+        st.flash = u < 0.57 ? 1 : Math.max(0, 1 - (u - 0.57) / 0.22); st.light = Math.max(0, 1 - (u - 0.5) / 0.42);
+        st.veil = u < 0.545 ? 0.62 : 0;
+        if (u >= 0.53 && !d.sw) { d.sw = 1; swap(); }
+      }
+    }, null).then(function () { if (!d.sw) swap(); G.chain = null; });
+  };
+  G.chainForge = function (swap) {
+    var red = FX.reduced, D = red ? 0.7 : 1.5, st = G.chain = { r: 1, tense: 0.6, brk: 1.15, t: G.t, veil: 0, doors: 0, flash: 0, light: 0, lite: FX.lite, a: 0 }, d = {};
+    if (red) { st.r = 0; st.brk = -1; }
+    return G.tween(D, function (u) {
+      st.t = G.t;
+      if (red) { st.veil = u < 0.5 ? u / 0.5 : 1 - (u - 0.5) / 0.5; if (u >= 0.5 && !d.sw) { d.sw = 1; swap(); } return; }
+      if (!d.s) { d.s = 1; Sfx.chainForge(); }
+      if (u < 0.42) {
+        var q = u / 0.42; st.brk = 1.15 * (1 - G.ease.inOut(q)); st.r = 1; st.veil = 0.85 * q; st.doors = G.ease.out3(clamp((u - 0.16) / 0.26, 0, 1)); st.tense = 0.6;
+        if (st.brk < 0.01) st.brk = -1;   // les maillons sont rassemblés : chaîne intacte et tendue
+      } else {
+        st.brk = -1;
+        if (!d.lock) { d.lock = 1; FX.shake(12, 0.45); FX.spark(G.cx, G.cy, 24, '#ffd86a', 380); FX.ring(G.cx, G.cy, '#ffd86a', G.R * 0.9, 0.6); st.flash = 0.55; }
+        st.flash = Math.max(0, st.flash - 0.05); st.tense = Math.max(0, st.tense - 0.03);
+        st.doors = 1; if (u >= 0.47 && !d.sw) { d.sw = 1; swap(); }
+        if (u > 0.58) { var o = G.ease.inOut(clamp((u - 0.58) / 0.42, 0, 1)); st.r = 1 - o; st.doors = 1 - o; st.veil = 0.85 * (1 - o); }
+      }
+    }, null).then(function () { if (!d.sw) swap(); G.chain = null; });
   };
 
   /* ======== ANUBIS SURGIT DU CENTRE DE LA ROUE : une apparition différente par bonus, liée à son thème ======== */
@@ -822,7 +1120,7 @@
     tier = clamp(tier | 0, 0, 4);
     return new Promise(function (res) {
       var T = I18N.t(), k = G.ultra ? 3.5 : G.turbo ? 1.8 : 1;
-      G.winOv = { t: 0, k: k, mult: mult, amount: amount, tier: tier, W: WT[tier], count: 0, p: 0, done: false, closing: 0, res: res, title: T.tiers[tier], ev: { rings: 0 }, acc: 0, t0: tier ? 0.6 : 0.25, nextWave: 0.9, nextSp: 0.5, nextFl: 1.2, ringN: 0 };
+      G.winOv = { t: 0, k: k, mult: mult, amount: amount, tier: tier, W: WT[tier], count: 0, p: 0, done: false, closing: 0, res: res, title: T.tiers[tier], ev: { rings: 0 }, acc: 0, t0: tier ? 0.6 : 0.25, nextWave: 0.9, nextSp: 0.5, nextFl: 1.2, ringN: 0, nextCn: 1.0, burst: 0, pre: 0, freeze: 0, fz: 0, nextBolt: 0.7 };
       if (tier === 0) {
         Sfx.chime(mult); if (G.wheel) G.wheel.flashLamps = 1;
         FX.ring(G.cx, G.cy, '#ffe9a0', G.R * 1.15, 0.9); FX.spark(G.cx, G.cy, 22, '#ffd86a', 360);
@@ -844,18 +1142,37 @@
       FX.shake(6 + t * 3, 0.45); FX.flash(0.2 + t * 0.07, WC[t][0]);
       FX.coins(G.cx, G.cy + G.R * 0.4, W.coins, 1150, 100);
       FX.spark(G.cx, G.cy - Math.min(G.w, G.h) * 0.2, 14 + t * 8, WC[t][0], 420);
+      if (t >= 2) {   // explosion du total : ondes de choc, canons à pièces, maillons brisés, rayons qui jaillissent
+        o.burst = 1; var cp = Math.sqrt(2100 * G.h);
+        FX.cannon(20, G.h - 10, 1, 10 + t * 5, cp); FX.cannon(G.w - 20, G.h - 10, -1, 10 + t * 5, cp);
+        FX.ring(G.cx, G.cy, WC[t][1], Math.max(G.w, G.h) * 0.5, 0.9); FX.ring(G.cx, G.cy, WC[t][0], Math.max(G.w, G.h) * 0.8, 1.2);
+        FX.links(G.cx, G.cy - Math.min(G.w, G.h) * 0.12, 10 + t * 4, 760);
+        FX.shake(10 + t * 4, 0.7);
+      }
     } else { FX.spark(G.cx, G.cy, 16, '#ffe9a0', 300); FX.coins(G.cx, G.cy + G.R * 0.3, W.coins, 900, 60); }
   }
   function updateWinOv(dt) {
-    var o = G.winOv; if (!o) return;
+    var o = G.winOv; if (!o) { G.fxScale = 1; return; }
     var t = o.tier, W = o.W, R = FX.reduced, w = G.w, u = Math.min(w, G.h), sdt = dt * o.k, prev = o.count;
-    o.t += sdt;
+    if (o.freeze > 0) {   // arrêt sur image juste avant le total (hit-stop), puis il retombe d'un coup
+      o.freeze -= dt; G.fxScale = 0;
+      if (o.freeze <= 0) { G.fxScale = 1; winLand(o); }
+      return;
+    }
+    var qq = clamp((o.t - o.t0) / W.cd, 0, 1);
+    o.pre = (t >= 2 && !o.done && !R) ? clamp((qq - 0.7) / 0.3, 0, 1) : 0;                       // les derniers pour cent : ralenti, zoom, tension
+    var slowK = 1 - 0.72 * o.pre * (t >= 3 ? 1 : 0.7);
+    G.fxScale = o.done ? 1 : slowK;
+    o.t += sdt * slowK;
+    if (o.burst > 0) o.burst = Math.max(0, o.burst - sdt * 1.5);
     if (!o.done) {
       var q = clamp((o.t - o.t0) / W.cd, 0, 1);
       o.p = 1 - Math.pow(1 - q, 3.2);                           // décompte : rapide au début, très lent à la fin
       o.count = q >= 1 ? o.amount : o.p * o.amount;
-      if (q >= 1) winLand(o);
-      else {
+      if (q >= 1) {
+        if (t >= 2 && !R && !o.fz) { o.fz = 1; o.freeze = (t >= 3 ? 0.2 : 0.12) / o.k; o.count = o.amount * 0.999; Sfx.hitStop && Sfx.hitStop(); }
+        else winLand(o);
+      } else {
         var nt = t ? 40 : 12;
         if (Math.floor(prev / o.amount * nt) !== Math.floor(o.count / o.amount * nt)) Sfx.countTick(o.p);
       }
@@ -869,16 +1186,18 @@
         o.acc += sdt * W.rain * amp * (R ? 0.4 : 1) * (FX.lite ? 0.6 : 1);
         while (o.acc >= 1) { o.acc -= 1; FX.rain(G.w, 1); }
         if (o.t > o.nextSp) { o.nextSp += 0.14; FX.spark(cx + (Math.random() - 0.5) * w * 0.6, ty + (Math.random() - 0.5) * u * 0.1, 2 + t, c[Math.random() < 0.5 ? 0 : 1], 240, 0.7); }
+        if (t >= 2 && !R && o.t > o.nextCn) { o.nextCn += t >= 3 ? 0.55 : 0.9; var cpw = Math.sqrt(2100 * G.h), sidec = o.ringN % 2 ? 1 : -1; FX.cannon(sidec > 0 ? 20 : w - 20, G.h - 10, sidec, 5 + t * 2, cpw); }
         if (t >= 2 && o.t > o.nextWave) { o.nextWave += t >= 3 ? 1.0 : 1.5; FX.ring(cx, G.cy, c[o.ringN++ % 2], Math.max(w, G.h) * 0.6, 1.1); if (t >= 3) FX.coins(cx, G.cy + G.R * 0.5, 14, 1000, w * 0.4); }
         if (t === 4 && o.t > o.nextFl) { o.nextFl += 1.3; FX.flash(0.22, '#e8d8ff'); }
       } else if (t >= 3 && o.ev.rings < 3 && o.t - o.doneAt > 0.3 * (o.ev.rings + 1)) { o.ev.rings++; FX.ring(cx, G.cy, c[o.ev.rings % 2], Math.max(w, G.h) * (0.5 + 0.15 * o.ev.rings), 1.0); }
     }
     if (o.done && !o.closing && o.t - o.doneAt > W.hold) o.closing = 0.0001;
     if (!o.closing && o.t > W.cd + W.hold + 14) { if (!o.done) winLand(o); o.closing = 0.0001; }   // sécurité : jamais de blocage
-    if (o.closing) { o.closing += sdt * 2.5; if (o.closing >= 1) { var r = o.res; G.winOv = null; r(); } }
+    if (o.closing) { o.closing += sdt * 2.5; if (o.closing >= 1) { var r = o.res; G.winOv = null; G.fxScale = 1; r(); } }
   }
   G.skipWinOv = function () {
     var o = G.winOv; if (!o) return false;
+    if (o.freeze > 0) { o.freeze = 0; G.fxScale = 1; }
     if (!o.done) winLand(o);
     else if (!o.closing) o.closing = 0.0001;
     return true;
@@ -889,6 +1208,7 @@
     var a = o.closing ? 1 - o.closing : 1, inn = clamp(tt / 0.3, 0, 1), d = o.done ? tt - o.doneAt : -1, i, j;
     var T = I18N.t(), amt = G.moneyCount(o.count, o.amount), amtMax = G.money(o.amount);
     ctx.save(); ctx.globalAlpha = a;
+    if (o.pre > 0) { var zk = 1 + 0.07 * o.pre * o.pre; ctx.translate(cx, cy); ctx.scale(zk, zk); ctx.translate(-cx, -cy); }
     /* --- WIN : bandeau élégant sur la roue, sans assombrir tout l'écran --- */
     if (t === 0) {
       var bh = u * 0.25, sl = G.ease.out3(clamp(tt / 0.3, 0, 1)), pul = 0.75 + 0.25 * Math.sin(tt * 6);
@@ -919,6 +1239,9 @@
     var rot = tt * (R ? 0.1 : 0.3 + 0.08 * t), vb = Math.min(h, (FX.floorY < 9000 ? FX.floorY + 10 : h));   // vb : bas de la zone visible (au-dessus du HUD)
     A.rays(ctx, cx, cy, Math.max(w, h), W.rays, rot, c[0], 0.09 + 0.03 * t);
     if (t >= 2) A.rays(ctx, cx, cy, Math.max(w, h), W.rays - 4, -rot * 1.3 + 0.2, c[1], 0.07 + 0.02 * t);
+    if (o.burst > 0.01) { ctx.save(); ctx.globalCompositeOperation = 'lighter'; A.rays(ctx, cx, cy, Math.max(w, h) * 1.2, 24, rot * 4, '#fff6d8', 0.4 * o.burst); ctx.restore(); }
+    if (o.pre > 0.01) { var vg0 = ctx.createRadialGradient(cx, cy, u * 0.2, cx, cy, Math.max(w, h) * 0.7); vg0.addColorStop(0, 'rgba(0,0,0,0)'); vg0.addColorStop(1, 'rgba(0,0,0,' + 0.55 * o.pre + ')'); ctx.fillStyle = vg0; ctx.fillRect(0, 0, w, h); }
+    if (t === 4 && !R && !o.done && ((tt * 2.2) % 1) < 0.22) { var bs = Math.floor(tt * 2.2) * 131 + 7; FX.bolt(ctx, cx + ((bs % 7) - 3) * w * 0.07, 0, cx + ((bs % 5) - 2) * w * 0.04, cy - u * 0.12, '#c28bff', u * 0.012, bs); }
     var gr = u * (0.55 + 0.08 * t) * (1 + 0.04 * Math.sin(tt * 4)), gl = ctx.createRadialGradient(cx, cy, 0, cx, cy, gr);
     gl.addColorStop(0, A.rgba(t === 2 ? '#6ff0dd' : t === 4 ? '#c28bff' : '#ffd86a', 0.3 + 0.04 * t)); gl.addColorStop(1, 'rgba(255,216,106,0)');
     ctx.fillStyle = gl; ctx.fillRect(0, 0, w, h);
@@ -994,10 +1317,11 @@
     for (i = 0; i < sub; i++) {
       W.update(h);
       if (G.scene && G.scene.update) G.scene.update(h);
-      FX.update(h);
+      FX.update(h * G.fxScale);
     }
     updateWinOv(dt);
     updateEmerge(sdt);
+    updateCell(sdt);
   }
   G.advance = async function (sec) { for (var n = Math.round(sec * 60), i = 0; i < n; i++) { tick(1 / 60); await null; } };
   var perf = { acc: 0, n: 0, stage: 0 };
@@ -1031,6 +1355,7 @@
     ctx.drawImage(frz, 0, 0, G.w, frz.height / G.dpr);
     ctx.save(); ctx.translate(P.x * 5, P.y * 3);                                                                       // jeu : plan proche
     if (!sc || sc.showsWheel) W.draw(sc && sc.wheelAlpha);
+    if (CA && (!sc || sc.showsWheel)) drawCell();
     if (sc && sc.draw) sc.draw(ctx);
     ctx.restore();
     var ovTop = G.winOv && G.winOv.tier > 0;      // gros gain : pièces et éclats passent AU-DESSUS de l'overlay assombri
@@ -1042,6 +1367,7 @@
     if (ovTop) { ctx.save(); ctx.translate(so[0], so[1]); FX.draw(ctx); ctx.restore(); }
     drawEmerge();
     FX.drawFlash(ctx, G.w, G.h);
+    if (G.chain) { ctx.save(); ctx.translate(so[0], so[1]); FX.Chains.draw(ctx, G.w, G.h, G.chain); ctx.restore(); }
     if (G.fade > 0.001) { ctx.fillStyle = 'rgba(4,3,2,' + G.fade + ')'; ctx.fillRect(0, 0, G.w, G.h); }
     for (i = 0; i < G.onFrame.length; i++) G.onFrame[i](dt);
   }
