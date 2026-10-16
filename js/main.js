@@ -298,9 +298,8 @@
       G.speed = spd();
       var def = M.KINDS[sp.kind] || { bonus: true };
       if (def.respin) {
-        Sfx.shield(); FX.spark(G.cx, G.cy - G.R * 0.9, 30, '#ffe9a0', 300); FX.flash(0.3, '#ffe9a0');
-        say(T.ankhRespin); G.wheel.flashLamps = 1.0;
-        await G.sleep(1.3);
+        Sfx.shield(); say(T.ankhRespin); G.wheel.flashLamps = 1.0;
+        await G.cellWin(sp);      // chaînes dorées qui cèdent, lumière divine : la roue est relancée
         G.wheel.clearOracle(); G.wheel.clearHighlight(); $('oracle').hidden = true;
         continue;
       }
@@ -308,22 +307,20 @@
         hadBonus = true; say(sp.upgraded ? T.kindsLong.hand : T.kindsLong[sp.kind]);
         // on tombe sur un bonus : le turbo/ultra se coupe tout de suite pour jouer le bonus et ses animations à vitesse normale
         if (G.turbo) { G.turbo = false; G.ultra = false; G.speed = 1; setSpinBtn(); save(); }
+        await G.cellWin(sp);      // la case s'anime (le scarabée s'envole, la plume tombe, la pyramide s'ouvre, Anubis frappe…) avant l'apparition d'Anubis
         await G.runBonus(sp, b);
       } else if (sp.pay > 0) {
-        var px = G.cx, py = G.cy - G.R * 0.55;
         if (sp.boost > 1) await G.wheel.applyBoost();   // le chiffre de la case est réécrit déjà multiplié
-        FX.float('×' + G.fmt(sp.pay), px, py, '#ffe9a0', 36);
-        FX.spark(px, py, 24, '#ffd86a', 320); Sfx.chime(sp.pay); G.wheel.flashLamps = 0.8;
-        await G.sleep(0.8);
+        await G.cellWin(sp);      // pièces + compteur qui défile, plus riche selon la case
       } else {
-        say(T.dust); FX.dust(G.cx, G.cy - G.R * 0.8, 10); await G.sleep(0.45);
+        say(T.dust); await G.cellWin(sp);
       }
       total += sp.pay;
       $('oracle').hidden = true;
       if (LIVE) RG.betEvent(i + 1);   // progression du tour (reprise éventuelle côté serveur), sans attendre la réponse
     } } catch (err) {   // une scène en erreur ne doit jamais bloquer le jeu ni perdre le gain déjà décidé
       if (root.console) console.error(err);
-      total = 0; round.spins.forEach(function (x) { total += x.pay; }); G.scene = null; G.eg = null; G.winOv = null; G.fade = 0; G.setScene(null);
+      total = 0; round.spins.forEach(function (x) { total += x.pay; }); G.scene = null; G.eg = null; G.winOv = null; G.fade = 0; G.chain = null; G.fxScale = 1; G.setScene(null);
     }
     total = LIVE ? srv.mult : Math.min(total, M.MAX_WIN);   // en mode RGS le gain fait foi : payoutMultiplier du serveur, jamais recalculé par le jeu
     var amount = LIVE ? (srv.payout != null ? srv.payout : G.r6(total * b)) : r2(total * b);   // montant RGS (micro-unités) ; démo : centimes
