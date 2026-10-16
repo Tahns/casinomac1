@@ -95,12 +95,18 @@
 
   /* ---------- lampes de la roue ---------- */
   function buildLamps() {
+    // goujons dorés de la jante : disque bombé à arête dure (clair en haut à gauche = torche, sombre en bas à droite), anneau net quand ils s'allument ; aucun halo flou
     function mk(on) {
-      var s = 40, c = document.createElement('canvas'); c.width = c.height = s; var x = c.getContext('2d');
-      var g = x.createRadialGradient(20, 20, 0, 20, 20, 20);
-      if (on) { g.addColorStop(0, '#ffffff'); g.addColorStop(0.18, '#fff1b8'); g.addColorStop(0.45, 'rgba(255,196,70,.55)'); g.addColorStop(1, 'rgba(255,170,40,0)'); }
-      else { g.addColorStop(0, '#5a4418'); g.addColorStop(0.2, '#3a2c10'); g.addColorStop(0.3, 'rgba(0,0,0,.4)'); g.addColorStop(0.5, 'rgba(0,0,0,0)'); }
-      x.fillStyle = g; x.fillRect(0, 0, s, s); return c;
+      var s = 40, c = document.createElement('canvas'); c.width = c.height = s; var x = c.getContext('2d'), r = on ? 5.6 : 8;
+      x.beginPath(); x.arc(20, 21.2, r + 0.6, 0, TAU); x.fillStyle = 'rgba(0,0,0,.7)'; x.fill();                    // ombre dure courte
+      var g = x.createLinearGradient(14, 13, 26, 27);
+      if (on) { g.addColorStop(0, '#fbf1c8'); g.addColorStop(0.5, '#e3c777'); g.addColorStop(1, '#a98536'); }
+      else { g.addColorStop(0, '#6b5528'); g.addColorStop(0.5, '#3d3016'); g.addColorStop(1, '#1d160a'); }
+      x.beginPath(); x.arc(20, 20, r, 0, TAU); x.fillStyle = g; x.fill();
+      x.lineWidth = 1; x.strokeStyle = on ? 'rgba(255,248,215,.9)' : 'rgba(120,96,44,.7)'; x.beginPath(); x.arc(20, 20, r - 0.5, Math.PI * 0.95, Math.PI * 1.6); x.stroke();
+      x.strokeStyle = 'rgba(20,12,2,.8)'; x.beginPath(); x.arc(20, 20, r - 0.5, Math.PI * 1.95, Math.PI * 2.6); x.stroke();
+      if (on) { x.lineWidth = 1.3; x.strokeStyle = 'rgba(244,224,160,.6)'; x.beginPath(); x.arc(20, 20, 8.6, 0, TAU); x.stroke(); }
+      return c;
     }
     lampOn = mk(true); lampOff = mk(false);
   }
@@ -163,7 +169,7 @@
     f.fillStyle = g; f.fillRect(0, 0, w, h);
     if (ART.key) {
       cover(f, ART.key, w, h);
-      f.fillStyle = 'rgba(4,3,2,.35)'; f.fillRect(0, 0, w, h);
+      f.fillStyle = 'rgba(4,3,2,.22)'; f.fillRect(0, 0, w, h);
       G.guard = null;
     } else {
     // assises de pierre
@@ -217,8 +223,8 @@
   function backdropGrads() {   // dégradés qui dépendent de la taille de l'écran : recréés seulement après buildBackdrop
     if (BG) return BG;
     var w = G.w, h = G.h, vg = ctx.createLinearGradient(0, 0, 0, h * 0.6), vv = ctx.createRadialGradient(w / 2, h * 0.5, Math.min(w, h) * 0.35, w / 2, h * 0.5, Math.max(w, h) * 0.8);
-    vg.addColorStop(0, 'rgba(96,34,170,1)'); vg.addColorStop(1, 'rgba(96,34,170,0)');
-    vv.addColorStop(0, 'rgba(18,6,36,0)'); vv.addColorStop(1, 'rgba(34,10,70,.55)');
+    vg.addColorStop(0, 'rgba(20,36,78,1)'); vg.addColorStop(1, 'rgba(20,36,78,0)');
+    vv.addColorStop(0, 'rgba(6,8,16,0)'); vv.addColorStop(1, 'rgba(6,9,20,.6)');
     return BG = { vg: vg, vv: vv };
   }
   function blob(g, x, y, rx, ry, alpha) {   // remplit le dégradé unité g en (x, y), rayons rx / ry
@@ -279,17 +285,18 @@
   G.drawBackdrop = drawBackdrop;
 
   /* ============================== LA ROUE ============================== */
+  // palette de la roue : pierres dures et métaux d'Égypte (lapis, turquoise, malachite, cornaline, ivoire de papyrus, or) — aucune couleur d'interface saturée
   var VIS = {
-    m0:    { c: ['#52432f', '#2a2016'], tx: '#d8c49a', glyph: 'dust' },
-    m025:  { c: ['#d6a24a', '#9a6a22'], tx: '#2a1600' },
-    m05:   { c: ['#f0bc50', '#a8741e'], tx: '#2a1600' },
-    m1:    { c: ['#5a96ff', '#2358d8'], tx: '#ffffff' },
-    m2:    { c: ['#30f0d8', '#0fa896'], tx: '#032b26' },
-    m3:    { c: ['#4cf5a2', '#18ad66'], tx: '#032616' },
-    ankh:  { c: ['#fff0b0', '#d29a28'], tx: '#3a2706', glyph: 'ankh' },
-    scarab:{ c: ['#ff7058', '#c02c1c'], tx: '#fff6e6', glyph: 'scarab' },
-    weigh: { c: ['#ffffff', '#e8cf86'], tx: '#4a3410', glyph: 'feather' },
-    vault: { c: ['#cc84ff', '#7a30b8'], tx: '#fff6ff', glyph: 'pyramid' }
+    m0:    { c: ['#6b5f4c', '#4a4132'], tx: '#efe2bf', glyph: 'dust' },
+    m025:  { c: ['#c2a05a', '#8f6a2a'], tx: '#1c1000' },
+    m05:   { c: ['#d6bb72', '#a58234'], tx: '#1c1000' },
+    m1:    { c: ['#4a72bf', '#2a509e'], tx: '#f8f1de' },
+    m2:    { c: ['#2fb0a0', '#14786d'], tx: '#021a17' },
+    m3:    { c: ['#4e9a70', '#2a6648'], tx: '#f8f1de' },
+    ankh:  { c: ['#e8d49a', '#b99443'], tx: '#2e1f05', glyph: 'ankh' },
+    scarab:{ c: ['#b24a34', '#74261a'], tx: '#f8f1de', glyph: 'scarab' },
+    weigh: { c: ['#f0e4c2', '#cdb780'], tx: '#3a2a10', glyph: 'feather' },
+    vault: { c: ['#33291a', '#1a140b'], tx: '#e2c477', glyph: 'pyramid' }
   };
   G.VIS = VIS;
   G.kindColor = function (k) { return VIS[k].c[0]; };
@@ -308,21 +315,27 @@
   function metalRing(f, rOut, rIn) {
     var cg = f.createConicGradient ? f.createConicGradient(-0.6, 0, 0) : null;
     if (cg) {
-      ['#8a5e12', '#ffe9a0', '#c8901e', '#fff3c4', '#9a6a14', '#f6cf68', '#7a5010', '#ffe08a', '#8a5e12'].forEach(function (c, n, a) { cg.addColorStop(n / (a.length - 1), c); });
+      ['#6e5420', '#e3d19a', '#b4903f', '#efe1b2', '#8a6c2c', '#d4b86a', '#5f4719', '#dcc57e', '#6e5420'].forEach(function (c, n, a) { cg.addColorStop(n / (a.length - 1), c); });
     }
     f.save();
     f.beginPath(); f.arc(0, 0, rOut, 0, TAU); f.arc(0, 0, rIn, 0, TAU, true);
     f.fillStyle = cg || A.goldGrad(f, -rOut, -rOut, rOut, rOut); f.fill('evenodd');
     if (ART.gold) {
-      f.clip('evenodd'); f.globalCompositeOperation = 'overlay'; f.globalAlpha = 0.6;
+      f.clip('evenodd'); f.globalCompositeOperation = 'overlay'; f.globalAlpha = 0.75;
       f.drawImage(ART.gold, -rOut, -rOut, rOut * 2, rOut * 2);
       f.globalCompositeOperation = 'source-over'; f.globalAlpha = 1;
     }
     f.restore();
     // biseau : filet clair dehors, filet sombre dedans
     f.lineWidth = Math.max(1, rOut * 0.006);
-    f.strokeStyle = 'rgba(255,248,210,.8)'; f.beginPath(); f.arc(0, 0, rOut - f.lineWidth * 0.5, 0, TAU); f.stroke();
-    f.strokeStyle = 'rgba(40,24,2,.75)'; f.beginPath(); f.arc(0, 0, rIn + f.lineWidth * 0.5, 0, TAU); f.stroke();
+    f.strokeStyle = 'rgba(244,234,196,.85)'; f.beginPath(); f.arc(0, 0, rOut - f.lineWidth * 0.5, 0, TAU); f.stroke();
+    f.strokeStyle = 'rgba(30,18,2,.85)'; f.beginPath(); f.arc(0, 0, rIn + f.lineWidth * 0.5, 0, TAU); f.stroke();
+  }
+
+  var STONE = null;
+  function stoneGrain(f) {   // motif de grain de pierre, créé une fois
+    if (!STONE) STONE = f.createPattern(A.noiseTile(128, 0.55), 'repeat');
+    return STONE;
   }
 
   W.build = function () {
@@ -342,11 +355,9 @@
       g.addColorStop(0, v.c[1]); g.addColorStop(1, v.c[0]);
       var gg = f.createRadialGradient(0, 0, ri, 0, 0, ro); gg.addColorStop(0, v.c[1]); gg.addColorStop(0.55, A.mix(v.c[1], v.c[0], 0.5)); gg.addColorStop(1, v.c[0]);
       f.fillStyle = gg; f.fill();
-      // reflet
+      // matière : grain de pierre taillée (pas de reflet plastique) ; la lumière de torche vient du haut-gauche
       f.save(); wedge(f, i, ri, ro); f.clip();
-      var sh = f.createLinearGradient(Math.cos(am - step / 2) * ro, Math.sin(am - step / 2) * ro, Math.cos(am + step / 2) * ro, Math.sin(am + step / 2) * ro);
-      sh.addColorStop(0, 'rgba(255,255,255,.22)'); sh.addColorStop(0.5, 'rgba(255,255,255,0)'); sh.addColorStop(1, 'rgba(0,0,0,.12)');
-      f.fillStyle = sh; f.fillRect(-R, -R, 2 * R, 2 * R);
+      f.globalCompositeOperation = 'overlay'; f.globalAlpha = 0.5; f.fillStyle = stoneGrain(f); f.fillRect(-R, -R, 2 * R, 2 * R);
       f.restore();
       // creux : ombre intérieure + arête éclairée => les secteurs semblent gravés dans la roue
       f.save(); wedge(f, i, ri, ro); f.clip(); wedge(f, i, ri, ro);
@@ -354,7 +365,7 @@
       f.lineWidth = R * 0.007; f.strokeStyle = 'rgba(255,240,190,.28)'; f.translate(R * 0.004, R * 0.006); wedge(f, i, ri, ro); f.stroke();
       f.restore();
       // arêtes dorées
-      wedge(f, i, ri, ro); f.lineWidth = Math.max(1, R * 0.006); f.strokeStyle = 'rgba(255,214,110,.75)'; f.stroke();
+      wedge(f, i, ri, ro); f.lineWidth = Math.max(1, R * 0.006); f.strokeStyle = 'rgba(232,206,140,.7)'; f.stroke();
       // contenu : tout est centré dans la case (axe radial) et borné par la largeur réelle du secteur
       f.save(); f.rotate(am);
       var big = M.KINDS[k].bonus || k === 'ankh', fr = I18N.decimalComma();
@@ -363,10 +374,10 @@
         var rd = Math.min(chord(RC) * 0.36, R * 0.07), fq = k === 'm05' ? 0.5 : 0.3;
         f.save(); f.rotate(Math.PI / 2); f.translate(0, -RC);
         f.beginPath(); f.arc(0, 0, rd, 0, TAU); f.fillStyle = 'rgba(0,0,0,.4)'; f.fill();
-        f.shadowColor = 'rgba(0,0,0,.55)'; f.shadowBlur = 3;
+        f.shadowColor = 'rgba(0,0,0,.6)'; f.shadowOffsetY = 1;
         f.beginPath(); f.moveTo(0, 0); f.arc(0, 0, rd * 0.86, -Math.PI / 2, -Math.PI / 2 + TAU * fq); f.closePath(); f.fillStyle = v.tx; f.fill();
         f.beginPath(); f.arc(0, 0, rd, 0, TAU); f.lineWidth = Math.max(1.2, rd * 0.2); f.strokeStyle = v.tx; f.stroke();
-        f.shadowBlur = 0; f.restore();
+        f.shadowOffsetY = 0; f.restore();
       } else if (!big) {
         var lab = k === 'm0' ? '0' : ({ m025: fr ? '0,3' : '0.3', m05: fr ? '0,5' : '0.5', m1: '1', m2: '2', m3: '3' })[k];
         var frac = k === 'm025' || k === 'm05';
@@ -378,10 +389,10 @@
         var shrink = frac ? Math.min(1, R * 0.30 / (tl + tr), chord(rc - (tl + tr) * 0.5) * 0.70 / dh) : Math.min(1, chord(rc - (ta + td) * 0.5) * 0.86 / (tl + tr));
         if (shrink < 1) { fs *= shrink; f.font = '700 ' + fs + 'px ' + G.NUM; tm = f.measureText(lab); tl = tm.actualBoundingBoxLeft; tr = tm.actualBoundingBoxRight; ta = tm.actualBoundingBoxAscent; td = tm.actualBoundingBoxDescent; }
         f.textAlign = 'left'; f.textBaseline = 'alphabetic'; f.fillStyle = v.tx;
-        if (k !== 'm0') { f.shadowColor = 'rgba(0,0,0,.55)'; f.shadowBlur = 3; }
+        if (k !== 'm0') { f.shadowColor = 'rgba(0,0,0,.6)'; f.shadowOffsetY = 1; }
         if (frac) f.fillText(lab, rc - (tr - tl) / 2, (ta - td) / 2); // le long du rayon, centré sur l'axe de la case
         else { f.rotate(Math.PI / 2); f.fillText(lab, -(tr - tl) / 2, -rc + (ta - td) / 2); }
-        f.shadowBlur = 0;
+        f.shadowOffsetY = 0;
         if (k === 'm0') { f.globalAlpha = 0.55; A.skullX(f, 0, -(RC - R * 0.05), Math.min(R * 0.07, chord(RC) * 0.8), v.tx); f.globalAlpha = 1; }
       } else {
         // icône (debout) vers l'extérieur, nom le long du rayon vers le centre ; l'ensemble est centré dans la case
@@ -391,6 +402,12 @@
         var gap = R * 0.025, tot = nlen + gap + isz, r1 = RC + tot / 2;      // r1 : bord extérieur de l'icône
         var iy = r1 - isz / 2, nEnd = r1 - isz - gap;                         // fin du nom (côté icône)
         f.save(); f.rotate(Math.PI / 2);
+        if (v.glyph !== 'ankh' && ART['ic_' + ({ scarab: 'scarab', feather: 'weigh', pyramid: 'vault' })[v.glyph]]) {
+          // médaillon d'obsidienne sous l'icône : l'or patiné se lit sur tous les fonds de case ; filet d'or biseauté
+          f.beginPath(); f.arc(0, -iy + isz * 0.02, isz * 0.52, 0, TAU); f.fillStyle = 'rgba(14,10,6,.78)'; f.fill();
+          f.lineWidth = Math.max(1, isz * 0.035); f.strokeStyle = 'rgba(207,169,76,.85)'; f.stroke();
+          f.lineWidth = Math.max(1, isz * 0.02); f.strokeStyle = 'rgba(239,223,168,.5)'; f.beginPath(); f.arc(0, -iy + isz * 0.02, isz * 0.52 - isz * 0.03, Math.PI, Math.PI * 1.6); f.stroke();
+        }
         if (v.glyph === 'ankh') A.ankh(f, 0, -iy + isz * 0.02, isz * 0.74, '#3a2706');
         else if (G.icon(f, ({ scarab: 'scarab', feather: 'weigh', pyramid: 'vault' })[v.glyph], 0, -iy, isz)) { /* logo illustré */ }
         else if (v.glyph === 'scarab') A.scarab(f, 0, -iy, isz * 0.8, '#ffd86a', 'rgba(0,0,0,.5)');
@@ -398,8 +415,8 @@
         else if (v.glyph === 'pyramid') A.pyramid(f, 0, -iy, isz * 0.85, '#ffe9a0', 'rgba(0,0,0,.45)');
         f.restore();
         f.font = '900 ' + nfs + 'px ' + G.TITLE; f.textAlign = 'right'; f.textBaseline = 'alphabetic'; f.fillStyle = v.tx;
-        var nb = f.measureText(nm); f.shadowColor = 'rgba(0,0,0,.6)'; f.shadowBlur = 3;
-        f.fillText(nm, nEnd, (nb.actualBoundingBoxAscent - nb.actualBoundingBoxDescent) / 2); f.shadowBlur = 0;
+        var nb = f.measureText(nm); f.shadowColor = 'rgba(0,0,0,.7)'; f.shadowOffsetY = 1;
+        f.fillText(nm, nEnd, (nb.actualBoundingBoxAscent - nb.actualBoundingBoxDescent) / 2); f.shadowOffsetY = 0;
       }
       f.restore();
     }
@@ -413,7 +430,8 @@
     // rivets
     for (i = 0; i < M.N; i++) {
       var ra = i * step - Math.PI / 2, rx = Math.cos(ra) * R * 0.948, ry = Math.sin(ra) * R * 0.948;
-      f.beginPath(); f.arc(rx, ry, R * 0.008, 0, TAU); f.fillStyle = '#5b4311'; f.fill();
+      f.beginPath(); f.arc(rx, ry, R * 0.008, 0, TAU); f.fillStyle = '#4f3a12'; f.fill();
+      f.beginPath(); f.arc(rx - R * 0.0025, ry - R * 0.0025, R * 0.0034, 0, TAU); f.fillStyle = 'rgba(244,228,170,.75)'; f.fill();   // éclat de rivet
     }
   };
 
@@ -453,16 +471,24 @@
   }
 
   function drawFrame(R) {
-    var cx = G.cx, cy = G.cy;
-    // jante extérieure fixe
+    var cx = G.cx, cy = G.cy, n = M.N, i;
+    // jante extérieure fixe : pierre d'obsidienne, double filet d'or biseauté (clair dehors / sombre dedans), graduations gravées
     ctx.beginPath(); ctx.arc(cx, cy, R * 1.075, 0, TAU); ctx.arc(cx, cy, R * 0.99, 0, TAU, true);
     var g = ctx.createLinearGradient(cx - R, cy - R, cx + R, cy + R);
-    g.addColorStop(0, '#2a1e0c'); g.addColorStop(0.3, '#120c05'); g.addColorStop(0.7, '#2a1e0c'); g.addColorStop(1, '#0c0803');
+    g.addColorStop(0, '#2b2114'); g.addColorStop(0.5, '#120d07'); g.addColorStop(1, '#0a0705');
     ctx.fillStyle = g; ctx.fill('evenodd');
+    ctx.save(); ctx.clip('evenodd'); ctx.globalCompositeOperation = 'overlay'; ctx.globalAlpha = 0.5; ctx.fillStyle = stoneGrain(ctx); ctx.fillRect(cx - R * 1.1, cy - R * 1.1, R * 2.2, R * 2.2); ctx.restore();
     ctx.lineWidth = R * 0.012;
     ctx.strokeStyle = A.goldGrad(ctx, cx - R, cy - R, cx + R, cy + R);
     ctx.beginPath(); ctx.arc(cx, cy, R * 1.075, 0, TAU); ctx.stroke();
     ctx.beginPath(); ctx.arc(cx, cy, R * 0.99, 0, TAU); ctx.stroke();
+    ctx.lineWidth = Math.max(1, R * 0.004); ctx.strokeStyle = 'rgba(244,234,196,.55)'; ctx.beginPath(); ctx.arc(cx, cy, R * 1.0815, 0, TAU); ctx.stroke();
+    ctx.strokeStyle = 'rgba(0,0,0,.8)'; ctx.beginPath(); ctx.arc(cx, cy, R * 0.9835, 0, TAU); ctx.stroke();
+    // graduations : un trait gravé entre chaque goujon
+    ctx.beginPath();
+    for (i = 0; i < n; i++) { var a = (i + 0.5) * step - Math.PI / 2, ca = Math.cos(a), sa = Math.sin(a); ctx.moveTo(cx + ca * R * 1.005, cy + sa * R * 1.005); ctx.lineTo(cx + ca * R * 1.065, cy + sa * R * 1.065); }
+    ctx.lineWidth = Math.max(1, R * 0.005); ctx.strokeStyle = 'rgba(0,0,0,.75)'; ctx.stroke();
+    ctx.translate(-0.7, -0.7); ctx.strokeStyle = 'rgba(207,169,76,.4)'; ctx.stroke(); ctx.translate(0.7, 0.7);
   }
 
   // Anubis Unchained (logo) au centre de la roue : jamais immobile — respire, balance la tête, yeux rouges qui pulsent et clignent,
@@ -478,16 +504,16 @@
   function drawHub(R) {
     var cx = G.cx, cy = G.cy, r = R * 0.285, t = G.t, spinN = W.mode === 'spin' ? 1 : 0, lg = headImg();
     ctx.save();
-    ctx.shadowColor = 'rgba(0,0,0,.7)'; ctx.shadowBlur = R * 0.05;
-    ctx.beginPath(); ctx.arc(cx, cy, r * 1.02, 0, TAU); ctx.fillStyle = '#050304'; ctx.fill(); ctx.shadowBlur = 0;
+    ctx.shadowColor = 'rgba(0,0,0,.8)'; ctx.shadowOffsetY = R * 0.016;   // ombre dure et courte, pas de flou
+    ctx.beginPath(); ctx.arc(cx, cy, r * 1.02, 0, TAU); ctx.fillStyle = '#050304'; ctx.fill(); ctx.shadowOffsetY = 0; ctx.shadowColor = 'transparent';
     if (!lg) { ctx.restore(); A.jackal(ctx, cx, cy - r * 0.2, r * 0.44, { glow: clamp(0.65 + 0.35 * Math.sin(t * 2.4), 0, 1) }); return; }
     if (G.eg) { ctx.restore(); return; }        // pendant l'apparition plein écran, le socle reste vide
     var size = r * HEAD.hubSize, br = 1 + 0.005 * Math.sin(t * 1.1) + spinN * 0.004 * Math.sin(t * 7), sway = 0.004 * Math.sin(t * 0.6) + spinN * 0.004 * Math.sin(t * 4);
     var jx = 0, jy = 0;
-    // aura rouge qui bat (plus vive et plus rapide pendant le tour)
-    var ap = 0.5 + 0.5 * Math.sin(t * (1.4 + spinN * 1.6)), ag = ctx.createRadialGradient(cx, cy, r * 0.6, cx, cy, r * 1.5);
-    ag.addColorStop(0, 'rgba(255,205,100,' + (0.1 + 0.06 * ap + spinN * 0.05) + ')'); ag.addColorStop(1, 'rgba(255,205,100,0)'); ctx.fillStyle = ag; ctx.fillRect(cx - r * 1.7, cy - r * 1.7, r * 3.4, r * 3.4);
-    ctx.lineWidth = R * 0.022; ctx.strokeStyle = A.goldGrad(ctx, cx - r, cy - r, cx + r, cy + r); ctx.beginPath(); ctx.arc(cx, cy, r, 0, TAU); ctx.stroke();       // anneau doré du moyeu
+    // anneau du moyeu : or patiné à bandes, filet clair dehors, filet sombre dedans (aucune aura lumineuse)
+    ctx.lineWidth = R * 0.022; ctx.strokeStyle = A.goldGrad(ctx, cx - r, cy - r, cx + r, cy + r); ctx.beginPath(); ctx.arc(cx, cy, r, 0, TAU); ctx.stroke();
+    ctx.lineWidth = Math.max(1, R * 0.004); ctx.strokeStyle = 'rgba(244,234,196,.6)'; ctx.beginPath(); ctx.arc(cx, cy, r + R * 0.0105, 0, TAU); ctx.stroke();
+    ctx.strokeStyle = 'rgba(20,12,2,.85)'; ctx.beginPath(); ctx.arc(cx, cy, r - R * 0.0105, 0, TAU); ctx.stroke();
     ctx.beginPath(); ctx.arc(cx, cy, r * HEAD.hubClip, 0, TAU); ctx.clip();       // la tête est sertie dans le moyeu : plus de chaînes qui débordent sur la roue
     ctx.translate(cx + jx, cy + jy + r * 0.004 * Math.sin(t * 1.1)); ctx.rotate(sway); ctx.scale(br, br);
     // on ne garde que la tête d'Anubis (sans texte ni chaînes), recentrée dans l'anneau du moyeu
@@ -512,14 +538,14 @@
     // dôme de verre : reflet qui suit la lumière (même fini que l'ancien médaillon) ; coordonnées relatives au centre du moyeu
     ctx.globalCompositeOperation = 'source-over';
     var dl = ctx.createRadialGradient(-r * 0.35 - P.x * r * 0.12, -r * 0.45 - P.y * r * 0.1, 0, -r * 0.2, -r * 0.25, r * 1.1);
-    dl.addColorStop(0, 'rgba(255,255,255,.3)'); dl.addColorStop(0.35, 'rgba(255,255,255,.06)'); dl.addColorStop(1, 'rgba(0,0,0,.3)'); ctx.fillStyle = dl; ctx.fillRect(-r, -r, r * 2, r * 2);
+    dl.addColorStop(0, 'rgba(244,236,214,.14)'); dl.addColorStop(0.35, 'rgba(244,236,214,.03)'); dl.addColorStop(1, 'rgba(0,0,0,.34)'); ctx.fillStyle = dl; ctx.fillRect(-r, -r, r * 2, r * 2);
     ctx.restore();
   }
 
   function drawPointer(R) {
     var cx = G.cx, py = G.cy - R * 1.085, s = R * 0.16;
     ctx.save(); ctx.translate(cx, py); ctx.rotate(W.ptr.a);
-    ctx.shadowColor = 'rgba(0,0,0,.7)'; ctx.shadowBlur = 8; ctx.shadowOffsetY = 3;
+    ctx.shadowColor = 'rgba(0,0,0,.75)'; ctx.shadowBlur = 0; ctx.shadowOffsetY = 2.5;   // ombre dure courte
     if (G.icon(ctx, 'pointer', 0, s * 0.18, s * 2.7)) { ctx.restore(); return; }
     ctx.beginPath(); ctx.moveTo(-s * 0.62, -s * 0.5);
     ctx.quadraticCurveTo(0, -s * 0.9, s * 0.62, -s * 0.5);
@@ -527,7 +553,7 @@
     ctx.fillStyle = A.goldGrad(ctx, -s, -s, s, s * 1.4); ctx.fill();
     ctx.shadowColor = 'transparent'; ctx.lineWidth = 1.4; ctx.strokeStyle = '#4b350b'; ctx.stroke();
     ctx.beginPath(); ctx.arc(0, -s * 0.1, s * 0.2, 0, TAU);
-    var rg = ctx.createRadialGradient(-s * 0.05, -s * 0.15, 0, 0, -s * 0.1, s * 0.22); rg.addColorStop(0, '#ff9a8a'); rg.addColorStop(1, '#a01810');
+    var rg = ctx.createRadialGradient(-s * 0.05, -s * 0.15, 0, 0, -s * 0.1, s * 0.22); rg.addColorStop(0, '#d9735a'); rg.addColorStop(1, '#74261a');
     ctx.fillStyle = rg; ctx.fill();
     ctx.restore();
   }

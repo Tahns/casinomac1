@@ -5,18 +5,21 @@
   'use strict';
   var TAU = Math.PI * 2;
 
+  // palette « Égypte antique sombre » : noir obsidienne, or PATINÉ (jamais de jaune vif), lapis-lazuli, turquoise ; cornaline / améthyste / émeraude
+  // sont des accents sourds (pierres de joaillerie), pas des couleurs d'interface
   var C = {
     ink: '#0b0907', obsid: '#14100c', obsid2: '#1d1710', basalt: '#2a2118',
-    gold: '#e6b94a', goldHi: '#fff1b8', goldLo: '#8a6a1e', goldDeep: '#5b4311',
-    sand: '#caa45f', lapis: '#2352b8', lapisHi: '#5b8cff', turq: '#18b5a4', turqHi: '#6ff0dd',
-    carn: '#c8392b', carnHi: '#ff7a5a', amet: '#7b3fa6', ametHi: '#c28bff', emer: '#1f9d62', emerHi: '#6fe8a4',
-    white: '#fff8e6'
+    gold: '#cfa94c', goldHi: '#efdfa8', goldLo: '#7c6122', goldDeep: '#4f3a12',
+    sand: '#bfa267', lapis: '#274f9e', lapisHi: '#5b84d0', turq: '#1fa596', turqHi: '#6cd8c6',
+    carn: '#ab3f2e', carnHi: '#d9735a', amet: '#5e4a82', ametHi: '#a08cc8', emer: '#2f8a63', emerHi: '#74c9a0',
+    white: '#f4ecd6'
   };
 
+  // or patiné : bandes dures claire / médiane / sombre / médiane / claire (métal brossé, pas de dégradé lisse « plastique »)
   function goldGrad(ctx, x0, y0, x1, y1) {
     var g = ctx.createLinearGradient(x0, y0, x1, y1);
-    g.addColorStop(0, C.goldHi); g.addColorStop(0.28, C.gold); g.addColorStop(0.55, C.goldLo);
-    g.addColorStop(0.78, C.gold); g.addColorStop(1, C.goldHi);
+    g.addColorStop(0, C.goldHi); g.addColorStop(0.16, C.gold); g.addColorStop(0.46, C.gold); g.addColorStop(0.5, C.goldLo);
+    g.addColorStop(0.72, C.goldLo); g.addColorStop(0.76, C.gold); g.addColorStop(0.92, C.gold); g.addColorStop(1, C.goldHi);
     return g;
   }
   function rgba(hex, a) {

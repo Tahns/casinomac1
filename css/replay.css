@@ -2,7 +2,7 @@
 .replay #hud>*:not(#rp),.replay #history,.replay #btnInfo,.replay #btnLang,.replay #btnCur{display:none!important}
 .replay #hud{display:flex;justify-content:center;align-items:center}
 #rp{display:grid;grid-template-columns:minmax(0,1.8fr) auto minmax(0,1fr);gap:clamp(8px,1.6vw,22px);align-items:center;width:100%;max-width:940px}
-.rp-plate{background:url(../img/plaque.webp) center/100% 100% no-repeat;padding:24px 38px 17px;text-align:center;filter:drop-shadow(0 4px 8px rgba(0,0,0,.6));min-width:0}
+.rp-plate{background:url(../img/plaque.webp) center/100% 100% no-repeat;padding:24px 38px 17px;text-align:center;filter:drop-shadow(0 3px 0 rgba(0,0,0,.7));min-width:0}
 #rpBet{font:600 clamp(13px,1.8vw,19px)/1.15 var(--f-num);color:var(--gold-hi);text-shadow:0 2px 0 #000;overflow-wrap:anywhere}
 #rpSub{display:block;margin-top:3px;font:700 clamp(9px,1.1vw,11px)/1.2 var(--f-text);letter-spacing:.12em;text-transform:uppercase;color:var(--dim)}
 .rp-go{min-height:48px;padding:0 clamp(18px,3vw,36px);font-size:clamp(12px,1.5vw,15px);white-space:nowrap}
@@ -10,11 +10,11 @@
 .rp-res{visibility:hidden}.rp-res.on{visibility:visible}
 .rp-res label{font:800 8px var(--f-text);letter-spacing:.22em;color:#bfa56a;line-height:1}
 #rpResV{margin-top:3px;font:600 clamp(16px,2.2vw,26px)/1.1 var(--f-num);color:var(--txt);text-shadow:0 2px 0 #000;white-space:nowrap}
-.rp-res.win #rpResV{color:#ffe08a;text-shadow:0 2px 0 #3a2706,0 0 20px rgba(255,200,60,.6)}
+.rp-res.win #rpResV{color:#efdfa8;text-shadow:0 2px 0 #3a2706}
 .rp-badge{position:absolute;left:50%;top:max(8px,env(safe-area-inset-top));transform:translateX(-50%);padding:2px 12px;border-radius:99px;font:900 10px var(--f-title);letter-spacing:.3em;color:#140a00;background:var(--go);pointer-events:none}
 #rpMsg{position:absolute;left:50%;top:42%;transform:translate(-50%,-50%);max-width:min(560px,86vw);padding:14px 22px;border-radius:14px;text-align:center;font:700 clamp(13px,2vw,17px)/1.4 var(--f-text);color:var(--gold-hi);background:rgba(10,7,4,.9);border:1px solid var(--line);pointer-events:none;z-index:5}
 #rpMsg[hidden]{display:none}
-#rpMsg.err{color:#ffb3a6;border-color:#c8392b}
+#rpMsg.err{color:#f0c4b6;border-color:#ab3f2e}
 @media (max-width:760px),(max-width:900px) and (min-height:521px){
   #rp{grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-areas:"info info" "go res";gap:8px 10px}
   #rpInfo{grid-area:info}.rp-go{grid-area:go;justify-self:end}.rp-res{grid-area:res}
