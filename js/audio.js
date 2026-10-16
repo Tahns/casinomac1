@@ -5,6 +5,8 @@
   'use strict';
   var ctx = null, master, sfxBus, musBus, verb, muted = false, ambNodes = null, tens = null;
   var pitchSemi = 0, PK = 1, vol = 1, musicOn = true, toneV = 0.3, softA = null, softB = null;
+  var sfxOn = true, inMusic = false;   // effets sonores (hors musique) : coupés à part ; inMusic = les sons d'un thème de bonus comptent comme musique
+  function gate(bus) { return !sfxOn && !inMusic && (!bus || bus === sfxBus); }   // vrai : cet effet est coupé
   function toneHz() { return 1200 * Math.pow(7.5, toneV); }     // 0 = très sourd (1,2 kHz) … 1 = brillant (9 kHz)
   // gamme phrygienne dominante (couleur « orientale ») : E F G# A B C D
   var SCALE = [164.81, 174.61, 207.65, 220, 246.94, 261.63, 293.66];
@@ -35,7 +37,7 @@
 
   // note simple (la hauteur globale PK s'applique à toutes les fréquences)
   function tone(f, dur, type, vol0, delay, glide, wet, bus) {
-    if (!ensure()) return;
+    if (!ensure() || gate(bus)) return;
     var t = ctx.currentTime + (delay || 0), o = ctx.createOscillator(), g = ctx.createGain();
     o.type = type || 'sine'; o.frequency.setValueAtTime(f * PK, t);
     if (glide) o.frequency.exponentialRampToValueAtTime(Math.max(20, glide * PK), t + dur);
@@ -46,7 +48,7 @@
   }
   // cloche FM : porteuse + modulatrice dont l'indice retombe vite (timbre de glockenspiel / cloche de temple)
   function bell(f, dur, vol0, delay, wet, ratio, bus) {
-    if (!ensure()) return;
+    if (!ensure() || gate(bus)) return;
     var t = ctx.currentTime + (delay || 0), c = ctx.createOscillator(), m = ctx.createOscillator(), mg = ctx.createGain(), g = ctx.createGain();
     c.type = 'sine'; m.type = 'sine'; c.frequency.value = f * PK; m.frequency.value = f * PK * (ratio || 3.51);
     mg.gain.setValueAtTime(f * PK * 0.9, t); mg.gain.exponentialRampToValueAtTime(Math.max(1, f * PK * 0.02), t + dur * 0.6);
@@ -57,7 +59,7 @@
   }
   // nappe : accord aux attaques/relâchements lents (sinus + triangle légèrement désaccordés)
   function pad(freqs, dur, vol0, delay, attack, bus) {
-    if (!ensure()) return;
+    if (!ensure() || gate(bus)) return;
     var t = ctx.currentTime + (delay || 0), a = attack || dur * 0.4;
     freqs.forEach(function (f, i) {
       [0, 1].forEach(function (k) {
@@ -68,7 +70,7 @@
     });
   }
   function noise(dur, vol0, delay, freq, type, endFreq, q) {
-    if (!ensure()) return;
+    if (!ensure() || gate()) return;
     var t = ctx.currentTime + (delay || 0), n = Math.floor(ctx.sampleRate * dur), buf = ctx.createBuffer(1, n, ctx.sampleRate), d = buf.getChannelData(0);
     for (var i = 0; i < n; i++) d[i] = Math.random() * 2 - 1;
     var s = ctx.createBufferSource(); s.buffer = buf;
@@ -79,7 +81,7 @@
   }
   // souffle montant (swoosh) : bruit passe-bande dont la fréquence grimpe, volume en cloche
   function swell(dur, vol0, delay, f0, f1) {
-    if (!ensure()) return;
+    if (!ensure() || gate()) return;
     var t = ctx.currentTime + (delay || 0), n = Math.floor(ctx.sampleRate * dur), buf = ctx.createBuffer(1, n, ctx.sampleRate), d = buf.getChannelData(0);
     for (var i = 0; i < n; i++) d[i] = Math.random() * 2 - 1;
     var s = ctx.createBufferSource(); s.buffer = buf; var f = ctx.createBiquadFilter(); f.type = 'bandpass'; f.Q.value = 1.2;
@@ -89,7 +91,7 @@
   }
   // cor chaud : deux dents de scie désaccordées, filtre qui s'ouvre à l'attaque, léger vibrato
   function horn(f, dur, vol0, delay, wet) {
-    if (!ensure()) return;
+    if (!ensure() || gate()) return;
     var t = ctx.currentTime + (delay || 0), flt = ctx.createBiquadFilter(), g = ctx.createGain(), lfo = ctx.createOscillator(), lg = ctx.createGain();
     flt.type = 'lowpass'; flt.Q.value = 1.1; flt.frequency.setValueAtTime(500 * PK, t); flt.frequency.exponentialRampToValueAtTime(Math.min(7000, f * PK * 6), t + Math.min(0.18, dur * 0.4)); flt.frequency.exponentialRampToValueAtTime(900 * PK, t + dur);
     g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol0 || 0.08, t + 0.05); g.gain.setValueAtTime(vol0 || 0.08, t + dur * 0.6); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
@@ -112,7 +114,7 @@
   var SHAPER = null;
   // basse grondante : dent de scie + sous-octave saturées, filtre grave
   function growl(f, dur, vol0, delay) {
-    if (!ensure()) return; if (!SHAPER) SHAPER = shaperCurve(30);
+    if (!ensure() || gate()) return; if (!SHAPER) SHAPER = shaperCurve(30);
     var t = ctx.currentTime + (delay || 0), ws = ctx.createWaveShaper(), lp = ctx.createBiquadFilter(), g = ctx.createGain(); ws.curve = SHAPER; ws.oversample = '2x';
     lp.type = 'lowpass'; lp.Q.value = 3; lp.frequency.setValueAtTime(900, t); lp.frequency.exponentialRampToValueAtTime(240, t + dur);
     g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol0, t + 0.02); g.gain.setValueAtTime(vol0, t + dur * 0.5); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
@@ -177,6 +179,146 @@
   };
   function stopTheme() { if (theme) { clearInterval(theme.timer); theme.alive = false; theme = null; } }
 
+  /* ===== MUSIQUE DU TEMPLE : boucle égyptienne générée en direct (mode phrygien dominant, mi fa sol# la si do ré) =====
+   * Instruments synthétisés : bourdon + nappe, bendir (tambour sur cadre) et darbouka (rythme maqsoum), oud (corde pincée, Karplus-Strong),
+   * ney (flûte soufflée), arpège de cloches lent. Un séquenceur à anticipation (0,3 s) place les notes sur l'horloge audio : aucun décalage.
+   * Forme de 4 mesures bouclée (accords mi, fa, mi, ré mineur) ; l'orchestration s'étoffe puis respire. Humeur « base » (84 bpm, 4/4) ou
+   * « bonus » (108 bpm, plus dense). Tous les volumes sont bornés (<= 0,18 par voix) et passent par le compresseur maître. */
+  var BPM = { base: 84, bonus: 108 };
+  var SEMI = [0, 1, 4, 5, 7, 8, 10];
+  function deg(i) { return 164.81 * Math.pow(2, SEMI[((i % 7) + 7) % 7] / 12 + Math.floor(i / 7)); }   // degré 0 = mi3
+  var CHORDS = [[0, 2, 4], [1, 3, 5], [0, 2, 4], [6, 8, 10]];                    // indices de degrés : mi sol# si | fa la do | mi sol# si | ré fa la
+  var ROOT = [82.41, 87.31, 82.41, 73.42];                                        // basses : mi fa mi ré
+  // phrases de l'oud : [pas sur 32, degré] (2 mesures)
+  var OUD = [
+    [[0, 7], [3, 8], [4, 7], [8, 9], [10, 8], [12, 7], [16, 6], [19, 7], [20, 8], [24, 7], [28, 0]],
+    [[0, 9], [2, 10], [4, 9], [6, 8], [8, 7], [12, 8], [14, 9], [16, 11], [18, 12], [20, 11], [22, 9], [24, 8], [28, 7]],
+    [[0, 7], [8, 9], [12, 8], [16, 7], [24, 6], [28, 7]],
+    [[0, 11], [4, 9], [6, 8], [8, 9], [10, 10], [12, 9], [14, 8], [16, 7], [24, 7]]
+  ];
+  var NEY = [[14, 11], [12, 13], [14, 9], [13, 14]];                              // 2 notes longues par bloc de 4 mesures
+  var KSB = {}, NZB = null, MU = null;
+  function noiseBuf() {
+    if (NZB) return NZB;
+    NZB = ctx.createBuffer(1, ctx.sampleRate * 2, ctx.sampleRate); var d = NZB.getChannelData(0), s = 12345;
+    for (var i = 0; i < d.length; i++) { s = (s * 1103515245 + 12345) & 0x7fffffff; d[i] = (s / 0x3fffffff) - 1; }
+    return NZB;
+  }
+  function nzAt(t, dur, v, freq, type, q, bus) {   // claque de bruit filtré, à l'heure t de l'horloge audio
+    var s = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain();
+    s.buffer = noiseBuf(); f.type = type || 'bandpass'; f.frequency.value = freq * PK; f.Q.value = q || 1;
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(Math.max(0.0002, v), t + 0.004); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    s.connect(f); f.connect(g); g.connect(bus || musBus); s.start(t, Math.random() * 1.5); s.stop(t + dur + 0.05);
+  }
+  function ksBuf(f) {   // corde pincée (Karplus-Strong) : bruit adouci qui tourne dans une boucle de longueur sr/f et perd ses aigus
+    var key = Math.round(f * 10); if (KSB[key]) return KSB[key];
+    var sr = ctx.sampleRate, n = Math.max(2, Math.round(sr / f)), len = Math.floor(sr * 1.5), b = ctx.createBuffer(1, len, sr), d = b.getChannelData(0), ring = new Float32Array(n), i, lp = 0, sd = key * 7919 + 1, idx = 0, pk = 0;
+    for (i = 0; i < n; i++) { sd = (sd * 1103515245 + 12345) & 0x7fffffff; lp += ((sd / 0x3fffffff - 1) - lp) * 0.5; ring[i] = lp; }
+    for (i = 0; i < len; i++) { var nx = idx + 1 === n ? 0 : idx + 1; d[i] = ring[idx]; ring[idx] = (ring[idx] + ring[nx]) * 0.498; idx = nx; if (Math.abs(d[i]) > pk) pk = Math.abs(d[i]); }
+    var k = pk > 0 ? 0.9 / pk : 1; for (i = 0; i < len; i++) d[i] *= k;
+    var fade = Math.floor(sr * 0.08); for (i = 0; i < fade; i++) d[len - 1 - i] *= i / fade;   // fin de buffer sans clic
+    return (KSB[key] = b);
+  }
+  function oudNote(f, t, v) {   // deux cordes légèrement désaccordées (chœur de l'oud), filtre doux
+    f *= PK; var g = ctx.createGain(), lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 2300; lp.Q.value = 0.6;
+    g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(0.0001, t + 1.3);
+    [1, 1.0035].forEach(function (r) { var s = ctx.createBufferSource(); s.buffer = ksBuf(f); s.playbackRate.value = r; s.connect(lp); s.start(t); s.stop(t + 1.4); });
+    lp.connect(g); g.connect(musBus); var w = ctx.createGain(); w.gain.value = 0.3; g.connect(w); w.connect(verb);
+  }
+  function neyNote(f, t, dur, v) {   // flûte de roseau : sinus + octave, souffle bruité, vibrato qui s'installe
+    f *= PK; var g = ctx.createGain(), lp = ctx.createBiquadFilter(), lfo = ctx.createOscillator(), lg = ctx.createGain(), o1 = ctx.createOscillator(), o2 = ctx.createOscillator(), g2 = ctx.createGain(), br = ctx.createBufferSource(), bf = ctx.createBiquadFilter(), bg = ctx.createGain();
+    lp.type = 'lowpass'; lp.frequency.value = 3200; o1.type = 'sine'; o2.type = 'triangle'; o1.frequency.value = f; o2.frequency.value = f * 2; g2.gain.value = 0.16;
+    lfo.frequency.value = 5.1; lg.gain.setValueAtTime(0, t); lg.gain.linearRampToValueAtTime(f * 0.011, t + dur * 0.6); lfo.connect(lg); lg.connect(o1.frequency); lg.connect(o2.frequency);
+    bf.type = 'bandpass'; bf.frequency.value = f * 2.2; bf.Q.value = 2.5; bg.gain.value = 0.22; br.buffer = noiseBuf(); br.loop = true;
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(v, t + 0.16); g.gain.setValueAtTime(v, t + dur - 0.4); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o1.connect(lp); o2.connect(g2); g2.connect(lp); br.connect(bf); bf.connect(bg); bg.connect(lp); lp.connect(g); g.connect(musBus); var w = ctx.createGain(); w.gain.value = 0.5; g.connect(w); w.connect(verb);
+    [o1, o2, lfo].forEach(function (o) { o.start(t); o.stop(t + dur + 0.05); }); br.start(t, Math.random()); br.stop(t + dur + 0.05);
+  }
+  function mPad(freqs, t, dur, v) {   // nappe de l'accord : sinus + triangle, attaque lente
+    freqs.forEach(function (f) {
+      [0, 1].forEach(function (k) {
+        var o = ctx.createOscillator(), g = ctx.createGain(); o.type = k ? 'triangle' : 'sine'; o.frequency.value = f * PK * (k ? 1.004 : 1);
+        g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(v / (k ? 2.4 : 1) / Math.sqrt(freqs.length), t + dur * 0.4); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+        o.connect(g); g.connect(musBus); var w = ctx.createGain(); w.gain.value = 0.5; g.connect(w); w.connect(verb); o.start(t); o.stop(t + dur + 0.05);
+      });
+    });
+  }
+  // percussions : bendir (doum grave + tak sec) et darbouka (plus aiguë, plus vive)
+  function pDum(t, v, hi) {
+    var o = ctx.createOscillator(), g = ctx.createGain(); o.type = 'sine'; o.frequency.setValueAtTime((hi ? 170 : 128) * PK, t); o.frequency.exponentialRampToValueAtTime((hi ? 88 : 60) * PK, t + 0.15);
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(v, t + 0.006); g.gain.exponentialRampToValueAtTime(0.0001, t + (hi ? 0.28 : 0.38)); o.connect(g); g.connect(musBus); o.start(t); o.stop(t + 0.45); nzAt(t, 0.08, v * 0.45, 650, 'lowpass', 0.7);
+  }
+  function pTak(t, v, hi) {
+    nzAt(t, 0.055, v, hi ? 3000 : 2300, 'bandpass', 2.2); var o = ctx.createOscillator(), g = ctx.createGain(); o.type = 'triangle'; o.frequency.setValueAtTime((hi ? 1100 : 850) * PK, t); o.frequency.exponentialRampToValueAtTime(520 * PK, t + 0.04);
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(v * 0.4, t + 0.003); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.05); o.connect(g); g.connect(musBus); o.start(t); o.stop(t + 0.08);
+  }
+  function pKa(t, v) { nzAt(t, 0.035, v, 3800, 'bandpass', 1.6); }
+  function pZil(t, v) { nzAt(t, 0.16, v, 7200, 'highpass', 0.8); }
+
+  function musicStep(n, t, M) {
+    var bar = n >> 4, s = n & 15, ci = bar & 3, now = ctx.currentTime, dl = t - now, bonus = M.mood === 'bonus', lvl;
+    if (bonus) lvl = 3; else if (bar < 2) lvl = 0; else { var c = (bar - 2) % 20; lvl = c < 2 ? 1 : c < 6 ? 2 : c < 18 ? 3 : 2; }
+    // nappe de l'accord, une par mesure
+    if (s === 0) { var ch = CHORDS[ci].map(function (i) { return deg(i); }); mPad(ch, t, bonus ? 2.4 : 3.4, bonus ? 0.085 : 0.07); }
+    if (lvl >= 1 && (s === 0 || s === 8)) { tone(ROOT[ci] * 2, 1.1, 'sine', 0.085, dl, null, false, musBus); tone(ROOT[ci] * 4.01, 0.6, 'triangle', 0.012, dl, null, false, musBus); }
+    // percussions (maqsoum : doum . tak . . tak doum . . tak . . ) ; l'orchestration s'étoffe avec le niveau
+    if (lvl >= 1) {
+      var dv = bonus ? 0.17 : 0.13;
+      if (s === 0 || s === 8) pDum(t, dv * (s ? 0.85 : 1), bonus);
+      if (lvl >= 2 && (s === 6 || s === 12)) pTak(t, bonus ? 0.07 : 0.05, bonus);
+      if (lvl >= 3) {
+        if (s === 2) pTak(t, 0.04, bonus);
+        if (s === 4 || s === 10 || s === 14) pKa(t, 0.028);
+        if (bonus && (s === 3 || s === 11)) pDum(t, 0.07, true);
+        if (s % 2 === 1) pZil(t, 0.006 + (s % 4 === 3 ? 0.004 : 0));
+        if ((bar & 3) === 3 && s >= 12) pKa(t, 0.03 + (s - 12) * 0.01);                // petite relance avant le retour
+      }
+    }
+    // arpège de cloches : sur l'accord, lent ; un peu plus dense aux niveaux hauts
+    if (lvl >= 1 && s % 4 === 0) { var a = CHORDS[ci][[0, 1, 2, 1][s >> 2]]; bell(deg(a + 7), 1.2, 0.017, dl, true, 3.0, musBus); }
+    if (lvl >= 2 && s % 4 === 2 && Math.random() < 0.55) bell(deg(CHORDS[ci][Math.floor(Math.random() * 3)] + 14), 1.0, 0.009, dl, true, 3.2, musBus);
+    // oud : une phrase de 2 mesures ; niveau 2 = phrases 1 et 3 seulement
+    if (lvl >= 2 && !M.tense) {
+      var pi = (bar >> 1) & 3;
+      if (lvl >= 3 || pi % 2 === 0) { var lp = ((bar & 1) << 4) + s; OUD[pi].forEach(function (e) { if (e[0] === lp) oudNote(deg(e[1]), t, e[0] % 8 === 0 ? 0.17 : 0.14); }); }
+    }
+    // ney : deux notes longues par bloc de 4 mesures (mesures 3 et 4)
+    if (lvl >= 3 && !M.tense && s === 0 && (bar & 3) >= 2) neyNote(deg(NEY[(bar >> 2) & 3][(bar & 3) - 2]), t, 2.7, 0.05);
+    // tension : doum de plus en plus serrés
+    if (M.tense && s % 2 === 0) pDum(t, 0.05 + M.tense * 0.1, false);
+  }
+  function musicSched() {
+    if (!MU || !MU.alive || !ctx) return;
+    var now = ctx.currentTime;
+    if (document.hidden || muted || !musicOn) { MU.next = now + 0.1; return; }
+    if (MU.next < now - 0.4) MU.next = now + 0.05;                                     // retard (onglet endormi) : on repart sans rattraper
+    var sd = 60 / BPM[MU.mood] / 4;
+    while (MU.next < now + 0.3) { try { musicStep(MU.step, MU.next, MU); } catch (e) {} MU.next += sd; MU.step++; }
+  }
+  function musicStart(mood) {
+    if (!ensure() || MU) return false;
+    var t0 = ctx.currentTime, dg = ctx.createGain(), lp = ctx.createBiquadFilter(), lfo = ctx.createOscillator(), lg = ctx.createGain(), nodes = [lfo];
+    lp.type = 'lowpass'; lp.frequency.value = 340; lp.Q.value = 0.7; lfo.frequency.value = 0.07; lg.gain.value = 90; lfo.connect(lg); lg.connect(lp.frequency);
+    dg.gain.setValueAtTime(0.0001, t0); dg.gain.exponentialRampToValueAtTime(0.06, t0 + 4);   // bourdon sur mi : fondamentale + quinte, deux dents de scie désaccordées
+    [[82.41, 'sawtooth', -6, 1], [82.41, 'sawtooth', 6, 1], [123.47, 'sine', 0, 0.7], [41.2, 'sine', 0, 0.9]].forEach(function (p) {
+      var o = ctx.createOscillator(), og = ctx.createGain(); o.type = p[1]; o.frequency.value = p[0] * PK * Math.pow(2, p[2] / 1200); og.gain.value = p[3] * (p[1] === 'sawtooth' ? 0.5 : 1);
+      o.connect(og); og.connect(lp); o.start(t0); nodes.push(o);
+    });
+    lfo.start(t0); lp.connect(dg); dg.connect(musBus);
+    MU = { alive: true, step: 0, next: t0 + 0.12, mood: mood || 'base', tense: 0, g: dg, nodes: nodes, timer: setInterval(musicSched, 60) };
+    return true;
+  }
+  function musicStop() {
+    if (!MU) return; var m = MU; MU = null; m.alive = false; clearInterval(m.timer);
+    if (ctx) { m.g.gain.cancelScheduledValues(ctx.currentTime); m.g.gain.setValueAtTime(Math.max(0.0001, m.g.gain.value), ctx.currentTime); m.g.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.5); }
+    setTimeout(function () { m.nodes.forEach(function (o) { try { o.stop(); } catch (e) {} }); }, 650);
+  }
+  // baisse brève de la musique sous un effet fort (brisure, tension), puis retour en douceur
+  function duck(level, dur) {
+    if (!musBus) return; var t = ctx.currentTime; musBus.gain.cancelScheduledValues(t); musBus.gain.setValueAtTime(musBus.gain.value, t);
+    musBus.gain.linearRampToValueAtTime(0.5 * level, t + 0.08); musBus.gain.linearRampToValueAtTime(0.5, t + dur);
+  }
+
   var A = {
     unlock: ensure,
     tick: function (speed) { tone(950 + (speed || 0) * 350, 0.03, 'triangle', 0.035); tone(520, 0.04, 'sine', 0.05); },
@@ -184,7 +326,7 @@
     whoosh: function () { swell(0.9, 0.16, 0, 300, 3600); },
     // Anubis surgit : grondement qui monte, grognement filtré, battement sourd, puis coup rouge
     anubisRise: function () {
-      if (!ensure()) return; var t = ctx.currentTime;
+      if (!ensure() || gate()) return; var t = ctx.currentTime;
       noise(2.4, 0.2, 0, 90, 'lowpass', 600);
       tone(46, 2.6, 'sine', 0.3, 0, 90, true);
       var o = ctx.createOscillator(), f = ctx.createBiquadFilter(), g = ctx.createGain(), l = ctx.createOscillator(), lg = ctx.createGain();       // grognement : dent de scie grave, filtre et trémolo
@@ -284,7 +426,7 @@
     },
     // pluie de pièces : tintements rapprochés (limitée pour ne pas saturer)
     coinShower: function (n) {
-      if (!ensure()) return; var now = ctx.currentTime; if (now - lastShower < 0.18) return; lastShower = now;
+      if (!ensure() || gate()) return; var now = ctx.currentTime; if (now - lastShower < 0.18) return; lastShower = now;
       n = Math.max(3, Math.min(14, n | 0));
       for (var i = 0; i < n; i++) bell(700 + Math.random() * 700, 0.26 + Math.random() * 0.12, 0.024 + Math.random() * 0.015, i * (0.04 + Math.random() * 0.03), true, 2.4);
     },
@@ -294,37 +436,15 @@
       bell(winNote(k % 10, 1), 0.2, 0.03 + p * 0.025, 0, true, 3.51);
     },
 
-    // ambiance très douce : nappe de ré mineur (sinus filtrés), respiration lente, rares cloches lointaines. Aucun bourdon, aucun battement.
+    // musique du temple (voir plus haut) : remplace l'ancienne nappe ; mêmes noms d'appel. Jamais par-dessus un thème de bonus.
     startAmbient: function () {
-      if (!musicOn || !ensure() || ambNodes || theme) return;   // jamais d'ambiance par-dessus un thème de bonus (changement de hauteur / musique en plein bonus)
-      var t0 = ctx.currentTime, nodes = [], g = ctx.createGain(), f = ctx.createBiquadFilter(), lfo = ctx.createOscillator(), lg = ctx.createGain(), br = ctx.createOscillator(), brg = ctx.createGain();
-      f.type = 'lowpass'; f.frequency.value = 650; f.Q.value = 0.4;
-      lfo.frequency.value = 0.045; lg.gain.value = 140; lfo.connect(lg); lg.connect(f.frequency);
-      g.gain.value = 0; g.gain.linearRampToValueAtTime(0.045, t0 + 6);
-      br.frequency.value = 0.06; brg.gain.value = 0.012; br.connect(brg); brg.connect(g.gain);   // respiration
-      [[73.42, 0.9], [110.0, 0.8], [146.83, 0.7], [174.61, 0.45], [220.0, 0.4]].forEach(function (p) {
-        [-3, 3].forEach(function (cents) {
-          var o = ctx.createOscillator(), og = ctx.createGain(); o.type = 'sine'; o.frequency.value = p[0] * PK * Math.pow(2, cents / 1200); og.gain.value = p[1] / 2;
-          o.connect(og); og.connect(f); o.start(); nodes.push(o);
-        });
-      });
-      f.connect(g); g.connect(musBus); verb && g.connect(verb); lfo.start(); br.start(); nodes.push(lfo, br);
-      ambNodes = { nodes: nodes, g: g, alive: true };
-      var me = ambNodes;
-      (function next() {
-        if (ambNodes !== me || !me.alive) return;
-        setTimeout(function () {
-          if (ambNodes !== me || !me.alive) return;
-          if (!muted) { var fq = PENTA[Math.floor(Math.random() * PENTA.length)]; bell(fq * 2, 3.2, 0.016, 0, true, 3.0, musBus); }
-          next();
-        }, 7000 + Math.random() * 9000);
-      })();
+      if (!musicOn || !ensure() || MU || theme) return;
+      musicStart('base'); ambNodes = MU;
     },
-    stopAmbient: function () {
-      if (!ambNodes) return; var n = ambNodes; ambNodes = null; n.alive = false;
-      n.g.gain.cancelScheduledValues(ctx.currentTime); n.g.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.5);
-      setTimeout(function () { n.nodes.forEach(function (o) { try { o.stop(); } catch (e) {} }); }, 650);
-    },
+    stopAmbient: function () { ambNodes = null; musicStop(); },
+    // humeur de la musique : 'base' (calme) ou 'bonus' (plus rapide, plus dense)
+    musicMood: function (m) { m = m === 'bonus' ? 'bonus' : 'base'; if (MU) MU.mood = m; },
+    isMusicPlaying: function () { return !!MU; },
     // annonce « BONUS » : montée dramatique (souffle + arpège de cloches + nappe + coup grave)
     bonusReveal: function () {
       swell(1.6, 0.17, 0, 180, 4200);
@@ -362,7 +482,7 @@
       if (!ensure()) return; var T = THEMES[kind]; if (!T) return;
       stopTheme(); ambWas = !!ambNodes; A.stopAmbient(); themeLevel = 0;
       var tm = theme = { kind: kind, step: 0, alive: true, timer: null }, ms = 60000 / T.bpm / 2;
-      tm.timer = setInterval(function () { if (!tm.alive || muted || !musicOn || document.hidden) return; try { T.step(tm.step++, themeLevel); } catch (e) {} }, ms);
+      tm.timer = setInterval(function () { if (!tm.alive || muted || !musicOn || document.hidden) return; inMusic = true; try { T.step(tm.step++, themeLevel); } catch (e) {} inMusic = false; }, ms);
     },
     stopBonusTheme: function () { stopTheme(); if (musicOn && !muted) setTimeout(function () { if (!theme) A.startAmbient(); }, 900); },
     bonusUp: function () { themeLevel = Math.min(4, themeLevel + 1); },
@@ -463,7 +583,49 @@
     furyFail: function () {                      // mauvaise couleur : tout retombe
       tone(130, 1.5, 'sawtooth', 0.12, 0, 30, true); growl(41.2, 1.6, 0.22, 0); taiko(0.4, 0.2, true); noise(1.2, 0.12, 0, 900, 'lowpass', 90);
     },
+    // ---- sons du motif « Unchained » et de la roue ----
+    // brisure d'une chaîne : coup de métal, maillons qui tombent, éclat de lumière divine (accord + souffle), choc grave ; la musique baisse un instant
+    chainBreak: function (light) {   // light : version courte (chaîne d'en-tête à l'ouverture d'un bonus, déjà couverte par l'annonce du bonus)
+      if (!ensure()) return; duck(light ? 0.6 : 0.25, light ? 1.2 : 2.4);
+      noise(0.09, 0.2, 0, 5200, 'highpass'); noise(0.22, 0.16, 0, 2400, 'bandpass', 900, 1.2);                       // claque du métal
+      bell(1180, 0.9, 0.09, 0, true, 5.4); bell(1760, 0.7, 0.06, 0.01, true, 6.1); tone(210, 0.18, 'square', 0.04, 0, 70);
+      for (var i = 0; i < 11; i++) bell(1500 + Math.random() * 3800, 0.18 + Math.random() * 0.25, 0.05 * (1 - i / 14), 0.06 + i * 0.055 + Math.random() * 0.03, true, 5.8 + Math.random());   // maillons qui rebondissent
+      if (light) { boom(0.25, 0); return; }
+      swell(0.7, 0.16, 0.02, 500, 8000);                                                                             // éclat
+      pad([winNote(0, 0), winNote(2, 0), winNote(4, 0), winNote(0, 1)], 2.2, 0.16, 0.12, 0.3);
+      [0, 2, 4, 6].forEach(function (k, j) { bell(winNote(k, 2), 1.6, 0.05, 0.2 + j * 0.06, true, 3.0); });
+      boom(0.45, 0);
+    },
+    // chaîne qui se reforme : cliquetis de plus en plus serré, puis verrou
+    chainForge: function () {
+      if (!ensure()) return;
+      for (var i = 0; i < 9; i++) { var t = 0.55 * (1 - Math.pow(1 - i / 9, 1.6)); bell(1300 + i * 150, 0.2, 0.04 + i * 0.004, t, false, 5.6); noise(0.03, 0.04, t, 4200, 'bandpass', undefined, 2); }
+      tone(150, 0.3, 'sine', 0.12, 0.58, 70, true); bell(SCALE[0] * 4, 0.9, 0.05, 0.6, true, 3.0); noise(0.1, 0.1, 0.58, 3000, 'bandpass', 1200, 1.4);
+    },
+    // anticipation : montée de tension de dur secondes (battements qui s'accélèrent, souffle grave qui s'ouvre, hauteur qui grimpe, dissonance finale)
+    tension: function (dur) {
+      if (!ensure()) return; dur = Math.max(0.8, Math.min(6, +dur || 2.4)); duck(0.55, dur + 0.6);
+      swell(dur, 0.14, 0, 140, 3400);
+      if (!gate()) {
+        var t0 = ctx.currentTime, o = ctx.createOscillator(), g = ctx.createGain();
+        o.type = 'sine'; o.frequency.setValueAtTime(110 * PK, t0); o.frequency.exponentialRampToValueAtTime(330 * PK, t0 + dur);
+        g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(0.07, t0 + dur * 0.92); g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur + 0.15);
+        o.connect(g); g.connect(sfxBus); g.connect(verb); o.start(t0); o.stop(t0 + dur + 0.2);
+      }
+      var tt = 0, gap = 0.62, k = 0;
+      while (tt < dur - 0.1) { tone(58, 0.2, 'sine', 0.1 + 0.1 * (tt / dur), tt, 38); tone(48, 0.22, 'sine', 0.07 + 0.08 * (tt / dur), tt + Math.min(0.2, gap * 0.4), 34); tt += gap; gap = Math.max(0.2, gap * 0.82); k++; }
+      bell(SCALE[0] * 8, 1.0, 0.03, dur - 0.1, true, 3.1); bell(SCALE[1] * 8, 1.0, 0.03, dur - 0.1, true, 3.1);
+    },
+    // arrêt de la roue : le pointeur claque sur une cheville, pierre grave, petite cloche
+    stopHit: function (strong) {
+      var v = strong ? 1 : 0.7;
+      tone(190, 0.14, 'triangle', 0.1 * v, 0, 80); noise(0.07, 0.1 * v, 0, 1800, 'bandpass', 900, 1.5);
+      tone(70, 0.4, 'sine', 0.14 * v, 0, 42, true); bell(SCALE[0] * 4, 0.6, 0.03 * v, 0.02, true, 2.6);
+    },
     // ---- réglages joueur ----
+    // effets sonores : coupés séparément de la musique (« Son » = tout couper reste le réglage général exigé par Stake)
+    setSfx: function (on) { sfxOn = !!on; },
+    isSfx: function () { return sfxOn; },
     setMuted: function (m) { muted = m; if (master) master.gain.value = m ? 0 : 0.85 * vol; },
     isMuted: function () { return muted; },
     // hauteur globale en demi-tons (-12 … +12) ; les notes déjà en cours ne bougent pas, l'ambiance est relancée

@@ -22,6 +22,7 @@ l=l||'en';d.lang=l;d.setAttribute('data-lang',l);d.dir=l==='ar'?'rtl':'ltr'})();
 
 <div id="ui">
   <header id="top">
+    <canvas id="hdrChain" aria-hidden="true"></canvas>
     <div class="brand">
       <span class="b-small" data-i="brandTop">ANUBIS</span>
       <span class="b-big">UNCHAINED</span>
@@ -38,7 +39,7 @@ l=l||'en';d.lang=l;d.setAttribute('data-lang',l);d.dir=l==='ar'?'rtl':'ltr'})();
     <div class="mx-row"><label for="mxVol" id="mxVolL">Volume</label><input id="mxVol" type="range" min="0" max="100" step="5"><b id="mxVolV"></b></div>
     <div class="mx-row"><label for="mxTone" id="mxToneL">Treble</label><input id="mxTone" type="range" min="0" max="100" step="5"><b id="mxToneV"></b></div>
     <div class="mx-row"><label for="mxPitch" id="mxPitchL">Pitch</label><input id="mxPitch" type="range" min="-12" max="12" step="1"><b id="mxPitchV"></b></div>
-    <div class="mx-row mx-btns"><button id="mxMute" type="button" class="chip"></button><button id="mxMusic" type="button" class="chip"></button><button id="mxReset" type="button" class="chip"></button></div>
+    <div class="mx-row mx-btns"><button id="mxMute" type="button" class="chip"></button><button id="mxSfx" type="button" class="chip"></button><button id="mxMusic" type="button" class="chip"></button><button id="mxReset" type="button" class="chip"></button></div>
   </div>
 
   <div id="oracle" class="pill" role="status" aria-label="Oracle boost" hidden><svg><use href="#i-eye" width="100%" height="100%"/></svg><span id="oracleText"></span></div>
@@ -80,11 +81,12 @@ l=l||'en';d.lang=l;d.setAttribute('data-lang',l);d.dir=l==='ar'?'rtl':'ltr'})();
   <symbol id="i-eye" viewBox="0 0 48 24"><g fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12Q22 -2 45 10Q26 24 3 12Z"/><circle cx="25" cy="11" r="4.4" fill="currentColor"/></g></symbol>
 </svg>
 
-<div id="splash" hidden><div class="spTxt"><div class="spSub1">ANUBIS</div><h1 class="spTitle">UNCHAINED</h1><p class="spSub" id="spSub"></p><button class="spBtn" id="spBtn" type="button"></button><p class="spDemo" id="spDemo"></p></div></div>
+<div id="splash" hidden role="dialog" aria-modal="true" aria-labelledby="spTitle"><canvas id="spCv" aria-hidden="true"></canvas><div class="spTxt"><div class="spSub1">ANUBIS</div><h1 class="spTitle" id="spTitle">UNCHAINED</h1><p class="spSub" id="spSub"></p><div class="spCar" id="spCar" role="region" aria-roledescription="carousel"><div class="spTrack" id="spTrack"></div><div class="spNav"><button class="spArr" id="spPrev" type="button"><svg viewBox="0 0 12 20" aria-hidden="true"><path d="M9 2 3 10l6 8" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button><div class="spDots" id="spDots"></div><button class="spArr" id="spNext" type="button"><svg viewBox="0 0 12 20" aria-hidden="true"><path d="m3 2 6 8-6 8" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button><button class="spSkip" id="spSkip" type="button"></button></div></div><button class="spBtn" id="spBtn" type="button"></button><p class="spDemo" id="spDemo"></p></div></div>
 <script src="js/build.js"></script>
 <script src="js/math.js"></script>
 <script src="js/rgs.js"></script>
 <script src="js/art.js"></script>
+<script src="js/chains.js"></script>
 <script src="js/audio.js"></script>
 <script src="js/fx.js"></script>
 <script src="js/i18n.js"></script>

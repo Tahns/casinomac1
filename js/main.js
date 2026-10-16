@@ -41,6 +41,7 @@
   var tabOff = false;   // mode RGS : cet onglet n'est pas l'onglet de jeu actif (voir plus bas)
   var GLE_WAIT = 60000;   // ERR_GLE du RGS : plus aucune mise pendant cette durée, puis le serveur tranche de nouveau
   var LIMIT_BASE = [0, 20, 50, 100, 250, 500], LIMITS = LIMIT_BASE.slice();
+  var hdr = null;   // chaîne d'en-tête (js/chains.js) : se brise quand un bonus s'ouvre, se reforme à sa sortie
   var rng = STAKE ? null : M.cryptoRng();   // build Stake : aucun tirage dans le navigateur (le RGS tire)
 
   // devise : ?currency= de l'URL (prioritaire, verrouille le sélecteur), sinon le choix du joueur, sinon la langue (démo locale) ;
@@ -114,6 +115,7 @@
         if (typeof d.vol === 'number') Sfx.setVolume(d.vol);
         if (typeof d.tone === 'number') Sfx.setTone(d.tone);
         if (d.music === false) Sfx.setMusic(false);
+        if (d.sfx === false) Sfx.setSfx(false);
         if (d.turbo) { G.turbo = true; G.ultra = !!d.ultra; G.speed = spd(); }
         if (typeof d.sobV2 === 'boolean') S.stopOnBonus = d.sobV2;   // (l'ancienne clé valait « oui » par défaut : ignorée)
         if (d.reduced) { S.reduced = true; FX.reduced = true; }
@@ -138,7 +140,7 @@
     if (REPLAY) return;
     try {
       S.synced = S.balance;
-      localStorage.setItem(SAVE_KEY, JSON.stringify({ v: SAVE_VER, t: Date.now(), cur: S.curSet ? S.cur : '', balCur: S.cur, pending: LIVE ? 0 : S.pending, balance: LIVE ? START_BAL : S.balance, bi: LIVE ? BET_DEFAULT : S.bi, lang: I18N.lang(), langSet: S.langSet ? 1 : 0, muted: Sfx.isMuted(), pitch: Sfx.getPitch(), vol: Sfx.getVolume(), tone: Sfx.getTone(), music: Sfx.isMusic(), turbo: G.turbo, ultra: !!G.ultra, sobV2: S.stopOnBonus, reduced: S.reduced, hist: S.hist, mode: S.mode, buyOn: S.buyOn, limit: S.limitB, quality: S.quality }));
+      localStorage.setItem(SAVE_KEY, JSON.stringify({ v: SAVE_VER, t: Date.now(), cur: S.curSet ? S.cur : '', balCur: S.cur, pending: LIVE ? 0 : S.pending, balance: LIVE ? START_BAL : S.balance, bi: LIVE ? BET_DEFAULT : S.bi, lang: I18N.lang(), langSet: S.langSet ? 1 : 0, muted: Sfx.isMuted(), pitch: Sfx.getPitch(), vol: Sfx.getVolume(), tone: Sfx.getTone(), music: Sfx.isMusic(), sfx: Sfx.isSfx(), turbo: G.turbo, ultra: !!G.ultra, sobV2: S.stopOnBonus, reduced: S.reduced, hist: S.hist, mode: S.mode, buyOn: S.buyOn, limit: S.limitB, quality: S.quality }));
     } catch (e) {}
     saveSess();
   }
@@ -293,7 +295,9 @@
         $('oracle').hidden = false;
         await G.wheel.showOracle(sp.oracle);
       }
-      if (!buyKind) await G.wheel.spinTo(sp);
+      var bonusBound = !buyKind && !(M.KINDS[sp.kind] || { bonus: true }).respin && (M.KINDS[sp.kind] || { bonus: true }).bonus;
+      if (bonusBound && !G.turbo) setTimeout(function () { if (S.busy && G.wheel.spinning) Sfx.tension(3.2); }, 3000);   // anticipation : la roue ralentit vers un bonus
+      if (!buyKind) { await G.wheel.spinTo(sp); Sfx.stopHit(bonusBound); }
       if (!buyKind && sp.oracle) { $('oracleText').textContent = T.oracleOn + ' ×' + sp.oracle.boost + ' → ' + T.kinds[sp.oracle.kind].replace('\n', ' '); await G.wheel.revealOracle(); }
       G.speed = spd();
       var def = M.KINDS[sp.kind] || { bonus: true };
@@ -307,8 +311,10 @@
         hadBonus = true; say(sp.upgraded ? T.kindsLong.hand : T.kindsLong[sp.kind]);
         // on tombe sur un bonus : le turbo/ultra se coupe tout de suite pour jouer le bonus et ses animations à vitesse normale
         if (G.turbo) { G.turbo = false; G.ultra = false; G.speed = 1; setSpinBtn(); save(); }
+        if (hdr) hdr.breakNow(function () { Sfx.chainBreak(true); });
         await G.cellWin(sp);      // la case s'anime (le scarabée s'envole, la plume tombe, la pyramide s'ouvre, Anubis frappe…) avant l'apparition d'Anubis
         await G.runBonus(sp, b);
+        if (hdr) hdr.reform(function () { Sfx.chainForge(); });
       } else if (sp.pay > 0) {
         if (sp.boost > 1) await G.wheel.applyBoost();   // le chiffre de la case est réécrit déjà multiplié
         await G.cellWin(sp);      // pièces + compteur qui défile, plus riche selon la case
@@ -320,6 +326,7 @@
       if (LIVE) RG.betEvent(i + 1);   // progression du tour (reprise éventuelle côté serveur), sans attendre la réponse
     } } catch (err) {   // une scène en erreur ne doit jamais bloquer le jeu ni perdre le gain déjà décidé
       if (root.console) console.error(err);
+      if (hdr) hdr.reform();
       total = 0; round.spins.forEach(function (x) { total += x.pay; }); G.scene = null; G.eg = null; G.winOv = null; G.fade = 0; G.chain = null; G.fxScale = 1; G.setScene(null);
     }
     total = LIVE ? srv.mult : Math.min(total, M.MAX_WIN);   // en mode RGS le gain fait foi : payoutMultiplier du serveur, jamais recalculé par le jeu
@@ -493,6 +500,7 @@
     $('mxPitch').value = Sfx.getPitch(); $('mxPitchV').textContent = (Sfx.getPitch() > 0 ? '+' : '') + Sfx.getPitch();
     $('mxMute').textContent = Sfx.isMuted() ? T.soundOff : T.soundOn; $('mxMute').classList.toggle('on', !Sfx.isMuted());
     $('mxMusic').textContent = T.musicShort; $('mxMusic').classList.toggle('on', Sfx.isMusic());
+    $('mxSfx').textContent = I18N.block('intro').sfxShort; $('mxSfx').classList.toggle('on', Sfx.isSfx());
     $('mxReset').textContent = T.resetL;
     $('btnSound').setAttribute('aria-label', T.mixLabel);
   }
@@ -509,7 +517,8 @@
   $('mxPitch').addEventListener('change', function () { Sfx.coin(1); Sfx.chime(4); });
   $('mxMute').addEventListener('click', function () { Sfx.unlock(); Sfx.setMuted(!Sfx.isMuted()); refreshSound(); save(); });
   $('mxMusic').addEventListener('click', function () { Sfx.unlock(); Sfx.setMusic(!Sfx.isMusic()); refreshMixer(); save(); });
-  $('mxReset').addEventListener('click', function () { Sfx.setTone(0.3); Sfx.setPitch(0); Sfx.setVolume(1); Sfx.setMuted(false); Sfx.setMusic(true); refreshSound(); save(); Sfx.coin(1); });
+  $('mxSfx').addEventListener('click', function () { Sfx.unlock(); Sfx.setSfx(!Sfx.isSfx()); refreshMixer(); save(); if (Sfx.isSfx()) Sfx.coin(1); });
+  $('mxReset').addEventListener('click', function () { Sfx.setTone(0.3); Sfx.setPitch(0); Sfx.setVolume(1); Sfx.setMuted(false); Sfx.setMusic(true); Sfx.setSfx(true); refreshSound(); save(); Sfx.coin(1); });
   // devise : change le symbole et convertit solde, mises et plafonds de la démo (ratio des taux indicatifs de CUR)
   function curButton() {
     var b = $('btnCur'), sy = G.sym(), t = sy.length > 2 ? S.cur : sy;
@@ -666,7 +675,8 @@
     ['m0', 'm025', 'm05', 'm1', 'm2', 'm3', 'ankh', 'scarab', 'weigh', 'vault'].forEach(function (id) {
       var def = M.KINDS[id], pays = def.bonus ? desc[id] : def.respin ? T.respinLabel : (def.mult ? def.mult + '×' : T.noWin);
       var fq = id === 'm05' ? 0.5 : id === 'm025' ? 0.3 : 0, disc = fq ? ' <svg width="15" height="15" viewBox="-8 -8 16 16" style="vertical-align:-3px;margin-left:4px"><circle r="7" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M0 0V-6A6 6 0 ' + (fq > 0.5 ? 1 : 0) + ' 1 ' + (6 * Math.sin(2 * Math.PI * fq)).toFixed(2) + ' ' + (-6 * Math.cos(2 * Math.PI * fq)).toFixed(2) + 'Z" fill="currentColor"/></svg>' : '';
-      rows += '<tr><td><span class="sw" style="background:' + G.kindColor(id) + '"></span>' + T.kinds[id] + disc + '</td><td class="n">' + def.count + ' / ' + M.N + '</td><td>' + pays + '</td></tr>';
+      var bi = (root.ANUBIS_IMG || {})['ic_' + id], pic = bi ? '<img class="rIc" alt="" src="' + bi + '" width="28" height="28">' : id === 'ankh' ? '<svg class="rAnk" viewBox="-14 -20 28 40" aria-hidden="true"><use href="#i-ankh" width="100%" height="100%"/></svg>' : '';
+      rows += '<tr><td><span class="sw" style="background:' + G.kindColor(id) + '"></span>' + pic + T.kinds[id] + disc + '</td><td class="n">' + def.count + ' / ' + M.N + '</td><td>' + pays + '</td></tr>';
     });
     $('modalBody').innerHTML =
       '<h2>' + T.infoTitle + '</h2>' + (LIVE ? '' : '<p class="sub">' + T.demo + '</p><p class="sub">' + T.demoBuild + '</p><p class="sub">' + T.curHint + '</p>') +   // [77] « argent fictif / démo » : démo locale seulement, jamais en session RGS
@@ -710,7 +720,7 @@
     });
     $('optBuy').onclick = function () { S.buyOn = !S.buyOn; save(); setSpinBtn(); openInfo(); };
     $('optStop').onclick = function () { S.stopOnBonus = !S.stopOnBonus; save(); openInfo(); };
-    $('optRed').onclick = function () { S.reduced = !S.reduced; FX.reduced = S.reduced; save(); openInfo(); };
+    $('optRed').onclick = function () { S.reduced = !S.reduced; FX.reduced = S.reduced; if (root.Chains) root.Chains.setReduced(S.reduced); save(); openInfo(); };
     if (!LIVE && $('optReset')) $('optReset').onclick = function () { if (S.busy) return; S.balance = START_BAL; shown.bal = -1; updateHud(); save(); };
     showModal(); Sfx.click();
   }
@@ -732,8 +742,9 @@
     if (typeof d.vol === 'number') Sfx.setVolume(d.vol);
     if (typeof d.tone === 'number') Sfx.setTone(d.tone);
     if ((d.music !== false) !== Sfx.isMusic()) Sfx.setMusic(d.music !== false);
+    if ((d.sfx !== false) !== Sfx.isSfx()) Sfx.setSfx(d.sfx !== false);
     if (d.quality && d.quality !== S.quality) { S.quality = d.quality; G.setQuality(d.quality); }
-    if (!!d.reduced !== S.reduced) { S.reduced = !!d.reduced; FX.reduced = S.reduced; }
+    if (!!d.reduced !== S.reduced) { S.reduced = !!d.reduced; FX.reduced = S.reduced; if (root.Chains) root.Chains.setReduced(S.reduced); }
     if (typeof d.sobV2 === 'boolean') S.stopOnBonus = d.sobV2;
     if (typeof d.buyOn === 'boolean') S.buyOn = d.buyOn;
     if (LIMIT_BASE.indexOf(d.limit) >= 0 && d.limit !== S.limitB) { S.limitB = d.limit; S.limit = LIVE ? limitLive(d.limit) : r2(d.limit * root.CUR.rate(S.cur)); checkLimit(); }
@@ -800,6 +811,7 @@
   if (LIVE) { startRgs(); tabStart(); }
   // les polices du canvas doivent être prêtes avant le premier rendu (sinon texte de secours visible, et roue/médaillons mesurés avec la mauvaise police)
   var started = false;
+  if (root.Chains) { root.Chains.setReduced(S.reduced); if ($('hdrChain')) hdr = root.Chains.header($('hdrChain')); }
   function startGame() { if (started) return; started = true; G.start(); resumeRound(); }
   if (document.fonts && document.fonts.load) {
     Promise.all(G.FONT_LOADS.map(function (f) { return document.fonts.load(f, 'ÉœéÀ0123456789×€$’'); })).then(startGame, startGame);
@@ -811,30 +823,197 @@
   G.onSocial = function () { var c = pickCurrency(); if (c !== S.cur) setCurrency(c, false); applyLang(); if (G.refreshSplash) G.refreshSplash(); };
   if (/[?&]debug/.test(location.search)) { G.debug = true; }
 
-  /* ---------- écran d'accueil : ambiance + déverrouillage de l'audio ---------- */
+  /* ---------- écran d'accueil « Unchained » : Anubis enchaîné, carrousel des fonctionnalités, un appui brise les chaînes ---------- */
+  // Décor, chaînes, cadenas, éclat de lumière : dessinés sur #spCv avec js/chains.js. Le même appui déverrouille l'audio (Sfx.unlock) et lance la musique.
+  // Mouvement réduit : image fixe, pas de balancement ni de brisure animée (simple fondu), le carrousel défile sans animation.
   (function () {
     var sp = $('splash');
     // ?splash=1 force l'affichage (tests automatisés : sinon l'écran est retiré en présence de webdriver / ?debug)
     if (!sp || REPLAY || (!/[?&]splash=1/.test(location.search) && (navigator.webdriver || /[?&](debug|nosplash)/.test(location.search)))) { if (sp) sp.remove(); return; }
-    var port = root.innerHeight > root.innerWidth, src = (root.ANUBIS_IMG || {})[port ? 'splashp' : 'splash'];
-    if (src) sp.style.backgroundImage = 'url(' + src + ')';
+    var CH = root.Chains, cv = $('spCv'), cx = cv.getContext('2d'), IMG = root.ANUBIS_IMG || {}, pics = {};
+    var W = 0, H = 0, dpr = 1, lay = null, chains = [], lk = { x: 0, y: 0, s: 60 }, motes = [], tStart = performance.now(), lastT = 0, raf = 0;
+    var state = 'idle', tCharge = 0, tBreak = 0, anim = null, entering = false, cur = 0, userTouched = false, autoTimer = 0, scrollRaf = 0, skipped = false;
+    function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
+    function red() { return !!(S.reduced || FX.reduced); }
+    function rtl() { return I18N.isRtl && I18N.isRtl(); }
+    ['splash', 'splashp'].forEach(function (k) {
+      if (!IMG[k]) return; var im = new Image();
+      im.onload = function () { pics[k] = im; if (sp.isConnected) { layout(); paint(performance.now()); } };
+      im.src = IMG[k];
+    });
+
+    /* ----- mise en page du décor : Anubis (image) centré sur le cadenas, chaînes tendues vers les bords ----- */
+    function layout() {
+      W = sp.clientWidth || root.innerWidth; H = sp.clientHeight || root.innerHeight; dpr = Math.min(root.devicePixelRatio || 1, 2);
+      cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+      var side = W > H * 1.2; sp.classList.toggle('side', side);
+      var txt = sp.querySelector('.spTxt').getBoundingClientRect(), top = txt.top - sp.getBoundingClientRect().top;
+      var key = side || W > H ? 'splash' : 'splashp', zoom = side ? 1.35 : key === 'splash' ? 1.22 : 1, fx = key === 'splash' ? 0.575 : 0.5, fy = key === 'splash' ? 0.4 : 0.36;
+      var ls = clamp(Math.min(W, H) * 0.17, 52, 124), ax = side ? W * 0.74 : W / 2, ay = side ? H * 0.5 : Math.max(H * 0.16, top - ls * 0.68 - 22);   // le cadenas se pose juste au-dessus du titre
+      var im = pics[key], iw = im ? im.width : key === 'splash' ? 1344 : 752, ih = im ? im.height : key === 'splash' ? 752 : 1344, sc0 = Math.max(W / iw, H / ih);
+      zoom = clamp(Math.max(zoom, (H - ay) / ((1 - fy) * ih * sc0)), 1, 1.8);   // assez de zoom pour pouvoir remonter l'image jusqu'à cette hauteur
+      var sc = sc0 * zoom, dw = iw * sc, dh = ih * sc;
+      var ox = clamp(ax - fx * dw, W - dw, 0), oy = clamp(ay - fy * dh, H - dh, 0);
+      lay = { key: key, im: im, ox: ox, oy: oy, dw: dw, dh: dh };
+      lk = { x: ox + fx * dw, y: oy + fy * dh, s: ls };
+      var sz = clamp(Math.min(W, H) * 0.06, 18, 40), tg;
+      if (side) tg = [[W * 1.06, -H * 0.06], [W * 1.06, H * 1.06], [W * 0.5, -H * 0.06], [W * 0.5, H * 1.06]];
+      else tg = [[-W * 0.06, lk.y - H * 0.3], [W * 1.06, lk.y - H * 0.3], [-W * 0.06, lk.y + H * 0.17], [W * 1.06, lk.y + H * 0.17]];
+      if (CH) chains = tg.map(function (p, i) { return CH.make(p[0], p[1], lk.x, lk.y, { size: sz, sag: 0.05, sway: red() ? 0 : 4, seed: i * 1.9 }); });
+      motes = []; for (var i = 0; i < 36; i++) motes.push({ x: Math.random() * W, y: Math.random() * H, v: 6 + Math.random() * 14, r: 0.6 + Math.random() * 1.6, p: Math.random() * 6.28 });
+    }
+
+    /* ----- une image du décor ----- */
+    function paint(now) {
+      if (!sp.isConnected || !lay) return;
+      var t = (now - tStart) / 1000, dt = lastT ? Math.min(0.05, (now - lastT) / 1000) : 0.016, f = 0, rotLight = 0; lastT = now;
+      cx.setTransform(dpr, 0, 0, dpr, 0, 0); cx.clearRect(0, 0, W, H);
+      cx.fillStyle = '#050308'; cx.fillRect(0, 0, W, H);
+      cx.save();
+      if (anim && anim.shake > 0 && !red()) cx.translate((Math.random() - 0.5) * 16 * anim.shake, (Math.random() - 0.5) * 16 * anim.shake);
+      var br = red() ? 0 : Math.sin(t * 0.5) * 0.008;   // lente qui respire
+      if (lay.im) { var k = 1 + br; cx.drawImage(lay.im, lay.ox - lay.dw * br / 2, lay.oy - lay.dh * br / 2, lay.dw * k, lay.dh * k); }
+      // étalonnage commun avec le reste du jeu : voile or sépia en multiplication, puis vignettage
+      cx.globalCompositeOperation = 'multiply'; cx.fillStyle = 'rgba(214,176,112,.42)'; cx.fillRect(0, 0, W, H); cx.globalCompositeOperation = 'source-over';
+      var vg = cx.createRadialGradient(lk.x, lk.y, Math.min(W, H) * 0.25, lk.x, lk.y, Math.max(W, H) * 0.85); vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(2,1,4,.78)');
+      cx.fillStyle = vg; cx.fillRect(0, 0, W, H);
+      // lueur du sceau, qui bat doucement puis s'emballe avant la brisure
+      var charge = state === 'charge' ? clamp((now - tCharge) / 300, 0, 1) : state === 'break' ? 1 : 0;
+      var pulse = red() ? 0.6 : 0.55 + 0.45 * Math.sin(t * 2.2);
+      cx.globalCompositeOperation = 'lighter';
+      var gr = cx.createRadialGradient(lk.x, lk.y, 0, lk.x, lk.y, lk.s * (2.4 + charge * 2)); gr.addColorStop(0, 'rgba(255,214,120,' + (0.28 * pulse + 0.4 * charge) + ')'); gr.addColorStop(1, 'rgba(255,170,50,0)');
+      cx.fillStyle = gr; cx.fillRect(lk.x - lk.s * 5, lk.y - lk.s * 5, lk.s * 10, lk.s * 10);
+      cx.globalCompositeOperation = 'source-over';
+      // chaînes (tendues, balancement léger), puis cadenas
+      if (CH) {
+        if (state === 'break' && anim) { anim.update(dt); anim.draw(cx, dpr); f = anim.flash; }
+        else chains.forEach(function (c) { c.sway = red() ? 0 : 4 + charge * 12; CH.draw(cx, c, t * (1 + charge * 6), { dpr: dpr, shadow: 3 }); });
+        var la = 1, ls = 1;
+        if (state === 'break') { var u = clamp((now - tBreak) / 320, 0, 1); la = 1 - u; ls = 1 + u * 0.35; }
+        if (la > 0.01) { cx.save(); cx.globalAlpha = la; cx.translate(lk.x, lk.y); cx.scale(ls, ls); cx.translate(-lk.x, -lk.y); CH.lock(cx, lk.x, lk.y, lk.s, { crack: charge, t: t }); cx.restore(); }
+      }
+      // poussière d'or
+      cx.globalCompositeOperation = 'lighter';
+      motes.forEach(function (m) {
+        if (!red()) { m.y -= m.v * dt; m.x += Math.sin(t * 0.6 + m.p) * 4 * dt; if (m.y < -4) { m.y = H + 4; m.x = Math.random() * W; } }
+        cx.fillStyle = 'rgba(255,220,140,' + (0.18 + 0.22 * (0.5 + 0.5 * Math.sin(t * 1.3 + m.p))) + ')'; cx.beginPath(); cx.arc(m.x, m.y, m.r, 0, 6.2832); cx.fill();
+      });
+      // éclat de lumière divine (brisure) : rayons, anneau, voile clair
+      if (f > 0) {
+        var R = Math.max(W, H);
+        cx.fillStyle = 'rgba(255,238,180,' + (0.55 * f) + ')'; cx.fillRect(0, 0, W, H);
+        var gl = cx.createRadialGradient(lk.x, lk.y, 0, lk.x, lk.y, R * (0.25 + 0.9 * (1 - f))); gl.addColorStop(0, 'rgba(255,252,230,' + (0.95 * f) + ')'); gl.addColorStop(1, 'rgba(255,200,90,0)');
+        cx.fillStyle = gl; cx.fillRect(0, 0, W, H);
+        cx.save(); cx.translate(lk.x, lk.y); rotLight = anim.t * 0.5;
+        for (var i = 0; i < 14; i++) { var a = rotLight + i / 14 * 6.2832; cx.fillStyle = 'rgba(255,240,190,' + (0.3 * f) + ')'; cx.beginPath(); cx.moveTo(0, 0); cx.lineTo(Math.cos(a - 0.05) * R, Math.sin(a - 0.05) * R); cx.lineTo(Math.cos(a + 0.05) * R, Math.sin(a + 0.05) * R); cx.fill(); }
+        cx.restore();
+        cx.strokeStyle = 'rgba(255,246,210,' + (0.8 * f) + ')'; cx.lineWidth = 6 * f + 1; cx.beginPath(); cx.arc(lk.x, lk.y, R * 0.7 * anim.ring, 0, 6.2832); cx.stroke();
+      }
+      cx.globalCompositeOperation = 'source-over';
+      cx.restore();
+    }
+    function loop(now) {
+      raf = 0; if (!sp.isConnected) return;
+      if (state === 'charge' && now - tCharge >= 300) breakNow(now);
+      paint(now);
+      if (!red() || entering) raf = root.requestAnimationFrame(loop);
+    }
+    function kick() { if (!raf && sp.isConnected) raf = root.requestAnimationFrame(loop); }
+
+    /* ----- un appui : les chaînes se brisent, l'audio se déverrouille, la musique démarre, le jeu apparaît ----- */
+    function finish() { if (raf) root.cancelAnimationFrame(raf); clearInterval(autoTimer); root.removeEventListener('resize', onResize); sp.remove(); }
+    function breakNow(now) {
+      state = 'break'; tBreak = now; sp.classList.add('breaking'); Sfx.chainBreak();
+      anim = CH.shatter(chains, { x: lk.x, y: lk.y, power: 1.15 });
+      setTimeout(function () { sp.classList.add('out'); setTimeout(finish, 950); }, 1050);
+    }
+    function enter() {
+      if (entering) return; entering = true;
+      Sfx.unlock(); clearInterval(autoTimer);
+      document.removeEventListener('keydown', key, true);
+      setTimeout(function () { Sfx.startAmbient(); }, red() ? 400 : 1100);
+      if (!CH || red()) { Sfx.chainBreak(); sp.classList.add('breaking'); sp.classList.add('out'); setTimeout(finish, 320); return; }
+      state = 'charge'; tCharge = performance.now(); kick();
+    }
+
+    /* ----- carrousel des fonctionnalités : glissable (défilement natif), flèches, points, auto-défilement jusqu'au premier geste, « Passer » ----- */
+    var track = $('spTrack'), dots = $('spDots');
+    function el(tag, cls, txt) { var e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; }
+    function img(k) { if (!IMG['ic_' + k]) return null; var i = el('img'); i.alt = ''; i.src = IMG['ic_' + k]; i.draggable = false; return i; }
+    function chip(txt) { return el('span', 'spChip', txt); }
+    function slideArt(i, box, T) {
+      var k;
+      if (i === 0) {   // Oracle : l'œil et les boosts possibles sur une case numérotée
+        box.innerHTML = '<svg viewBox="0 0 48 24" aria-hidden="true"><use href="#i-eye"/></svg>';
+        M.ORACLE_BOOST.num.forEach(function (b) { box.appendChild(chip('×' + b[0])); });
+      } else if (i === 1) {   // 4 bonus + secret
+        ['scarab', 'weigh', 'vault', 'hand'].forEach(function (n) { var m = img(n); if (m) box.appendChild(m); });
+        box.appendChild(el('span', 'spQ', '?'));
+      } else if (i === 2) {   // choix : plume ou cœur, couleur de la Fureur
+        var m = img('weigh'); if (m) box.appendChild(m);
+        box.appendChild(chip(T.feather)); box.appendChild(chip(T.heart));
+        ['#18b5a4', '#e6b94a', '#c8392b'].forEach(function (c) { var d = el('span', 'spDot3'); d.style.background = c; box.appendChild(d); });
+      } else {   // accès direct + vitesses
+        k = img('coin'); if (k) box.appendChild(k);
+        box.appendChild(chip(T.turbo)); box.appendChild(chip('ULTRA'));
+      }
+    }
+    function buildSlides() {
+      var I = I18N.block('intro'), T = I18N.t(), n = 4, ox = Math.max.apply(null, M.ORACLE_BOOST.bonus.map(function (b) { return b[0]; }));
+      track.innerHTML = ''; dots.innerHTML = '';
+      for (var i = 0; i < n; i++) (function (i) {
+        var s = el('div', 'spSlide'), art = el('div', 'spArt'), lab = String(I.slideN).replace('{n}', i + 1).replace('{t}', n);
+        s.setAttribute('role', 'group'); s.setAttribute('aria-roledescription', 'slide'); s.setAttribute('aria-label', lab);
+        slideArt(i, art, T); s.appendChild(art); s.appendChild(el('h2', '', I['s' + (i + 1) + 'T'])); s.appendChild(el('p', '', String(I['s' + (i + 1) + 'B']).replace('{ox}', ox)));
+        track.appendChild(s);
+        var d = el('button'); d.type = 'button'; d.setAttribute('aria-label', lab); d.addEventListener('click', function (e) { e.stopPropagation(); userTouched = true; go(i); }); dots.appendChild(d);
+      })(i);
+      $('spPrev').setAttribute('aria-label', I.prev); $('spNext').setAttribute('aria-label', I.next); $('spSkip').textContent = I.skip; $('spCar').setAttribute('aria-label', I.carLabel);
+      mark(cur); track.scrollLeft = 0; if (cur) go(cur, true);
+    }
+    function mark(i) { cur = i; Array.prototype.forEach.call(dots.children, function (d, j) { if (j === i) d.setAttribute('aria-current', 'true'); else d.removeAttribute('aria-current'); }); }
+    function go(i, instant) {
+      var n = dots.children.length; if (!n) return; i = (i + n) % n; mark(i);
+      var w = track.clientWidth; try { track.scrollTo({ left: (rtl() ? -1 : 1) * i * w, behavior: instant || red() ? 'auto' : 'smooth' }); } catch (e) { track.scrollLeft = (rtl() ? -1 : 1) * i * w; }
+    }
+    track.addEventListener('scroll', function () {
+      if (scrollRaf) return;
+      scrollRaf = root.requestAnimationFrame(function () { scrollRaf = 0; var w = track.clientWidth || 1, i = Math.round(Math.abs(track.scrollLeft) / w); if (i !== cur && i < dots.children.length) mark(i); });
+    }, { passive: true });
+    ['pointerdown', 'touchstart', 'wheel', 'keydown'].forEach(function (ev) { track.addEventListener(ev, function () { userTouched = true; }, { passive: true }); });
+    $('spPrev').addEventListener('click', function (e) { e.stopPropagation(); userTouched = true; Sfx.click(); go(cur - 1); });
+    $('spNext').addEventListener('click', function (e) { e.stopPropagation(); userTouched = true; Sfx.click(); go(cur + 1); });
+    $('spSkip').addEventListener('click', function (e) { e.stopPropagation(); $('spCar').hidden = true; skipped = true; clearInterval(autoTimer); layout(); paint(performance.now()); try { $('spBtn').focus({ preventScroll: true }); } catch (er) {} });
+    function onResize() { layout(); go(cur, true); if (red()) paint(performance.now()); }
+    root.addEventListener('resize', onResize);
+
     // textes de l'écran d'accueil, recalculés après l'authentification (G.onSocial : le mode social peut ne venir que de config.jurisdiction.socialCasino)
     // [77] E1 : « démo · argent fictif » n'a de sens qu'en démo locale ; en session RGS (portefeuille réel) il ne reste que le rappel de jeu responsable
     G.refreshSplash = function () {
       if (!sp.isConnected) return;
-      var T = I18N.t();
-      $('spSub').textContent = T.splashSub; $('spBtn').textContent = T.splashEnter;
+      var T = I18N.t(), I = I18N.block('intro');
+      $('spSub').textContent = T.splashSub; $('spBtn').textContent = I.breakBtn;
       $('spDemo').textContent = LIVE ? String(T.splashDemo).split(' · ').pop() : T.splashDemo + ' · ' + T.demoBuild;
+      buildSlides(); if (skipped) $('spCar').hidden = true;
+      if (lay) { layout(); if (red() || !raf) paint(performance.now()); }
     };
-    G.refreshSplash();
-    sp.hidden = false;
-    function enter() {
-      Sfx.unlock(); Sfx.startAmbient(); Sfx.bonus();
-      sp.classList.add('out'); setTimeout(function () { sp.remove(); }, 1000);
-      document.removeEventListener('keydown', key, true);
+    sp.hidden = false; G.refreshSplash(); layout(); kick(); if (red()) paint(performance.now());
+    try { $('spBtn').focus({ preventScroll: true }); } catch (e) {}
+    if (!red()) autoTimer = setInterval(function () { if (!userTouched && !document.hidden && !entering && !skipped) go(cur + 1); }, 4800);
+
+    function key(e) {
+      var t = e.target, inCar = t && t.closest && t.closest('#spCar');
+      if (e.code === 'Tab') {   // le focus reste dans l'écran d'accueil
+        var fs = Array.prototype.filter.call(sp.querySelectorAll('button'), function (b) { return b.offsetParent !== null; });
+        if (!fs.length) return; var a = fs[0], z = fs[fs.length - 1];
+        if (e.shiftKey && document.activeElement === a) { e.preventDefault(); z.focus(); } else if (!e.shiftKey && document.activeElement === z) { e.preventDefault(); a.focus(); }
+        return;
+      }
+      if (e.code === 'ArrowLeft' || e.code === 'ArrowRight') { if ($('spCar').hidden) return; e.preventDefault(); userTouched = true; go(cur + ((e.code === 'ArrowRight') !== rtl() ? 1 : -1)); return; }
+      if (inCar && t.tagName === 'BUTTON') return;   // une flèche, un point ou « Passer » qui a le focus garde son comportement natif
+      if (e.code === 'Space' || e.code === 'Enter') { e.preventDefault(); e.stopImmediatePropagation(); enter(); }
     }
-    function key(e) { if (e.code === 'Space' || e.code === 'Enter') { e.preventDefault(); e.stopImmediatePropagation(); enter(); } }
     document.addEventListener('keydown', key, true);
-    sp.addEventListener('click', enter);
+    sp.addEventListener('click', function (e) { if (e.target.closest && e.target.closest('.spCar')) return; enter(); });
   })();
 })(window);

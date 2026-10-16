@@ -858,6 +858,25 @@
         tabTitle: 'JEU OUVERT DANS UN AUTRE ONGLET', tabMsg: 'Anubis Unchained est déjà ouvert dans un autre onglet ou une autre fenêtre. Un seul onglet peut jouer à la fois, pour que le solde reste cohérent.', tabHere: 'Jouer ici'
       }
     },
+    // écran d'accueil (carrousel des fonctionnalités), bouton « Effets » du mixeur, exemple de gain et légende de la roue des règles
+    intro: {
+      en: {
+        breakBtn: 'BREAK THE CHAINS', skip: 'Skip', next: 'Next', prev: 'Previous', carLabel: 'Game features', slideN: '{n} / {t}',
+        s1T: 'THE ORACLE', s1B: 'Before the wheel stops, the Oracle can boost one segment: its value is multiplied, up to ×{ox}.',
+        s2T: '4 BONUSES + 1 SECRET', s2B: 'Four bonuses, each with its own world, and a hidden sanctuary that can replace any bonus you won.',
+        s3T: 'YOUR CHOICES', s3B: 'Feather or heart in the Weighing, a colour for the Fury of Anubis: some bonuses are in your hands.',
+        s4T: 'DIRECT ACCESS · TURBO', s4B: 'Open a bonus straight from the menu. Turbo and Ultra speed the game up.',
+        sfxShort: 'Effects', exH: 'Example', exP: 'With an amount of {a}: a ×3 segment gives {b}. When the Oracle boosts it ×5, the same segment gives {c}.', wheelCap: 'The {n} segments of the wheel (same colours as the table above).'
+      },
+      fr: {
+        breakBtn: 'BRISER LES CHAÎNES', skip: 'Passer', next: 'Suivant', prev: 'Précédent', carLabel: 'Fonctions du jeu', slideN: '{n} / {t}',
+        s1T: 'L\'ORACLE', s1B: 'Avant l\'arrêt de la roue, l\'Oracle peut booster une case : sa valeur est multipliée, jusqu\'à ×{ox}.',
+        s2T: '4 BONUS + 1 SECRET', s2B: 'Quatre bonus, chacun dans son monde, et un sanctuaire caché qui peut remplacer un bonus gagné.',
+        s3T: 'VOS CHOIX', s3B: 'Plume ou cœur dans la Pesée, une couleur pour la Fureur d\'Anubis : certains bonus sont entre vos mains.',
+        s4T: 'ACCÈS DIRECT · TURBO', s4B: 'Ouvrez un bonus directement depuis le menu. Turbo et Ultra accélèrent le jeu.',
+        sfxShort: 'Effets', exH: 'Exemple', exP: 'Avec un montant de {a} : une case ×3 donne {b}. Quand l\'Oracle la booste ×5, la même case donne {c}.', wheelCap: 'Les {n} cases de la roue (mêmes couleurs que le tableau ci-dessus).'
+      }
+    },
     replay: {
       en: {
         badge: 'REPLAY', start: 'PLAY', again: 'PLAY AGAIN', playing: 'PLAYING…', loading: 'Loading the replay…',
@@ -969,7 +988,7 @@
   };
   var lang = 'fr';
   // textes des 14 autres langues, définis dans les blocs en fin de fichier : blocs « rules » / « replay », textes du RGS, noms localisés des paliers de gain
-  var X = root.I18N_X = { rules: {}, replay: {}, ui: {}, rgs: {}, tiers: {} };
+  var X = root.I18N_X = { rules: {}, replay: {}, ui: {}, rgs: {}, tiers: {}, intro: {} };
 
   /* ---------- Langues Stake : les 16 codes acceptés par le RGS (paramètre ?lang=). Défaut : anglais. ---------- */
   var LANGS = [
@@ -2810,5 +2829,95 @@
     X.replay[l].errSum = e[0];
     X.rgs[l].errIs = e[1]; X.rgs[l].errAte = e[2]; X.rgs[l].errLoc = e[3]; X.rgs[l].errMaint = e[4]; X.rgs[l].errSum = e[5]; X.rgs[l].resuming = e[6];
   });
+})(window.I18N_X);
+/* --- écran d'accueil (carrousel des fonctionnalités), bouton « Effets », exemple de gain et légende de la roue : bloc « intro », 14 langues --- */
+(function (X) {
+  var I = {
+    de: { breakBtn: 'KETTEN SPRENGEN', skip: 'Überspringen', next: 'Weiter', prev: 'Zurück', carLabel: 'Spielfunktionen', slideN: '{n} / {t}',
+      s1T: 'DAS ORAKEL', s1B: 'Bevor das Rad stoppt, kann das Orakel ein Feld verstärken: Sein Wert wird vervielfacht, bis zu ×{ox}.',
+      s2T: '4 BONI + 1 GEHEIMNIS', s2B: 'Vier Bonusspiele, jedes mit eigener Welt, und ein verborgenes Heiligtum, das einen gewonnenen Bonus ersetzen kann.',
+      s3T: 'DEINE WAHL', s3B: 'Feder oder Herz bei der Wägung, eine Farbe für die Wut des Anubis: Manche Boni liegen in deiner Hand.',
+      s4T: 'DIREKTZUGANG · TURBO', s4B: 'Öffne einen Bonus direkt über das Menü. Turbo und Ultra beschleunigen das Spiel.',
+      sfxShort: 'Effekte', exH: 'Beispiel', exP: 'Bei einem Betrag von {a}: Ein ×3-Feld ergibt {b}. Verstärkt der Orakel-Boost es ×5, ergibt dasselbe Feld {c}.', wheelCap: 'Die {n} Felder des Rades (Farben wie in der Tabelle oben).' },
+    es: { breakBtn: 'ROMPE LAS CADENAS', skip: 'Omitir', next: 'Siguiente', prev: 'Anterior', carLabel: 'Funciones del juego', slideN: '{n} / {t}',
+      s1T: 'EL ORÁCULO', s1B: 'Antes de que la rueda se detenga, el Oráculo puede potenciar una casilla: su valor se multiplica, hasta ×{ox}.',
+      s2T: '4 BONOS + 1 SECRETO', s2B: 'Cuatro bonos, cada uno con su propio mundo, y un santuario oculto que puede sustituir a cualquier bono ganado.',
+      s3T: 'TUS DECISIONES', s3B: 'Pluma o corazón en el Pesaje, un color para la Furia de Anubis: algunos bonos están en tus manos.',
+      s4T: 'ACCESO DIRECTO · TURBO', s4B: 'Abre un bono directamente desde el menú. Turbo y Ultra aceleran el juego.',
+      sfxShort: 'Efectos', exH: 'Ejemplo', exP: 'Con un importe de {a}: una casilla ×3 da {b}. Si el Oráculo la potencia ×5, la misma casilla da {c}.', wheelCap: 'Las {n} casillas de la rueda (mismos colores que la tabla de arriba).' },
+    pt: { breakBtn: 'QUEBRE AS CORRENTES', skip: 'Pular', next: 'Seguinte', prev: 'Anterior', carLabel: 'Recursos do jogo', slideN: '{n} / {t}',
+      s1T: 'O ORÁCULO', s1B: 'Antes de a roda parar, o Oráculo pode reforçar uma casa: o valor dela é multiplicado, até ×{ox}.',
+      s2T: '4 BÔNUS + 1 SEGREDO', s2B: 'Quatro bônus, cada um com seu próprio mundo, e um santuário oculto que pode substituir qualquer bônus ganho.',
+      s3T: 'SUAS ESCOLHAS', s3B: 'Pena ou coração na Pesagem, uma cor para a Fúria de Anúbis: alguns bônus estão nas suas mãos.',
+      s4T: 'ACESSO DIRETO · TURBO', s4B: 'Abra um bônus direto pelo menu. Turbo e Ultra aceleram o jogo.',
+      sfxShort: 'Efeitos', exH: 'Exemplo', exP: 'Com um valor de {a}: uma casa ×3 rende {b}. Se o Oráculo a reforça ×5, a mesma casa rende {c}.', wheelCap: 'As {n} casas da roda (mesmas cores da tabela acima).' },
+    pl: { breakBtn: 'ZERWIJ ŁAŃCUCHY', skip: 'Pomiń', next: 'Dalej', prev: 'Wstecz', carLabel: 'Funkcje gry', slideN: '{n} / {t}',
+      s1T: 'WYROCZNIA', s1B: 'Zanim koło się zatrzyma, Wyrocznia może wzmocnić jedno pole: jego wartość zostaje pomnożona, nawet do ×{ox}.',
+      s2T: '4 BONUSY + 1 SEKRET', s2B: 'Cztery bonusy, każdy w innym świecie, oraz ukryte sanktuarium, które może zastąpić wygrany bonus.',
+      s3T: 'TWOJE WYBORY', s3B: 'Pióro albo serce przy Ważeniu, kolor dla Gniewu Anubisa: niektóre bonusy są w twoich rękach.',
+      s4T: 'DOSTĘP BEZPOŚREDNI · TURBO', s4B: 'Otwórz bonus prosto z menu. Turbo i Ultra przyspieszają grę.',
+      sfxShort: 'Efekty', exH: 'Przykład', exP: 'Przy kwocie {a}: pole ×3 daje {b}. Gdy Wyrocznia wzmocni je ×5, to samo pole daje {c}.', wheelCap: '{n} pól koła (kolory jak w tabeli powyżej).' },
+    tr: { breakBtn: 'ZİNCİRLERİ KIR', skip: 'Geç', next: 'İleri', prev: 'Geri', carLabel: 'Oyun özellikleri', slideN: '{n} / {t}',
+      s1T: 'KEHANET', s1B: 'Çark durmadan önce Kehanet bir kutuyu güçlendirebilir: değeri çarpılır, en fazla ×{ox}.',
+      s2T: '4 BONUS + 1 SIR', s2B: 'Her biri ayrı bir dünyada geçen dört bonus ve kazanılan bir bonusun yerini alabilen gizli bir sığınak.',
+      s3T: 'SEÇİMLERİN', s3B: 'Tartıda tüy ya da kalp, Anubis’in Gazabı için bir renk: bazı bonuslar senin elinde.',
+      s4T: 'DOĞRUDAN ERİŞİM · TURBO', s4B: 'Bir bonusu doğrudan menüden aç. Turbo ve Ultra oyunu hızlandırır.',
+      sfxShort: 'Efektler', exH: 'Örnek', exP: '{a} tutarla: ×3 kutu {b} verir. Kehanet onu ×5 güçlendirirse aynı kutu {c} verir.', wheelCap: 'Çarkın {n} kutusu (renkler yukarıdaki tabloyla aynı).' },
+    id: { breakBtn: 'PUTUSKAN RANTAI', skip: 'Lewati', next: 'Lanjut', prev: 'Kembali', carLabel: 'Fitur permainan', slideN: '{n} / {t}',
+      s1T: 'ORAKEL', s1B: 'Sebelum roda berhenti, Orakel dapat memperkuat satu kotak: nilainya dikalikan, hingga ×{ox}.',
+      s2T: '4 BONUS + 1 RAHASIA', s2B: 'Empat bonus dengan dunianya masing-masing, dan satu kuil tersembunyi yang bisa menggantikan bonus yang dimenangkan.',
+      s3T: 'PILIHANMU', s3B: 'Bulu atau hati saat Penimbangan, satu warna untuk Amarah Anubis: sebagian bonus ada di tanganmu.',
+      s4T: 'AKSES LANGSUNG · TURBO', s4B: 'Buka bonus langsung dari menu. Turbo dan Ultra mempercepat permainan.',
+      sfxShort: 'Efek', exH: 'Contoh', exP: 'Dengan jumlah {a}: kotak ×3 menghasilkan {b}. Jika Orakel memperkuatnya ×5, kotak yang sama menghasilkan {c}.', wheelCap: '{n} kotak pada roda (warna sama dengan tabel di atas).' },
+    vi: { breakBtn: 'PHÁ XIỀNG XÍCH', skip: 'Bỏ qua', next: 'Tiếp', prev: 'Trước', carLabel: 'Tính năng trò chơi', slideN: '{n} / {t}',
+      s1T: 'THẦN LỜI', s1B: 'Trước khi bánh xe dừng, Thần Lời có thể tăng sức cho một ô: giá trị được nhân lên, tối đa ×{ox}.',
+      s2T: '4 THƯỞNG + 1 BÍ MẬT', s2B: 'Bốn vòng thưởng, mỗi vòng một thế giới riêng, cùng một thánh điện ẩn có thể thay thế vòng thưởng đã thắng.',
+      s3T: 'LỰA CHỌN CỦA BẠN', s3B: 'Lông vũ hay trái tim khi Cân, một màu cho Thịnh Nộ của Anubis: có vòng thưởng nằm trong tay bạn.',
+      s4T: 'VÀO TRỰC TIẾP · TURBO', s4B: 'Mở một vòng thưởng ngay từ menu. Turbo và Ultra làm trò chơi nhanh hơn.',
+      sfxShort: 'Hiệu ứng', exH: 'Ví dụ', exP: 'Với mức {a}: một ô ×3 cho {b}. Nếu Thần Lời tăng ô đó ×5, cùng ô ấy cho {c}.', wheelCap: '{n} ô của bánh xe (màu giống bảng bên trên).' },
+    fi: { breakBtn: 'KATKAISE KETJUT', skip: 'Ohita', next: 'Seuraava', prev: 'Edellinen', carLabel: 'Pelin ominaisuudet', slideN: '{n} / {t}',
+      s1T: 'ORAAKKELI', s1B: 'Ennen kuin ratas pysähtyy, Oraakkeli voi vahvistaa yhtä ruutua: sen arvo kerrotaan, enintään ×{ox}.',
+      s2T: '4 BONUSTA + 1 SALAISUUS', s2B: 'Neljä bonusta, kukin omassa maailmassaan, ja piilotettu pyhäkkö, joka voi korvata voitetun bonuksen.',
+      s3T: 'SINÄ VALITSET', s3B: 'Sulka vai sydän punnituksessa, väri Anubiksen Raivolle: osa bonuksista on omissa käsissäsi.',
+      s4T: 'SUORA PÄÄSY · TURBO', s4B: 'Avaa bonus suoraan valikosta. Turbo ja Ultra nopeuttavat peliä.',
+      sfxShort: 'Tehosteet', exH: 'Esimerkki', exP: 'Summalla {a}: ×3-ruutu antaa {b}. Jos Oraakkeli vahvistaa sen ×5, sama ruutu antaa {c}.', wheelCap: 'Rattaan {n} ruutua (värit kuten yllä olevassa taulukossa).' },
+    ru: { breakBtn: 'РАЗОРВАТЬ ЦЕПИ', skip: 'Пропустить', next: 'Далее', prev: 'Назад', carLabel: 'Возможности игры', slideN: '{n} / {t}',
+      s1T: 'ОРАКУЛ', s1B: 'Перед остановкой колеса Оракул может усилить один сектор: его значение умножается, до ×{ox}.',
+      s2T: '4 БОНУСА + 1 ТАЙНА', s2B: 'Четыре бонуса, у каждого свой мир, и скрытое святилище, которое может заменить выигранный бонус.',
+      s3T: 'ВАШ ВЫБОР', s3B: 'Перо или сердце при взвешивании, цвет для Ярости Анубиса: некоторые бонусы в ваших руках.',
+      s4T: 'ПРЯМОЙ ДОСТУП · ТУРБО', s4B: 'Откройте бонус сразу из меню. Турбо и Ультра ускоряют игру.',
+      sfxShort: 'Эффекты', exH: 'Пример', exP: 'При сумме {a}: сектор ×3 даёт {b}. Если Оракул усилит его ×5, тот же сектор даст {c}.', wheelCap: '{n} секторов колеса (цвета как в таблице выше).' },
+    ar: { breakBtn: 'حطّم السلاسل', skip: 'تخطّي', next: 'التالي', prev: 'السابق', carLabel: 'مميزات اللعبة', slideN: '{n} / {t}',
+      s1T: 'العرّاف', s1B: 'قبل أن تتوقف العجلة، يستطيع العرّاف تعزيز خانة واحدة: تُضرب قيمتها حتى ×{ox}.',
+      s2T: '4 مكافآت + سرّ', s2B: 'أربع مكافآت لكلٍّ منها عالمها، ومحراب خفي قد يحلّ محل مكافأة فزت بها.',
+      s3T: 'اختياراتك', s3B: 'الريشة أو القلب عند الوزن، ولون لغضب أنوبيس: بعض المكافآت بين يديك.',
+      s4T: 'وصول مباشر · تيربو', s4B: 'افتح مكافأة مباشرةً من القائمة. تيربو وألترا يسرّعان اللعبة.',
+      sfxShort: 'المؤثرات', exH: 'مثال', exP: 'بمبلغ {a}: خانة ×3 تمنح {b}. وإذا عزّزها العرّاف ×5 تمنح الخانة نفسها {c}.', wheelCap: 'خانات العجلة ({n}) بالألوان نفسها الموجودة في الجدول أعلاه.' },
+    hi: { breakBtn: 'ज़ंजीरें तोड़ो', skip: 'छोड़ें', next: 'आगे', prev: 'पीछे', carLabel: 'खेल की विशेषताएँ', slideN: '{n} / {t}',
+      s1T: 'ओरेकल', s1B: 'पहिया रुकने से पहले ओरेकल एक खाने को बढ़ा सकता है: उसका मान गुणा हो जाता है, अधिकतम ×{ox} तक।',
+      s2T: '4 बोनस + 1 रहस्य', s2B: 'चार बोनस, हर एक की अपनी दुनिया, और एक छिपा गर्भगृह जो जीते हुए बोनस की जगह ले सकता है।',
+      s3T: 'आपके चुनाव', s3B: 'तौल में पंख या हृदय, अनुबिस के क्रोध के लिए एक रंग: कुछ बोनस आपके हाथ में हैं।',
+      s4T: 'सीधी पहुँच · टर्बो', s4B: 'मेनू से सीधे कोई बोनस खोलें। टर्बो और अल्ट्रा खेल को तेज़ करते हैं।',
+      sfxShort: 'प्रभाव', exH: 'उदाहरण', exP: '{a} की राशि पर: ×3 वाला खाना {b} देता है। ओरेकल उसे ×5 बढ़ा दे तो वही खाना {c} देता है।', wheelCap: 'पहिये के {n} खाने (रंग ऊपर की तालिका जैसे)।' },
+    ja: { breakBtn: '鎖を断ち切れ', skip: 'スキップ', next: '次へ', prev: '前へ', carLabel: 'ゲームの特徴', slideN: '{n} / {t}',
+      s1T: '神託', s1B: '輪が止まる前に、神託が1つのマスを強化することがあります。その値が掛け算され、最大×{ox}になります。',
+      s2T: 'ボーナス4種 + 隠し1つ', s2B: 'それぞれ別世界の4つのボーナスと、獲得したボーナスと入れ替わることがある隠された聖域。',
+      s3T: 'あなたの選択', s3B: '秤では羽根か心臓、アヌビスの怒りでは色を選びます。ボーナスの一部はあなたの手の中にあります。',
+      s4T: '直接アクセス · ターボ', s4B: 'メニューからボーナスを直接開けます。ターボとウルトラでゲームが加速します。',
+      sfxShort: '効果音', exH: '例', exP: '金額が{a}のとき、×3のマスは{b}になります。神託がそれを×5に強化すると、同じマスは{c}になります。', wheelCap: '輪の{n}マス（色は上の表と同じ）。' },
+    ko: { breakBtn: '사슬을 끊어라', skip: '건너뛰기', next: '다음', prev: '이전', carLabel: '게임 특징', slideN: '{n} / {t}',
+      s1T: '신탁', s1B: '바퀴가 멈추기 전에 신탁이 한 칸을 강화할 수 있습니다. 값이 곱해져 최대 ×{ox}가 됩니다.',
+      s2T: '보너스 4종 + 비밀 1개', s2B: '각기 다른 세계의 보너스 4종과, 획득한 보너스를 대체할 수 있는 숨겨진 성소.',
+      s3T: '당신의 선택', s3B: '저울에서는 깃털 또는 심장, 아누비스의 분노에서는 색을 고릅니다. 일부 보너스는 당신 손에 달려 있습니다.',
+      s4T: '바로 열기 · 터보', s4B: '메뉴에서 보너스를 바로 열 수 있습니다. 터보와 울트라가 게임을 빠르게 합니다.',
+      sfxShort: '효과음', exH: '예시', exP: '금액이 {a}일 때 ×3 칸은 {b}입니다. 신탁이 ×5로 강화하면 같은 칸은 {c}입니다.', wheelCap: '바퀴의 {n}칸(색은 위 표와 같음).' },
+    zh: { breakBtn: '挣断锁链', skip: '跳过', next: '下一页', prev: '上一页', carLabel: '游戏特色', slideN: '{n} / {t}',
+      s1T: '神谕', s1B: '转盘停下之前，神谕可以强化一个格子：它的数值会被放大，最高 ×{ox}。',
+      s2T: '4 个奖励 + 1 个隐藏', s2B: '四个各有天地的奖励，以及一座可能取代已获奖励的隐藏圣所。',
+      s3T: '你的选择', s3B: '称重时选羽毛或心脏，为阿努比斯之怒选一种颜色：部分奖励掌握在你手中。',
+      s4T: '直接进入 · 极速', s4B: '可从菜单直接开启奖励。极速和超速让游戏更快。',
+      sfxShort: '音效', exH: '示例', exP: '数额为 {a} 时，×3 的格子得到 {b}。若神谕将其强化 ×5，同一格子得到 {c}。', wheelCap: '转盘的 {n} 个格子（颜色与上表相同）。' }
+  };
+  Object.keys(I).forEach(function (l) { X.intro[l] = I[l]; });
 })(window.I18N_X);
 /* ===== TRADUCTIONS : fin ===== */

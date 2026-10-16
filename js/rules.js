@@ -24,6 +24,18 @@
   }
   function p(t) { return '<p>' + t + '</p>'; }
   function h3(t) { return '<h3>' + esc(t) + '</h3>'; }
+  // logo illustré d'un bonus (images du jeu, fond noir fondu en « screen ») ; vide si l'image n'est pas chargée
+  function ic(kind) { var u = (root.ANUBIS_IMG || {})['ic_' + kind]; return u ? '<img class="rIc" alt="" src="' + u + '" width="38" height="38">' : ''; }
+  // roue en un coup d'œil : une part par case (couleurs de l'écran de jeu), pointeur en haut
+  var KCOL = { m0: '#4a4036', m025: '#6f5a2e', m05: '#8a6a1e', m1: '#b48a24', m2: '#c9a03a', m3: '#e6b94a', ankh: '#18b5a4', scarab: '#2f8f5b', weigh: '#2352b8', vault: '#7b3fa6' };
+  function wheelSvg() {
+    var L = M.LAYOUT, n = L.length, r = 46, out = '<svg viewBox="-50 -52 100 104" role="img" aria-hidden="true">';
+    for (var i = 0; i < n; i++) {
+      var a0 = i / n * 2 * Math.PI - Math.PI / 2, a1 = (i + 1) / n * 2 * Math.PI - Math.PI / 2, col = (root.G && root.G.kindColor && root.G.kindColor(L[i])) || KCOL[L[i]] || '#8a6a1e';
+      out += '<path d="M0 0L' + (r * Math.cos(a0)).toFixed(2) + ' ' + (r * Math.sin(a0)).toFixed(2) + 'A' + r + ' ' + r + ' 0 0 1 ' + (r * Math.cos(a1)).toFixed(2) + ' ' + (r * Math.sin(a1)).toFixed(2) + 'Z" fill="' + col + '" stroke="#0b0907" stroke-width=".8"/>';
+    }
+    return out + '<circle r="9" fill="#14100c" stroke="#e6b94a" stroke-width="1.6"/><path d="M0 -50 -4.2 -43.5H4.2Z" fill="#fff1b8" stroke="#5b4311" stroke-width=".8"/></svg>';
+  }
 
   var BTN_CUR = 9;   // rang de l'entrée « devise » dans le guide des boutons (R.btn) : tools/i18n-check.js vérifie qu'elle porte bien le bouton de devise
   function html() {
@@ -62,7 +74,10 @@
     out += h3(R.modesH) + table([R.colMode, R.colCost, R.colRtp, R.colMax], rowsM, 'modes') + p(f(R.modesNote));
 
     /* formation des gains */
-    out += h3(R.howH) + R.how.map(function (t) { return p('• ' + esc(f(t))); }).join('');
+    var IN = root.I18N.block('intro'), money = function (v) { return root.G && root.G.money ? root.G.money(v) : num(v); }, ub = (root.G && root.G.bet) || 1;
+    out += h3(R.howH) + '<figure class="wheelFig">' + wheelSvg() + '<figcaption>' + esc(fill(IN.wheelCap, { n: M.N })) + '</figcaption></figure>' + R.how.map(function (t) { return p('• ' + esc(f(t))); }).join('');
+    /* exemple de gain chiffré (montant courant, case ×3, boost d'Oracle ×5) */
+    out += h3(IN.exH) + '<div class="exBox">' + ic('coin') + '<p>' + esc(fill(IN.exP, { a: money(ub), b: money(ub * 3), c: money(ub * 15) })) + '</p></div>';
     var tb = M.ORACLE_BOOST, sn = sum(tb.num), sb = sum(tb.bonus), boosts = uniq(tb.num.map(function (t) { return t[0]; }).concat(tb.bonus.map(function (t) { return t[0]; })));
     boosts = sortNum(boosts);
     var chance = function (tab, b) { var w = 0; tab.forEach(function (t) { if (t[0] === b) w = t[1]; }); return w ? pct(w / sum(tab) * 100, 1) : '—'; };
@@ -71,18 +86,18 @@
     /* bonus : déclenchement et valeurs */
     out += h3(R.bonusH);
     var sv = M.SCARAB_PROFILES.std, binom = [1, 8, 28, 56, 70, 56, 28, 8, 1];
-    out += '<h4 class="rh">' + esc(R.scarabH) + '</h4>' + p(esc(f(R.scarabP))) +
+    out += '<h4 class="rh">' + ic('scarab') + esc(R.scarabH) + '</h4>' + p(esc(f(R.scarabP))) +
       table(sv.map(function (x, i) { return '#' + (i + 1); }), [sv.map(function (x) { return '×' + num(x); }), binom.map(function (b) { return pct(b / 256 * 100, 1); })]);
     var wp = M.WEIGH_PROFILES.std, ws = sum(wp);
-    out += '<h4 class="rh">' + esc(R.weighH) + '</h4>' + p(esc(f(R.weighP))) + table([R.colValue, R.colChance], wp.map(function (t) { return ['×' + num(t[0][0]) + ' / ×' + num(t[0][1]), pct(t[1] / ws * 100, 1)]; }));
+    out += '<h4 class="rh">' + ic('weigh') + esc(R.weighH) + '</h4>' + p(esc(f(R.weighP))) + table([R.colValue, R.colChance], wp.map(function (t) { return ['×' + num(t[0][0]) + ' / ×' + num(t[0][1]), pct(t[1] / ws * 100, 1)]; }));
     var vp = M.VAULT_PROFILES.std, vw = sum(vp.tokens) + vp.seal;
-    out += '<h4 class="rh">' + esc(R.vaultH) + '</h4>' + p(esc(f(R.vaultP))) + table([R.colValue, R.colChance], vp.tokens.map(function (t) {
+    out += '<h4 class="rh">' + ic('vault') + esc(R.vaultH) + '</h4>' + p(esc(f(R.vaultP))) + table([R.colValue, R.colChance], vp.tokens.map(function (t) {
       var lab = t[0] === 'scepter' ? R.tokScepter : t[0] === 'key' ? R.tokKey : '+' + num(t[0]) + '×';
       return [esc(f(lab)), pct(t[1] / vw * 100, 2)];
     }).concat([[esc(R.tokSeal), pct(vp.seal / vw * 100, 1)]]));
-    out += '<h4 class="rh">' + esc(R.handH) + '</h4>' + p(esc(f(R.handP)));
+    out += '<h4 class="rh">' + ic('hand') + esc(R.handH) + '</h4>' + p(esc(f(R.handP)));
     var ct = M.CRYPT_TYPES, cw = sum(ct), cn = { dust: R.cDust, tab: R.cTab, tide: R.cTide, eclipse: R.cEclipse };
-    out += '<h4 class="rh">' + esc(R.cryptH) + '</h4>' + p(esc(f(R.cryptP))) + table([R.colValue, R.colChance, R.colMax], ct.map(function (t) {
+    out += '<h4 class="rh">' + ic('skull') + esc(R.cryptH) + '</h4>' + p(esc(f(R.cryptP))) + table([R.colValue, R.colChance, R.colMax], ct.map(function (t) {
       var vals = M.CRYPT_VALUES[t[0]]; return [esc(cn[t[0]]), pct(t[1] / cw * 100, 1), vals ? '×' + list(vals.map(function (x) { return x[0]; })) : '—'];
     }));
 
