@@ -8,7 +8,8 @@ Choix du joueur (FORMAT v2, en-tête de tools/stake-export.js) : toutes les vari
   - Fureur d'Anubis : 3 variantes de couleur (color 0, 1, 2) ; seules les cases DOUBLE changent (même rôle, même palier, mêmes nombres).
   - Pesée : `weighReveal.variants[0|1]` (plume / cœur) ; le choix du joueur sélectionne la variante, le gain est identique.
   - Trésor / Sanctuaire : tout est tiré d'avance, la tuile touchée est neutre.
-  - Profil (Prudent / Équilibré / Audacieux) : seul l'Équilibré est joué.
+  - Pacte (Scribe / Balance / Chacal) : choisi AVANT le tour, c'est le mode de mise (safe / std / bold, et plus_*) ; roundStart.pact le
+    rappelle, l'échelle de la Colère est dans l'événement « wrath » (ladder). Aucun choix de profil pendant le tour.
 """
 import game_config as C
 
@@ -103,10 +104,11 @@ def book_events(rnd, payout_int):
     """Événements ordonnés d'un tour (dictionnaire rendu par game_calculations.play_mode)."""
     log = EventLog()
     log.add("roundStart", v=2, mode="bonus" if rnd["mode"] == "buy" else rnd["mode"], modeName=rnd.get("mode_name", rnd["mode"]), cost=C.S(rnd["cost"]),
-            scale=C.SCALE, maxWin=C.WINCAP_INT, wincap=C.WINCAP_INT, cells=C.N)
+            scale=C.SCALE, maxWin=C.WINCAP_INT, wincap=C.WINCAP_INT, cells=C.N, pact=rnd.get("pact", "std"))
     wr = rnd.get("wrath")
     if wr:   # Colère d'Anubis : les chaînes se brisent avant le premier tour (format v2, ajout compatible : tools/stake-export.js)
-        log.add("wrath", level=wr["start"], mult=C.WRATH_LADDER[wr["start"]], ladder=list(C.WRATH_LADDER))
+        lad = wr.get("ladder", C.WRATH_LADDER)
+        log.add("wrath", level=wr["start"], mult=lad[wr["start"]], ladder=list(lad))
     for k, s in enumerate(rnd["spins"]):
         n = k + 1
         if s["oracle"]:
@@ -117,7 +119,7 @@ def book_events(rnd, payout_int):
             if s["oracle"]:
                 log.add("oracleReveal", spin=n, kind=s["oracle"]["kind"], boost=s["oracle"]["boost"], hit=s["oracle"]["kind"] == s["kind"])
             if s.get("wrath_up"):
-                log.add("wrathUp", spin=n, level=C.WRATH_LADDER.index(s["wrath_up"]), mult=s["wrath_up"])
+                log.add("wrathUp", spin=n, level=wr["ladder"].index(s["wrath_up"]), mult=s["wrath_up"])
         if s["bonus"] is not None:
             kind = s["bonus_kind"]
             log.add("bonusStart", spin=n, bonus=kind, name=BONUS_EVENT_NAME[kind], secret=bool(s["secret"]),

@@ -76,12 +76,12 @@ var VPS = {
       var cdp = p.__cdp || await p.__ctx.newCDPSession(p);
       await cdp.send('Input.synthesizePinchGesture', { x: vp.viewport.width / 2, y: vp.viewport.height / 3, scaleFactor: 2.5, relativeSpeed: 600 }).catch(function () {});
       await p.waitForTimeout(300);
-      await p.touchscreen.tap(vp.viewport.width / 2, 60); await p.waitForTimeout(60); await p.touchscreen.tap(vp.viewport.width / 2, 60); await p.waitForTimeout(300);
+      await p.touchscreen.tap(vp.viewport.width * 0.2, 60); await p.waitForTimeout(60); await p.touchscreen.tap(vp.viewport.width * 0.2, 60);   // zone neutre (logo) : le haut-centre accueille le bouton des pactes sur petit écran await p.waitForTimeout(300);
       var vv = await p.evaluate('({s:visualViewport.scale, w:visualViewport.width, iw:innerWidth})');
       ok(vv.s === 1 && Math.abs(vv.w - vv.iw) < 1, tag + 'pincement 2,5× et double toucher : échelle du viewport = ' + vv.s);
     }
     // contrôles utilisables : dans l'écran, non recouverts
-    var ctl = await p.evaluate(`(function(){ var bad=[]; ['betDn','betUp','spin','btnTurbo','btnAuto','btnBuy','btnPlus','btnLang','btnSound','btnInfo'].forEach(function(id){ var e=document.getElementById(id); if(!e||e.hidden) return; var r=e.getBoundingClientRect(); if(r.width<8||r.height<8||r.left<-1||r.top<-1||r.right>innerWidth+1||r.bottom>innerHeight+1){ bad.push(id+' hors écran'); return; } var t=document.elementFromPoint(r.left+r.width/2,r.top+r.height/2); if(t!==e&&!e.contains(t)) bad.push(id+' recouvert par '+(t&&(t.id||t.className||t.tagName))); }); return bad; })()`);
+    var ctl = await p.evaluate(`(function(){ var bad=[]; ['betDn','betUp','spin','btnTurbo','btnAuto','btnBuy','btnPlus','btnPact','btnLang','btnSound','btnInfo'].forEach(function(id){ var e=document.getElementById(id); if(!e||e.hidden) return; var r=e.getBoundingClientRect(); if(r.width<8||r.height<8||r.left<-1||r.top<-1||r.right>innerWidth+1||r.bottom>innerHeight+1){ bad.push(id+' hors écran'); return; } var t=document.elementFromPoint(r.left+r.width/2,r.top+r.height/2); if(t!==e&&!e.contains(t)) bad.push(id+' recouvert par '+(t&&(t.id||t.className||t.tagName))); }); return bad; })()`);
     ok(ctl.length === 0, tag + 'tous les contrôles visibles et non recouverts' + (ctl.length ? ' : ' + ctl.join(', ') : ''));
     // un clic réel sur « tourner » envoie une requête de jeu
     var n0 = plays().length;

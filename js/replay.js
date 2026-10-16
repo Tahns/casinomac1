@@ -105,6 +105,7 @@
     if (kind === 'bonus') sub.push(s0.upgraded ? L.kindsLong.hand : (L.kindsLong[s0.kind] || ''));
     else if (kind === 'plus') sub.push(L.oraclePlus);
     else sub.push(T.modeStd);
+    if (kind !== 'bonus' && data.round.pact && data.round.pact !== 'std') sub.push(I18N.block('pact').name[data.round.pact] || '');   // pacte du tour (mode safe / bold)
     ui.sub.textContent = sub.filter(Boolean).join(' · ');
     ui.sub.hidden = false;
   }

@@ -94,7 +94,38 @@
 
   /* ---------- Oracle (bénédiction scellée avant le tour : la valeur n'est révélée qu'à l'arrêt de la roue) ---------- */
   // wrath : chance de la Colère d'Anubis (feature aléatoire du jeu de base, voir plus bas), tirée une fois au début du tour
-  var MODES = { std: { cost: 1, oracle: 0.0765, wrath: 0.002 }, plus: { cost: 1.1, oracle: 0.27, wrath: 0.002 } };
+  /* ---------- PACTES (décision du joueur avant le tour : profil de volatilité, docs/GAMEPLAY.md) ----------
+   * Chaque pacte est un MODE DE MISE distinct (au même coût) : un book = un résultat décidé avant l'animation, le choix du joueur est donc fait
+   * AVANT la requête de jeu et n'est jamais rejoué après. Trois pactes, même RTP (96,2 %, calcul exact : tools/rtp-exact.js, tools/tune-pacts.js) :
+   *  - safe (Pacte du Scribe)   : bonus en profil Prudent, Colère d'Anubis plus fréquente mais plafonnée à ×10 ;
+   *  - std  (Pacte de la Balance) : le jeu de référence ;
+   *  - bold (Pacte du Chacal)   : bonus en profil Audacieux, Colère plus rare qui part de ×3 et monte jusqu'à ×250.
+   * Le pacte gouverne tous les bonus joués pendant le tour (Fureur d'Anubis et ses bandes comprises), jamais les achats (profil Équilibré). */
+  var PACTS = {
+    safe: { ladder: [2, 3, 5, 10] },
+    std:  { ladder: [2, 3, 5, 10, 25, 50, 100] },
+    bold: { ladder: [3, 5, 10, 25, 50, 100, 250] }
+  };
+  var PACT_ORDER = ['safe', 'std', 'bold'];
+  var PACT_BIG = 5000;   // seuil des « très gros gains » cités pour comparer les pactes (fenêtre des pactes, règles : 1 tour sur N, calcul exact)
+  // wrath : chance de la Colère d'Anubis par tour (réglée par pacte pour un RTP identique, tools/tune-pacts.js)
+  var MODES = {
+    std:       { cost: 1,   oracle: 0.0765, wrath: 0.002,    pact: 'std' },
+    plus:      { cost: 1.1, oracle: 0.27,   wrath: 0.002,    pact: 'std' },
+    safe:      { cost: 1,   oracle: 0.0765, wrath: 0.0040715, pact: 'safe' },
+    bold:      { cost: 1,   oracle: 0.0765, wrath: 0.0011626, pact: 'bold' },
+    plus_safe: { cost: 1.1, oracle: 0.27,   wrath: 0.0039719, pact: 'safe' },
+    plus_bold: { cost: 1.1, oracle: 0.27,   wrath: 0.0012062, pact: 'bold' }
+  };
+  var BASE_MODES = ['std', 'plus', 'safe', 'bold', 'plus_safe', 'plus_bold'];
+  // mode de mise d'une combinaison (famille std | plus = Oracle+, pacte safe | std | bold)
+  function modeFor(family, pact) {
+    var f = family === 'plus' ? 'plus' : 'std', p = PACTS[pact] ? pact : 'std';
+    return p === 'std' ? f : (f === 'plus' ? 'plus_' : '') + p;
+  }
+  function pactOf(mode) { return (MODES[mode] || MODES.std).pact; }
+  function familyOf(mode) { return /^plus/.test(String(mode)) ? 'plus' : 'std'; }
+  function ladderOf(pact) { return (PACTS[pact] || PACTS.std).ladder; }
   var ORACLE_CHANCE = MODES.std.oracle;
   var ORACLE_KIND_W = [['m05', 3], ['m1', 4], ['m2', 3], ['m3', 2], ['scarab', 3], ['weigh', 3], ['vault', 3]];
   var ORACLE_BOOST = {
@@ -109,8 +140,9 @@
   //  - chaque Ankh (relance) brise une chaîne de plus : le multiplicateur monte d'un cran (×2 → ×3 → ×5 → ×10 → ×25 → ×50 → ×100, plafonné au dernier) ;
   //  - le gain de la case finale (nombre ou bonus, Oracle compris) est multiplié par le cran atteint. Jamais à l'achat de bonus.
   // Le multiplicateur est intégré au boost du tour (s.boost = boost de l'Oracle × multiplicateur de la Colère) : le gain reste s.pay = s.base × s.boost.
-  var WRATH_LADDER = [2, 3, 5, 10, 25, 50, 100];
-  var WRATH_START = [[0, 1]];   // [cran de départ, poids] : la Colère s'allume toujours à ×2
+  // échelle de référence (Pacte de la Balance) ; chaque pacte a la sienne (PACTS[p].ladder), portée par l'événement « wrath » du book
+  var WRATH_LADDER = PACTS.std.ladder;
+  var WRATH_START = [[0, 1]];   // [cran de départ, poids] : la Colère s'allume toujours au premier cran de l'échelle du pacte
   var WRATH_TOP = WRATH_LADDER.length - 1;
 
   /* ---------- Bonus 1 : Chute du Scarabée (cascade de chevilles, 8 rangées, 3 scarabées) ---------- */
@@ -206,8 +238,8 @@
   ];
   var HAND_MAX_CHAIN = 4;   // nombre maximal de doublements (palier ×16) ; au palier maximal les cases DOUBLE ne comptent plus
   var HAND_MIN_N = Math.min.apply(null, HAND_SEGS.filter(function (s) { return s.n; }).map(function (s) { return s.n; }));
-  function handBand(rng, seg) {
-    var data = BONUS_FN[seg.b](rng, 'std');
+  function handBand(rng, seg, prof) {
+    var data = BONUS_FN[seg.b](rng, prof || 'std');
     if (seg.b === 'weigh') { data.pick = rng() < 0.5 ? 0 : 1; data.total = weighGain(data, data.pick); }   // choix auto aléatoire (la scène laisse jouer le joueur et recalcule)
     return data;
   }
@@ -225,7 +257,8 @@
     return h.total;
   }
   // forced : suite d'indices de cases imposée (tests visuels) ; sinon tirage uniforme
-  function hand(rng, colour, forced) {
+  // prof : pacte du tour (profil des bandes de bonus imbriquées), 'std' par défaut
+  function hand(rng, colour, forced, prof) {
     colour = colour || 0;
     var spins = [], mult = 1, level = 0, n = HAND_SEGS.length;
     for (var i = 0; i < 12; i++) {
@@ -237,16 +270,16 @@
       if (s.d != null && s.d === colour && level < HAND_MAX_CHAIN) { level++; mult *= 2; spins.push({ idx: idx, kind: 'up', mult: mult, final: false }); continue; }
       var rec = { idx: idx, mult: mult, final: true };
       if (s.d != null) rec.kind = 'wrong';
-      else if (s.b) { rec.kind = 'band'; rec.band = s.b; rec.x = s.x; rec.bonus = handBand(rng, s); }
+      else if (s.b) { rec.kind = 'band'; rec.band = s.b; rec.x = s.x; rec.bonus = handBand(rng, s, prof); }
       else { rec.kind = 'num'; rec.base = s.n; }
       spins.push(rec);
       break;
     }
-    var h = { spins: spins, mult: mult, total: 0, colour: colour };
+    var h = { spins: spins, mult: mult, total: 0, colour: colour, pact: prof || 'std' };
     handRecalc(h);
     return h;
   }
-  function handOptions(rng) { var o = {}; HAND_COLORS.forEach(function (c, i) { o[c] = hand(rng, i); }); return o; }
+  function handOptions(rng, prof) { var o = {}; HAND_COLORS.forEach(function (c, i) { o[c] = hand(rng, i, null, prof); }); return o; }
 
   /* ---------- Bonus SECRET : le Sanctuaire des Marées (grille 3×3 de tablettes) ---------- */
   // Caché : ni sur la roue, ni à l'achat. Il remplace un bonus gagné (voir SECRET_UPGRADE dans playSpin), environ 1 tour sur 500.
@@ -332,20 +365,22 @@
     return round.total;
   }
 
-  // wrath : état de la Colère d'Anubis du tour ({ level }) ou null ; pendant la Colère la roue ne s'arrête que sur WRATH_CELLS
-  function playSpin(rng, chance, wrath) {
+  // wrath : état de la Colère d'Anubis du tour ({ level, ladder }) ou null ; pendant la Colère la roue ne s'arrête que sur WRATH_CELLS
+  // pact : pacte du tour (profil des bonus) ; les trois profils restent tirés (drawOptions) pour garder la même suite de tirages
+  function playSpin(rng, chance, wrath, pact) {
+    pact = PACTS[pact] ? pact : 'std';
     var oracle = rollOracle(rng, chance);
     var index = wrath ? WRATH_CELLS[Math.floor(rng() * WRATH_CELLS.length)] : Math.floor(rng() * N);
     var kind = LAYOUT[index];
     var def = KINDS[kind];
     var oboost = (oracle && oracle.kind === kind) ? oracle.boost : 1;
-    var wm = wrath ? WRATH_LADDER[wrath.level] : 1;
+    var wm = wrath ? (wrath.ladder || WRATH_LADDER)[wrath.level] : 1;
     var s = { oracle: oracle, index: index, kind: kind, boost: oboost * wm, oracleBoost: oboost, bonus: null, base: 0, pay: 0 };
     if (wrath) s.wrath = wm;
     if (def.bonus) {
       if (rng() < SECRET_UPGRADE) { s.secret = true; s.bonus = crypt(rng); s.profile = 'crypt'; }   // bonus SECRET (prioritaire sur la Fureur) : aucun choix, script unique
-      else if (rng() < HAND_UPGRADE) { s.options = handOptions(rng); s.bonus = s.options.turq; s.profile = 'turq'; s.upgraded = true; }
-      else { s.options = drawOptions(rng, kind); s.bonus = s.options.std; s.profile = 'std'; }
+      else if (rng() < HAND_UPGRADE) { s.options = handOptions(rng, pact); s.bonus = s.options.turq; s.profile = 'turq'; s.upgraded = true; }
+      else { s.options = drawOptions(rng, kind); s.bonus = s.options[pact]; s.profile = pact; }
       s.base = s.bonus.total;
     } else if (!def.respin) {
       s.base = def.mult;
@@ -356,23 +391,25 @@
 
   // renvoie { spins:[...], total, capped }
   function playRound(rng, mode) {
-    var md = MODES[mode] || MODES.std, chance = md.oracle;
+    if (!MODES[mode] || /^bonus_/.test(mode)) mode = 'std';
+    var md = MODES[mode], chance = md.oracle, pact = md.pact, lad = ladderOf(pact), top = lad.length - 1;
     var spins = [], total = 0, wrath = null;
-    if (rng() < md.wrath) { var lv = weighted(rng, WRATH_START); wrath = { level: lv, start: lv, mult: WRATH_LADDER[lv] }; }   // Colère d'Anubis : un tirage par tour, avant la roue
+    if (rng() < md.wrath) { var lv = weighted(rng, WRATH_START); wrath = { level: lv, start: lv, mult: lad[lv], ladder: lad }; }   // Colère d'Anubis : un tirage par tour, avant la roue
     for (var i = 0; i <= MAX_CHAIN; i++) {
-      var s = playSpin(rng, chance, wrath);
+      var s = playSpin(rng, chance, wrath, pact);
       if (s.kind === 'ankh' && i === MAX_CHAIN) { // plus de relance possible : on retire
-        do { s = playSpin(rng, chance, wrath); } while (s.kind === 'ankh');
+        do { s = playSpin(rng, chance, wrath, pact); } while (s.kind === 'ankh');
       }
       spins.push(s);
       total += s.pay;
       if (s.kind !== 'ankh') break;
-      if (wrath && wrath.level < WRATH_TOP) { wrath.level++; s.wrathUp = WRATH_LADDER[wrath.level]; }   // l'Ankh brise une chaîne : le multiplicateur monte d'un cran
+      if (wrath && wrath.level < top) { wrath.level++; s.wrathUp = lad[wrath.level]; }   // l'Ankh brise une chaîne : le multiplicateur monte d'un cran
     }
-    if (wrath) wrath.mult = WRATH_LADDER[wrath.level];
+    if (wrath) wrath.mult = lad[wrath.level];
     var capped = total > MAX_WIN;
     if (capped) total = MAX_WIN;
-    return { spins: spins, total: total, capped: capped, cost: md.cost, mode: md === MODES.plus ? 'plus' : 'std', wrath: wrath };
+    // mode : famille (std | plus, champ historique du format v2) ; modeName : mode de mise complet ; pact : pacte joué
+    return { spins: spins, total: total, capped: capped, cost: md.cost, mode: familyOf(mode), modeName: mode, pact: pact, wrath: wrath };
   }
 
   /* ---------- Achat de bonus ---------- */
@@ -386,13 +423,13 @@
     else { opts = drawOptions(rng, kind); b = opts.std; }
     var s = { oracle: null, index: -1, kind: kind, boost: 1, bonus: b, upgraded: upgraded, base: b.total, pay: b.total, options: opts, profile: opts ? (upgraded ? 'turq' : 'std') : undefined };
     var total = Math.min(s.pay, MAX_WIN);
-    return { spins: [s], total: total, capped: s.pay > MAX_WIN, cost: BUY[kind].price, mode: 'buy' };
+    return { spins: [s], total: total, capped: s.pay > MAX_WIN, cost: BUY[kind].price, mode: 'buy', pact: 'std' };
   }
 
   return {
     BUY: BUY, playBuy: playBuy, applyChoice: applyChoice, drawOptions: drawOptions, PROFILES: PROFILES,
     SCARAB_PROFILES: SCARAB_PROFILES, WEIGH_PROFILES: WEIGH_PROFILES, VAULT_PROFILES: VAULT_PROFILES,
-    MAX_WIN: MAX_WIN, MODES: MODES, ORACLE_KIND_W: ORACLE_KIND_W, ORACLE_BOOST: ORACLE_BOOST, N: N, LAYOUT: LAYOUT, KINDS: KINDS, MAX_CHAIN: MAX_CHAIN,
+    MAX_WIN: MAX_WIN, MODES: MODES, BASE_MODES: BASE_MODES, PACTS: PACTS, PACT_ORDER: PACT_ORDER, PACT_BIG: PACT_BIG, modeFor: modeFor, pactOf: pactOf, familyOf: familyOf, ladderOf: ladderOf, ORACLE_KIND_W: ORACLE_KIND_W, ORACLE_BOOST: ORACLE_BOOST, N: N, LAYOUT: LAYOUT, KINDS: KINDS, MAX_CHAIN: MAX_CHAIN,
     WRATH_LADDER: WRATH_LADDER, WRATH_START: WRATH_START, WRATH_TOP: WRATH_TOP, WRATH_CELLS: WRATH_CELLS, WRATH_KINDS: WRATH_KINDS,
     SCARAB_ROWS: SCARAB_ROWS, SCARAB_VALUES: SCARAB_VALUES, SCARAB_BALLS: SCARAB_BALLS,
     WEIGH_PAIRS: WEIGH_PAIRS, weighGain: weighGain, VAULT_TILES: VAULT_TILES, VAULT_MAX_PICKS: VAULT_MAX_PICKS, VAULT_BASE_PICKS: VAULT_BASE_PICKS, VAULT_KEY_PICKS: VAULT_KEY_PICKS, VAULT_PICK_CAP: VAULT_PICK_CAP, VAULT_FINISH: VAULT_FINISH,

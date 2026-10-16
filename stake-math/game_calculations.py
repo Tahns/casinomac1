@@ -127,8 +127,8 @@ def vault(rng, prof="std"):
 BONUS_FN = {"scarab": scarab, "weigh": weigh, "vault": vault}
 
 
-def hand_band(rng, seg):
-    data = BONUS_FN[seg["b"]](rng, "std")
+def hand_band(rng, seg, prof="std"):
+    data = BONUS_FN[seg["b"]](rng, prof or "std")
     if seg["b"] == "weigh":   # « pick » tiré d'avance (la scène JS laisse jouer, le book fige)
         data["pick"] = 0 if rng() < 0.5 else 1
         data["total"] = weigh_gain(data, data["pick"])
@@ -145,7 +145,8 @@ def hand_spin_pay(sp):
     return 0
 
 
-def hand(rng, colour=0, forced=None):
+def hand(rng, colour=0, forced=None, prof="std"):
+    """prof : pacte du tour (profil des bandes de bonus imbriquées)."""
     colour = colour or 0
     spins, mult, level, n = [], 1, 0, len(C.HAND_SEGS)
     for i in range(C.HAND_MAX_SPINS):
@@ -170,13 +171,13 @@ def hand(rng, colour=0, forced=None):
             rec["kind"] = "band"
             rec["band"] = s["b"]
             rec["x"] = s["x"]
-            rec["bonus"] = hand_band(rng, s)
+            rec["bonus"] = hand_band(rng, s, prof)
         else:
             rec["kind"] = "num"
             rec["base"] = s["n"]
         spins.append(rec)
         break
-    h = {"spins": spins, "mult": mult, "total": 0, "colour": colour}
+    h = {"spins": spins, "mult": mult, "total": 0, "colour": colour, "pact": prof or "std"}
     hand_recalc(h)
     return h
 
@@ -188,10 +189,10 @@ def hand_recalc(h):
     return h["total"]
 
 
-def hand_options(rng):
+def hand_options(rng, prof="std"):
     """Trois scripts indépendants et de même loi (un par couleur) : ils sont TOUS tirés pour garder la parité de la suite de
     tirages avec le JS ; seul celui de la couleur 0 (turq) est écrit dans le book — voir README, « Fureur d'Anubis »."""
-    return {c: hand(rng, i) for i, c in enumerate(C.HAND_COLORS)}
+    return {c: hand(rng, i, None, prof) for i, c in enumerate(C.HAND_COLORS)}
 
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -247,8 +248,10 @@ def draw_options(rng, kind):
     return o
 
 
-def play_spin(rng, chance, wrath=None):
-    """wrath : état de la Colère d'Anubis du tour ({"level"}) ou None ; pendant la Colère la roue ne s'arrête que sur C.WRATH_CELLS."""
+def play_spin(rng, chance, wrath=None, pact="std"):
+    """wrath : état de la Colère d'Anubis du tour ({"level", "ladder"}) ou None ; pendant la Colère la roue ne s'arrête que sur C.WRATH_CELLS.
+    pact : pacte du tour (profil des bonus) ; les trois profils restent tirés (draw_options) pour garder la suite de tirages du JS."""
+    pact = pact if pact in C.PACTS else "std"
     oracle = roll_oracle(rng, chance)
     if wrath:
         index = C.WRATH_CELLS[int(math.floor(rng() * len(C.WRATH_CELLS)))]
@@ -257,7 +260,7 @@ def play_spin(rng, chance, wrath=None):
     kind = C.LAYOUT[index]
     d = C.KINDS[kind]
     oboost = oracle["boost"] if (oracle and oracle["kind"] == kind) else 1
-    wm = C.WRATH_LADDER[wrath["level"]] if wrath else 1
+    wm = wrath.get("ladder", C.WRATH_LADDER)[wrath["level"]] if wrath else 1
     s = {"oracle": oracle, "index": index, "kind": kind, "boost": oboost * wm, "oracle_boost": oboost, "wrath": wm if wrath else None,
          "wrath_up": None, "bonus": None, "bonus_kind": None, "base": 0, "pay": 0, "secret": False, "upgraded": False, "options": None, "profile": None}
     boost = s["boost"]
@@ -268,16 +271,16 @@ def play_spin(rng, chance, wrath=None):
             s["bonus_kind"] = "crypt"
             s["profile"] = "crypt"
         elif rng() < C.HAND_UPGRADE:        # Fureur d'Anubis
-            s["options"] = hand_options(rng)
+            s["options"] = hand_options(rng, pact)
             s["bonus"] = s["options"]["turq"]
             s["bonus_kind"] = "hand"
             s["profile"] = "turq"
             s["upgraded"] = True
         else:
             s["options"] = draw_options(rng, kind)
-            s["bonus"] = s["options"]["std"]
+            s["bonus"] = s["options"][pact]
             s["bonus_kind"] = kind
-            s["profile"] = "std"
+            s["profile"] = pact
         s["base"] = s["bonus"]["total"]
     elif not d["respin"]:
         s["base"] = d["mult_int"]
@@ -286,32 +289,36 @@ def play_spin(rng, chance, wrath=None):
 
 
 def play_round(rng, mode="std"):
-    md = C.MODES.get(mode) or C.MODES["std"]
-    chance = md["oracle"]
+    if mode not in C.MODES:
+        mode = "std"
+    md = C.MODES[mode]
+    chance, pact = md["oracle"], md["pact"]
+    lad = C.ladder_of(pact)
+    top = len(lad) - 1
     spins, total, wrath = [], 0, None
     if rng() < md["wrath"]:   # Colère d'Anubis : un tirage par tour, avant la roue
         lv = weighted(rng, C.WRATH_START)
-        wrath = {"level": lv, "start": lv, "mult": C.WRATH_LADDER[lv]}
+        wrath = {"level": lv, "start": lv, "mult": lad[lv], "ladder": lad}
     for i in range(C.MAX_CHAIN + 1):
-        s = play_spin(rng, chance, wrath)
+        s = play_spin(rng, chance, wrath, pact)
         if s["kind"] == "ankh" and i == C.MAX_CHAIN:   # plus de relance possible : on retire
             while True:
-                s = play_spin(rng, chance, wrath)
+                s = play_spin(rng, chance, wrath, pact)
                 if s["kind"] != "ankh":
                     break
         spins.append(s)
         total += s["pay"]
         if s["kind"] != "ankh":
             break
-        if wrath and wrath["level"] < C.WRATH_TOP:   # l'Ankh brise une chaîne : le multiplicateur monte d'un cran
+        if wrath and wrath["level"] < top:   # l'Ankh brise une chaîne : le multiplicateur monte d'un cran
             wrath["level"] += 1
-            s["wrath_up"] = C.WRATH_LADDER[wrath["level"]]
+            s["wrath_up"] = lad[wrath["level"]]
     if wrath:
-        wrath["mult"] = C.WRATH_LADDER[wrath["level"]]
+        wrath["mult"] = lad[wrath["level"]]
     capped = total > C.WINCAP_INT
     if capped:
         total = C.WINCAP_INT
-    return {"spins": spins, "total": total, "capped": capped, "cost": md["cost"], "mode": "plus" if md is C.MODES["plus"] else "std",
+    return {"spins": spins, "total": total, "capped": capped, "cost": md["cost"], "mode": C.family_of(mode), "pact": pact,
             "wrath": wrath}
 
 
@@ -328,11 +335,11 @@ def play_buy(rng, kind):
          "upgraded": upgraded, "secret": False, "base": b["total"], "pay": b["total"], "options": opts,
          "profile": "turq" if upgraded else "std"}
     total = min(s["pay"], C.WINCAP_INT)
-    return {"spins": [s], "total": total, "capped": s["pay"] > C.WINCAP_INT, "cost": C.BUY[kind], "mode": "buy"}
+    return {"spins": [s], "total": total, "capped": s["pay"] > C.WINCAP_INT, "cost": C.BUY[kind], "mode": "buy", "pact": "std"}
 
 
 def play_mode(rng, mode_name):
-    """Joue un tour dans un des 6 modes du jeu (std, plus, bonus_scarab, bonus_weigh, bonus_vault, bonus_fury)."""
+    """Joue un tour dans un des 10 modes du jeu (std, plus, safe, bold, plus_safe, plus_bold, bonus_scarab, bonus_weigh, bonus_vault, bonus_fury)."""
     if mode_name in C.BUY_KIND_OF:
         r = play_buy(rng, C.BUY_KIND_OF[mode_name])
     else:

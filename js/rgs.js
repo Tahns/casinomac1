@@ -9,7 +9,8 @@
  *  - le front ne recalcule jamais le gain : payoutMultiplier (RGS) fait foi ; l'adaptateur relève seulement les incohérences (round.issues) ;
  *  - choix du joueur : Fureur d'Anubis (3 variantes de couleur dans le book -> sp.options) et Pesée du Cœur (2 variantes plume / cœur ->
  *    data.pick sélectionne l'affichage) restent de vrais choix, pré-résolus : tous les choix paient le même total ;
- *  - profils Prudent/Audacieux : absents (tous les bonus se jouent en profil Équilibré) ; Sanctuaire des Marées et Oracle scellé lus tels quels.
+ *  - PACTES (Scribe / Balance / Chacal) : choisis AVANT la mise, ce sont des modes de mise (safe, bold, plus_safe, plus_bold) ; roundStart.pact
+ *    donne le profil des bonus du tour et wrath.ladder l'échelle de la Colère ; Sanctuaire des Marées et Oracle scellé lus tels quels.
  */
 (function (root, factory) {
   if (typeof module === 'object' && module.exports) module.exports = factory(root);
@@ -92,15 +93,23 @@
   RGS.endRound = function () { return post('/wallet/end-round', { sessionID: RGS.sessionID }); };
   RGS.betEvent = function (event) { return post('/bet/event', { sessionID: RGS.sessionID, event: String(event) }, 0).catch(function () {}); };
 
-  // nom de mode du RGS <-> mode du jeu ({ mode:'std'|'plus', buy:'scarab'|'weigh'|'vault'|'hand' })
+  // nom de mode du RGS <-> mode du jeu ({ mode:'std'|'plus', buy:'scarab'|'weigh'|'vault'|'hand', pact:'safe'|'std'|'bold' })
   // (aucun mot « buy » dans les noms publiés : ils peuvent s'afficher en mode social ; l'identifiant interne `buy` reste dans le code)
   var BUY_NAMES = { scarab: 'bonus_scarab', weigh: 'bonus_weigh', vault: 'bonus_vault', hand: 'bonus_fury' };
   var LEGACY_NAMES = { scarab: 'buy_scarab', weigh: 'buy_weigh', vault: 'buy_vault', hand: 'buy_fury' };   // anciens books / rediffusions : lus, jamais écrits
-  RGS.modeName = function (mode, buy) { return buy ? BUY_NAMES[buy] : (mode === 'plus' ? 'plus' : 'std'); };
+  // pacte : modes std / plus (Balance), safe / plus_safe (Scribe), bold / plus_bold (Chacal) ; les achats sont toujours en Balance
+  var PACT_NAMES = { safe: 1, bold: 1 };
+  RGS.modeName = function (mode, buy, pact) {
+    if (buy) return BUY_NAMES[buy];
+    var fam = mode === 'plus' ? 'plus' : 'std';
+    return PACT_NAMES[pact] ? (fam === 'plus' ? 'plus_' : '') + pact : fam;
+  };
   RGS.parseMode = function (name) {
-    var buy = null;
-    Object.keys(BUY_NAMES).forEach(function (k) { if (BUY_NAMES[k] === name || LEGACY_NAMES[k] === name) buy = k; });
-    return { mode: name === 'plus' ? 'plus' : 'std', buy: buy };
+    var buy = null, n = String(name || ''), pact = 'std';
+    Object.keys(BUY_NAMES).forEach(function (k) { if (BUY_NAMES[k] === n || LEGACY_NAMES[k] === n) buy = k; });
+    var m = /^(plus_)?(safe|bold)$/.exec(n);
+    if (m) pact = m[2];
+    return { mode: n === 'plus' || !!(m && m[1]) ? 'plus' : 'std', buy: buy, pact: buy ? 'std' : pact };
   };
 
   // réponse /wallet/play ou round actif -> { events, mult, amount (mise de base, unités), payout (gain en unités ou null), active }
@@ -119,7 +128,7 @@
   var TOL = 1e-6;
   function bookToRound(events, M) {
     var S = M.SCALE || 100, f = function (n) { return n / S; };
-    var rs = null, spins = [], spin = null, bev = null, bstart = null, oracle = null, fin = null, issues = [], wrath = null;
+    var rs = null, spins = [], spin = null, bev = null, bstart = null, oracle = null, fin = null, issues = [], wrath = null, pact = 'std';
     function blank() { return { oracle: null, index: -1, kind: 'm0', boost: 1, bonus: null, base: 0, pay: 0 }; }
     function of(list, type) { return list.filter(function (e) { return e.type === type; }); }
 
@@ -128,7 +137,7 @@
       var rv = of(list, 'weighReveal')[0];
       if (!rv || !rv.variants || rv.variants.length !== 2) throw bookError('weighReveal');
       var vs = rv.variants.map(function (v) { return { mults: v.mults.map(f), heavy: v.heavy }; }), p = 0;
-      var d = { pair: vs[0].mults.slice().sort(function (a, b) { return a - b; }), mults: vs[0].mults.slice(), heavy: vs[0].heavy, total: f(rv.win), fixed: f(rv.win), profile: 'std' };
+      var d = { pair: vs[0].mults.slice().sort(function (a, b) { return a - b; }), mults: vs[0].mults.slice(), heavy: vs[0].heavy, total: f(rv.win), fixed: f(rv.win), profile: pact };
       Object.defineProperty(d, 'pick', { enumerable: true, get: function () { return p; }, set: function (v) {
         p = v === 1 ? 1 : 0; d.mults = vs[p].mults.slice(); d.heavy = vs[p].heavy;
       } });
@@ -156,14 +165,14 @@
       if (kind === 'scarab') {
         var balls = of(list, 'scarabDrop').map(function (e) { return { path: e.path, slot: e.slot, value: f(e.win) }; }), t = 0;
         balls.forEach(function (b) { t += b.value; });
-        return { balls: balls, total: Math.round(t * S) / S, values: M.SCARAB_PROFILES.std, profile: 'std' };
+        return { balls: balls, total: Math.round(t * S) / S, values: (M.SCARAB_PROFILES[pact] || M.SCARAB_PROFILES.std), profile: pact };
       }
       if (kind === 'weigh') return weighData(list);
       if (kind === 'vault') {
         var picks = of(list, 'vaultPick').map(function (e) { return { token: typeof e.token === 'number' ? f(e.token) : e.token, total: f(e.runningTotal), left: e.chestsLeft }; });
         var ve = of(list, 'vaultEnd')[0];
         if (!ve) throw bookError('vaultEnd');
-        return { picks: picks, ended: ve.ended, bonusFinish: f(ve.finishBonus), total: f(ve.win), profile: 'std' };
+        return { picks: picks, ended: ve.ended, bonusFinish: f(ve.finishBonus), total: f(ve.win), profile: pact };
       }
       if (kind === 'crypt') {
         var steps = of(list, 'sanctuaryTablet').map(function (e) { return { t: e.tablet_type, v: e.tablet_type === 'tab' ? f(e.value) : e.value, poolBefore: f(e.offeringBefore), tideBefore: e.tideBefore, gain: f(e.gain), pool: f(e.offering), tide: e.tide }; });
@@ -201,9 +210,10 @@
           rs = e;
           if (e.v !== 2) throw bookError('book format ' + e.v + ' (v2 expected)');
           if (e.cells !== M.N) throw bookError('wheel of ' + e.cells + ' cells (' + M.N + ' expected)');
+          pact = e.pact && M.PACTS && M.PACTS[e.pact] ? e.pact : 'std';
           break;
         case 'oracle': oracle = { kind: e.kind, boost: e.boost }; break;
-        case 'wrath': wrath = { level: e.level, start: e.level, mult: e.mult }; break;   // Colère d'Anubis : multiplicateur allumé avant la roue
+        case 'wrath': wrath = { level: e.level, start: e.level, mult: e.mult, ladder: Array.isArray(e.ladder) ? e.ladder.slice() : (M.ladderOf ? M.ladderOf(pact) : M.WRATH_LADDER) }; break;   // Colère d'Anubis : multiplicateur allumé avant la roue
         case 'wheelStop':
           spin = blank(); spin.oracle = oracle; oracle = null; spin.index = e.index; spin.kind = e.kind; spin.boost = e.boost || 1;
           spin.oracleBoost = spin.oracle && spin.oracle.kind === e.kind ? spin.oracle.boost : 1;
@@ -224,7 +234,7 @@
     sum = Math.min(Math.round(sum * S) / S, M.MAX_WIN);
     var total = f(fin.amount);
     if (Math.abs(total - sum) > TOL) issues.push('finalWin ' + total + ' != sum of spins ' + sum);
-    return { spins: spins, total: total, sum: sum, capped: !!fin.capped, cost: f(rs.cost), mode: rs.mode === 'bonus' ? 'buy' : rs.mode, issues: issues, version: 2, wrath: wrath };
+    return { spins: spins, total: total, sum: sum, capped: !!fin.capped, cost: f(rs.cost), mode: rs.mode === 'bonus' ? 'buy' : rs.mode, pact: pact, issues: issues, version: 2, wrath: wrath };
   }
   RGS.bookToRound = bookToRound;
 

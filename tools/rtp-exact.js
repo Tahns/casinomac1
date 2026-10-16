@@ -139,19 +139,20 @@ function compute() {
 function cellCounts(wrath) { var o = {}; Object.keys(M.KINDS).forEach(function (k) { var d = M.KINDS[k]; if (d.respin || (wrath && (M.WRATH_KINDS || []).indexOf(k) < 0)) return; o[k] = d.count; }); return o; }
 // loi EXACTE du multiplicateur final de la Colère : cran de départ (WRATH_START) + nombre d'Ankh L avant la case finale
 // (sur la roue de la Colère, P(Ankh) = a = Ankh / cases non « 0 » ; L < MAX_CHAIN : a^L (1 - a) ; L = MAX_CHAIN : a^MAX_CHAIN, la dernière relance est retirée hors Ankh)
-function wrathLadder() {
-  var n = 0, ws = 0, pm = {}, out = [];
+// pact : échelle du pacte (M.ladderOf : ×2…×100 Balance, ×2…×10 Scribe, ×3…×250 Chacal) ; par défaut, l'échelle de référence
+function wrathLadder(pact) {
+  var n = 0, ws = 0, pm = {}, out = [], LAD = M.ladderOf ? M.ladderOf(pact || 'std') : M.WRATH_LADDER, TOP = LAD.length - 1;
   if (!M.WRATH_START) return out;   // version des maths sans Colère d'Anubis (comparaison avant / après)
   M.LAYOUT.forEach(function (k) { if (M.WRATH_KINDS.indexOf(k) >= 0) n++; });
   var a = M.KINDS.ankh.count / n;
   M.WRATH_START.forEach(function (t) { ws += t[1]; });
   M.WRATH_START.forEach(function (st) {
     for (var l = 0; l <= M.MAX_CHAIN; l++) {
-      var pl = l < M.MAX_CHAIN ? Math.pow(a, l) * (1 - a) : Math.pow(a, M.MAX_CHAIN), m = M.WRATH_LADDER[Math.min(st[0] + l, M.WRATH_TOP)];
+      var pl = l < M.MAX_CHAIN ? Math.pow(a, l) * (1 - a) : Math.pow(a, M.MAX_CHAIN), m = LAD[Math.min(st[0] + l, TOP)];
       pm[m] = (pm[m] || 0) + st[1] / ws * pl;
     }
   });
-  M.WRATH_LADDER.forEach(function (m) { if (pm[m]) out.push([m, pm[m]]); });
+  LAD.forEach(function (m) { if (pm[m]) out.push([m, pm[m]]); });
   return out;
 }
 
@@ -201,9 +202,11 @@ function vaultDist(vp) {
   layer.forEach(function (p, key) { dAdd(out, tenth(+key.split('|')[1] + M.VAULT_FINISH), p); });
   return out;
 }
-function handDist() {
+// prof : profil (pacte) des bandes de bonus imbriquées
+function handDist(prof) {
+  prof = prof || 'std';
   var S = M.HAND_SEGS, n = S.length, q = S.filter(function (sg) { return sg.d === 0; }).length / n, parts = [], L;
-  var B = { scarab: scarabDist('std'), weigh: weighDist('std'), vault: vaultDist(M.VAULT_PROFILES.std) };
+  var B = { scarab: scarabDist(prof), weigh: weighDist(prof), vault: vaultDist(M.VAULT_PROFILES[prof]) };
   function seg(excl, m) {   // loi du lancer final au palier m (excl : les DOUBLE ne comptent plus, palier maximal)
     var list = [];
     S.forEach(function (sg) {
@@ -246,21 +249,24 @@ function cryptDist() {
   st.forEach(function (p, key) { var F = key % K; dAdd(out, 10 * Math.max(F, 1), p); });   // plancher ×1
   return out;
 }
-var _bonusDists = null;
-function bonusDists() {
-  if (_bonusDists) return _bonusDists;
-  var h = M.HAND_UPGRADE, s = M.SECRET_UPGRADE, H = handDist(), Cd = cryptDist(), o = { hand: H, crypt: Cd, buy: {}, wheel: {} };
-  [['scarab', scarabDist('std')], ['weigh', weighDist('std')], ['vault', vaultDist(M.VAULT_PROFILES.std)]].forEach(function (e) {
+// lois des bonus pour un pacte (profil) donné ; le Sanctuaire n'a pas de profil (une seule loi, calculée une fois)
+var _bonusDists = {}, _cryptDist = null;
+function bonusDists(prof) {
+  prof = prof || 'std';
+  if (_bonusDists[prof]) return _bonusDists[prof];
+  if (!_cryptDist) _cryptDist = cryptDist();
+  var h = M.HAND_UPGRADE, s = M.SECRET_UPGRADE, H = handDist(prof), Cd = _cryptDist, o = { hand: H, crypt: Cd, buy: {}, wheel: {} };
+  [['scarab', scarabDist(prof)], ['weigh', weighDist(prof)], ['vault', vaultDist(M.VAULT_PROFILES[prof])]].forEach(function (e) {
     o[e[0]] = e[1];
     o.buy[e[0]] = dMix([[e[1], 1 - h], [H, h]]);                    // achat : Fureur possible, jamais de Sanctuaire
     o.wheel[e[0]] = dMix([[o.buy[e[0]], 1 - s], [Cd, s]]);           // gagné sur la roue : Sanctuaire possible
   });
   o.buy.hand = H;
-  _bonusDists = o;
+  _bonusDists[prof] = o;
   return o;
 }
-function spinDist(qo, wrath) {
-  var cc = cellCounts(wrath), Nn = 0, BD = bonusDists(), list = [], Wo = 0;
+function spinDist(qo, wrath, prof) {
+  var cc = cellCounts(wrath), Nn = 0, BD = bonusDists(prof), list = [], Wo = 0;
   M.ORACLE_KIND_W.forEach(function (t) { Wo += t[1]; });
   Object.keys(cc).forEach(function (k) { Nn += cc[k]; });
   Object.keys(cc).forEach(function (k) {
@@ -274,14 +280,14 @@ function spinDist(qo, wrath) {
   });
   return dMix(list);
 }
-// loi exacte du gain (en dixièmes, plafonné) d'un tour du mode : std | plus | bonus_scarab | bonus_weigh | bonus_vault | bonus_fury
+// loi exacte du gain (en dixièmes, plafonné) d'un tour du mode : std | plus | safe | bold | plus_safe | plus_bold (pactes) | bonus_scarab | bonus_weigh | bonus_vault | bonus_fury
 var BUY_OF = { bonus_scarab: 'scarab', bonus_weigh: 'weigh', bonus_vault: 'vault', bonus_fury: 'hand' }, BUY_MODE = { scarab: 'bonus_scarab', weigh: 'bonus_weigh', vault: 'bonus_vault', hand: 'bonus_fury' };
 var _dist = {};
 function distribution(mode) {
   if (_dist[mode]) return _dist[mode];
-  if (BUY_OF[mode]) return (_dist[mode] = bonusDists().buy[BUY_OF[mode]]);
-  var md = M.MODES[mode], q = md.wrath || 0, list = [[spinDist(md.oracle, false), 1 - q]];
-  if (q) { var sw = spinDist(md.oracle, true); wrathLadder().forEach(function (lm) { list.push([dScale(sw, lm[0]), q * lm[1]]); }); }
+  if (BUY_OF[mode]) return (_dist[mode] = bonusDists('std').buy[BUY_OF[mode]]);   // achats : toujours le profil Équilibré
+  var md = M.MODES[mode], pf = md.pact || 'std', q = md.wrath || 0, list = [[spinDist(md.oracle, false, pf), 1 - q]];
+  if (q) { var sw = spinDist(md.oracle, true, pf); wrathLadder(pf).forEach(function (lm) { list.push([dScale(sw, lm[0]), q * lm[1]]); }); }
   return (_dist[mode] = dMix(list));
 }
 // paliers de gain (en × la mise ; bornes incluses) : fréquence des gros gains et fences de l'optimiseur (stake-math/game_optimization.py)
@@ -309,7 +315,7 @@ function decompose(mode) {
 }
 // même décomposition, mais AVEC le plafond (chaque composante est une loi exacte plafonnée) : c'est elle qui décrit le jeu réellement servi
 function decomposeCapped(mode) {
-  var md = M.MODES[mode], q = md.wrath || 0, BD = bonusDists(), h = M.HAND_UPGRADE, s = M.SECRET_UPGRADE, Wo = 0, out = {}, E = 0, E2 = 0;
+  var md = M.MODES[mode], pf = md.pact || 'std', q = md.wrath || 0, BD = bonusDists(pf), h = M.HAND_UPGRADE, s = M.SECRET_UPGRADE, Wo = 0, out = {}, E = 0, E2 = 0;
   M.ORACLE_KIND_W.forEach(function (t) { Wo += t[1]; });
   var names = { num: 'cases ×', scarab: 'Scarabées', weigh: 'Pesée', vault: 'Trésor', hand: 'Fureur', crypt: 'Sanctuaire' };
   function addComp(name, p, d, f) {
@@ -318,7 +324,7 @@ function decomposeCapped(mode) {
     var o = out[name] || (out[name] = { p: 0, rtp: 0, m2: 0 });
     o.p += p; o.rtp += p * a; o.m2 += p * b; E += p * a; E2 += p * b;
   }
-  var levels = [[1, 1 - q]].concat(q ? wrathLadder().map(function (lm) { return [lm[0], q * lm[1]]; }) : []);
+  var levels = [[1, 1 - q]].concat(q ? wrathLadder(pf).map(function (lm) { return [lm[0], q * lm[1]]; }) : []);
   levels.forEach(function (lv, li) {
     var wrath = li > 0, cc = cellCounts(wrath), Nn = 0;
     Object.keys(cc).forEach(function (k) { Nn += cc[k]; });
@@ -356,7 +362,8 @@ module.exports.distribution = distribution;
 module.exports.summary = summary;
 module.exports.decompose = decompose;
 module.exports.TIERS = TIERS;
-module.exports.MODES = ['std', 'plus', 'bonus_scarab', 'bonus_weigh', 'bonus_vault', 'bonus_fury'];
+module.exports.MODES = (M.BASE_MODES || ['std', 'plus']).concat(['bonus_scarab', 'bonus_weigh', 'bonus_vault', 'bonus_fury']);
+module.exports.bonusDists = bonusDists;
 
 if (require.main === module) {
   var r = compute();
@@ -373,7 +380,7 @@ if (require.main === module) {
     });
   }
   if (process.argv.indexOf('--variance') >= 0) {
-    ['std', 'plus'].forEach(function (m) {
+    (M.BASE_MODES || ['std', 'plus']).forEach(function (m) {
       var D = decomposeCapped(m);
       console.log('\nVariance ' + m + ' (plafond compris) : E[X] ' + D.mean.toFixed(4) + '  écart-type ' + Math.sqrt(D.var).toFixed(2) +
         '  — plancher d\'une table à paliers fixes (0 / <100 / 100-1000 / 1000+ / max) : ' + tableFloorSd(m, [0, 0.1, 100, 1000, M.MAX_WIN]).toFixed(2) +

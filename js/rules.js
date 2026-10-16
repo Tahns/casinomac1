@@ -70,6 +70,13 @@
       ['<b>' + esc(R.modeStd) + '</b><small>' + esc(f(R.modeStdD)) + '</small>', '×' + num(M.MODES.std.cost), rtp(S.std && S.std.rtp), maxW + '×'],
       ['<b>' + esc(R.modePlus) + '</b><small>' + esc(f(R.modePlusD)) + '</small>', '×' + num(plusCost), rtp(S.plus && S.plus.rtp), maxW + '×']
     ];
+    // pactes : un mode de mise par pacte (même prix, même RTP), aussi en Oracle+ ; leurs bonus et leur Colère sont détaillés plus bas
+    var PB = root.I18N.block('pact'), PS = S.pacts || {}, lad = function (pf) { var l = M.ladderOf(pf); return { s: num(l[l.length - 1], 0), a: num(l[0], 0) }; };
+    var pfill = { s: lad('safe').s, j: lad('bold').s, j0: lad('bold').a, btn: PB.btn, ws: num(Math.round(1 / M.MODES.safe.wrath), 0), wj: num(Math.round(1 / M.MODES.bold.wrath), 0), x: num(M.PACT_BIG, 0) };
+    ['safe', 'bold', 'plus_safe', 'plus_bold'].forEach(function (m) {
+      var pf = M.pactOf(m), plus = M.familyOf(m) === 'plus';
+      rowsM.push(['<b>' + esc((plus ? T.oraclePlus + ' · ' : '') + PB.name[pf]) + '</b><small>' + esc(fill(PB.modeD[pf], pfill)) + '</small>', '×' + num(M.MODES[m].cost), rtp(PS[m] && PS[m].rtp), maxW + '×']);
+    });
     ['vault', 'scarab', 'weigh', 'hand'].forEach(function (id) {
       rowsM.push(['<b>' + esc(buyNames[id]) + '</b><small>' + esc(R['buy' + id.charAt(0).toUpperCase() + id.slice(1) + 'D']) + '</small>', '×' + num(M.BUY[id].price), rtp(S.buy && S.buy[id] && S.buy[id].rtp), maxW + '×']);
     });
@@ -107,6 +114,29 @@
     var wl = M.WRATH_LADDER, wc = M.WRATH_CELLS, wa = wc.filter(function (i) { return M.LAYOUT[i] === 'ankh'; }).length / wc.length;
     out += h3(R.wrathH) + R.wrathP.map(function (t) { return p(esc(f(t))); }).join('') + p(esc(R.wrathL)) +
       table([R.colBoost, R.colChance], wl.map(function (x, k) { var w0 = M.WRATH_START[0][0]; if (k < w0) return null; var q = k === M.WRATH_TOP ? Math.pow(wa, k - w0) : Math.pow(wa, k - w0) * (1 - wa); return ['×' + num(x, 0), pct(q * 100, 2)]; }).filter(Boolean));
+
+    /* PACTES : décision du joueur avant le tour ; chaque pacte = un mode de mise (même prix, même RTP). Chiffres : math.js et js/stats.js (calcul exact) */
+    var PO = M.PACT_ORDER, big = function (m) { return PS[m] && PS[m].big ? '1 / ' + num(PS[m].big, 0) : '—'; };
+    out += h3(PB.rulesH) + PB.rulesP.map(function (t) { return p(esc(fill(t, pfill))); }).join('') +
+      table([PB.colPact, R.wrathH, PB.colLadder, fill(PB.colBig, pfill), PB.colSd, R.colRtp], PO.map(function (pf) {
+        var m = pf === 'std' ? 'std' : pf, l = M.ladderOf(pf);
+        return [esc(PB.name[pf]), '1 / ' + num(Math.round(1 / M.MODES[m].wrath), 0), '×' + l.map(function (x) { return num(x, 0); }).join(' → ×'), big(m), PS[m] ? num(PS[m].sd, 1) : '—', rtp(PS[m] && PS[m].rtp)];
+      }), 'modes');
+    // valeurs des bonus par pacte (les achats utilisent toujours la Balance)
+    out += '<h4 class="rh">' + ic('scarab') + esc(fill(PB.valsH, { bonus: T.kindsLong.scarab })) + '</h4>' +
+      table([PB.colPact].concat(M.SCARAB_PROFILES.std.map(function (x, i) { return '#' + (i + 1); })), PO.map(function (pf) { return [esc(PB.short[pf])].concat(M.SCARAB_PROFILES[pf].map(function (x) { return '×' + num(x); })); }));
+    var wrows = [];
+    M.WEIGH_PROFILES.std.forEach(function (q, i) { wrows.push(['#' + (i + 1)].concat(PO.map(function (pf) { var t = M.WEIGH_PROFILES[pf][i], sw = sum(M.WEIGH_PROFILES[pf]); return '×' + num(t[0][0]) + ' / ×' + num(t[0][1]) + ' · ' + pct(t[1] / sw * 100, 1); }))); });
+    out += '<h4 class="rh">' + ic('weigh') + esc(fill(PB.valsH, { bonus: T.kindsLong.weigh })) + '</h4>' + table([R.colValue].concat(PO.map(function (pf) { return esc(PB.short[pf]); })), wrows);
+    var vrows = [];
+    M.VAULT_PROFILES.std.tokens.forEach(function (q, i) {
+      vrows.push(['#' + (i + 1)].concat(PO.map(function (pf) {
+        var vpp = M.VAULT_PROFILES[pf], t = vpp.tokens[i], vww = sum(vpp.tokens) + vpp.seal, lb = t[0] === 'scepter' ? R.tokScepter : t[0] === 'key' ? R.tokKey : '+' + num(t[0]) + '×';
+        return esc(f(lb)) + ' · ' + pct(t[1] / vww * 100, 2);
+      })));
+    });
+    vrows.push([esc(R.tokSeal)].concat(PO.map(function (pf) { var vpp = M.VAULT_PROFILES[pf]; return pct(vpp.seal / (sum(vpp.tokens) + vpp.seal) * 100, 1); })));
+    out += '<h4 class="rh">' + ic('vault') + esc(fill(PB.valsH, { bonus: T.kindsLong.vault })) + '</h4>' + table([R.colValue].concat(PO.map(function (pf) { return esc(PB.short[pf]); })), vrows);
 
     /* relances et re-déclenchements, boutons, avertissement */
     out += h3(R.retrigH) + R.retrig.map(function (t) { return p('• ' + esc(f(t))); }).join('');

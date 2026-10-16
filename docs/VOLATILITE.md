@@ -65,7 +65,7 @@ finalWin
 ```bash
 git clone https://github.com/StakeEngine/math-sdk   # Python ≥ 3.12, Rust/Cargo
 HOA_BIG=1 python3 stake-math/run.py --books 200000 --prepare-optimizer --out <math-sdk>/games/anubis_unchained/library
-# pour chaque mode (std, plus, bonus_scarab, bonus_weigh, bonus_vault, bonus_fury) :
+# pour chaque mode (std, plus, safe, bold, plus_safe, plus_bold, bonus_scarab, bonus_weigh, bonus_vault, bonus_fury) — pactes : docs/GAMEPLAY.md :
 cp <math-sdk>/games/anubis_unchained/library/optimization_files/setup_<mode>.toml <math-sdk>/optimization_program/src/setup.toml
 (cd <math-sdk>/optimization_program && cargo run --release)
 python3 -c "import sys; sys.path.insert(0,'stake-math'); import verify; print(verify.verify_library('<math-sdk>/games/anubis_unchained/library/publish_files'))"

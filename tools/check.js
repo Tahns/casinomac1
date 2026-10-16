@@ -13,15 +13,16 @@ ok(M.HAND_SEGS.length === 24, 'la roue de la Fureur d\'Anubis compte 24 cases');
 
 // 2. déterminisme
 function sig(seed, mode) { var r = M.mulberry32(seed), out = []; for (var i = 0; i < 200; i++) out.push(M.playRound(r, mode).total); return out.join(','); }
-ok(sig(5, 'std') === sig(5, 'std') && sig(5, 'plus') === sig(5, 'plus'), 'même graine => mêmes tours (std et plus)');
+ok(M.BASE_MODES.every(function (m) { return sig(5, m) === sig(5, m); }), 'même graine => mêmes tours (' + M.BASE_MODES.join(', ') + ')');
 
 // 3. structure des tours
 var cap = require('./cap');
 var rng = M.mulberry32(99), bad = 0, maxChain = 0, capped = 0, N = cap(300000);
-['std', 'plus'].forEach(function (mode) {
+M.BASE_MODES.forEach(function (mode) {
   for (var i = 0; i < N; i++) {
     var r = M.playRound(rng, mode), sp = r.spins, last = sp[sp.length - 1], sum = 0;
     if (!(r.total >= 0 && r.total <= M.MAX_WIN)) bad++;
+    if (r.pact !== M.MODES[mode].pact || r.modeName !== mode || r.mode !== M.familyOf(mode) || r.cost !== M.MODES[mode].cost) bad++;
     if (last.kind === 'ankh') bad++;
     if (sp.length - 1 > 6) bad++;
     maxChain = Math.max(maxChain, sp.length - 1);
@@ -29,6 +30,8 @@ var rng = M.mulberry32(99), bad = 0, maxChain = 0, capped = 0, N = cap(300000);
       sum += s.pay;
       if (j < sp.length - 1 && s.kind !== 'ankh') bad++;
       if (M.KINDS[s.kind].bonus && !s.bonus) bad++;
+      if (s.bonus && !s.secret && !s.upgraded && s.profile !== r.pact) bad++;   // le pacte fixe le profil de chaque bonus du tour
+      if (s.upgraded && s.bonus.pact !== r.pact) bad++;                           // et celui des bandes de la Fureur
       if (!M.KINDS[s.kind].bonus && s.bonus) bad++;
       // boost appliqué = boost de l'Oracle (s'il visait cette case) × multiplicateur de la Colère d'Anubis (1 hors Colère)
       var ob = s.oracle && s.oracle.kind === s.kind ? s.oracle.boost : 1;
@@ -40,35 +43,70 @@ var rng = M.mulberry32(99), bad = 0, maxChain = 0, capped = 0, N = cap(300000);
     if (r.capped) capped++;
   }
 });
-ok(bad === 0, 'invariants de structure sur ' + 2 * N + ' tours (anomalies: ' + bad + ', chaîne Ankh max: ' + maxChain + ')');
+ok(bad === 0, 'invariants de structure sur ' + M.BASE_MODES.length * N + ' tours (anomalies: ' + bad + ', chaîne Ankh max: ' + maxChain + ')');
 
 // 3b. Colère d'Anubis (1 tour sur 500 : forcée ici par un premier tirage à 0) : roue limitée aux cases libérées, multiplicateur ×2 qui monte
 // d'un cran à chaque Ankh, appliqué au gain de la case finale ; jamais à l'achat
 var rw0 = M.mulberry32(4242), badWr = 0, nWr = cap(400), wrUp = 0, wrTop = 0, wrKinds = {};
 ok(M.WRATH_CELLS.length === M.WRATH_KINDS.reduce(function (a, k) { return a + M.KINDS[k].count; }, 0) && M.WRATH_CELLS.every(function (i) { return M.WRATH_KINDS.indexOf(M.LAYOUT[i]) >= 0; }),
   'Colère : ' + M.WRATH_CELLS.length + ' cases libérées (' + M.WRATH_KINDS.join(', ') + '), échelle ×' + M.WRATH_LADDER.join(' → ×'));
-['std', 'plus'].forEach(function (mode) {
+M.BASE_MODES.forEach(function (mode) {
+  var LAD = M.ladderOf(M.pactOf(mode)), TOPL = LAD.length - 1;
   for (var i = 0; i < nWr; i++) {
     var first = true, rr = M.playRound(function () { if (first) { first = false; return 0; } return rw0(); }, mode), lvl = rr.wrath ? rr.wrath.start : -1, t = 0;
     if (!rr.wrath || M.WRATH_START.every(function (s0) { return s0[0] !== rr.wrath.start; })) { badWr++; continue; }
     rr.spins.forEach(function (sp, j) {
       wrKinds[sp.kind] = 1;
-      if (M.WRATH_KINDS.indexOf(sp.kind) < 0 || sp.wrath !== M.WRATH_LADDER[lvl]) badWr++;
-      if (sp.boost !== (sp.oracle && sp.oracle.kind === sp.kind ? sp.oracle.boost : 1) * M.WRATH_LADDER[lvl]) badWr++;
+      if (M.WRATH_KINDS.indexOf(sp.kind) < 0 || sp.wrath !== LAD[lvl]) badWr++;
+      if (sp.boost !== (sp.oracle && sp.oracle.kind === sp.kind ? sp.oracle.boost : 1) * LAD[lvl]) badWr++;
       if (sp.kind === 'ankh' && j < rr.spins.length - 1) {
-        if (lvl < M.WRATH_TOP) { lvl++; wrUp++; if (sp.wrathUp !== M.WRATH_LADDER[lvl]) badWr++; } else if (sp.wrathUp) badWr++;
+        if (lvl < TOPL) { lvl++; wrUp++; if (sp.wrathUp !== LAD[lvl]) badWr++; } else if (sp.wrathUp) badWr++;
       } else if (sp.wrathUp) badWr++;
       t += sp.pay;
     });
-    if (lvl === M.WRATH_TOP) wrTop++;
-    if (rr.wrath.level !== lvl || rr.wrath.mult !== M.WRATH_LADDER[lvl] || rr.total !== Math.min(t, M.MAX_WIN)) badWr++;
+    if (lvl === TOPL) wrTop++;
+    if (rr.wrath.level !== lvl || rr.wrath.mult !== LAD[lvl] || rr.wrath.ladder !== LAD || rr.total !== Math.min(t, M.MAX_WIN)) badWr++;
   }
 });
-ok(badWr === 0 && wrUp > 0, 'Colère : ' + 2 * nWr + ' tours forcés, roue limitée aux cases libérées, ×' + M.WRATH_LADDER[0] + ' puis +1 cran par Ankh, gain = base × Oracle × Colère (anomalies: ' + badWr + ', crans gagnés ' + wrUp + ', cran maximal atteint ' + wrTop + ' fois)');
+ok(badWr === 0 && wrUp > 0, 'Colère : ' + M.BASE_MODES.length * nWr + ' tours forcés (6 modes, échelle du pacte), roue limitée aux cases libérées, ×' + M.WRATH_LADDER[0] + ' puis +1 cran par Ankh, gain = base × Oracle × Colère (anomalies: ' + badWr + ', crans gagnés ' + wrUp + ', cran maximal atteint ' + wrTop + ' fois)');
 var rwb = M.mulberry32(9), wrBuy = 0; ['scarab', 'weigh', 'vault', 'hand'].forEach(function (k) { for (var i = 0; i < cap(200); i++) { var rb0 = M.playBuy(function () { return 0; }, k); if (rb0.wrath || rb0.spins[0].wrath) wrBuy++; rb0 = M.playBuy(rwb, k); if (rb0.wrath) wrBuy++; } });
 ok(wrBuy === 0, 'Colère : jamais à l\'achat d\'un bonus');
 var WX = require('./rtp-exact'), wl = WX.wrathLadder(), wsum = wl.reduce(function (a, x) { return a + x[1]; }, 0), aW = M.KINDS.ankh.count / M.WRATH_CELLS.length;
 ok(Math.abs(wsum - 1) < 1e-12 && Math.abs(wl[wl.length - 1][1] - Math.pow(aW, M.WRATH_TOP)) < 1e-12, 'Colère : loi exacte du multiplicateur final (somme 1, ×' + M.WRATH_LADDER[M.WRATH_TOP] + ' = a^' + M.WRATH_TOP + ' avec a = ' + M.KINDS.ankh.count + '/' + M.WRATH_CELLS.length + ') : ' + wl.map(function (x) { return '×' + x[0] + ' ' + (x[1] * 100).toFixed(2) + ' %'; }).join(' · '));
+
+// 3c. PACTES : décision du joueur avant le tour (docs/GAMEPLAY.md). Un pacte = un mode de mise au même coût et au même RTP EXACT ;
+// la volatilité change nettement (Scribe < Balance < Chacal) ; mêmes tirages => même roue et même Oracle, seul le profil des bonus change.
+ok(M.PACT_ORDER.join() === 'safe,std,bold' && M.BASE_MODES.every(function (m) { return M.modeFor(M.familyOf(m), M.pactOf(m)) === m; }) && M.modeFor('plus', 'xx') === 'plus' && M.modeFor('std', 'bold') === 'bold',
+  'Pactes : modes ' + M.BASE_MODES.join(', ') + ' (famille × pacte, modeFor/pactOf/familyOf cohérents)');
+ok(M.ladderOf('safe').join() === '2,3,5,10' && M.ladderOf('std') === M.WRATH_LADDER && M.ladderOf('bold')[0] === 3 && M.ladderOf('bold')[M.ladderOf('bold').length - 1] === 250,
+  'Pactes : échelles de la Colère ×' + M.PACT_ORDER.map(function (p) { return M.ladderOf(p).join('/'); }).join('  ×'));
+var PX = require('./rtp-exact'), pSum = {};
+M.BASE_MODES.forEach(function (m) { pSum[m] = PX.summary(m); });
+ok(M.BASE_MODES.every(function (m) { return Math.abs(pSum[m].rtp - 0.962) < 5e-5 && M.MODES[m].cost === M.MODES[M.familyOf(m)].cost && M.MODES[m].oracle === M.MODES[M.familyOf(m)].oracle; }),
+  'Pactes : même coût, même Oracle, RTP exact identique (' + M.BASE_MODES.map(function (m) { return m + ' ' + (pSum[m].rtp * 100).toFixed(3) + ' %'; }).join(' · ') + ')');
+ok(['std', 'plus'].every(function (f) { var a = pSum[M.modeFor(f, 'safe')].sdRel, b = pSum[f].sdRel, c = pSum[M.modeFor(f, 'bold')].sdRel; return a * 1.25 < b && b * 1.25 < c; }),
+  'Pactes : volatilité nettement ordonnée (écart-type exact × le coût : ' + M.BASE_MODES.map(function (m) { return m + ' ' + pSum[m].sdRel.toFixed(1); }).join(' · ') + ')');
+var rPa = 0, nPa = cap(600), sameWheel = 0, profSeen = {};
+for (var pi = 0; pi < nPa; pi++) {
+  var outP = {};
+  ['std', 'safe', 'bold'].forEach(function (m) { var b0 = M.mulberry32(3000 + pi), f0 = true; var rr = M.playRound(function () { if (f0) { f0 = false; return 0.9999; } return b0(); }, m); outP[m] = rr.spins[0]; });
+  if (outP.std.index !== outP.safe.index || outP.std.index !== outP.bold.index || String(outP.std.oracle && outP.std.oracle.kind) !== String(outP.safe.oracle && outP.safe.oracle.kind)) rPa++; else sameWheel++;
+  if (outP.std.bonus && !outP.std.secret && !outP.std.upgraded) { profSeen[outP.safe.profile + '/' + outP.bold.profile] = 1; if (outP.safe.bonus !== outP.safe.options.safe || outP.bold.bonus !== outP.bold.options.bold) rPa++; }
+}
+ok(rPa === 0 && profSeen['safe/bold'], 'Pactes : mêmes tirages => même case et même Oracle sur ' + sameWheel + ' tours ; seul le profil du bonus change (anomalies: ' + rPa + ')');
+var SEp = require('./stake-export.js'), RGp = require('../js/rgs.js'), badPb = 0, nPb = Math.min(cap(1000), 240);
+for (var bi2 = 0; bi2 < nPb; bi2++) {
+  var mP = M.BASE_MODES[bi2 % M.BASE_MODES.length], wf = bi2 % 4 === 0, rPb = M.mulberry32(7100 + bi2);
+  var rdP = M.playRound(wf ? (function () { var f1 = true; return function () { if (f1) { f1 = false; return 0; } return rPb(); }; })() : rPb, mP), bkP = SEp.makeBook(bi2 + 1, rdP);
+  var vP = SEp.verify(bkP), backP = RGp.bookToRound(bkP.events, M);
+  if (vP.length || backP.issues.length || backP.pact !== M.pactOf(mP) || M.toInt(backP.total) !== bkP.payoutMultiplier || bkP.events[0].pact !== M.pactOf(mP)) badPb++;
+  if (rdP.wrath && (!backP.wrath || backP.wrath.ladder.join() !== M.ladderOf(M.pactOf(mP)).join())) badPb++;
+}
+var bkBadW = SEp.makeBook(1, M.playRound((function () { var f2 = true, r0 = M.mulberry32(8); return function () { if (f2) { f2 = false; return 0; } return r0(); }; })(), 'safe')); bkBadW.events[1].ladder = M.WRATH_LADDER.slice();
+ok(badPb === 0 && SEp.verify(bkBadW).length > 0, 'Pactes : ' + nPb + ' books des 6 modes de base (Colère comprise) vérifiés et relus par RGS.bookToRound au même gain et au même pacte ; une échelle de Colère faussée est refusée');
+ok(RGp.modeName('std', null, 'safe') === 'safe' && RGp.modeName('plus', null, 'bold') === 'plus_bold' && RGp.modeName('plus', null, 'std') === 'plus' && RGp.modeName('plus', 'vault', 'bold') === 'bonus_vault' &&
+  RGp.parseMode('plus_safe').pact === 'safe' && RGp.parseMode('plus_safe').mode === 'plus' && RGp.parseMode('bold').mode === 'std' && RGp.parseMode('bonus_fury').pact === 'std',
+  'Pactes : noms de modes du RGS (modeName / parseMode) aller-retour');
 
 // 4. achats
 var rb = M.mulberry32(7), badBuy = 0;

@@ -38,12 +38,14 @@
   }
   var HOT = ['#ffe9a0', '#ffd86a', '#ffc247', '#ffae33', '#ff9a26', '#ff8a1a', '#fff6d0'];   // or de plus en plus chaud (le rouge reste réservé à la Fureur)
 
+  // couleur d'un cran, quelle que soit la longueur de l'échelle du pacte : le dernier cran est toujours le blanc-or
+  function hot(i) { i = clamp(i, 0, TOP); return i >= TOP ? HOT[HOT.length - 1] : HOT[Math.round(i * (HOT.length - 2) / Math.max(1, TOP - 1))]; }
   /* ---------- dessin ---------- */
   function drawPlaque(ctx, g) {
     var R = G.R, a = S.a * (!G.scene || G.scene.showsWheel ? 1 : 0) * (G.winOv ? 0 : 1);
     if (a <= 0.01) return;
-    var x = g.x, y = g.y, w = g.w, h = g.h, lv = S.lvl, k = 1 + 0.12 * S.pop * S.pop, col = HOT[clamp(lv, 0, TOP)];
-    if (S.flick) { var sh = (Math.floor(S.t * S.flick.f) % 2) === 0; lv = sh ? S.flick.from : S.flick.to; col = HOT[clamp(lv, 0, TOP)]; }
+    var x = g.x, y = g.y, w = g.w, h = g.h, lv = S.lvl, k = 1 + 0.12 * S.pop * S.pop, col = hot(lv);
+    if (S.flick) { var sh = (Math.floor(S.t * S.flick.f) % 2) === 0; lv = sh ? S.flick.from : S.flick.to; col = hot(lv); }
     var jx = red() ? 0 : (Math.sin(S.t * 71) * S.shk * 2.4), jy = red() ? 0 : (Math.cos(S.t * 63) * S.shk * 1.8);
     ctx.save(); ctx.globalAlpha = a; ctx.translate(x + jx, y + jy);
     // lueur
@@ -63,7 +65,7 @@
     for (i = 0; i < n; i++) {
       var qx = px0 + (px1 - px0) * i / (n - 1); on = i <= lv;
       ctx.beginPath(); ctx.arc(qx, py, pr * (i === lv ? 1.35 + 0.15 * S.glow : 1), 0, TAU);
-      ctx.fillStyle = on ? HOT[i] : '#1b130b'; if (on && !FX.lite) { ctx.shadowColor = HOT[i]; ctx.shadowBlur = i === lv ? 10 : 3; }
+      var hc = hot(i); ctx.fillStyle = on ? hc : '#1b130b'; if (on && !FX.lite) { ctx.shadowColor = hc; ctx.shadowBlur = i === lv ? 10 : 3; }
       ctx.fill(); ctx.shadowBlur = 0; ctx.lineWidth = 1; ctx.strokeStyle = on ? '#5b4311' : 'rgba(138,106,30,.7)'; ctx.stroke();
     }
     // multiplicateur courant
@@ -149,6 +151,8 @@
     // wrath = round.wrath ({ start, level, mult }) ; renvoie quand la scène est finie
     begin: async function (wr) {
       if (!wr || S.on) return;
+      // échelle du pacte du tour (Scribe ×2…×10, Balance ×2…×100, Chacal ×3…×250) : portée par l'événement « wrath » du book
+      L = Array.isArray(wr.ladder) && wr.ladder.length ? wr.ladder : M.WRATH_LADDER; TOP = L.length - 1;
       var T = txt(), r = red(), start = clamp(wr.start == null ? 0 : wr.start, 0, TOP);
       S.on = true; S.lvl = start; S.a = 0; S.shade = 0; S.shk = 0; S.tense = 0; S.flick = null;
       if (G.say) G.say(T.wrathT + ' ×' + G.fmt(L[start]));

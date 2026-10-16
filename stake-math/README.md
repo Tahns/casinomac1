@@ -11,7 +11,7 @@ lancé ici ; aucun test, aucune simulation ne dépasse 1000 tours (`cap.py`).
 
 | Fichier | Rôle (équivalent math-sdk) |
 |---|---|
-| `game_config.py` | `GameConfig` : 6 modes (`std`, `plus`, `bonus_scarab`, `bonus_weigh`, `bonus_vault`, `bonus_fury`), coûts, RTP cible 96,2 %, `wincap` 25 000, roue de 64 cases, Oracle, tables des bonus, échelle `SCALE = 100`. Utilise `BetMode`/`Distribution` du SDK s'il est importable, sinon des classes de même signature |
+| `game_config.py` | `GameConfig` : 10 modes (`std`, `plus`, pactes `safe` / `bold` / `plus_safe` / `plus_bold`, `bonus_scarab`, `bonus_weigh`, `bonus_vault`, `bonus_fury`), coûts, RTP cible 96,2 %, `wincap` 25 000, roue de 64 cases, Oracle, tables des bonus, échelle `SCALE = 100`. Utilise `BetMode`/`Distribution` du SDK s'il est importable, sinon des classes de même signature |
 | `game_calculations.py` | Les calculs du jeu (Scarabées, Pesée, Trésor, Fureur, Sanctuaire, tour, achat) : copie de `js/math.js`, mêmes tables, mêmes plafonds, même ordre de consommation des tirages, **tout en entiers** (échelle 100) |
 | `game_events.py` | Les événements d'un book (voir « Format des events ») |
 | `gamestate.py` | `GameState.run_spin` : un tour → un book, critères de distribution par rejet (comme `check_repeat` du SDK) |
@@ -36,12 +36,16 @@ node tools/export-parity.js                              # régénère les tirag
 Python 3.12 ou plus pour le SDK ; ce dossier tourne dès Python 3.9. `zstandard` (ou Python 3.14, `pyzstd`, la commande `zstd`) est utilisé pour
 compresser les books ; sans aucun d'eux, `run.py` écrit des `.jsonl` bruts et l'annonce (le RGS veut du `.jsonl.zst`). numpy n'est pas nécessaire.
 
-## Les 6 modes
+## Les 10 modes (dont 4 pactes, docs/GAMEPLAY.md)
 
 | Mode | Coût (× mise) | RTP exact (plafond compris) | Taux de gain | Écart-type | ≥ 100× | ≥ 1000× | 25 000× |
 |---|---|---|---|---|---|---|---|
 | `std` | 1 | 96,20 % | 32,7 % | 31,2 | 1/882 | 1/10 392 | 1/1,88 M |
 | `plus` (Oracle+) | 1,1 | 96,20 % | 32,7 % | 33,2 × le coût | 1/801 | 1/9 271 | 1/1,29 M |
+| `safe` (Pacte du Scribe) | 1 | 96,20 % | 32,8 % | 18,3 | 1/1 165 | 1/47 609 | 1/20,6 M |
+| `bold` (Pacte du Chacal) | 1 | 96,20 % | 32,6 % | 44,2 | 1/921 | 1/14 257 | 1/0,82 M |
+| `plus_safe` | 1,1 | 96,20 % | 32,8 % | 21,8 × le coût | 1/1 004 | 1/30 773 | 1/7,6 M |
+| `plus_bold` | 1,1 | 96,20 % | 32,7 % | 45,4 × le coût | 1/860 | 1/12 112 | 1/0,63 M |
 | `bonus_scarab` | 9,26 | 96,02 % | 99,8 % | 3,99 × le prix | 1/38 | 1/8 394 | 1/1,1·10⁸ |
 | `bonus_weigh` | 10,31 | 96,01 % | 53,8 % | 6,71 × le prix | 1/62 | 1/282 | 1/1,1·10⁸ |
 | `bonus_vault` | 12,37 | 96,03 % | 99,7 % | 3,47 × le prix | 1/114 | 1/5 015 | 1/1,1·10⁸ |
@@ -97,7 +101,7 @@ identique dans les deux langages (`test_gain_maximal_meme_chemin_dans_les_deux_l
 
 - `tests/test_exact.py` : le port Python du calcul exact égale `tools/rtp-exact.js` à 1e-9 (RTP 96,21 % / 96,14 % / 95,96–96,02 %), la récurrence du Sanctuaire égale un DP exhaustif,
   la Pesée et un scarabée énumérés par le moteur retrouvent les formules exactes.
-- `tests/test_parity.py` : 922 tours / tirages joués par `js/math.js` (6 modes × 100, 5 bonus × 60, chaînes imposées, 6 scripts de gain maximal) ; Python rejoue les mêmes tirages
+- `tests/test_parity.py` : 928 tours / tirages joués par `js/math.js` (10 modes × 56, Colère 6 × 11, 5 bonus × 36, bonus des pactes 8 × 12, chaînes imposées, 10 scripts de gain maximal) ; Python rejoue les mêmes tirages
   et doit retrouver mêmes gains entiers, mêmes cases, mêmes boosts, et consommer exactement les mêmes tirages. Un test relance Node avec une autre graine (≈ 230 tours).
 - `tests/test_stats.py` : RTP dans [90 %, 96,7 %] et à moins de 0,5 point de 96,2 % ; écart entre modes ≤ 0,5 point (0,2 constaté) ; taux de gain ≥ 1/20 ; critère `wincap` dans
   chaque mode et dans la distribution cible ; un book à 2 500 000 par mode.
