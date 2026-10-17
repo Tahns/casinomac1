@@ -829,7 +829,7 @@
      G.cellWin(sp) : joue l animation de la case atteinte, se résout à sa fin (temps de jeu = G.speed : Turbo / Ultra écourtent,
      jamais d'attente du joueur). FX.reduced : pas de secousse ni d'éclair, effets réduits à un fondu / un compteur. */
   var CA = null;
-  var CA_DUR = { m0: 0.9, m025: 1.0, m05: 1.1, m1: 1.3, m2: 1.5, m3: 1.7, ankh: 1.7, scarab: 1.5, weigh: 1.8, vault: 1.7, hand: 1.9, secret: 1.9 };
+  var CA_DUR = { m0: 0.9, m025: 1.0, m05: 1.1, m1: 1.3, m2: 1.5, m3: 1.7, ankh: 2.0, scarab: 1.5, weigh: 1.8, vault: 1.7, hand: 1.9, secret: 1.9 };
   function cellPos() {
     var a = W.rot + (CA.idx + 0.5) * step - Math.PI / 2, rc = G.R * 0.6175;
     return { x: G.cx + Math.cos(a) * rc, y: G.cy + Math.sin(a) * rc, a: a };
@@ -862,8 +862,18 @@
       once('r', u > 0.35 && big, function () { FX.rain(G.w, k === 'm3' ? 26 : 14); FX.coins(G.cx, G.cy - R * 0.2, k === 'm3' ? 30 : 16, 900, R * 0.8); });
       once('e', u > 0.72, function () { FX.spark(G.cx, G.cy - R * 0.55, 10 + lvl * 4, '#efdfa8', 260); });
     } else if (k === 'ankh') {
-      once('s', true, function () { Sfx.divine(); FX.flash(0.25, '#efdfa8'); });
-      once('b', u > 0.4, function () { Sfx.chainSlam(); FX.links(p.x, p.y, 16, 520); FX.ring(p.x, p.y, '#efdfa8', R * 0.9, 0.9); FX.flash(0.3, '#efdfa8'); if (!red) FX.shake(8, 0.4); FX.spark(p.x, p.y, 36, '#d9b857', 480); });
+      once('s', true, function () {
+        Sfx.divine(); FX.flash(0.15, '#efdfa8');
+        if (!red && FX.Break.ready()) { c.chs = []; for (var j = 0; j < 5; j++) c.chs.push(FX.Break.chain(0, 0, 1, 0, Math.max(9, R * 0.075), { sag: 0.04, par: j })); }
+      });
+      once('b', u > 0.4, function () {
+        Sfx.chainSlam(); FX.ring(p.x, p.y, '#efdfa8', R * 0.9, 0.9); FX.flash(0.16, '#efdfa8'); if (!red) FX.shake(9, 0.45);
+        if (c.chs) {   // les cinq chaînes qui tiennent l'Ankh cèdent ensemble : cordes qui fouettent, maillons et éclats qui rebondissent sur la roue
+          FX.Break.slow(0.35, 0.3);
+          for (var j = 0; j < c.chs.length; j++) FX.Break.snap(c.chs[j], { power: 0.55, at: 0.45 + 0.25 * Math.random(), tens: 1 });
+          FX.Break.impact(p.x, p.y, 0.7, { size: Math.max(10, R * 0.08), links: 4 });
+        } else if (!red) { FX.links(p.x, p.y, 16, 520); FX.spark(p.x, p.y, 36, '#d9b857', 480); }
+      });
       if (u > 0.4 && u < 0.85) { c.acc += sdt * 26; while (c.acc >= 1) { c.acc--; FX.spark(p.x + (Math.random() - 0.5) * R * 0.2, p.y, 1, '#efdfa8', 120, 1.0); } }
     } else if (k === 'scarab') {
       once('s', true, function () { Sfx.scarabFly(); FX.ring(p.x, p.y, '#d9735a', R * 0.5, 0.6); });
@@ -909,10 +919,16 @@
       ctx.beginPath(); for (i = 0; i < nc; i++) { var mx = R * (0.6175 + cr[i][0]), my = R * cr[i][1]; if (i) ctx.lineTo(mx, my); else ctx.moveTo(mx, my); } ctx.stroke(); ctx.restore();
     } else if (k === 'ankh') {
       var lw = R * 0.5 * Math.sin(Math.PI * clamp(u * 1.15, 0, 1)), bg = ctx.createLinearGradient(p.x - lw, 0, p.x + lw, 0);   // colonne de lumière divine
-      bg.addColorStop(0, 'rgba(239,223,168,0)'); bg.addColorStop(0.5, 'rgba(255,248,220,.8)'); bg.addColorStop(1, 'rgba(239,223,168,0)');
+      bg.addColorStop(0, 'rgba(239,223,168,0)'); bg.addColorStop(0.5, 'rgba(255,248,220,.38)'); bg.addColorStop(1, 'rgba(239,223,168,0)');
       ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.fillStyle = bg; ctx.fillRect(p.x - lw, 0, lw * 2, FX.floorY < 9000 ? FX.floorY : G.h); ctx.restore();
-      var rr = R * (0.21 + 0.02 * Math.sin(u * 20)), nl = FX.lite ? 8 : 12;
-      if (u < 0.4) for (i = 0; i < nl; i++) { var an = TAU * i / nl + u * 4; FX.Chains.link(ctx, p.x + Math.cos(an) * rr, p.y + Math.sin(an) * rr, an + Math.PI / 2, R * 0.11, i % 2 === 0); }
+      if (c.chs && u < 0.4) {   // cinq chaînes tendues, de la jante vers l'Ankh : elles se raidissent et vibrent avant de rompre
+        var tn = 0.55 + 0.45 * clamp(u / 0.38, 0, 1), cj, ca;
+        for (i = 0; i < c.chs.length; i++) {
+          cj = c.chs[i]; ca = TAU * i / c.chs.length - Math.PI / 2 + 0.3;
+          cj.x0 = p.x + Math.cos(ca) * R * 0.5; cj.y0 = p.y + Math.sin(ca) * R * 0.5; cj.x1 = p.x + Math.cos(ca) * R * 0.1; cj.y1 = p.y + Math.sin(ca) * R * 0.1;
+          FX.Break.drawChain(ctx, cj, c.t, tn);
+        }
+      }
       var ap = G.ease.outBack(clamp(u / 0.35, 0, 1)), as = R * 0.34 * ap * (1 + 0.04 * Math.sin(u * 30));
       ctx.save(); ctx.globalAlpha = 1 - clamp((u - 0.8) / 0.2, 0, 1); ctx.shadowColor = 'rgba(255,230,150,.95)'; ctx.shadowBlur = 0;
       A.ankh(ctx, p.x, p.y - R * 0.02, as, '#efdfa8', '#8a5e12'); ctx.restore();
@@ -1132,11 +1148,42 @@
     ctx.font = num ? '700 ' + size * 1.14 + 'px ' + G.NUM : '900 ' + size + 'px Cinzel, serif';
     var m = ctx.measureText(str).width; return m > maxW ? size * maxW / m : size;
   }
+  // pièces qui rebondissent (pool 3D de FX.Break) ; mouvement réduit : l'ancien jet à plat
+  function coinsFx(x, y, n, power, spread) { if (FX.reduced) FX.coins(x, y, n, power, spread); else FX.Break.coins(x, y, n, power, spread); }
+  function cannonFx(x, y, dir, n, power) { if (FX.reduced) FX.cannon(x, y, dir, n, power); else FX.Break.cannon(x, y, dir, n, power); }
+  function rainFx(w, n) { if (FX.reduced) FX.rain(w, n); else if (Math.random() < 0.5) FX.Break.rain(w, n, 0.12); }
+  // chaînes qui retiennent le montant : une par palier franchi (1 chaîne pour Big … 4 pour Divin), elles cèdent quand le compteur atteint le palier
+  var WCHAIN = ['low', 'top', 'dA', 'dB'];
+  function breakWinChain(o, j, final) {
+    var c = o.chs && o.chs[j]; if (!c || c.dead) return;
+    c.dead = true;
+    var pt = FX.Break.snap(c.ch, { power: 0.6 + 0.2 * j + (o.tier >= 3 ? 0.2 : 0), at: c.at, tens: 1 });
+    if (!pt) return;
+    var px = pt.x, py = pt.y;
+    if (!final) FX.Break.slow(0.3 + 0.05 * j, 0.3);
+    Sfx.chainSlam(); if (j >= 2) Sfx.thunder(); if (j === o.chs.length - 1 && o.tier >= 3) Sfx.chainBreak();
+    FX.shake(5 + 3 * j, 0.4 + 0.1 * j);
+    FX.Break.coins(px, py, 6 + 4 * j, 650, 40); FX.Break.ring(px, py, G.R * (0.7 + 0.2 * j), 4 + j, 0.7, WC[o.tier][0], 0, 0.12);
+  }
+  function layWinChains(o, w, h, cx, cy, u, ty, tsz, nlines, ay) {
+    var size = clamp(u * 0.07, 20, 40), j, c, ch, topY = ty - tsz * (0.55 * nlines + 0.35);
+    for (j = 0; j < o.chs.length; j++) {
+      c = o.chs[j]; ch = c.ch; ch.size = size;
+      if (c.id === 'low') { ch.x0 = -size; ch.y0 = ay + u * 0.14; ch.x1 = w + size; ch.y1 = ay + u * 0.14; }
+      else if (c.id === 'top') { ch.x0 = -size; ch.y0 = topY; ch.x1 = w + size; ch.y1 = topY; }
+      else if (c.id === 'dA') { ch.x0 = -size; ch.y0 = cy - u * 0.46; ch.x1 = w + size; ch.y1 = cy + u * 0.4; }
+      else { ch.x0 = w + size; ch.y0 = cy - u * 0.46; ch.x1 = -size; ch.y1 = cy + u * 0.4; }
+    }
+  }
   G.showBigWin = function (mult, amount, tier) {
     tier = clamp(tier | 0, 0, 4);
     return new Promise(function (res) {
       var T = I18N.t(), k = G.ultra ? 3.5 : G.turbo ? 1.8 : 1;
-      G.winOv = { t: 0, k: k, mult: mult, amount: amount, tier: tier, W: WT[tier], count: 0, p: 0, done: false, closing: 0, res: res, title: T.tiers[tier], ev: { rings: 0 }, acc: 0, t0: tier ? 0.6 : 0.25, nextWave: 0.9, nextSp: 0.5, nextFl: 1.2, ringN: 0, nextCn: 1.0, burst: 0, pre: 0, freeze: 0, fz: 0, nextBolt: 0.7 };
+      G.winOv = { t: 0, k: k, mult: mult, amount: amount, tier: tier, W: WT[tier], count: 0, p: 0, done: false, closing: 0, res: res, title: T.tiers[tier], ev: { rings: 0 }, acc: 0, t0: tier ? 0.6 : 0.25, nextWave: 0.9, nextSp: 0.5, nextFl: 1.2, ringN: 0, nextCn: 1.0, burst: 0, pre: 0, freeze: 0, fz: 0, nextBolt: 0.7, chs: null };
+      if (tier > 0 && !FX.reduced && FX.Break.ready()) {
+        G.winOv.chs = [];
+        for (var cj = 0; cj < tier; cj++) G.winOv.chs.push({ id: WCHAIN[cj], thr: G.WIN_TIERS[cj + 1], ch: FX.Break.chain(0, 0, 1, 0, 24, { sag: 0.05, par: cj }), dead: false, at: 0.3 + 0.4 * Math.random() });
+      }
       if (tier === 0) {
         Sfx.chime(mult); if (G.wheel) G.wheel.flashLamps = 1;
         FX.ring(G.cx, G.cy, '#eadb9f', G.R * 1.15, 0.9); FX.spark(G.cx, G.cy, 22, '#d9b857', 360);
@@ -1144,25 +1191,27 @@
       } else {
         Sfx.fanfare(tier);
         if (tier >= 2 && Sfx.rise) Sfx.rise(tier, WT[tier].cd / k);
-        FX.flash(0.3 + tier * 0.1, '#eadb9f'); FX.shake(6 + tier * 3, 0.5);
-        FX.coins(G.cx, G.cy + G.R * 0.4, 18 + tier * 8, 1100, 80);
+        FX.flash(0.1 + tier * 0.03, '#eadb9f'); FX.shake(6 + tier * 3, 0.5);
+        coinsFx(G.cx, G.cy + G.R * 0.4, 18 + tier * 8, 1100, 80);
       }
     });
   };
   function winLand(o) {
     o.done = true; o.doneAt = o.t; o.count = o.amount; o.p = 1;
-    var t = o.tier, W = o.W;
-    FX.ring(G.cx, G.cy, '#eadb9f', G.R * (t ? 1.3 : 1.1), 0.9);
+    var t = o.tier, W = o.W, R = FX.reduced, j;
+    if (o.chs) for (j = 0; j < o.chs.length; j++) breakWinChain(o, j, true);   // les chaînes restantes cèdent avec le total
+    if (R) FX.ring(G.cx, G.cy, '#eadb9f', G.R * (t ? 1.3 : 1.1), 0.9); else FX.Break.ring(G.cx, G.cy, G.R * (t ? 1.3 : 1.1), 5, 0.8, '#d9b857', 0, 0);
     if (t > 0) {
       Sfx.thud(); Sfx.winLand && Sfx.winLand(t);
-      FX.shake(6 + t * 3, 0.45); FX.flash(0.2 + t * 0.07, WC[t][0]);
-      FX.coins(G.cx, G.cy + G.R * 0.4, W.coins, 1150, 100);
-      FX.spark(G.cx, G.cy - Math.min(G.w, G.h) * 0.2, 14 + t * 8, WC[t][0], 420);
-      if (t >= 2) {   // explosion du total : ondes de choc, canons à pièces, maillons brisés, rayons qui jaillissent
+      FX.shake(6 + t * 3, 0.45); FX.flash(0.08 + t * 0.03, WC[t][0]);
+      coinsFx(G.cx, G.cy + G.R * 0.4, W.coins, 1150, 100);
+      if (R) FX.spark(G.cx, G.cy - Math.min(G.w, G.h) * 0.2, 14 + t * 8, WC[t][0], 420);
+      else FX.Break.impact(G.cx, G.cy - Math.min(G.w, G.h) * 0.08, 0.4 + 0.2 * t, { size: clamp(Math.min(G.w, G.h) * 0.05, 14, 30), links: 2 + t * 2 });
+      if (t >= 2) {   // explosion du total : ondes de choc, canons à pièces, maillons brisés
         o.burst = 1; var cp = Math.sqrt(2100 * G.h);
-        FX.cannon(20, G.h - 10, 1, 10 + t * 5, cp); FX.cannon(G.w - 20, G.h - 10, -1, 10 + t * 5, cp);
-        FX.ring(G.cx, G.cy, WC[t][1], Math.max(G.w, G.h) * 0.5, 0.9); FX.ring(G.cx, G.cy, WC[t][0], Math.max(G.w, G.h) * 0.8, 1.2);
-        FX.links(G.cx, G.cy - Math.min(G.w, G.h) * 0.12, 10 + t * 4, 760);
+        cannonFx(20, G.h - 10, 1, 10 + t * 5, cp); cannonFx(G.w - 20, G.h - 10, -1, 10 + t * 5, cp);
+        if (R) { FX.ring(G.cx, G.cy, WC[t][1], Math.max(G.w, G.h) * 0.5, 0.9); FX.ring(G.cx, G.cy, WC[t][0], Math.max(G.w, G.h) * 0.8, 1.2); }
+        else { FX.Break.ring(G.cx, G.cy, Math.max(G.w, G.h) * 0.5, 5, 0.9, WC[t][1], 0, 0.08); FX.Break.ring(G.cx, G.cy, Math.max(G.w, G.h) * 0.8, 6, 1.2, WC[t][0], 0, 0.2); FX.Break.rain(G.w, 10 + t * 5, 0.5); }
         FX.shake(10 + t * 4, 0.7);
       }
     } else { FX.spark(G.cx, G.cy, 16, '#eadb9f', 300); FX.coins(G.cx, G.cy + G.R * 0.3, W.coins, 900, 60); }
@@ -1178,12 +1227,12 @@
     var qq = clamp((o.t - o.t0) / W.cd, 0, 1);
     o.pre = (t >= 2 && !o.done && !R) ? clamp((qq - 0.7) / 0.3, 0, 1) : 0;                       // les derniers pour cent : ralenti, zoom, tension
     var slowK = 1 - 0.72 * o.pre * (t >= 3 ? 1 : 0.7);
-    G.fxScale = o.done ? 1 : slowK;
-    o.t += sdt * slowK;
+    G.fxScale = o.done ? 1 : slowK;   // ralenti des seuls éclats : le compteur, lui, accélère jusqu'au claquement
+    o.t += sdt;
     if (o.burst > 0) o.burst = Math.max(0, o.burst - sdt * 1.5);
     if (!o.done) {
       var q = clamp((o.t - o.t0) / W.cd, 0, 1);
-      o.p = 1 - Math.pow(1 - q, 3.2);                           // décompte : rapide au début, très lent à la fin
+      o.p = Math.pow(q, 2.1);                                   // décompte : lent sous la tension des chaînes, puis il accélère jusqu'au claquement
       o.count = q >= 1 ? o.amount : o.p * o.amount;
       if (q >= 1) {
         if (t >= 2 && !R && !o.fz) { o.fz = 1; o.freeze = (t >= 3 ? 0.2 : 0.12) / o.k; o.count = o.amount * 0.999; Sfx.hitStop && Sfx.hitStop(); }
@@ -1191,6 +1240,7 @@
       } else {
         var nt = t ? 40 : 12;
         if (Math.floor(prev / o.amount * nt) !== Math.floor(o.count / o.amount * nt)) Sfx.countTick(o.p);
+        if (o.chs) { var cj2; for (cj2 = 0; cj2 < o.chs.length; cj2++) if (!o.chs[cj2].dead && q >= 0.85 * Math.log(o.chs[cj2].thr) / Math.log(Math.max(o.mult, o.chs[cj2].thr * 1.0001))) breakWinChain(o, cj2, false); }   // paliers répartis sur l'échelle logarithmique du compteur
       }
     }
     var cx = G.cx, ty = G.cy - u * 0.2, c = WC[t];
@@ -1200,12 +1250,12 @@
         var amp = 0.35 + 0.65 * o.p;
         if (t >= 2 && o.t > 0.4) FX.shake(W.shake * amp, 0.12);                  // la tension monte avec le compteur
         o.acc += sdt * W.rain * amp * (R ? 0.4 : 1) * (FX.lite ? 0.6 : 1);
-        while (o.acc >= 1) { o.acc -= 1; FX.rain(G.w, 1); }
-        if (o.t > o.nextSp) { o.nextSp += 0.14; FX.spark(cx + (Math.random() - 0.5) * w * 0.6, ty + (Math.random() - 0.5) * u * 0.1, 2 + t, c[Math.random() < 0.5 ? 0 : 1], 240, 0.7); }
-        if (t >= 2 && !R && o.t > o.nextCn) { o.nextCn += t >= 3 ? 0.55 : 0.9; var cpw = Math.sqrt(2100 * G.h), sidec = o.ringN % 2 ? 1 : -1; FX.cannon(sidec > 0 ? 20 : w - 20, G.h - 10, sidec, 5 + t * 2, cpw); }
-        if (t >= 2 && o.t > o.nextWave) { o.nextWave += t >= 3 ? 1.0 : 1.5; FX.ring(cx, G.cy, c[o.ringN++ % 2], Math.max(w, G.h) * 0.6, 1.1); if (t >= 3) FX.coins(cx, G.cy + G.R * 0.5, 14, 1000, w * 0.4); }
-        if (t === 4 && o.t > o.nextFl) { o.nextFl += 1.3; FX.flash(0.22, '#cfc4e4'); }
-      } else if (t >= 3 && o.ev.rings < 3 && o.t - o.doneAt > 0.3 * (o.ev.rings + 1)) { o.ev.rings++; FX.ring(cx, G.cy, c[o.ev.rings % 2], Math.max(w, G.h) * (0.5 + 0.15 * o.ev.rings), 1.0); }
+        while (o.acc >= 1) { o.acc -= 1; rainFx(G.w, 1); }
+        if (o.t > o.nextSp) { o.nextSp += 0.14; if (!o.chs) FX.spark(cx + (Math.random() - 0.5) * w * 0.6, ty + (Math.random() - 0.5) * u * 0.1, 2 + t, c[Math.random() < 0.5 ? 0 : 1], 240, 0.7); }
+        if (t >= 2 && !R && o.t > o.nextCn) { o.nextCn += t >= 3 ? 0.55 : 0.9; var cpw = Math.sqrt(2100 * G.h), sidec = o.ringN % 2 ? 1 : -1; cannonFx(sidec > 0 ? 20 : w - 20, G.h - 10, sidec, 5 + t * 2, cpw); }
+        if (t >= 2 && o.t > o.nextWave) { o.nextWave += t >= 3 ? 1.0 : 1.5; if (R) FX.ring(cx, G.cy, c[o.ringN % 2], Math.max(w, G.h) * 0.6, 1.1); else FX.Break.ring(cx, G.cy, Math.max(w, G.h) * 0.6, 5, 1.1, c[o.ringN % 2], 0, 0); o.ringN++; if (t >= 3) coinsFx(cx, G.cy + G.R * 0.5, 14, 1000, w * 0.4); }
+        if (t === 4 && o.t > o.nextFl) { o.nextFl += 1.3; if (R) FX.flash(0.1, '#cfc4e4'); else FX.Break.ring(cx, G.cy, Math.max(w, G.h) * 0.4, 4, 0.9, '#a08cc8', 1, 0); }
+      } else if (t >= 3 && o.ev.rings < 3 && o.t - o.doneAt > 0.3 * (o.ev.rings + 1)) { o.ev.rings++; if (R) FX.ring(cx, G.cy, c[o.ev.rings % 2], Math.max(w, G.h) * (0.5 + 0.15 * o.ev.rings), 1.0); else FX.Break.ring(cx, G.cy, Math.max(w, G.h) * (0.5 + 0.15 * o.ev.rings), 4, 1.0, c[o.ev.rings % 2], 0, 0); }
     }
     if (o.done && !o.closing && o.t - o.doneAt > W.hold) o.closing = 0.0001;
     if (!o.closing && o.t > W.cd + W.hold + 14) { if (!o.done) winLand(o); o.closing = 0.0001; }   // sécurité : jamais de blocage
@@ -1228,8 +1278,6 @@
     /* --- WIN : bandeau élégant sur la roue, sans assombrir tout l'écran --- */
     if (t === 0) {
       var bh = u * 0.25, sl = G.ease.out3(clamp(tt / 0.3, 0, 1)), pul = 0.75 + 0.25 * Math.sin(tt * 6);
-      var gl0 = ctx.createRadialGradient(cx, cy, 0, cx, cy, G.R * 1.2); gl0.addColorStop(0, A.rgba('#d9b857', 0.32 * pul * sl)); gl0.addColorStop(1, 'rgba(217,184,87,0)');
-      ctx.fillStyle = gl0; ctx.fillRect(0, 0, w, h);
       ctx.save(); ctx.translate(cx, cy); ctx.scale(1, sl);
       var bg = ctx.createLinearGradient(-w / 2, 0, w / 2, 0);
       bg.addColorStop(0, 'rgba(6,5,3,0)'); bg.addColorStop(0.16, 'rgba(6,5,3,.86)'); bg.addColorStop(0.84, 'rgba(6,5,3,.86)'); bg.addColorStop(1, 'rgba(6,5,3,0)');
@@ -1255,12 +1303,10 @@
     var rot = tt * (R ? 0.1 : 0.3 + 0.08 * t), vb = Math.min(h, (FX.floorY < 9000 ? FX.floorY + 10 : h));   // vb : bas de la zone visible (au-dessus du HUD)
     A.rays(ctx, cx, cy, Math.max(w, h), W.rays, rot, c[0], 0.09 + 0.03 * t);
     if (t >= 2) A.rays(ctx, cx, cy, Math.max(w, h), W.rays - 4, -rot * 1.3 + 0.2, c[1], 0.07 + 0.02 * t);
-    if (o.burst > 0.01) { ctx.save(); ctx.globalCompositeOperation = 'lighter'; A.rays(ctx, cx, cy, Math.max(w, h) * 1.2, 24, rot * 4, '#f4ecd6', 0.4 * o.burst); ctx.restore(); }
+    if (o.burst > 0.01) { ctx.save(); A.rays(ctx, cx, cy, Math.max(w, h) * 1.2, 24, rot * 4, '#d9b857', 0.16 * o.burst); ctx.restore(); }
     if (o.pre > 0.01) { var vg0 = ctx.createRadialGradient(cx, cy, u * 0.2, cx, cy, Math.max(w, h) * 0.7); vg0.addColorStop(0, 'rgba(0,0,0,0)'); vg0.addColorStop(1, 'rgba(0,0,0,' + 0.55 * o.pre + ')'); ctx.fillStyle = vg0; ctx.fillRect(0, 0, w, h); }
     if (t === 4 && !R && !o.done && ((tt * 2.2) % 1) < 0.22) { var bs = Math.floor(tt * 2.2) * 131 + 7; FX.bolt(ctx, cx + ((bs % 7) - 3) * w * 0.07, 0, cx + ((bs % 5) - 2) * w * 0.04, cy - u * 0.12, '#a08cc8', u * 0.012, bs); }
-    var gr = u * (0.55 + 0.08 * t) * (1 + 0.04 * Math.sin(tt * 4)), gl = ctx.createRadialGradient(cx, cy, 0, cx, cy, gr);
-    gl.addColorStop(0, A.rgba(t === 2 ? '#6cd8c6' : t === 4 ? '#a08cc8' : '#d9b857', 0.3 + 0.04 * t)); gl.addColorStop(1, 'rgba(217,184,87,0)');
-    ctx.save(); ctx.globalAlpha = 0.55; ctx.fillStyle = gl; ctx.fillRect(0, 0, w, h); ctx.restore();
+    // (plus de halo radial flou : la profondeur vient des rayons gravés, des anneaux nets et des chaînes)
     /* --- MEGA / DIVIN : Anubis surgit derrière le titre --- */
     if (t >= 3 && ART.medal) {
       var mr = G.ease.outBack(clamp((tt - 0.15) / 0.9, 0, 1)), ms = Math.min(u * (t === 4 ? 1.05 : 0.92), vb * 0.9) * mr, my = cy - u * 0.02 + (1 - mr) * u * 0.3, ma = 0.36 * clamp((tt - 0.1) / 0.6, 0, 1) * (1 + 0.1 * Math.sin(tt * 3));
@@ -1297,6 +1343,17 @@
     var ty = cy - u * 0.2, lines = (w < 640 && o.title.indexOf(' ') > 0 && o.title.length > 10) ? o.title.split(' ') : [o.title];
     var bsz = u * (0.105 + 0.006 * t), tsz2 = bsz;
     lines.forEach(function (s) { tsz2 = Math.min(tsz2, winFit(s, bsz, w * 0.78, false)); });
+    if (o.chs) {   // chaînes tendues sur le titre et le montant ; leur tension monte avec le compteur
+      var ay0 = cy + u * 0.06 + (lines.length - 1) * tsz2 * 0.5, nxt = -1, cq, tn;
+      layWinChains(o, w, h, cx, cy, u, ty, tsz2, lines.length, ay0);
+      for (j = 0; j < o.chs.length; j++) if (!o.chs[j].dead) { nxt = j; break; }
+      ctx.save(); ctx.globalAlpha = a * inn;
+      for (j = 0; j < o.chs.length; j++) {
+        cq = o.chs[j]; tn = 0.5 + 0.4 * p + (j === nxt && o.mult > 0 ? 0.1 * clamp(o.mult * p / cq.thr, 0, 1) : 0);
+        FX.Break.drawChain(ctx, cq.ch, tt, clamp(tn, 0, 1));
+      }
+      ctx.restore();
+    }
     var slam = R ? 1 : 1 + 1.9 * (1 - G.ease.out5(clamp((tt - 0.05) / 0.32, 0, 1)));
     var tpul = 1 + (R ? 0 : 0.014 * Math.sin(tt * 3.2)) + (d >= 0 && !R ? 0.1 * Math.exp(-d * 4) * Math.cos(d * 12) : 0);
     var tal = clamp((tt - 0.05) / 0.12, 0, 1);
@@ -1386,6 +1443,7 @@
     if (G.chain) { ctx.save(); ctx.translate(so[0], so[1]); FX.Chains.draw(ctx, G.w, G.h, G.chain); ctx.restore(); }
     if (G.fade > 0.001) { ctx.fillStyle = 'rgba(4,3,2,' + G.fade + ')'; ctx.fillRect(0, 0, G.w, G.h); }
     for (i = 0; i < G.onFrame.length; i++) G.onFrame[i](dt);
+    try { if (FX.Break.active()) { ctx.save(); ctx.translate(so[0], so[1]); FX.Break.draw(ctx); ctx.restore(); } } catch (e) { FX.Break.clear(); }   // maillons, éclats et pièces des chaînes brisées : au-dessus de tout
   }
 
   G.setFade = function (to, dur) { var from = G.fade; return G.tween(dur, function (u) { G.fade = from + (to - from) * u; }, null); };
