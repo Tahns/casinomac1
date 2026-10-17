@@ -694,9 +694,9 @@
     var c = document.createElement('canvas'); c.width = c.height = 144; var x = c.getContext('2d'), A = root.Art;
     x.translate(72, 74);
     if (G.icon(x, kind, 0, 0, 140)) return c;
-    if (kind === 'vault') A.pyramid(x, 0, 2, 110, '#e8c4ff', 'rgba(60,20,90,.6)');
-    else if (kind === 'scarab') A.scarab(x, 0, 0, 100, '#ffd86a', 'rgba(60,30,0,.6)');
-    else if (kind === 'weigh') { A.feather(x, 0, 0, 110, '#fff8e6', 'rgba(150,110,40,.8)'); }
+    if (kind === 'vault') A.pyramid(x, 0, 2, 110, '#cfc4e4', 'rgba(60,20,90,.6)');
+    else if (kind === 'scarab') A.scarab(x, 0, 0, 100, '#d9b857', 'rgba(60,30,0,.6)');
+    else if (kind === 'weigh') { A.feather(x, 0, 0, 110, '#f4ecd6', 'rgba(150,110,40,.8)'); }
     else A.hand(x, 0, 18, 52, {});
     return c;
   }
@@ -971,7 +971,7 @@
       var charge = state === 'charge' ? clamp((now - tCharge) / 300, 0, 1) : state === 'break' ? 1 : 0;
       var pulse = red() ? 0.6 : 0.55 + 0.45 * Math.sin(t * 2.2);
       cx.globalCompositeOperation = 'lighter';
-      var gr = cx.createRadialGradient(lk.x, lk.y, 0, lk.x, lk.y, lk.s * (2.4 + charge * 2)); gr.addColorStop(0, 'rgba(255,214,120,' + (0.28 * pulse + 0.4 * charge) + ')'); gr.addColorStop(1, 'rgba(255,170,50,0)');
+      var gr = cx.createRadialGradient(lk.x, lk.y, 0, lk.x, lk.y, lk.s * (2.4 + charge * 2)); gr.addColorStop(0, 'rgba(217,184,87,' + (0.28 * pulse + 0.4 * charge) + ')'); gr.addColorStop(1, 'rgba(255,170,50,0)');
       cx.fillStyle = gr; cx.fillRect(lk.x - lk.s * 5, lk.y - lk.s * 5, lk.s * 10, lk.s * 10);
       cx.globalCompositeOperation = 'source-over';
       // chaînes (tendues, balancement léger), puis cadenas
@@ -992,7 +992,7 @@
       if (f > 0) {
         var R = Math.max(W, H);
         cx.fillStyle = 'rgba(255,238,180,' + (0.55 * f) + ')'; cx.fillRect(0, 0, W, H);
-        var gl = cx.createRadialGradient(lk.x, lk.y, 0, lk.x, lk.y, R * (0.25 + 0.9 * (1 - f))); gl.addColorStop(0, 'rgba(255,252,230,' + (0.95 * f) + ')'); gl.addColorStop(1, 'rgba(255,200,90,0)');
+        var gl = cx.createRadialGradient(lk.x, lk.y, 0, lk.x, lk.y, R * (0.25 + 0.9 * (1 - f))); gl.addColorStop(0, 'rgba(255,252,230,' + (0.95 * f) + ')'); gl.addColorStop(1, 'rgba(217,184,87,0)');
         cx.fillStyle = gl; cx.fillRect(0, 0, W, H);
         cx.save(); cx.translate(lk.x, lk.y); rotLight = anim.t * 0.5;
         for (var i = 0; i < 14; i++) { var a = rotLight + i / 14 * 6.2832; cx.fillStyle = 'rgba(255,240,190,' + (0.3 * f) + ')'; cx.beginPath(); cx.moveTo(0, 0); cx.lineTo(Math.cos(a - 0.05) * R, Math.sin(a - 0.05) * R); cx.lineTo(Math.cos(a + 0.05) * R, Math.sin(a + 0.05) * R); cx.fill(); }
@@ -1042,7 +1042,7 @@
       } else if (i === 2) {   // choix : pacte avant le tour (trois jauges), plume ou cœur, couleur de la Fureur
         var PB = I18N.block('pact');
         (M.PACT_ORDER || []).forEach(function (pp) { var c = chip(PB.short[pp]); if (G.pactFx) c.insertAdjacentHTML('afterbegin', G.pactFx.icon(pp)); c.classList.add('spPact'); box.appendChild(c); });
-        ['#18b5a4', '#e6b94a', '#c8392b'].forEach(function (c) { var d = el('span', 'spDot3'); d.style.background = c; box.appendChild(d); });
+        ['#1fa596', '#cfa94c', '#c8392b'].forEach(function (c) { var d = el('span', 'spDot3'); d.style.background = c; box.appendChild(d); });
       } else {   // accès direct + vitesses
         k = img('coin'); if (k) box.appendChild(k);
         box.appendChild(chip(T.turbo)); box.appendChild(chip('ULTRA'));

@@ -154,7 +154,7 @@
         if (!buy && sp.oracle) { $('oracleText').textContent = L.oracleOn + ' ×' + sp.oracle.boost + ' → ' + L.kinds[sp.oracle.kind].replace('\n', ' '); await G.wheel.revealOracle(); }
         var def = M.KINDS[sp.kind] || { bonus: true };
         if (def.respin) {
-          Sfx.shield(); FX.spark(G.cx, G.cy - G.R * 0.9, 30, '#ffe9a0', 300); FX.flash(0.3, '#ffe9a0');
+          Sfx.shield(); FX.spark(G.cx, G.cy - G.R * 0.9, 30, '#eadb9f', 300); FX.flash(0.3, '#eadb9f');
           G.say(L.ankhRespin); G.wheel.flashLamps = 1.0;
           await G.sleep(1.3);
           if (sp.wrathUp && G.wrath) await G.wrath.up(sp.wrathUp);
@@ -167,8 +167,8 @@
         } else if (sp.pay > 0) {
           var px = G.cx, py = G.cy - G.R * 0.55;
           if (sp.boost > 1) await G.wheel.applyBoost();
-          FX.float('×' + G.fmt(sp.pay), px, py, '#ffe9a0', 36);
-          FX.spark(px, py, 24, '#ffd86a', 320); Sfx.chime(sp.pay); G.wheel.flashLamps = 0.8;
+          FX.float('×' + G.fmt(sp.pay), px, py, '#eadb9f', 36);
+          FX.spark(px, py, 24, '#d9b857', 320); Sfx.chime(sp.pay); G.wheel.flashLamps = 0.8;
           await G.sleep(0.8);
         } else { G.say(L.dust); FX.dust(G.cx, G.cy - G.R * 0.8, 10); await G.sleep(0.45); }
         total += sp.pay || 0;

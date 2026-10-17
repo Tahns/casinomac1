@@ -28,7 +28,7 @@
   var S = { on: false, a: 0, veil: 0, t: 0, pact: 'std', pop: 0, chain: null, anim: null, shk: 0, id: 0 };
 
   function geo() {
-    var w = Math.min(G.w - 32, Math.max(240, G.R * 2.1)), h = clamp(G.R * 0.62, 84, 150);
+    var w = Math.min(G.w - 32, Math.max(240, G.R * 2.1)), h = clamp(G.R * 0.66, 100, 156);
     return { x: G.cx, y: clamp(G.cy - G.R * 0.05, h, G.h - h), w: w, h: h };
   }
   function rr(c, x, y, w, h, r) {
@@ -48,25 +48,22 @@
     var w = g.w, h = g.h;
     // cartouche d'obsidienne cerclé d'or (même matière que la plaque de la Colère)
     ctx.beginPath(); rr(ctx, -w / 2 + 5, -h / 2 + 6, w, h, h * 0.22); ctx.fillStyle = 'rgba(0,0,0,.55)'; ctx.fill();
-    var bg = ctx.createLinearGradient(0, -h / 2, 0, h / 2); bg.addColorStop(0, '#2a1d11'); bg.addColorStop(0.5, '#120c07'); bg.addColorStop(1, '#0a0705');
-    ctx.beginPath(); rr(ctx, -w / 2, -h / 2, w, h, h * 0.22); ctx.fillStyle = bg; ctx.fill();
-    var bd = ctx.createLinearGradient(0, -h / 2, 0, h / 2); bd.addColorStop(0, '#fff1b8'); bd.addColorStop(0.35, '#e6b94a'); bd.addColorStop(0.7, '#8a6a1e'); bd.addColorStop(1, '#4a350c');
-    ctx.lineWidth = Math.max(2, h * 0.04); ctx.strokeStyle = bd; ctx.stroke();
+    ctx.beginPath(); rr(ctx, -w / 2, -h / 2, w, h, h * 0.22); ctx.fillStyle = '#120c07'; ctx.fill(); Art.grain(ctx); ctx.beginPath(); rr(ctx, -w / 2, -h / 2, w, h, h * 0.22);
+    ctx.lineWidth = Math.max(2, h * 0.04); ctx.strokeStyle = Art.goldGrad(ctx, 0, -h / 2, 0, h / 2); ctx.stroke();
     // titre « PACTE SCELLÉ » puis nom du pacte et sa devise
     var name = P.name[S.pact], ts = Math.max(10, fit(ctx, P.sealed, h * 0.15, w * 0.8, G.TEXT));
-    G.txt(P.sealed, 0, -h * 0.3, { size: ts, family: G.TEXT, weight: 800, fill: '#cdb98a', stroke: '#1a0e02', sw: 2 });
+    G.txt(P.sealed, 0, -h * 0.34, { size: ts, family: G.TEXT, weight: 800, fill: '#cdb98a', stroke: '#1a0e02', sw: 2 });
     var ns = Math.max(12, fit(ctx, name, h * 0.24, w * 0.86, G.TITLE));
-    G.goldText(name, 0, -h * 0.04, ns, { blur: 18, spacing: 2, shadow: 'rgba(255,190,70,.55)' });
+    G.goldText(name, 0, -h * 0.12, ns, { spacing: 2 });
     var tg = P.tag[S.pact], gs = Math.max(10, fit(ctx, tg, h * 0.13, w * 0.86, G.TEXT));
-    G.txt(tg, 0, h * 0.19, { size: gs, family: G.TEXT, weight: 700, fill: '#fff1b8', stroke: '#1a0e02', sw: 2 });
+    G.txt(tg, 0, h * 0.12, { size: gs, family: G.TEXT, weight: 700, fill: '#efdfa8', stroke: '#1a0e02', sw: 2 });
     // jauge de trois maillons
-    var lv = LEVEL[S.pact] || 2, pr = clamp(h * 0.07, 5, 10), py = h * 0.36;
+    var lv = LEVEL[S.pact] || 2, pr = clamp(h * 0.052, 4, 8), py = h * 0.36;
     for (var i = 0; i < 3; i++) {
       var on = i < lv, qx = (i - 1) * pr * 3.2;
       ctx.beginPath(); ctx.ellipse(qx, py, pr * 1.25, pr, 0, 0, TAU); ctx.lineWidth = pr * 0.5;
-      ctx.strokeStyle = on ? (S.pact === 'bold' ? '#ffd86a' : '#e6b94a') : 'rgba(138,106,30,.45)';
-      if (on && !FX.lite) { ctx.shadowColor = '#ffd86a'; ctx.shadowBlur = 8 * S.pop + 2; }
-      ctx.stroke(); ctx.shadowBlur = 0;
+      ctx.strokeStyle = on ? (S.pact === 'bold' ? '#d9b857' : '#cfa94c') : 'rgba(138,106,30,.45)';
+      ctx.stroke();
     }
     ctx.restore();
   }
@@ -110,7 +107,7 @@
         S.anim = Chains.reform([c1], { x: g.x, y: y, dur: 0.7, onDone: function () { if (alive(id)) S.chain = c1; } });
         sfx('chainTense', 0.7 / Math.max(1, G.speed));
         await G.sleep(0.75); if (!alive(id)) return;
-        S.pop = 1; sfx('chainSlam'); FX.shake(6, 0.3); FX.ring(g.x, g.y, '#e6b94a', g.w * 0.5, 0.6);
+        S.pop = 1; sfx('chainSlam'); FX.shake(6, 0.3); FX.ring(g.x, g.y, '#cfa94c', g.w * 0.5, 0.6);
       } else if (S.pact === 'bold') {
         // les chaînes éclatent : la Colère se déchaîne
         var b1 = Chains.make(g.x - g.w / 2 - size, y, g.x, y, { size: size, sag: 0.02 }), b2 = Chains.make(g.x, y, g.x + g.w / 2 + size, y, { size: size, sag: 0.02 });
@@ -120,12 +117,12 @@
         S.chain = b1; await G.tween(0.6, function (u) { if (alive(id)) { S.shk = u; } }, null); if (!alive(id)) return;
         S.chain = null; S.shk = 0; S.pop = 1;
         S.anim = Chains.shatter(tense.c, { x: g.x, y: y, power: 1.1 });
-        sfx('chainBreak'); sfx('thunder'); FX.flash(0.6, '#fff1b8'); FX.shake(18, 0.6);
-        FX.ring(g.x, g.y, '#ffd86a', Math.max(G.w, G.h) * 0.5, 0.8); FX.spark(g.x, g.y, 50, '#ffd86a', 600);
+        sfx('chainBreak'); sfx('thunder'); FX.flash(0.6, '#efdfa8'); FX.shake(18, 0.6);
+        FX.ring(g.x, g.y, '#d9b857', Math.max(G.w, G.h) * 0.5, 0.8); FX.spark(g.x, g.y, 50, '#d9b857', 600);
       } else {
         // une chaîne tendue à l'équilibre : le jugement classique
         S.chain = Chains.make(g.x - g.w / 2 - size, y, g.x + g.w / 2 + size, y, { size: size, sag: 0.05 });
-        S.pop = 1; sfx('chime', 2); FX.ring(g.x, g.y, '#e6b94a', g.w * 0.45, 0.6);
+        S.pop = 1; sfx('chime', 2); FX.ring(g.x, g.y, '#cfa94c', g.w * 0.45, 0.6);
       }
       await G.sleep(1.0); if (!alive(id)) return;
       await G.tween(0.4, function (u) { if (alive(id)) { S.a = 1 - u; S.veil = 0.7 * (1 - u); } }, null);

@@ -40,6 +40,8 @@
     ctx.fillStyle = goldGrad(ctx, x0, y0, x1, y1); ctx.fill();
     ctx.save(); ctx.clip(); ctx.fillStyle = grainPat(ctx); ctx.fill(); ctx.restore();
   }
+  // grain de pierre / métal sur le tracé courant (la couleur de fond reste celle déjà posée)
+  function grainFill(ctx, rule) { ctx.save(); ctx.clip(rule || 'nonzero'); ctx.fillStyle = grainPat(ctx); ctx.fill(); ctx.restore(); }
   function rgba(hex, a) {
     var n = parseInt(hex.slice(1), 16);
     return 'rgba(' + (n >> 16) + ',' + ((n >> 8) & 255) + ',' + (n & 255) + ',' + a + ')';
@@ -285,7 +287,7 @@
   }
 
   root.Art = {
-    C: C, TAU: TAU, goldGrad: goldGrad, fillMetal: fillMetal, rgba: rgba, mix: mix,
+    C: C, TAU: TAU, goldGrad: goldGrad, fillMetal: fillMetal, grain: grainFill, rgba: rgba, mix: mix,
     ankh: ankh, eye: eye, scarab: scarab, feather: feather, pyramid: pyramid, skullX: skullX, cobra: cobra, skull: skull,
     jackal: jackal, hand: hand, glyphStrip: glyphStrip, glyphRow: glyphRow, noiseTile: noiseTile, rays: rays, roundRect: roundRect
   };
