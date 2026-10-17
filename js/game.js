@@ -393,10 +393,11 @@
         if (shrink < 1) { fs *= shrink; f.font = '700 ' + fs + 'px ' + G.NUM; tm = f.measureText(lab); tl = tm.actualBoundingBoxLeft; tr = tm.actualBoundingBoxRight; ta = tm.actualBoundingBoxAscent; td = tm.actualBoundingBoxDescent; }
         f.textAlign = 'left'; f.textBaseline = 'alphabetic'; f.fillStyle = v.tx;
         if (k !== 'm0') { f.shadowColor = 'rgba(0,0,0,.6)'; f.shadowOffsetY = 1; }
+        else { f.globalAlpha = 0.62; f.fillStyle = '#d8cba6'; }          // hiérarchie : les « 0 » (case morte, répétée) s'effacent, 1 / 2 / 3 et les bonus ressortent
         if (frac) f.fillText(lab, rc - (tr - tl) / 2, (ta - td) / 2); // le long du rayon, centré sur l'axe de la case
         else { f.rotate(Math.PI / 2); f.fillText(lab, -(tr - tl) / 2, -rc + (ta - td) / 2); }
-        f.shadowOffsetY = 0;
-        if (k === 'm0') { f.globalAlpha = 0.55; A.skullX(f, 0, -(RC - R * 0.05), Math.min(R * 0.07, chord(RC) * 0.8), v.tx); f.globalAlpha = 1; }
+        f.shadowOffsetY = 0; f.globalAlpha = 1;
+        if (k === 'm0') { f.globalAlpha = 0.4; A.skullX(f, 0, -(RC - R * 0.05), Math.min(R * 0.07, chord(RC) * 0.8), v.tx); f.globalAlpha = 1; }
       } else {
         // icône (debout) vers l'extérieur, nom le long du rayon vers le centre ; l'ensemble est centré dans la case
         var isz = Math.min(chord(RC + R * 0.12) * ({ scarab: 1.35, feather: 1.6, pyramid: 1.2, ankh: 1.2 })[v.glyph], R * 0.17), nm = T.kinds[k];
@@ -1259,12 +1260,12 @@
     if (t === 4 && !R && !o.done && ((tt * 2.2) % 1) < 0.22) { var bs = Math.floor(tt * 2.2) * 131 + 7; FX.bolt(ctx, cx + ((bs % 7) - 3) * w * 0.07, 0, cx + ((bs % 5) - 2) * w * 0.04, cy - u * 0.12, '#a08cc8', u * 0.012, bs); }
     var gr = u * (0.55 + 0.08 * t) * (1 + 0.04 * Math.sin(tt * 4)), gl = ctx.createRadialGradient(cx, cy, 0, cx, cy, gr);
     gl.addColorStop(0, A.rgba(t === 2 ? '#6cd8c6' : t === 4 ? '#a08cc8' : '#d9b857', 0.3 + 0.04 * t)); gl.addColorStop(1, 'rgba(217,184,87,0)');
-    ctx.fillStyle = gl; ctx.fillRect(0, 0, w, h);
+    ctx.save(); ctx.globalAlpha = 0.55; ctx.fillStyle = gl; ctx.fillRect(0, 0, w, h); ctx.restore();
     /* --- MEGA / DIVIN : Anubis surgit derrière le titre --- */
     if (t >= 3 && ART.medal) {
       var mr = G.ease.outBack(clamp((tt - 0.15) / 0.9, 0, 1)), ms = Math.min(u * (t === 4 ? 1.05 : 0.92), vb * 0.9) * mr, my = cy - u * 0.02 + (1 - mr) * u * 0.3, ma = 0.36 * clamp((tt - 0.1) / 0.6, 0, 1) * (1 + 0.1 * Math.sin(tt * 3));
-      var ha = ctx.createRadialGradient(cx, my, ms * 0.2, cx, my, ms * 0.85); ha.addColorStop(0, A.rgba(t === 4 ? '#a08cc8' : '#6cd8c6', 0.9 * ma)); ha.addColorStop(1, 'rgba(0,0,0,0)');
-      ctx.fillStyle = ha; ctx.fillRect(0, 0, w, h);
+      ctx.save(); ctx.lineWidth = Math.max(2, ms * 0.012); ctx.strokeStyle = A.rgba(t === 4 ? '#a08cc8' : '#6cd8c6', 0.8 * ma);   // anneaux gravés (aplat net, pas de halo flou)
+      [0.56, 0.62].forEach(function (rr) { ctx.beginPath(); ctx.arc(cx, my, ms * rr, 0, TAU); ctx.stroke(); }); ctx.restore();
       ctx.save(); ctx.translate(cx, my); ctx.globalAlpha = a * clamp(ma, 0, 1);
       ctx.shadowColor = c[2]; ctx.shadowBlur = 0; ctx.beginPath(); ctx.arc(0, 0, ms * 0.49, 0, TAU); ctx.fillStyle = '#000'; ctx.fill(); ctx.shadowBlur = 0;
       ctx.save(); ctx.clip(); ctx.drawImage(ART.medal, -ms / 2, -ms / 2, ms, ms); ctx.restore();
@@ -1285,7 +1286,7 @@
     /* --- gardiens (grand écran) --- */
     var hs = u * 0.11 * G.ease.outBack(clamp(tt / 0.6, 0, 1));
     // médaillons latéraux : repoussés vers les bords et rétrécis pour ne jamais masquer le titre ni le montant ; absents si la place manque
-    var gsz = winFit(amtMax, Math.min(w * 0.15, u * 0.17) * (1 + 0.05 * t), w * 0.9, true);
+    var gsz = winFit(amtMax, Math.min(w * 0.15, u * 0.17) * (1 + 0.05 * t), w * 0.8, true);
     ctx.font = '700 ' + gsz * 1.14 + 'px ' + G.NUM; var gHalf = ctx.measureText(amtMax).width / 2 + 10;
     var gms = Math.min(hs * 3.4, w / 2 - gHalf - 8), gx = w / 2 - gms / 2 - 6;
     if (w > 640 && t >= 2 && gms > u * 0.2) [-1, 1].forEach(function (sd) {
@@ -1295,7 +1296,7 @@
     /* --- titre : choc d'arrivée (zoom arrière), puis respiration, puis pulsation à l'arrivée du total --- */
     var ty = cy - u * 0.2, lines = (w < 640 && o.title.indexOf(' ') > 0 && o.title.length > 10) ? o.title.split(' ') : [o.title];
     var bsz = u * (0.105 + 0.006 * t), tsz2 = bsz;
-    lines.forEach(function (s) { tsz2 = Math.min(tsz2, winFit(s, bsz, w * 0.88, false)); });
+    lines.forEach(function (s) { tsz2 = Math.min(tsz2, winFit(s, bsz, w * 0.78, false)); });
     var slam = R ? 1 : 1 + 1.9 * (1 - G.ease.out5(clamp((tt - 0.05) / 0.32, 0, 1)));
     var tpul = 1 + (R ? 0 : 0.014 * Math.sin(tt * 3.2)) + (d >= 0 && !R ? 0.1 * Math.exp(-d * 4) * Math.cos(d * 12) : 0);
     var tal = clamp((tt - 0.05) / 0.12, 0, 1);
@@ -1303,7 +1304,7 @@
     lines.forEach(function (s, li) { G.goldText(s, 0, (li - (lines.length - 1) / 2) * tsz2 * 1.05, tsz2, { spacing: 2, blur: 26 + t * 6, shadow: c[2] }); });
     ctx.restore();
     /* --- montant : défile, ralentit, puis rebondit à l'arrivée --- */
-    var asz2 = winFit(amtMax, Math.min(w * 0.15, u * 0.17) * (1 + 0.05 * t), w * 0.9, true);
+    var asz2 = winFit(amtMax, Math.min(w * 0.15, u * 0.17) * (1 + 0.05 * t), w * 0.8, true);
     var ns = d >= 0 ? 1 + 0.24 * Math.exp(-d * 4.5) * Math.cos(d * 13) : 1 + 0.018 * Math.sin(tt * 30);
     var ay = cy + u * 0.06 + (lines.length - 1) * tsz2 * 0.5;
     ctx.save(); ctx.translate(cx, ay); ctx.scale(ns, ns); G.goldText(amt, 0, 0, asz2, { blur: 40, shadow: c[2] }); ctx.restore();
