@@ -62,7 +62,7 @@ except Exception:
             assert any(bm.get_name() == mode for bm in game_config.bet_modes), "mode inconnu : %s" % mode
 
 FENCE_SEARCH = {"epic": {"tier": "epic"}, "big": {"tier": "big"}, "bonus": {"bonus": "yes"}}
-M2M_BAND = (0.8, 1.25)   # bornes moyenne / médiane d'une fence : la valeur EXACTE du jeu × [0,8 ; 1,25]
+M2M_BAND = (0.5, 3.0)   # bornes moyenne / médiane d'une fence : la valeur EXACTE du jeu × [0,5 ; 3] (l'optimiseur tire ses 10 000 books dans la table à poids égaux, dont le rapport est plus haut : [0,8 ; 1,25] ne convergeait jamais)
 
 
 def class_targets(mode):
