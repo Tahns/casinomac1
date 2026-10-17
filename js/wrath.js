@@ -19,8 +19,9 @@
 
   var S = G.wheel.wrath = {
     on: false, a: 0, lvl: 0, veil: 0, shade: 0, t: 0, pop: 0, shk: 0, glow: 0, tense: 0, flick: null, banner: null,
-    intro: null, anim: null, pch: null, pcAnim: null, key: ''
+    intro: null, anim: null, pch: null, pcAnim: null, key: '', pcs: null, hot: -1, hotT: 0, kick: 0, zoom: 0, zhold: false
   };
+  var B = FX.Break;
 
   /* ---------- géométrie de la plaque : au-dessus de la roue s'il y a la place, sinon en dessous ---------- */
   function geo() {
@@ -36,6 +37,38 @@
     c.arc(x + w - r, y + h - r, r, 0, Math.PI / 2); c.lineTo(x + r, y + h); c.arc(x + r, y + h - r, r, Math.PI / 2, Math.PI);
     c.lineTo(x, y + r); c.arc(x + r, y + r, r, Math.PI, Math.PI * 1.5); c.closePath();
   }
+  /* ---------- chaînes qui tiennent la plaque : une par cran restant, en éventail croisé (relatives au centre de la plaque) ---------- */
+  function ensurePcs() {
+    if (S.pcs && S.pcs.length === TOP) return;
+    S.pcs = []; for (var k = 0; k < TOP; k++) { var c = B.chain(0, 0, 1, 0, 8, { sag: 0.05, par: k }); c.dead = k < S.lvl; c.at = 0.3 + 0.4 * ((k * 0.37) % 1); S.pcs.push(c); }
+  }
+  function layChains(g) {
+    if (!S.pcs) return;
+    var sz = clamp(g.h * 0.19, 8, 14), hw = g.w / 2 + 6, k, f, c, up = g.h * 0.41;
+    for (k = 0; k < S.pcs.length; k++) {
+      c = S.pcs[k]; f = (k + 0.5) / TOP - 0.5; c.size = sz;
+      c.x0 = -hw; c.x1 = hw; c.y0 = f * 2 * up; c.y1 = -f * 2 * up * 0.78 + (k % 2 ? 1 : -1) * g.h * 0.045;
+    }
+  }
+  function weakPt(k, g) {
+    var c = S.pcs && S.pcs[k] || { x0: 0, x1: 0, y0: 0, y1: 0, at: 0.5, size: 10 }, z = zs(g);
+    return { x: g.x + (c.x0 + (c.x1 - c.x0) * c.at) * z, y: g.y + (c.y0 + (c.y1 - c.y0) * c.at) * z, s: c.size * z };
+  }
+  // coup de zoom sur la plaque pendant le suspense (borné : jamais sous l'en-tête ni hors de l'écran)
+  function zs(g) { return 1 + S.zoom * clamp(Math.min((g.y - 46) / (g.h / 2) - 1, (G.w - 8) / g.w - 1), 0, 0.4); }
+  function drawBound(ctx, g) {
+    if (!S.pcs || red() || !B.ready()) return;
+    var k, c, tn;
+    for (k = 0; k < S.pcs.length; k++) {
+      c = S.pcs[k]; if (c.dead) continue;
+      tn = k === S.hot ? 0.78 + 0.22 * S.hotT : 0.78 + 0.03 * Math.sin(S.t * 2.1 + k);
+      B.drawChain(ctx, c, S.t, tn);
+    }
+    for (k = 0; k < S.pcs.length; k++) {   // goujons d'ancrage sur le cadre
+      c = S.pcs[k]; ctx.beginPath(); ctx.arc(c.x0 + 2, c.y0, c.size * 0.5, 0, TAU); ctx.moveTo(c.x1 + c.size * 0.5 - 2, c.y1); ctx.arc(c.x1 - 2, c.y1, c.size * 0.5, 0, TAU);
+      ctx.fillStyle = c.dead ? '#3a2a0c' : '#a8802e'; ctx.fill(); ctx.lineWidth = 1.2; ctx.strokeStyle = '#1a1004'; ctx.stroke();
+    }
+  }
   var HOT = ['#eadb9f', '#d9b857', '#d9b857', '#cfa94c', '#b8923a', '#a8802e', '#f4ecd6'];   // or de plus en plus chaud (le rouge reste réservé à la Fureur)
 
   // couleur d'un cran, quelle que soit la longueur de l'échelle du pacte : le dernier cran est toujours le blanc-or
@@ -44,15 +77,16 @@
   function drawPlaque(ctx, g) {
     var R = G.R, a = S.a * (!G.scene || G.scene.showsWheel ? 1 : 0) * (G.winOv ? 0 : 1);
     if (a <= 0.01) return;
-    var x = g.x, y = g.y, w = g.w, h = g.h, lv = S.lvl, k = 1 + 0.12 * S.pop * S.pop, col = hot(lv);
+    var x = g.x, y = g.y, w = g.w, h = g.h, lv = S.lvl, k = 1 + 0.12 * S.pop * S.pop, zk = red() ? 1 : zs(g), col = hot(lv);
     if (S.flick) { var sh = (Math.floor(S.t * S.flick.f) % 2) === 0; lv = sh ? S.flick.from : S.flick.to; col = hot(lv); }
-    var jx = red() ? 0 : (Math.sin(S.t * 71) * S.shk * 2.4), jy = red() ? 0 : (Math.cos(S.t * 63) * S.shk * 1.8);
-    ctx.save(); ctx.globalAlpha = a; ctx.translate(x + jx, y + jy);
+    var sk = S.shk + S.kick, jx = red() ? 0 : (Math.sin(S.t * 71) * sk * 2.4), jy = red() ? 0 : (Math.cos(S.t * 63) * sk * 1.8);
+    ctx.save(); ctx.globalAlpha = a; ctx.translate(x + jx, y + jy); ctx.scale(zk, zk);
     // plaque d'obsidienne cerclée d'or
     ctx.beginPath(); rr(ctx, -w / 2 + 4, -h / 2 + 5, w, h, h * 0.2); ctx.fillStyle = 'rgba(0,0,0,.55)'; ctx.fill();
     ctx.beginPath(); rr(ctx, -w / 2, -h / 2, w, h, h * 0.2); ctx.fillStyle = '#120c07'; ctx.fill(); Art.grain(ctx); ctx.beginPath(); rr(ctx, -w / 2, -h / 2, w, h, h * 0.2);
     ctx.lineWidth = Math.max(2, h * (0.045 + 0.02 * S.glow)); ctx.strokeStyle = Art.goldGrad(ctx, 0, -h / 2, 0, h / 2); ctx.stroke();
     ctx.beginPath(); rr(ctx, -w / 2 + h * 0.07, -h / 2 + h * 0.07, w - h * 0.14, h - h * 0.14, h * 0.15); ctx.lineWidth = 1; ctx.strokeStyle = 'rgba(239,223,168,.22)'; ctx.stroke();
+    layChains(g); drawBound(ctx, g);
     // échelle : un maillon par cran, allumés jusqu'au cran courant
     var n = L.length, px0 = -w / 2 + w * 0.12, px1 = w / 2 - w * 0.12, py = h * 0.33, pr = Math.max(3, Math.min(h * 0.075, w * 0.022)), i, on;
     ctx.lineWidth = Math.max(1, pr * 0.45); ctx.strokeStyle = 'rgba(138,106,30,.55)'; ctx.beginPath(); ctx.moveTo(px0, py); ctx.lineTo(px1, py); ctx.stroke();
@@ -67,12 +101,7 @@
     ctx.save(); ctx.translate(0, -h * 0.12);
     G.txt('×' + G.fmt(L[clamp(lv, 0, TOP)]), 0, 0, { size: fs, weight: 900, fill: col, stroke: '#2a1802', sw: fs * 0.12, shadow: 'on' });
     ctx.restore();
-    // chaîne tendue en travers de la plaque pendant le suspense, puis éclats
-    if (S.pch && Chains && !red()) {
-      ctx.save(); ctx.translate(Math.sin(S.t * 97) * S.tense * 1.6, 0); Chains.draw(ctx, S.pch, S.t, { still: true, shadow: 2, dpr: G.dpr }); ctx.restore();
-    }
     ctx.restore();
-    if (S.pcAnim) S.pcAnim.draw(ctx, G.dpr);
   }
   function fitFont(ctx, str, size, maxW, weight, family) {
     ctx.font = weight + ' ' + size + 'px ' + family;
@@ -98,15 +127,14 @@
     var c = S.intro; if (!c || !Chains) return;
     var R = G.R, size = c.size, jx = Math.sin(S.t * 83) * c.tense * 2.2, jy = Math.cos(S.t * 77) * c.tense * 1.6;
     ctx.save(); ctx.translate(jx, jy);
-    [[c.c1, -1], [c.c2, 1]].forEach(function (p) {
-      ctx.save(); ctx.globalAlpha = c.r; ctx.translate(p[1] * (1 - c.r) * G.w * 0.25, 0); Chains.draw(ctx, p[0], S.t, { still: true, shadow: 3, dpr: G.dpr }); ctx.restore();
-    });
+    if (c.c1) { ctx.save(); ctx.globalAlpha = c.r; ctx.translate(-(1 - c.r) * G.w * 0.25, 0); B.drawChain(ctx, c.c1, S.t, 0.55 + 0.45 * c.tense); ctx.restore(); }
+    if (c.c2) { ctx.save(); ctx.globalAlpha = c.r; ctx.translate((1 - c.r) * G.w * 0.25, 0); B.drawChain(ctx, c.c2, S.t, 0.55 + 0.45 * c.tense); ctx.restore(); }
     ctx.globalAlpha = c.r; Chains.lock(ctx, G.cx, G.cy, R * 0.44, { crack: c.crack, t: S.t }); ctx.globalAlpha = 1;
     ctx.restore();
   }
   function step(dt) {
     var sdt = Math.min(dt, 0.05) * Math.min(G.speed || 1, 4);
-    S.t += sdt; S.pop = Math.max(0, S.pop - sdt * 2.4); S.glow = Math.max(0, S.glow - sdt * 1.4);
+    S.t += sdt; S.kick = Math.max(0, S.kick - sdt * 3.2); if (!S.zhold) S.zoom = Math.max(0, S.zoom - sdt * 1.5); S.pop = Math.max(0, S.pop - sdt * 2.4); S.glow = Math.max(0, S.glow - sdt * 1.4);
     [S.anim, S.pcAnim].forEach(function (an) { if (an && !an.done) { for (var q = sdt; q > 0; q -= 1 / 60) an.update(Math.min(q, 1 / 60)); } });
     if (S.anim && S.anim.done) S.anim = null;
     if (S.pcAnim && S.pcAnim.done) S.pcAnim = null;
@@ -144,9 +172,9 @@
       // échelle du pacte du tour (Scribe ×2…×10, Balance ×2…×100, Chacal ×3…×250) : portée par l'événement « wrath » du book
       L = Array.isArray(wr.ladder) && wr.ladder.length ? wr.ladder : M.WRATH_LADDER; TOP = L.length - 1;
       var T = txt(), r = red(), start = clamp(wr.start == null ? 0 : wr.start, 0, TOP);
-      S.on = true; S.lvl = start; S.a = 0; S.shade = 0; S.shk = 0; S.tense = 0; S.flick = null;
+      S.on = true; S.lvl = start; S.a = 0; S.shade = 0; S.shk = 0; S.tense = 0; S.flick = null; S.pcs = null; S.hot = -1; S.hotT = 0; S.kick = 0; B.clear(); ensurePcs();
       if (G.say) G.say(T.wrathT + ' ×' + G.fmt(L[start]));
-      if (r || !Chains) {
+      if (r || !Chains || !B.ready()) {
         sfx('oracle'); S.banner = { t: 0, a: 0 };
         await G.tween(0.35, function (u) { S.veil = 0.7 * u; S.banner.a = u; S.banner.t = u * 0.5; }, null);
         await G.tween(0.5, function (u) { S.shade = u; S.a = u; }, null);
@@ -156,17 +184,23 @@
       }
       // 1. deux chaînes d'or traversent l'écran et tiennent un cadenas au centre de la roue
       var size = clamp(G.R * 0.1, 15, 32), lw = G.R * 0.2;
-      var c = S.intro = { size: size, r: 0, tense: 0, crack: 0, c1: Chains.make(-size, G.cy, G.cx - lw, G.cy, { size: size, sag: 0.015 }), c2: Chains.make(G.w + size, G.cy, G.cx + lw, G.cy, { size: size, sag: 0.015 }) };
+      var c = S.intro = { size: size, r: 0, tense: 0, crack: 0, c1: B.chain(-size, G.cy, G.cx - lw, G.cy, size, { sag: 0.02 }), c2: B.chain(G.w + size, G.cy, G.cx + lw, G.cy, size, { sag: 0.02, par: 1 }) };
       sfx('runes'); sfx('chainSlam');
       await G.tween(0.5, function (u) { S.veil = u; c.r = G.ease.out3 ? G.ease.out3(u) : u; }, null);
       // 2. tension : le cadenas se fissure, tout tremble
       sfx('chainTense', 1.0 / Math.max(1, G.speed)); sfx('drum', 0.3);
-      await G.tween(1.0, function (u) { c.tense = u; c.crack = u; S.shk = 0; if (u > 0.2) FX.shake(1 + 5 * u, 0.08); }, null);
+      var sa = 0;
+      await G.tween(1.0, function (u) {
+        c.tense = u; c.crack = u; S.shk = 0; if (u > 0.2) FX.shake(1 + 5 * u, 0.08);
+        sa += u * 0.9; while (sa >= 1) { sa--; B.stress(G.cx + (Math.random() < 0.5 ? -1 : 1) * lw * (1.1 + Math.random() * 0.4), G.cy, u, size); }
+      }, null);
       // 3. les chaînes se brisent
-      S.anim = Chains.shatter([c.c1, c.c2], { x: G.cx, y: G.cy, power: 1.15 });
+      B.slow(0.9, 0.16);
+      B.snap(c.c1, { power: 1.3, at: 0.8, tens: 1 }); B.snap(c.c2, { power: 1.3, at: 0.8, tens: 1 });
+      B.impact(G.cx, G.cy, 1.5, { size: size * 1.25, bigShards: 1.25, links: 6 });   // le cadenas éclate
+      B.ring(G.cx, G.cy, Math.max(G.w, G.h) * 0.7, 7, 1.0, '#d9b857', 0, 0.05); B.ring(G.cx, G.cy, G.R * 1.1, 4.5, 0.8, '#efdfa8', 0, 0.2);
       S.intro = null; S.glow = 1; S.pop = 1;
-      sfx('chainBreak'); sfx('thunder'); FX.flash(0.9, '#efdfa8'); FX.shake(26, 0.9);
-      FX.ring(G.cx, G.cy, '#efdfa8', Math.max(G.w, G.h) * 0.7, 1.0); FX.ring(G.cx, G.cy, '#d9b857', G.R * 0.9, 0.7); FX.spark(G.cx, G.cy, 70, '#d9b857', 700); FX.links(G.cx, G.cy, 18, 700);
+      sfx('chainBreak'); sfx('thunder'); FX.flash(0.35, '#efdfa8'); FX.shake(26, 0.9);
       S.banner = { t: 0, a: 1 };
       var from = S.veil;
       await G.tween(1.1, function (u) { S.veil = from + (0.45 - from) * u; S.shade = G.ease.out3 ? G.ease.out3(u) : u; S.a = clamp(u * 2, 0, 1); S.banner.t = u * 1.1; }, null);
@@ -180,39 +214,58 @@
     up: async function (mult) {
       if (!S.on) return;
       var nl = L.indexOf(mult); if (nl < 0 || nl === S.lvl) return;
-      var from = S.lvl, big = nl / TOP, T = txt(), g = geo();
+      var from = S.lvl, big = nl / TOP, T = txt(), g = geo(), k, ch;
       if (G.say) G.say(T.wrathT + ' ×' + G.fmt(L[nl]));
-      if (red() || !Chains) { S.lvl = nl; S.pop = 0.5; S.glow = 0.6; sfx('chime', L[nl]); await G.sleep(0.6); return; }
-      // suspense : la chaîne se tend en travers de la plaque, le chiffre vacille entre l'ancienne et la nouvelle valeur, les lumières s'éteignent
-      S.pch = plaqueChain();
-      var dur = 0.9 + 0.8 * big;
+      if (red() || !Chains || !B.ready()) { S.lvl = nl; S.pop = 0.5; S.glow = 0.6; sfx('chime', L[nl]); await G.sleep(0.6); return; }
+      ensurePcs();
+      // suspense : la chaîne la plus haute du cran se tend, étincelles au point faible, le chiffre vacille entre l'ancienne et la nouvelle valeur
+      var last = nl - 1, dur = 0.9 + 0.8 * big, sa = 0;
+      S.hot = last; S.hotT = 0; S.zhold = true; S.zoom = 0; S.pcs[last].at = 0.3 + 0.4 * Math.random();
       sfx('chainTense', dur / Math.max(1, G.speed)); sfx('drum', 0.22 + 0.2 * big);
       S.flick = { from: from, to: nl, f: 5 };
-      await G.tween(dur, function (u) { S.tense = u; S.shk = u; S.flick.f = 5 + 24 * u * u; S.veil = 0.4 * u; S.glow = Math.max(S.glow, 0.5 * u); }, null);
+      await G.tween(dur, function (u) {
+        S.tense = u; S.shk = u; S.hotT = u; S.zoom = u * u; S.flick.f = 5 + 24 * u * u; S.veil = 0.4 * u; S.glow = Math.max(S.glow, 0.5 * u);
+        sa += u * u * 1.4; while (sa >= 1) { sa--; var wp = weakPt(last, g); B.stress(wp.x, wp.y, u, wp.s); }
+      }, null);
+      if (!S.on || !S.pcs) return;
       // silence, un battement
       S.flick = null; S.shk = 0; S.lvl = from; S.veil = 0.5;
       await G.sleep(0.22 + 0.3 * big);
-      // la chaîne casse, le nouveau multiplicateur claque
-      S.lvl = nl; S.pop = 1; S.glow = 1; S.tense = 0; S.veil = 0;
-      S.pcAnim = Chains.shatter([S.pch], { x: g.x, y: g.y, power: 0.6 + 0.5 * big }); S.pch = null;
+      if (!S.on || !S.pcs) return;
+      // la chaîne casse : ralenti bref, les moitiés fouettent, le nouveau multiplicateur claque
+      S.lvl = nl; S.pop = 1; S.glow = 1; S.tense = 0; S.veil = 0; S.hot = -1; S.hotT = 0; S.kick = 1.2 + big; var zsc = zs(g); S.zhold = false;
+      B.slow(0.35 + 0.5 * big, nl === TOP ? 0.14 : 0.26);
       sfx('chainSlam'); if (nl >= 3) sfx('thunder'); if (nl === TOP) sfx('chainBreak');
-      FX.flash(nl === TOP ? 0.9 : 0.25 + 0.4 * big, nl === TOP ? '#ffffff' : '#efdfa8'); FX.shake(8 + 22 * big, 0.5 + 0.5 * big);
-      FX.ring(g.x, g.y, '#d9b857', G.R * (0.5 + 0.4 * big), 0.7); FX.spark(g.x, g.y, 24 + 50 * big, '#d9b857', 420 + 300 * big);
-      if (nl === TOP) { FX.ring(G.cx, G.cy, '#efdfa8', Math.max(G.w, G.h) * 0.6, 1.0); FX.spark(G.cx, G.cy, 80, '#efdfa8', 760); }
+      FX.shake(8 + 22 * big, 0.5 + 0.5 * big);
+      for (k = from; k < nl; k++) {
+        ch = S.pcs[k]; var wp2 = weakPt(k, g);
+        B.snap(ch, { ox: g.x, oy: g.y, sc: zsc, power: (0.55 + 0.75 * big) * (k === last ? 1 : 0.8), at: ch.at, tens: 0.95 });
+        if (k < last) await G.sleep(0.08);
+      }
+      FX.flash(nl === TOP ? 0.35 : 0.12 + 0.12 * big, '#efdfa8');
+      if (nl === TOP) {   // le dernier cran : toutes les chaînes ont cédé, l'écran entier encaisse
+        var cx = g.x, cy = g.y;
+        B.ring(cx, cy, Math.max(G.w, G.h) * 0.7, 7, 1.1, '#d9b857', 0, 0.05); B.ring(cx, cy, Math.max(G.w, G.h) * 0.45, 5, 0.9, '#efdfa8', 0, 0.22);
+        B.ring(cx, cy, G.R * 1.0, 4, 0.8, '#f4ecd6', 1, 0.1);
+        B.impact(cx, cy, 1.5, { size: clamp(g.h * 0.3, 14, 26), bigShards: 1.2, links: 8 });
+        B.rain(G.w, 22, 0.5); await G.sleep(0.18); B.rain(G.w, 18, 0.4); B.coins(cx, cy, 24, 900, g.w * 0.6);
+      } else {
+        FX.ring(g.x, g.y, '#d9b857', G.R * (0.5 + 0.4 * big), 0.7);
+      }
       await G.sleep(0.7 + 0.5 * big);
     },
     // rétablit la valeur sans animation (reprise, saut de tour)
-    sync: function (mult) { var nl = L.indexOf(mult); if (S.on && nl >= 0) S.lvl = nl; },
+    sync: function (mult) { var nl = L.indexOf(mult); if (S.on && nl >= 0) { S.lvl = nl; if (S.pcs) for (var k = 0; k < S.pcs.length; k++) if (k < nl) S.pcs[k].dead = true; } },
     end: async function () {
       if (!S.on) return;
-      S.flick = null; S.pch = null; S.shk = 0; S.tense = 0; S.veil = 0;
+      S.flick = null; S.pch = null; S.shk = 0; S.tense = 0; S.veil = 0; S.hot = -1;
       var a0 = S.a, s0 = S.shade;
       await G.tween(red() ? 0.3 : 0.6, function (u) { S.a = a0 * (1 - u); S.shade = s0 * (1 - u); }, null);
       Wr.reset();
     },
     // arrêt immédiat (erreur de scène, nouveau tour)
     reset: function () {
-      S.on = false; S.a = 0; S.shade = 0; S.veil = 0; S.banner = null; S.intro = null; S.anim = null; S.pch = null; S.pcAnim = null; S.flick = null; S.shk = 0; S.tense = 0;
+      S.on = false; S.a = 0; S.shade = 0; S.veil = 0; S.banner = null; S.intro = null; S.anim = null; S.pch = null; S.pcAnim = null; S.flick = null; S.shk = 0; S.tense = 0; S.pcs = null; S.hot = -1; S.hotT = 0; S.kick = 0; S.zoom = 0; S.zhold = false;
     },
     // tour de bonus : lignes à afficher en clair, « Colère ×N » séparée de l'Oracle (sp.oracleBoost) ; null hors Colère
     boostLines: function (sp) {
