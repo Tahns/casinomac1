@@ -19,7 +19,12 @@
     var w = G.w, fs = G.h < 520 ? 16 : clamp(w * 0.034, 17, 34), subS = clamp(w * 0.0125, 11, 15);
     ctx.save(); if (alpha != null) ctx.globalAlpha = alpha;
     ctx.font = '900 ' + fs + 'px ' + G.TITLE; if (ctx.letterSpacing !== undefined) ctx.letterSpacing = '4px';
-    var tw = Math.min(w * 0.94, ctx.measureText(text).width + fs * 3), th = fs * 1.9 + (sub ? subS * 1.6 : 0);
+    var tw = Math.min(w * 0.94, ctx.measureText(text).width + fs * 2.2), th = fs * 1.9 + (sub ? subS * 1.6 : 0);
+    if (G.h < 520) {   // paysage de téléphone : le bandeau tient entre le logo (gauche) et les boutons (droite), jamais sous eux
+      var lo = 185, hi = w - 290;
+      while (tw > hi - lo && fs > 11) { fs -= 1; ctx.font = '900 ' + fs + 'px ' + G.TITLE; tw = Math.min(w * 0.94, ctx.measureText(text).width + fs * 2.2); }
+      th = fs * 1.9 + (sub ? subS * 1.6 : 0); if (hi - lo >= tw) cx = clamp(cx, lo + tw / 2, hi - tw / 2);
+    }
     var x = cx - tw / 2;
     A.roundRect(ctx, x, y, tw, th, 12);
     var g = ctx.createLinearGradient(0, y, 0, y + th); g.addColorStop(0, 'rgba(36,26,12,.94)'); g.addColorStop(1, 'rgba(10,7,4,.94)');
@@ -450,7 +455,7 @@
     S.layout = function () {
       var w = G.w, h = G.h;
       if (h < 520) { g.px = G.cx; g.py = h * 0.34; g.L = Math.min(w * 0.26, h * 0.27); g.chain = Math.min(h * 0.11, g.L * 0.55); g.pan = g.L * 0.38; }
-      else { g.px = G.cx; g.py = h * 0.375; g.L = Math.min(w * 0.28, h * 0.33); g.chain = Math.min(h * 0.115, g.L * 0.5); g.pan = g.L * 0.4; }
+      else { var tall = w < h * 0.75; g.px = G.cx; g.py = h * (tall ? 0.34 : 0.375); g.L = Math.min(w * (tall ? 0.3 : 0.28), h * 0.33); g.chain = Math.min(h * 0.115, g.L * 0.5); g.pan = g.L * 0.4; }
       // cartes de choix : de part et d'autre de la balance si la place le permet, sinon sous les plateaux
       var hb = h - hudH(), edge = w / 2 - g.L - g.pan, cw, chh, y, x0;
       if (edge >= 150) {
@@ -458,18 +463,59 @@
         y = clamp(g.py + g.chain * 0.9 + g.pan * 0.3 - chh / 2, T0() + 56, hb - chh - (h < 520 ? 8 : 58));
         cards[0] = { x: edge / 2 - cw / 2, y: y, w: cw, h: chh }; cards[1] = { x: w - edge / 2 - cw / 2, y: y, w: cw, h: chh };
       } else {
-        var bottom = hb - (h < 520 ? 6 : 60), top = g.py + g.chain + g.pan * 1.35 + 10;
+        var bottom = hb - (h < 520 ? 6 : 60), top = g.py + g.chain + g.pan * 1.75 + 10;
         cw = (w * 0.92 - 12) / 2; chh = clamp(bottom - top, 78, 200); y = Math.max(top, bottom - chh); x0 = w * 0.04;
         cards[0] = { x: x0, y: y, w: cw, h: chh }; cards[1] = { x: x0 + cw + 12, y: y, w: cw, h: chh };
       }
     };
     function endPt(side) { var a = theta, x = side * g.L; return { x: g.px + Math.cos(a) * x, y: g.py + Math.sin(a) * x }; }
     function platePt(si) { var e = endPt(si ? 1 : -1); return { x: e.x, y: e.y + g.chain }; }
-    function heart(x, y, s, col) {
-      ctx.save(); ctx.translate(x, y); ctx.scale(s / 24, s / 24); ctx.beginPath();
-      ctx.moveTo(0, 9); ctx.bezierCurveTo(-18, -4, -9, -16, 0, -7); ctx.bezierCurveTo(9, -16, 18, -4, 0, 9); ctx.closePath();
-      var hg = ctx.createRadialGradient(-3, -4, 0, 0, 0, 16); hg.addColorStop(0, '#ff9a8a'); hg.addColorStop(1, col || '#a01810'); ctx.fillStyle = hg; ctx.fill();
-      ctx.lineWidth = 1.2; ctx.strokeStyle = '#5a0c06'; ctx.stroke(); ctx.restore();
+    // cœur : cornaline taillée (facettes, grain, reflet) sertie d'un liseré d'or
+    var HEART = function () { ctx.beginPath(); ctx.moveTo(0, 9); ctx.bezierCurveTo(-18, -4, -9, -16, 0, -7); ctx.bezierCurveTo(9, -16, 18, -4, 0, 9); ctx.closePath(); };
+    function heart(x, y, s) {
+      ctx.save(); ctx.translate(x, y); ctx.scale(s / 24, s / 24); HEART();
+      var hg = ctx.createRadialGradient(-4, -6, 0, 0, 0, 17); hg.addColorStop(0, A.C.carnHi); hg.addColorStop(0.45, '#b8402c'); hg.addColorStop(1, '#4a1409');
+      ctx.fillStyle = hg; ctx.fill();
+      ctx.save(); ctx.clip();
+      [[0, -7, -9, -3, 0.16], [0, -7, 9, -3, 0.05], [-9, -3, -4, 4, 0.1], [9, -3, 4, 4, 0.22], [-4, 4, 0, 9, 0.18], [4, 4, 0, 9, 0.3], [-9, -3, 0, 2, 0.06], [9, -3, 0, 2, 0.12]].forEach(function (f, i) {
+        ctx.beginPath(); ctx.moveTo(f[0], f[1]); ctx.lineTo(f[2], f[3]); ctx.lineTo(0, 0); ctx.closePath(); ctx.fillStyle = i % 2 ? 'rgba(255,200,170,' + f[4] + ')' : 'rgba(30,4,0,' + f[4] * 1.4 + ')'; ctx.fill();
+      });
+      ctx.fillStyle = stonePat(); ctx.globalAlpha = 0.5; ctx.fillRect(-20, -20, 40, 40); ctx.globalAlpha = 1;
+      ctx.beginPath(); ctx.ellipse(-5.5, -7.5, 3.6, 1.6, -0.6, 0, TAU); ctx.fillStyle = 'rgba(255,240,220,.65)'; ctx.fill();
+      ctx.restore(); HEART(); ctx.lineWidth = 2.4; ctx.strokeStyle = '#3a2808'; ctx.stroke(); ctx.lineWidth = 1.5; ctx.strokeStyle = A.goldGrad(ctx, -14, -12, 14, 10); ctx.stroke(); ctx.restore();
+    }
+    // plume de Maât : ivoire nervuré (barbes), tige d'or
+    function maat(x, y, h) {
+      ctx.save(); ctx.translate(x, y); var k = h / 40; ctx.scale(k, k);
+      var P = function () { ctx.beginPath(); ctx.moveTo(0, -20); ctx.bezierCurveTo(11, -12, 11, 8, 3, 14); ctx.lineTo(0, 20); ctx.lineTo(-3, 14); ctx.bezierCurveTo(-11, 8, -11, -12, 0, -20); ctx.closePath(); };
+      P(); var fg = ctx.createLinearGradient(-11, 0, 11, 0); fg.addColorStop(0, '#b79e66'); fg.addColorStop(0.35, '#f4ecd6'); fg.addColorStop(0.55, '#fff8e6'); fg.addColorStop(1, '#a58c58'); ctx.fillStyle = fg; ctx.fill();
+      ctx.save(); ctx.clip(); ctx.lineWidth = 0.6;
+      for (var i = -8; i <= 8; i++) { var yy = i * 2.4; ctx.strokeStyle = i % 2 ? 'rgba(120,90,30,.5)' : 'rgba(255,255,255,.55)'; ctx.beginPath(); ctx.moveTo(0, yy + 3); ctx.lineTo(-11, yy - 3); ctx.moveTo(0, yy + 3); ctx.lineTo(11, yy - 3); ctx.stroke(); }
+      ctx.fillStyle = stonePat(); ctx.globalAlpha = 0.25; ctx.fillRect(-12, -22, 24, 44); ctx.restore();
+      P(); ctx.lineWidth = 1.2; ctx.strokeStyle = '#5a4210'; ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(0, -18); ctx.lineTo(0, 20); ctx.lineWidth = 1.8; ctx.strokeStyle = A.goldGrad(ctx, -2, 0, 2, 0); ctx.stroke(); ctx.restore();
+    }
+    var stoneT = null;   // grain de pierre / cornaline (tuile 96 px, graine fixe)
+    function stonePat() {
+      if (!stoneT) {
+        var c = document.createElement('canvas'), x, sd = 11, i; c.width = c.height = 96; x = c.getContext('2d');
+        var r = function () { sd = (sd * 16807) % 2147483647; return sd / 2147483647; };
+        for (i = 0; i < 700; i++) { x.fillStyle = r() < 0.5 ? 'rgba(255,230,190,' + (0.05 + r() * 0.12) + ')' : 'rgba(0,0,0,' + (0.1 + r() * 0.2) + ')'; x.fillRect(r() * 96, r() * 96, 1 + r() * 3, 1 + r() * 2); }
+        stoneT = c;
+      }
+      return ctx.createPattern(stoneT, 'repeat');
+    }
+    // chaîne à vrais maillons, de (x0,y0) à (x1,y1)
+    function chain(x0, y0, x1, y1, lw) {
+      var len = Math.hypot(x1 - x0, y1 - y0), ll = Math.max(7, lw * 3.4), n = Math.max(2, Math.round(len / ll)), a = Math.atan2(y1 - y0, x1 - x0);
+      for (var i = 0; i < n; i++) {
+        var t = (i + 0.5) / n, px = x0 + (x1 - x0) * t, py = y0 + (y1 - y0) * t, flat = i % 2, ry = flat ? lw * 0.45 : lw * 1.15;
+        ctx.save(); ctx.translate(px, py); ctx.rotate(a);
+        ctx.beginPath(); ctx.ellipse(0, 0, ll * 0.62, ry, 0, 0, TAU);
+        ctx.lineWidth = lw + 1.6; ctx.strokeStyle = '#2b1d06'; ctx.stroke(); ctx.lineWidth = lw; ctx.strokeStyle = flat ? '#a5843a' : '#d6b15a'; ctx.stroke();
+        ctx.lineWidth = lw * 0.3; ctx.strokeStyle = 'rgba(255,240,180,.7)'; ctx.beginPath(); ctx.ellipse(0, 0, ll * 0.62, ry, 0, Math.PI * 1.15, Math.PI * 1.7); ctx.stroke();
+        ctx.restore();
+      }
     }
     S.update = function (dt) {
       chromeUpdate(S, dt); ph += dt; burst = Math.max(0, burst - dt * 0.8); flashW = Math.max(0, flashW - dt * 2.2);
@@ -497,11 +543,19 @@
       A.roundRect(ctx, c.x, y, c.w, c.h, 16);
       var gg = ctx.createLinearGradient(0, y, 0, y + c.h); gg.addColorStop(0, hv ? '#3a2c16' : '#241a0d'); gg.addColorStop(1, '#0c0804');
       ctx.fillStyle = gg; ctx.shadowColor = hv ? 'rgba(255,216,106,' + (0.55 + 0.2 * pulse) + ')' : 'rgba(0,0,0,.7)'; ctx.shadowBlur = hv ? 30 : 14; ctx.fill(); ctx.shadowBlur = 0;
-      ctx.lineWidth = hv ? 3 : 2; ctx.strokeStyle = hv ? '#fff1b8' : A.goldGrad(ctx, c.x, y, c.x + c.w, y + c.h); ctx.stroke();
+      ctx.save(); A.roundRect(ctx, c.x, y, c.w, c.h, 16); ctx.clip(); ctx.fillStyle = stonePat(); ctx.globalAlpha = 0.55; ctx.fillRect(c.x, y, c.w, c.h); ctx.globalAlpha = 1;
+      var sg = ctx.createLinearGradient(0, y, 0, y + c.h); sg.addColorStop(0, 'rgba(255,230,160,.10)'); sg.addColorStop(0.25, 'rgba(255,230,160,0)'); ctx.fillStyle = sg; ctx.fillRect(c.x, y, c.w, c.h); ctx.restore();   // lumière rasante en haut
+      A.roundRect(ctx, c.x, y, c.w, c.h, 16); ctx.lineWidth = hv ? 4 : 3.4; ctx.strokeStyle = hv ? '#fff1b8' : A.goldGrad(ctx, c.x, y, c.x + c.w, y + c.h); ctx.stroke();   // cadre d'or + filet intérieur
+      A.roundRect(ctx, c.x + 6, y + 6, c.w - 12, c.h - 12, 11); ctx.lineWidth = 1; ctx.strokeStyle = 'rgba(207,169,76,.45)'; ctx.stroke();
+      [[c.x + 9, y + 9], [c.x + c.w - 9, y + 9], [c.x + 9, y + c.h - 9], [c.x + c.w - 9, y + c.h - 9]].forEach(function (q) { ctx.beginPath(); ctx.arc(q[0], q[1], 2.6, 0, TAU); A.fillMetal(ctx, q[0] - 3, q[1] - 3, q[0] + 3, q[1] + 3); });
       var isz = compact ? c.h * 0.46 : Math.min(c.w * 0.3, c.h * 0.3), ix = compact ? c.x + c.h * 0.55 : c.x + c.w / 2, iy = compact ? y + c.h * 0.5 : y + c.h * 0.34;
-      var og = ctx.createRadialGradient(ix, iy, 0, ix, iy, isz * 1.7); og.addColorStop(0, i ? 'rgba(255,90,70,.28)' : 'rgba(255,244,200,.3)'); og.addColorStop(1, 'rgba(255,200,120,0)');
+      var og = ctx.createRadialGradient(ix, iy, 0, ix, iy, isz * 1.7); og.addColorStop(0, i ? 'rgba(255,90,70,.22)' : 'rgba(255,244,200,.24)'); og.addColorStop(1, 'rgba(255,200,120,0)');
       ctx.fillStyle = og; ctx.beginPath(); ctx.arc(ix, iy, isz * 1.7, 0, TAU); ctx.fill();
-      if (i === 0) A.feather(ctx, ix, iy, isz * 1.15, '#fff8e6', 'rgba(150,110,40,.8)'); else heart(ix, iy + isz * 0.08, isz * 1.35);
+      // médaillon : disque de lapis (plume) ou d'obsidienne (cœur) serti d'or
+      var mr = isz * 0.8; ctx.beginPath(); ctx.arc(ix, iy, mr, 0, TAU); A.fillMetal(ctx, ix - mr, iy - mr, ix + mr, iy + mr); ctx.lineWidth = 1.2; ctx.strokeStyle = '#2b1d06'; ctx.stroke();
+      ctx.beginPath(); ctx.arc(ix, iy, mr * 0.82, 0, TAU); var mg = ctx.createRadialGradient(ix - mr * 0.3, iy - mr * 0.3, 0, ix, iy, mr * 0.82); mg.addColorStop(0, i ? '#3a2a22' : '#3c63b4'); mg.addColorStop(1, i ? '#0e0806' : '#142a5e'); ctx.fillStyle = mg; ctx.fill();
+      ctx.save(); ctx.clip(); ctx.fillStyle = stonePat(); ctx.globalAlpha = 0.6; ctx.fillRect(ix - mr, iy - mr, mr * 2, mr * 2); ctx.restore(); ctx.lineWidth = 1.2; ctx.strokeStyle = 'rgba(0,0,0,.7)'; ctx.stroke();
+      if (i === 0) maat(ix, iy, isz * 1.0); else heart(ix, iy + isz * 0.05, isz * 1.0);
       var tx = compact ? c.x + c.h * 1.05 : c.x + c.w / 2, al = compact ? 'left' : 'center', maxW = compact ? c.w - c.h * 1.05 - 38 : c.w * 0.88;
       var name = i ? T.heart : T.feather, tag = i ? T.heartOf : T.featherOf;
       var fs = fitSize(name, maxW, compact ? clamp(c.h * 0.3, 15, 26) : clamp(c.w * 0.13, 17, 30), G.TITLE);
@@ -551,10 +605,9 @@
         var e = endPt(side), cx = e.x, cy = e.y + g.chain, pr = g.pan, dim = dimSide === si ? 0.42 : 1, rl = reel[si];
         ctx.save(); ctx.globalAlpha = dim;
         // chaînes
-        ctx.strokeStyle = 'rgba(246,216,120,.85)'; ctx.lineWidth = 2;
-        ctx.beginPath(); ctx.moveTo(e.x, e.y); ctx.lineTo(cx - pr, cy); ctx.moveTo(e.x, e.y); ctx.lineTo(cx + pr, cy); ctx.moveTo(e.x, e.y); ctx.lineTo(cx, cy - pr * 0.1); ctx.stroke();
+        var clw = Math.max(1.8, pr * 0.045); chain(e.x, e.y, cx - pr, cy, clw); chain(e.x, e.y, cx + pr, cy, clw); chain(e.x, e.y, cx, cy - pr * 0.1, clw);
         if (choosing && hoverCard === si) { ctx.fillStyle = 'rgba(255,236,150,' + (0.16 + 0.1 * Math.sin(G.t * 7)) + ')'; ctx.beginPath(); ctx.arc(cx, cy, pr * 1.9, 0, TAU); ctx.fill(); }
-        if (pick === si) A.ankh(ctx, cx, cy - pr * 1.55, pr * 0.5, '#6ff0dd');
+        if (pick === si) { ctx.save(); ctx.shadowColor = 'rgba(111,240,221,.8)'; ctx.shadowBlur = pr * 0.3; A.ankh(ctx, cx, cy - pr * 1.55, pr * 0.58, '#2b1d06'); ctx.shadowBlur = 0; A.ankh(ctx, cx, cy - pr * 1.55, pr * 0.5, '#6ff0dd', '#e8fff8'); ctx.restore(); }
         if (glowSide === si) {
           var gl = ctx.createRadialGradient(cx, cy, 0, cx, cy, pr * 2.3); gl.addColorStop(0, 'rgba(255,236,150,.7)'); gl.addColorStop(1, 'rgba(255,236,150,0)');
           ctx.fillStyle = gl; ctx.beginPath(); ctx.arc(cx, cy, pr * 2.3, 0, TAU); ctx.fill();
@@ -563,21 +616,29 @@
         var pulse = 0.5 + 0.5 * Math.sin(ph * (3 + tens * 9) + si), hl = (0.25 + 0.3 * pulse + tens * 0.35) * clamp(ent, 0, 1), hc = si === 0 ? '255,244,200' : '255,90,70';
         var hg2 = ctx.createRadialGradient(cx, cy - pr * 0.4, 0, cx, cy - pr * 0.4, pr * 1.6); hg2.addColorStop(0, 'rgba(' + hc + ',' + hl + ')'); hg2.addColorStop(1, 'rgba(' + hc + ',0)');
         ctx.fillStyle = hg2; ctx.beginPath(); ctx.arc(cx, cy - pr * 0.4, pr * 1.6, 0, TAU); ctx.fill();
-        if (si === 0) { A.feather(ctx, cx, cy - pr * 0.42, pr * 0.95, '#fff8e6', 'rgba(150,110,40,.8)'); }
-        else { heart(cx, cy - pr * 0.3, pr * 0.9 * (1 + 0.07 * Math.pow(Math.max(0, Math.sin(ph * (4 + tens * 8))), 3) * (0.5 + tens))); }
         // bol
         ctx.beginPath(); ctx.moveTo(cx - pr, cy); ctx.quadraticCurveTo(cx - pr * 0.55, cy + pr * 0.62, cx, cy + pr * 0.62); ctx.quadraticCurveTo(cx + pr * 0.55, cy + pr * 0.62, cx + pr, cy); ctx.closePath();
         A.fillMetal(ctx, cx - pr, cy, cx + pr, cy); ctx.lineWidth = 1.4; ctx.strokeStyle = '#2b1d06'; ctx.stroke();
         ctx.beginPath(); ctx.ellipse(cx, cy, pr, pr * 0.2, 0, 0, TAU);   // intérieur du bol : creux sombre, rebord clair
         var ig = ctx.createLinearGradient(0, cy - pr * 0.2, 0, cy + pr * 0.2); ig.addColorStop(0, '#3a2a0a'); ig.addColorStop(0.55, '#6a4f18'); ig.addColorStop(1, '#a98a3c');
         ctx.fillStyle = ig; ctx.fill(); ctx.lineWidth = 1.6; ctx.strokeStyle = '#efdfa8'; ctx.stroke();
+        // objet posé au creux du bol (dessiné après lui : plus jamais coupé par le métal)
+        ctx.save(); ctx.shadowColor = 'rgba(0,0,0,.55)'; ctx.shadowBlur = pr * 0.12; ctx.shadowOffsetY = pr * 0.04;
+        if (si === 0) maat(cx, cy - pr * 0.46, pr * 0.95);
+        else heart(cx, cy - pr * 0.3, pr * 0.9 * (1 + 0.07 * Math.pow(Math.max(0, Math.sin(ph * (4 + tens * 8))), 3) * (0.5 + tens)));
+        ctx.restore();
         // cartouche du multiplicateur : « ×? » puis compteur qui défile (rouleau) et se fige sur la vraie valeur
         var cw = pr * 1.5, ch = pr * 0.62, cyy = cy + pr * 0.95, lit = glowSide === si || rl.on;
         ctx.save(); ctx.translate(cx, cyy); ctx.scale(1 + 0.3 * rl.pop, 1 + 0.3 * rl.pop); ctx.translate(-cx, -cyy);
-        A.roundRect(ctx, cx - cw / 2, cyy - ch / 2, cw, ch, ch * 0.5);
-        var cg = ctx.createLinearGradient(0, cyy - ch / 2, 0, cyy + ch / 2); cg.addColorStop(0, '#2a1f10'); cg.addColorStop(1, '#0c0804');
-        ctx.fillStyle = cg; ctx.fill(); ctx.lineWidth = lit ? 3 : 1.6; ctx.strokeStyle = lit ? '#fff6c8' : A.goldGrad(ctx, cx - cw, cyy, cx + cw, cyy); ctx.stroke();
-        ctx.save(); A.roundRect(ctx, cx - cw / 2 + 2, cyy - ch / 2 + 2, cw - 4, ch - 4, ch * 0.45); ctx.clip();
+        A.roundRect(ctx, cx - cw / 2, cyy - ch / 2, cw, ch, ch * 0.5);   // cadre d'or patiné, cuvette d'obsidienne grainée, cabochons de lapis aux extrémités
+        ctx.shadowColor = 'rgba(0,0,0,.6)'; ctx.shadowBlur = 8; A.fillMetal(ctx, 0, cyy - ch / 2, 0, cyy + ch / 2); ctx.shadowBlur = 0;
+        ctx.lineWidth = lit ? 2.6 : 1.2; ctx.strokeStyle = lit ? '#fff6c8' : '#2b1d06'; ctx.stroke();
+        var bz = Math.max(3, ch * 0.13);
+        A.roundRect(ctx, cx - cw / 2 + bz, cyy - ch / 2 + bz, cw - bz * 2, ch - bz * 2, (ch - bz * 2) * 0.5);
+        var cg = ctx.createLinearGradient(0, cyy - ch / 2, 0, cyy + ch / 2); cg.addColorStop(0, '#0a0705'); cg.addColorStop(1, '#241a0e');
+        ctx.fillStyle = cg; ctx.fill(); ctx.save(); ctx.clip(); ctx.fillStyle = stonePat(); ctx.globalAlpha = 0.5; ctx.fillRect(cx - cw / 2, cyy - ch / 2, cw, ch); ctx.restore(); ctx.lineWidth = 1; ctx.strokeStyle = 'rgba(0,0,0,.8)'; ctx.stroke();
+        [-1, 1].forEach(function (sd) { ctx.beginPath(); ctx.arc(cx + sd * (cw / 2 - ch * 0.5), cyy, bz * 0.7, 0, TAU); ctx.fillStyle = '#274f9e'; ctx.fill(); ctx.lineWidth = 0.8; ctx.strokeStyle = '#2b1d06'; ctx.stroke(); });
+        ctx.save(); A.roundRect(ctx, cx - cw / 2 + bz + 1, cyy - ch / 2 + bz + 1, cw - bz * 2 - 2, ch - bz * 2 - 2, ch * 0.4); ctx.clip();
         var tb = lit ? 22 : 8, t1 = '×' + fb(rl.prev, B), t2 = '×' + fb(rl.cur, B), fsn = Math.min(ch * 0.62, cw * 0.86 / Math.max(2.4, Math.max(t1.length, t2.length) * 0.62));   // ×B déjà appliqué aux compteurs
         if (rl.k < 1) { G.goldText(t1, cx, cyy + 1 + rl.k * ch * 0.95, fsn, { blur: 6 }); G.goldText(t2, cx, cyy + 1 + (rl.k - 1) * ch * 0.95, fsn, { blur: 6 }); }
         else G.goldText(rl.shown ? t2 : '×?', cx, cyy + 1, fsn, { blur: tb });
@@ -590,7 +651,7 @@
         if (res[si]) {   // GAGNÉ / PERDU sous le cartouche
           var ls = clamp(pr * 0.24, 12, 22), won = res[si] === 'won', pop = G.ease.outBack(clamp((verdict ? verdict.t : 1) / 0.4, 0, 1));
           ctx.globalAlpha = won ? 1 : 0.95;
-          G.txt(won ? T.weighWon : T.weighLost, cx, cyy - ch * 0.5 - ls * 0.75, { size: ls * pop, family: G.TEXT, weight: 900, fill: won ? '#fff1b8' : '#ff8a7a', stroke: 'rgba(0,0,0,.6)', sw: 3, spacing: 3, shadow: won ? 'rgba(255,216,106,.9)' : 'rgba(0,0,0,.6)', blur: won ? 14 : 4 });
+          G.txt(won ? T.weighWon : T.weighLost, cx, cyy + ch * 0.5 + ls * 0.95, { size: ls * pop, family: G.TEXT, weight: 900, fill: won ? '#fff1b8' : '#ff8a7a', stroke: 'rgba(0,0,0,.6)', sw: 3, spacing: 3, shadow: won ? 'rgba(255,216,106,.9)' : 'rgba(0,0,0,.6)', blur: won ? 14 : 4 });
         }
         ctx.restore();
       });
@@ -688,7 +749,7 @@
       // 3. la balance pèse : le plateau le plus lourd descend et gagne son multiplicateur, le plus léger ne gagne rien
       G.say(T.weighing); Sfx.roll(10, 0.09); FX.ring(g.px, g.py, '#6ff0dd', g.L, 0.7);
       sway = false; weighing = true;
-      var dir = data.heavy === 1 ? 1 : -1, final = dir * 0.30, dur = q ? 2.6 : 6.5, lastSign = 0, hbT = 0, lastU = 0, tkT = 0;
+      var dir = data.heavy === 1 ? 1 : -1, final = dir * 0.24, dur = q ? 2.6 : 6.5, lastSign = 0, hbT = 0, lastU = 0, tkT = 0;
       await G.tween(dur, function (u) {
         var env = Math.pow(1 - u, 1.5);
         var fake = -dir * 0.5 * Math.sin(Math.PI * clamp((u - 0.35) / 0.4, 0, 1));   // faux espoir : la balance penche d'abord du mauvais côté
