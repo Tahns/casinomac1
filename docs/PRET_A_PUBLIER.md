@@ -10,7 +10,7 @@ Ce que le jeu contient et ce qu'il reste à faire **par toi**. Ce document ne pr
 | Démo jouable (test) | https://claude.ai/artifact/9tueR3gP8QpKf1RLCZdkgn | Fichier unique, argent fictif |
 | Maths (format math-sdk) | `stake-math/` | 10 modes, parité JS/Python, 74 tests |
 | Pactes (Scribe / Balance / Chacal) | `docs/GAMEPLAY.md` | RTP 96,20 % pour chaque mode, volatilité distincte |
-| Volatilité | `docs/VOLATILITE.md` | Écart-type exact 31,2 en Balance (Stake mesurait 9,24 avant) |
+| Volatilité | `docs/VOLATILITE.md` | Écart-type 33,0 en Balance sur la table optimisée (Stake mesurait 9,24 avant) |
 | Checklist des 50 cases collées | `docs/CHECKLIST_51.md` | 39 vérifiées, 3 non vérifiables ici, 8 à faire par toi |
 | Direction artistique | `docs/AUDIT_DA.md`, `tools/retouche-assets.py` | Retouche unifiée, bonus refaits |
 | Visuels de marque | `brand/` (key art, miniatures 5 formats, logos, bannières, captures) | Générés avec Canva et Higgsfield |
