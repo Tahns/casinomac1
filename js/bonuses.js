@@ -1878,7 +1878,8 @@
     else await G.sleep(G.turbo ? 0.5 : 1.1);
     // entrée : les chaînes dorées d'Unchained se tendent, se brisent dans un flash de lumière divine, le décor du bonus se révèle dessous
     var is = introScene(sp), introRun = null;
-    await G.chainBreak(function () { G.setScene(is); introRun = is.run(); });
+    var ckind = sp.secret ? 'crypt' : sp.upgraded ? 'hand' : sp.kind;
+    await G.chainBreak(function () { G.setScene(is); introRun = is.run(); }, ckind);
     await introRun;
     await G.setFade(1, 0.35);
     if (sp.options && sp.upgraded) {   // Fureur d'Anubis : le joueur choisit sa couleur (au hasard en turbo / auto : les trois sont équivalentes)
@@ -1902,7 +1903,7 @@
     if (Sfx.bonusTheme) Sfx.bonusTheme(sp.secret ? 'crypt' : sp.upgraded ? 'hand' : sp.kind);   // musique propre à chaque bonus
     try { await scene.run(); } finally { if (Sfx.stopBonusTheme) Sfx.stopBonusTheme(); G.speed = speed0; }
     // sortie : les maillons se rassemblent, les portes d'obsidienne se referment puis s'ouvrent sur la roue
-    await G.chainForge(function () { G.setScene(null); G.say(''); });
+    await G.chainForge(function () { G.setScene(null); G.say(''); }, ckind);
     G.speed = speed0;
   };
 

@@ -552,26 +552,6 @@
     nearMiss: function () {                      // faux espoir : le bonus est frôlé puis perdu
       tone(420, 0.7, 'triangle', 0.08, 0, 130, true); pad([SCALE[2] / 2, SCALE[0]], 0.9, 0.08, 0, 0.1); noise(0.4, 0.05, 0, 900, 'lowpass', 150);
     },
-    // ---- chaînes (transition de bonus) ----
-    chainSlam: function () {
-      boom(0.3); noise(0.25, 0.16, 0, 5000, 'highpass');
-      for (var i = 0; i < 7; i++) tone(2200 + Math.random() * 1800, 0.09, 'triangle', 0.03, i * 0.022, 1100, true);
-    },
-    chainTense: function (dur) {
-      dur = Math.max(0.3, dur || 0.6); swell(dur, 0.1, 0, 200, 2600); tone(180, dur, 'sawtooth', 0.025, 0, 520, true);
-      for (var i = 0; i < 9; i++) noise(0.035, 0.02 + i * 0.004, dur * (i / 9) * 0.95, 2800 + i * 250, 'bandpass', undefined, 5);
-    },
-    chainBreak: function () {
-      noise(0.5, 0.26, 0, 6000, 'highpass', 1500); boom(0.5); swell(0.8, 0.14, 0, 400, 6000);
-      for (var i = 0; i < 14; i++) tone(1800 + Math.random() * 2600, 0.12, 'triangle', 0.045, i * 0.03, 900, true);
-      pad([SCALE[0] * 2, SCALE[4] * 2, SCALE[0] * 4], 2.0, 0.16, 0.05, 0.2);
-      [0, 2, 4, 6, 4].forEach(function (k, j) { bell(SCALE[k] * 4, 1.3, 0.07, 0.1 + j * 0.07, true); });
-    },
-    chainForge: function () {                    // sortie de bonus : les maillons se rassemblent, le verrou claque
-      swell(0.55, 0.12, 0, 3200, 300);
-      for (var i = 0; i < 8; i++) tone(1400 + i * 260, 0.08, 'triangle', 0.03 + i * 0.004, 0.05 + i * 0.05, 800, true);
-      boom(0.34, 0.58); noise(0.2, 0.14, 0.58, 4200, 'bandpass', 1500, 3); bell(SCALE[0] * 4, 1.4, 0.06, 0.62, true);
-    },
     // ---- victoires par case ----
     dustFall: function () { noise(0.7, 0.09, 0, 1100, 'lowpass', 160); tone(220, 0.6, 'sine', 0.06, 0, 70, true); },
     divine: function () {                        // Ankh : lumière divine, les chaînes cèdent
@@ -642,23 +622,46 @@
       tone(130, 1.5, 'sawtooth', 0.12, 0, 30, true); growl(41.2, 1.6, 0.22, 0); taiko(0.4, 0.2, true); noise(1.2, 0.12, 0, 900, 'lowpass', 90);
     },
     // ---- sons du motif « Unchained » et de la roue ----
-    // brisure d'une chaîne : coup de métal, maillons qui tombent, éclat de lumière divine (accord + souffle), choc grave ; la musique baisse un instant
+    // tension d'une chaîne : grincement métallique qui monte (dent de scie filtrée, trémolo rapide), cliquetis de maillons de plus en plus serrés, souffle grave
+    chainTense: function (dur) {
+      if (!ensure()) return; dur = Math.max(0.3, Math.min(2, +dur || 0.6)); duck(0.6, dur + 0.5);
+      swell(dur, 0.07, 0, 200, 2200);
+      if (!gate()) {
+        var t0 = ctx.currentTime, o = ctx.createOscillator(), f = ctx.createBiquadFilter(), g = ctx.createGain(), l = ctx.createOscillator(), lg = ctx.createGain();
+        o.type = 'sawtooth'; o.frequency.setValueAtTime(130 * PK, t0); o.frequency.exponentialRampToValueAtTime(390 * PK, t0 + dur);
+        f.type = 'bandpass'; f.Q.value = 5; f.frequency.setValueAtTime(700, t0); f.frequency.exponentialRampToValueAtTime(2200, t0 + dur);
+        l.frequency.value = 31; lg.gain.value = 0.01; l.connect(lg); lg.connect(g.gain);
+        g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(0.028, t0 + dur * 0.95); g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur + 0.06);
+        o.connect(f); f.connect(g); g.connect(sfxBus); o.start(t0); l.start(t0); o.stop(t0 + dur + 0.1); l.stop(t0 + dur + 0.1);
+      }
+      for (var i = 0; i < 10; i++) { var t = dur * (1 - Math.pow(1 - i / 10, 1.5)); bell(1700 + i * 130, 0.12, 0.022 + i * 0.003, t, false, 5.6); noise(0.02, 0.03, t, 3800, 'bandpass', undefined, 3); }
+    },
+    chainSlam: function () {   // la chaîne arrive en bout de course et claque
+      if (!ensure()) return; boom(0.24); noise(0.18, 0.12, 0, 5000, 'highpass');
+      for (var i = 0; i < 6; i++) tone(2200 + Math.random() * 1600, 0.08, 'triangle', 0.025, i * 0.022, 1100, true);
+    },
+    chainTink: function (v) {   // un maillon rebondit sur la pierre (appelé avec parcimonie par l'animation)
+      v = Math.max(0.2, Math.min(1, +v || 0.6)); bell(1500 + Math.random() * 2600, 0.2 + Math.random() * 0.15, 0.03 * v, 0, true, 5.8); noise(0.02, 0.025 * v, 0, 4200, 'bandpass', undefined, 3);
+    },
+    // brisure d'une chaîne : claquement sec, éclats de métal, écho de pierre, maillons qui rebondissent, éclat de lumière (accord + souffle) ; la musique baisse un instant
     chainBreak: function (light) {   // light : version courte (chaîne d'en-tête à l'ouverture d'un bonus, déjà couverte par l'annonce du bonus)
       if (!ensure()) return; duck(light ? 0.6 : 0.25, light ? 1.2 : 2.4);
       noise(0.09, 0.2, 0, 5200, 'highpass'); noise(0.22, 0.16, 0, 2400, 'bandpass', 900, 1.2);                       // claque du métal
       bell(1180, 0.9, 0.09, 0, true, 5.4); bell(1760, 0.7, 0.06, 0.01, true, 6.1); tone(210, 0.18, 'square', 0.04, 0, 70); metal(620, 1.4, 0.05, 0.005); tone(48, 0.9, 'sine', 0.2, 0, 28, true);
-      for (var i = 0; i < 11; i++) bell(1500 + Math.random() * 3800, 0.18 + Math.random() * 0.25, 0.05 * (1 - i / 14), 0.06 + i * 0.055 + Math.random() * 0.03, true, 5.8 + Math.random());   // maillons qui rebondissent
+      noise(1.3, 0.09, 0.04, 700, 'lowpass', 90); tone(64, 1.2, 'sine', 0.08, 0.06, 38, true);                          // écho de pierre
+      for (var i = 0; i < 9; i++) bell(1500 + Math.random() * 3800, 0.18 + Math.random() * 0.25, 0.045 * (1 - i / 12), 0.05 + i * 0.05 + Math.random() * 0.03, true, 5.8 + Math.random());   // éclats qui s'égrènent
       if (light) { boom(0.25, 0); return; }
-      swell(0.7, 0.16, 0.02, 500, 8000);                                                                             // éclat
-      pad([winNote(0, 0), winNote(2, 0), winNote(4, 0), winNote(0, 1)], 2.2, 0.16, 0.12, 0.3);
+      swell(0.7, 0.14, 0.02, 500, 8000);                                                                             // éclat
+      pad([winNote(0, 0), winNote(2, 0), winNote(4, 0), winNote(0, 1)], 2.2, 0.15, 0.12, 0.3);
       [0, 2, 4, 6].forEach(function (k, j) { bell(winNote(k, 2), 1.6, 0.05, 0.2 + j * 0.06, true, 3.0); });
-      boom(0.45, 0);
+      boom(0.42, 0);
     },
-    // chaîne qui se reforme : cliquetis de plus en plus serré, puis verrou
+    // chaîne qui se reforme : grondement de pierre (portes), cliquetis de plus en plus serré, puis verrou
     chainForge: function () {
       if (!ensure()) return;
-      for (var i = 0; i < 9; i++) { var t = 0.55 * (1 - Math.pow(1 - i / 9, 1.6)); bell(1300 + i * 150, 0.2, 0.04 + i * 0.004, t, false, 5.6); noise(0.03, 0.04, t, 4200, 'bandpass', undefined, 2); }
-      tone(150, 0.3, 'sine', 0.12, 0.58, 70, true); bell(SCALE[0] * 4, 0.9, 0.05, 0.6, true, 3.0); noise(0.1, 0.1, 0.58, 3000, 'bandpass', 1200, 1.4);
+      noise(0.55, 0.07, 0, 300, 'lowpass', 120); swell(0.5, 0.05, 0, 3000, 400);
+      for (var i = 0; i < 9; i++) { var t = 0.5 * (1 - Math.pow(1 - i / 9, 1.6)); bell(1300 + i * 150, 0.2, 0.04 + i * 0.004, t, false, 5.6); noise(0.03, 0.04, t, 4200, 'bandpass', undefined, 2); }
+      tone(150, 0.3, 'sine', 0.12, 0.52, 70, true); boom(0.3, 0.52); bell(SCALE[0] * 4, 0.9, 0.05, 0.54, true, 3.0); noise(0.1, 0.1, 0.52, 3000, 'bandpass', 1200, 1.4);
     },
     // anticipation : montée de tension de dur secondes (battements qui s'accélèrent, souffle grave qui s'ouvre, hauteur qui grimpe, dissonance finale)
     tension: function (dur) {

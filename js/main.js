@@ -922,7 +922,7 @@
     if (!sp || REPLAY || (!/[?&]splash=1/.test(location.search) && (navigator.webdriver || /[?&](debug|nosplash)/.test(location.search)))) { if (sp) sp.remove(); return; }
     var CH = root.Chains, cv = $('spCv'), cx = cv.getContext('2d'), IMG = root.ANUBIS_IMG || {}, pics = {};
     var W = 0, H = 0, dpr = 1, lay = null, chains = [], lk = { x: 0, y: 0, s: 60 }, motes = [], tStart = performance.now(), lastT = 0, raf = 0;
-    var state = 'idle', tCharge = 0, tBreak = 0, anim = null, entering = false, cur = 0, userTouched = false, autoTimer = 0, scrollRaf = 0, skipped = false;
+    var seq = null, lastS = 0, outDone = false, entering = false, cur = 0, userTouched = false, autoTimer = 0, scrollRaf = 0, skipped = false;
     function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
     function red() { return !!(S.reduced || FX.reduced); }
     function rtl() { return I18N.isRtl && I18N.isRtl(); }
@@ -934,6 +934,7 @@
 
     /* ----- mise en page du décor : Anubis (image) centré sur le cadenas, chaînes tendues vers les bords ----- */
     function layout() {
+      if (seq) return;   // pas de remise en page pendant la brisure (les maillons en vol gardent leur repère)
       W = sp.clientWidth || root.innerWidth; H = sp.clientHeight || root.innerHeight; dpr = Math.min(root.devicePixelRatio || 1, 2);
       cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
       var side = W > H * 1.2; sp.classList.toggle('side', side);
@@ -960,15 +961,16 @@
       cx.setTransform(dpr, 0, 0, dpr, 0, 0); cx.clearRect(0, 0, W, H);
       cx.fillStyle = '#050308'; cx.fillRect(0, 0, W, H);
       cx.save();
-      if (anim && anim.shake > 0 && !red()) cx.translate((Math.random() - 0.5) * 16 * anim.shake, (Math.random() - 0.5) * 16 * anim.shake);
-      var br = red() ? 0 : Math.sin(t * 0.5) * 0.008;   // lente qui respire
-      if (lay.im) { var k = 1 + br; cx.drawImage(lay.im, lay.ox - lay.dw * br / 2, lay.oy - lay.dh * br / 2, lay.dw * k, lay.dh * k); }
+      var rs = seq ? seq.rise : 0, tb = seq ? seq.tb : -1;   // rs : Anubis s'éclaire et se redresse après la rupture
+      if (seq && seq.shake > 0 && !red()) cx.translate((Math.random() - 0.5) * 16 * seq.shake, (Math.random() - 0.5) * 16 * seq.shake);
+      var br = red() ? 0 : Math.sin(t * 0.5) * 0.008 + 0.04 * rs;   // lente qui respire, puis léger avancé
+      if (lay.im) { var k = 1 + br; cx.drawImage(lay.im, lay.ox - lay.dw * br / 2, lay.oy - lay.dh * br / 2 - rs * H * 0.015, lay.dw * k, lay.dh * k); }
       // étalonnage commun avec le reste du jeu : voile or sépia en multiplication, puis vignettage
-      cx.globalCompositeOperation = 'multiply'; cx.fillStyle = 'rgba(214,176,112,.42)'; cx.fillRect(0, 0, W, H); cx.globalCompositeOperation = 'source-over';
-      var vg = cx.createRadialGradient(lk.x, lk.y, Math.min(W, H) * 0.25, lk.x, lk.y, Math.max(W, H) * 0.85); vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(2,1,4,.78)');
+      cx.globalCompositeOperation = 'multiply'; cx.fillStyle = 'rgba(214,176,112,' + (0.42 - 0.18 * rs) + ')'; cx.fillRect(0, 0, W, H); cx.globalCompositeOperation = 'source-over';
+      var vg = cx.createRadialGradient(lk.x, lk.y, Math.min(W, H) * 0.25, lk.x, lk.y, Math.max(W, H) * 0.85); vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(2,1,4,' + (0.78 - 0.24 * rs) + ')');
       cx.fillStyle = vg; cx.fillRect(0, 0, W, H);
       // lueur du sceau, qui bat doucement puis s'emballe avant la brisure
-      var charge = state === 'charge' ? clamp((now - tCharge) / 300, 0, 1) : state === 'break' ? 1 : 0;
+      var charge = seq ? (tb < 0 ? seq.charge : Math.max(0, 1 - tb / 0.9)) : 0;
       var pulse = red() ? 0.6 : 0.55 + 0.45 * Math.sin(t * 2.2);
       cx.globalCompositeOperation = 'lighter';
       var gr = cx.createRadialGradient(lk.x, lk.y, 0, lk.x, lk.y, lk.s * (2.4 + charge * 2)); gr.addColorStop(0, 'rgba(217,184,87,' + (0.28 * pulse + 0.4 * charge) + ')'); gr.addColorStop(1, 'rgba(255,170,50,0)');
@@ -976,11 +978,8 @@
       cx.globalCompositeOperation = 'source-over';
       // chaînes (tendues, balancement léger), puis cadenas
       if (CH) {
-        if (state === 'break' && anim) { anim.update(dt); anim.draw(cx, dpr); f = anim.flash; }
-        else chains.forEach(function (c) { c.sway = red() ? 0 : 4 + charge * 12; CH.draw(cx, c, t * (1 + charge * 6), { dpr: dpr, shadow: 3 }); });
-        var la = 1, ls = 1;
-        if (state === 'break') { var u = clamp((now - tBreak) / 320, 0, 1); la = 1 - u; ls = 1 + u * 0.35; }
-        if (la > 0.01) { cx.save(); cx.globalAlpha = la; cx.translate(lk.x, lk.y); cx.scale(ls, ls); cx.translate(-lk.x, -lk.y); CH.lock(cx, lk.x, lk.y, lk.s, { crack: charge, t: t }); cx.restore(); }
+        if (seq) { seq.drawChains(cx); seq.drawLock(cx, t); }
+        else { chains.forEach(function (c) { c.sway = red() ? 0 : 4; CH.draw(cx, c, t, { dpr: dpr, shadow: 3 }); }); CH.lock(cx, lk.x, lk.y, lk.s, { crack: 0, t: t }); }
       }
       // poussière d'or
       cx.globalCompositeOperation = 'lighter';
@@ -988,23 +987,19 @@
         if (!red()) { m.y -= m.v * dt; m.x += Math.sin(t * 0.6 + m.p) * 4 * dt; if (m.y < -4) { m.y = H + 4; m.x = Math.random() * W; } }
         cx.fillStyle = 'rgba(255,220,140,' + (0.18 + 0.22 * (0.5 + 0.5 * Math.sin(t * 1.3 + m.p))) + ')'; cx.beginPath(); cx.arc(m.x, m.y, m.r, 0, 6.2832); cx.fill();
       });
-      // éclat de lumière divine (brisure) : rayons, anneau, voile clair
-      if (f > 0) {
-        var R = Math.max(W, H);
-        cx.fillStyle = 'rgba(255,238,180,' + (0.55 * f) + ')'; cx.fillRect(0, 0, W, H);
-        var gl = cx.createRadialGradient(lk.x, lk.y, 0, lk.x, lk.y, R * (0.25 + 0.9 * (1 - f))); gl.addColorStop(0, 'rgba(255,252,230,' + (0.95 * f) + ')'); gl.addColorStop(1, 'rgba(217,184,87,0)');
-        cx.fillStyle = gl; cx.fillRect(0, 0, W, H);
-        cx.save(); cx.translate(lk.x, lk.y); rotLight = anim.t * 0.5;
-        for (var i = 0; i < 14; i++) { var a = rotLight + i / 14 * 6.2832; cx.fillStyle = 'rgba(255,240,190,' + (0.3 * f) + ')'; cx.beginPath(); cx.moveTo(0, 0); cx.lineTo(Math.cos(a - 0.05) * R, Math.sin(a - 0.05) * R); cx.lineTo(Math.cos(a + 0.05) * R, Math.sin(a + 0.05) * R); cx.fill(); }
-        cx.restore();
-        cx.strokeStyle = 'rgba(255,246,210,' + (0.8 * f) + ')'; cx.lineWidth = 6 * f + 1; cx.beginPath(); cx.arc(lk.x, lk.y, R * 0.7 * anim.ring, 0, 6.2832); cx.stroke();
-      }
       cx.globalCompositeOperation = 'source-over';
+      if (seq) seq.drawFx(cx);   // éclats 3D, étincelles, poussière, ondes de choc, flash doré borné
       cx.restore();
     }
     function loop(now) {
       raf = 0; if (!sp.isConnected) return;
-      if (state === 'charge' && now - tCharge >= 300) breakNow(now);
+      if (seq) {
+        try {
+          seq.update(lastS ? Math.min(0.1, (now - lastS) / 1000) : 0.016); lastS = now;
+          if (seq.tb >= 0 && !sp.classList.contains('breaking')) sp.classList.add('breaking');
+          if (!outDone && (seq.tb > 1.15 || seq.done)) { outDone = true; sp.classList.add('out'); setTimeout(finish, 950); }
+        } catch (er) { seq = null; outDone = true; sp.classList.add('breaking'); sp.classList.add('out'); setTimeout(finish, 300); }   // une erreur ne bloque jamais l'entrée dans le jeu
+      }
       paint(now);
       if (!red() || entering) raf = root.requestAnimationFrame(loop);
     }
@@ -1012,18 +1007,15 @@
 
     /* ----- un appui : les chaînes se brisent, l'audio se déverrouille, la musique démarre, le jeu apparaît ----- */
     function finish() { if (raf) root.cancelAnimationFrame(raf); clearInterval(autoTimer); root.removeEventListener('resize', onResize); sp.remove(); }
-    function breakNow(now) {
-      state = 'break'; tBreak = now; sp.classList.add('breaking'); Sfx.chainBreak();
-      anim = CH.shatter(chains, { x: lk.x, y: lk.y, power: 1.15 });
-      setTimeout(function () { sp.classList.add('out'); setTimeout(finish, 950); }, 1050);
-    }
     function enter() {
       if (entering) return; entering = true;
       Sfx.unlock(); clearInterval(autoTimer);
       document.removeEventListener('keydown', key, true);
       setTimeout(function () { Sfx.startAmbient(); }, red() ? 400 : 1100);
       if (!CH || red()) { Sfx.chainBreak(); sp.classList.add('breaking'); sp.classList.add('out'); setTimeout(finish, 320); return; }
-      state = 'charge'; tCharge = performance.now(); kick();
+      try { seq = CH.unchain({ chains: chains, x: lk.x, y: lk.y, size: lk.s, W: W, H: H, floor: Math.min(H * 0.97, lk.y + H * 0.46), dpr: dpr, fast: !!G.turbo }); }
+      catch (er) { seq = null; Sfx.chainBreak(); sp.classList.add('breaking'); sp.classList.add('out'); setTimeout(finish, 320); return; }
+      lastS = 0; kick();
     }
 
     /* ----- carrousel des fonctionnalités : glissable (défilement natif), flèches, points, auto-défilement jusqu'au premier geste, « Passer » ----- */

@@ -975,46 +975,33 @@
     ctx.restore();
   }
 
-  /* ============ TRANSITIONS DE BONUS : chaînes d'Unchained ============
-     G.chainBreak(swap) : entrée. Les chaînes dorées se tendent, se brisent en éclats dans un flash de lumière divine ; swap() est appelé
-     sous le flash (le décor du bonus se révèle). G.chainForge(swap) : sortie. Les maillons se rassemblent, les portes d'obsidienne se referment,
-     swap() sous les portes, puis le rideau se rouvre sur la roue. FX.reduced : simple fondu doré, sans chaînes ni secousse. */
-  G.chainBreak = function (swap) {
-    var red = FX.reduced, D = red ? 0.7 : 1.9, st = G.chain = { r: red ? 0 : 0, tense: 0, brk: -1, t: G.t, veil: 0, doors: 0, flash: 0, light: 0, lite: FX.lite }, d = {};
+  /* ============ TRANSITIONS DE BONUS : chaînes d'Unchained (cinématique dans js/chains.js, accent propre à chaque bonus) ============
+     G.chainBreak(swap, kind) : entrée. Les chaînes traversent l'écran, se tendent et se brisent en éclats 3D ; swap() est appelé sous le flash
+     (le décor du bonus se révèle). G.chainForge(swap, kind) : sortie. Les maillons se rassemblent, les portes d'obsidienne se referment,
+     swap() sous les portes, puis le rideau se rouvre sur la roue. FX.reduced (ou erreur de la cinématique) : simple fondu doré, sans secousse. */
+  function chainCine(make, kind) {
+    try { return root.Chains && root.Chains[make] ? root.Chains[make](kind, G.w, G.h, { dpr: G.dpr, cx: G.cx, cy: G.cy, floor: Math.min(G.h * 0.93, G.cy + G.R * 1.2) }) : null; } catch (e) { return null; }
+  }
+  G.chainBreak = function (swap, kind) {
+    var red = FX.reduced, cine = red ? null : chainCine('entry', kind), simple = !cine, D = cine ? cine.dur : 0.7, st = G.chain = { r: 0, tense: 0, brk: -1, t: G.t, veil: 0, doors: 0, flash: 0, light: 0, lite: FX.lite, cine: cine }, d = {};
     return G.tween(D, function (u) {
       st.t = G.t;
-      if (red) { st.flash = (u < 0.45 ? u / 0.45 : 1 - (u - 0.45) / 0.55) * 0.9; if (u >= 0.45 && !d.sw) { d.sw = 1; swap(); } return; }
-      var q = clamp(u / 0.26, 0, 1);
-      if (u < 0.5) {
-        st.r = G.ease.out3(q); st.veil = 0.62 * q;
-        if (u >= 0.26) { st.tense = (u - 0.26) / 0.24; st.light = st.tense * 0.35; FX.shake(1 + 3 * st.tense, 0.08); }
-        if (u >= 0.26 && !d.slam) { d.slam = 1; Sfx.chainSlam(); FX.shake(10, 0.4); FX.spark(G.cx, G.cy, 18, '#d9b857', 320); FX.ring(G.cx, G.cy, '#d9b857', G.R * 0.8, 0.5); Sfx.chainTense(D * 0.24 / Math.max(1, G.speed)); }
-      } else {
-        if (!d.brk) { d.brk = 1; Sfx.chainBreak(); FX.shake(22, 0.7); FX.ring(G.cx, G.cy, '#efdfa8', Math.max(G.w, G.h) * 0.7, 1.0); FX.spark(G.cx, G.cy, 60, '#d9b857', 700); FX.links(G.cx, G.cy, 20, 760); }
-        st.r = 1; st.tense = 1; st.brk = (u - 0.5) * D;
-        st.flash = u < 0.57 ? 1 : Math.max(0, 1 - (u - 0.57) / 0.22); st.light = Math.max(0, 1 - (u - 0.5) / 0.42);
-        st.veil = u < 0.545 ? 0.62 : 0;
-        if (u >= 0.53 && !d.sw) { d.sw = 1; swap(); }
+      if (!simple) {
+        try { var T = u * D; cine.frame(T); if (T >= cine.swapAt && !d.sw) { d.sw = 1; swap(); } return; }
+        catch (e) { st.cine = cine = null; simple = true; st.veil = 0; }
       }
+      st.flash = (u < 0.45 ? u / 0.45 : 1 - (u - 0.45) / 0.55) * 0.9; if (u >= 0.45 && !d.sw) { d.sw = 1; swap(); }
     }, null).then(function () { if (!d.sw) swap(); G.chain = null; });
   };
-  G.chainForge = function (swap) {
-    var red = FX.reduced, D = red ? 0.7 : 1.5, st = G.chain = { r: 1, tense: 0.6, brk: 1.15, t: G.t, veil: 0, doors: 0, flash: 0, light: 0, lite: FX.lite, a: 0 }, d = {};
-    if (red) { st.r = 0; st.brk = -1; }
+  G.chainForge = function (swap, kind) {
+    var red = FX.reduced, cine = red ? null : chainCine('exit', kind), simple = !cine, D = cine ? cine.dur : 0.7, st = G.chain = { r: 0, tense: 0, brk: -1, t: G.t, veil: 0, doors: 0, flash: 0, light: 0, lite: FX.lite, cine: cine }, d = {};
     return G.tween(D, function (u) {
       st.t = G.t;
-      if (red) { st.veil = u < 0.5 ? u / 0.5 : 1 - (u - 0.5) / 0.5; if (u >= 0.5 && !d.sw) { d.sw = 1; swap(); } return; }
-      if (!d.s) { d.s = 1; Sfx.chainForge(); }
-      if (u < 0.42) {
-        var q = u / 0.42; st.brk = 1.15 * (1 - G.ease.inOut(q)); st.r = 1; st.veil = 0.85 * q; st.doors = G.ease.out3(clamp((u - 0.16) / 0.26, 0, 1)); st.tense = 0.6;
-        if (st.brk < 0.01) st.brk = -1;   // les maillons sont rassemblés : chaîne intacte et tendue
-      } else {
-        st.brk = -1;
-        if (!d.lock) { d.lock = 1; FX.shake(12, 0.45); FX.spark(G.cx, G.cy, 24, '#d9b857', 380); FX.ring(G.cx, G.cy, '#d9b857', G.R * 0.9, 0.6); st.flash = 0.55; }
-        st.flash = Math.max(0, st.flash - 0.05); st.tense = Math.max(0, st.tense - 0.03);
-        st.doors = 1; if (u >= 0.47 && !d.sw) { d.sw = 1; swap(); }
-        if (u > 0.58) { var o = G.ease.inOut(clamp((u - 0.58) / 0.42, 0, 1)); st.r = 1 - o; st.doors = 1 - o; st.veil = 0.85 * (1 - o); }
+      if (!simple) {
+        try { var T = u * D; cine.frame(T); if (T >= cine.swapAt && !d.sw) { d.sw = 1; swap(); } return; }
+        catch (e) { st.cine = cine = null; simple = true; st.veil = 0; }
       }
+      st.veil = u < 0.5 ? u / 0.5 : 1 - (u - 0.5) / 0.5; if (u >= 0.5 && !d.sw) { d.sw = 1; swap(); }
     }, null).then(function () { if (!d.sw) swap(); G.chain = null; });
   };
 
@@ -1383,7 +1370,7 @@
     if (ovTop) { ctx.save(); ctx.translate(so[0], so[1]); FX.draw(ctx); ctx.restore(); }
     drawEmerge();
     FX.drawFlash(ctx, G.w, G.h);
-    if (G.chain) { ctx.save(); ctx.translate(so[0], so[1]); FX.Chains.draw(ctx, G.w, G.h, G.chain); ctx.restore(); }
+    if (G.chain) { ctx.save(); ctx.translate(so[0], so[1]); try { FX.Chains.draw(ctx, G.w, G.h, G.chain); } catch (e) { G.chain.cine = null; } ctx.restore(); }
     if (G.fade > 0.001) { ctx.fillStyle = 'rgba(4,3,2,' + G.fade + ')'; ctx.fillRect(0, 0, G.w, G.h); }
     for (i = 0; i < G.onFrame.length; i++) G.onFrame[i](dt);
   }

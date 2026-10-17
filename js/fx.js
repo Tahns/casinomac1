@@ -215,6 +215,7 @@
       c.restore();
     }
     function draw(c, w, h, st) {
+      if (st.cine) { st.cine.draw(c, w, h); return; }   // cinématique js/chains.js (entrée / sortie de bonus)
       var L = layout(w, h, st.lite), s = L.s, i, k, H, lk, tb = st.brk == null ? -1 : st.brk, r = st.r == null ? 1 : st.r;
       if (st.veil > 0.002) { c.fillStyle = 'rgba(6,4,3,' + st.veil + ')'; c.fillRect(0, 0, w, h); }
       if (st.doors > 0.002) {   // portes d'obsidienne : deux battants à liseré d'or qui se rejoignent

@@ -8,6 +8,7 @@
  *   var a = Chains.shatter([ch1, ch2], { x, y, power: 1, onDone });    // « se brise » : a.update(dt) puis a.draw(ctx) à chaque image, a.done
  *   var r = Chains.reform([ch1, ch2], { x, y, dur: 1.1, onLink, onDone }); // « se reforme » : même interface
  *   var h = Chains.header(canvasElement);                              // petit effet d'en-tête : h.breakNow(), h.reform(), h.destroy()
+ *   Chains.unchain / entry / exit : séquences cinématiques (accueil, entrée et sortie de bonus), voir plus bas.
  *   Chains.setReduced(true);                                           // mouvement réduit : aucune animation, états finaux immédiats
  *
  * Palette = celle du jeu (or #cfa94c, patine turquoise). Aucun hasard dans le dessin des maillons (rendu identique à chaque image). */
@@ -29,8 +30,8 @@
 
   /* ---------- maillons : sprites pré-rendus (face = anneau, tranche = barre), avec leur silhouette pour l'ombre dure ---------- */
   var cache = {};
-  function sprite(size, edge, shadow, dpr) {
-    var key = Math.round(size * dpr) + (edge ? 'e' : 'f') + (shadow ? 's' : 'c');
+  function sprite(size, edge, shadow, dpr, dark) {
+    var key = Math.round(size * dpr) + (edge ? 'e' : 'f') + (shadow ? 's' : dark ? 'd' : 'c');
     if (cache[key]) return cache[key];
     var k = dpr, L = size * k, W = size * 0.6 * k, T = size * 0.19 * k, pad = Math.ceil(3 * k + 2);
     var c = mk(L + pad * 2, W + pad * 2), x = c.getContext('2d'), cx = c.width / 2, cy = c.height / 2;
@@ -61,11 +62,12 @@
     } else {
       x.beginPath(); x.moveTo(cx - L * 0.3, cy - T * 0.3); x.lineTo(cx + L * 0.28, cy - T * 0.3); x.lineWidth = Math.max(1, k); x.lineCap = 'round'; x.strokeStyle = 'rgba(255,252,230,.6)'; x.stroke();
     }
+    if (dark) { x.globalCompositeOperation = 'source-atop'; x.fillStyle = 'rgba(14,8,0,.5)'; x.fillRect(0, 0, c.width, c.height); }   // face arrière / dans l'ombre
     cache[key] = c; return c;
   }
-  function linkAt(ctx, lk, size, dpr, shadow) {
-    var s = sprite(size, lk.e, shadow, dpr), w = s.width / dpr, h = s.height / dpr;
-    ctx.save(); ctx.translate(lk.x, lk.y); ctx.rotate(lk.a); ctx.drawImage(s, -w / 2, -h / 2, w, h); ctx.restore();
+  function linkAt(ctx, x, y, a, e, size, dpr, shadow) {
+    var s = sprite(size, e, shadow, dpr), w = s.width / dpr, h = s.height / dpr;
+    ctx.save(); ctx.translate(x, y); ctx.rotate(a); ctx.drawImage(s, -w / 2, -h / 2, w, h); ctx.restore();
   }
 
   /* ---------- une chaîne : maillons placés le long d'une courbe (flèche = pesanteur) ---------- */
@@ -94,18 +96,26 @@
     };
     return ch.place(0);
   }
-  function draw(ctx, ch, t, opt) {
+  function draw(ctx, ch, t, opt) {   // opt : dpr, shadow (px), alpha, still, jit (px : tremblement des maillons sous tension), jt (temps du tremblement)
     opt = opt || {};
-    var dpr = opt.dpr || (root.devicePixelRatio || 1), sh = opt.shadow == null ? 3 : opt.shadow;
+    var dpr = opt.dpr || (root.devicePixelRatio || 1), sh = opt.shadow == null ? 3 : opt.shadow, jit = opt.jit || 0, jt = opt.jt || 0;
     if (ch.sway && !opt.still) ch.place(t);
-    var i, lk, a = opt.alpha == null ? 1 : opt.alpha;
+    var i, lk, a = opt.alpha == null ? 1 : opt.alpha, jx = 0, jy = 0, n = ch.links.length;
     if (sh > 0) {   // ombre dure : même silhouette, décalée, sans flou
-      ctx.save(); ctx.globalAlpha = 0.55 * a;
-      for (i = 0; i < ch.links.length; i++) { lk = ch.links[i]; if (lk.al <= 0.02) continue; ctx.globalAlpha = 0.55 * a * lk.al; linkAt(ctx, { x: lk.x + sh, y: lk.y + sh * 1.3, a: lk.a, e: lk.e }, ch.size, dpr, true); }
+      ctx.save();
+      for (i = 0; i < n; i++) {
+        lk = ch.links[i]; if (lk.al <= 0.02) continue; ctx.globalAlpha = 0.55 * a * lk.al;
+        if (jit) { jx = Math.sin(jt * 93 + i * 2.1) * jit; jy = Math.cos(jt * 77 + i * 1.3) * jit; }
+        linkAt(ctx, lk.x + jx + sh, lk.y + jy + sh * 1.3, lk.a, lk.e, ch.size, dpr, true);
+      }
       ctx.restore();
     }
     ctx.save();
-    for (i = 0; i < ch.links.length; i++) { lk = ch.links[i]; if (lk.al <= 0.02) continue; ctx.globalAlpha = a * lk.al; linkAt(ctx, lk, ch.size, dpr, false); }
+    for (i = 0; i < n; i++) {
+      lk = ch.links[i]; if (lk.al <= 0.02) continue; ctx.globalAlpha = a * lk.al;
+      if (jit) { jx = Math.sin(jt * 93 + i * 2.1) * jit; jy = Math.cos(jt * 77 + i * 1.3) * jit; }
+      linkAt(ctx, lk.x + jx, lk.y + jy, lk.a, lk.e, ch.size, dpr, false);
+    }
     ctx.restore();
   }
 
@@ -277,7 +287,336 @@
     return ctl;
   }
 
+  /* =====================================================================================================================
+   * CINÉMATIQUE « les chaînes cèdent » : maillons en 3D (rotation sur deux axes, profondeur, ombre dure), éclats d'or patiné, étincelles de
+   * friction, poussière, ondes de choc. Tout vit dans des pools d'objets pré-alloués (aucune allocation par image).
+   *   Chains.unchain({ chains, x, y, size, W, H, floor, dpr, fast })  accueil : tension -> rupture -> éclats (seq.update(dt) puis seq.draw*)
+   *   Chains.entry(kind, w, h, { dpr, cx, cy, floor })  entrée de bonus (kind : weigh|scarab|vault|hand|crypt) ; Chains.exit(...) sortie : e.frame(T) puis e.draw(ctx,w,h)
+   * ===================================================================================================================== */
+  var GRAV = 1700;
+  function rnd() { return Math.random(); }
+  function link3(ctx, x, y, rz, rx, ry, z, size, dpr, al, shadow, ox, oy) {   // un maillon vu en 3D : rx = tour sur son grand axe (anneau -> tranche), ry = tour sur l'axe vertical
+    var cx = Math.cos(rx), ax = Math.abs(cx), cyv = Math.abs(Math.cos(ry)), edge = ax < 0.3, zs = 1 + z / 520;
+    var s = sprite(size, edge, shadow, dpr, !shadow && cx < 0 && !edge), w = s.width / dpr, h = s.height / dpr;
+    ctx.save(); ctx.translate(x + (shadow ? ox : 0), y + (shadow ? oy : 0)); ctx.rotate(rz); ctx.scale(zs * Math.max(0.35, cyv), zs * (edge ? 1 : Math.max(0.3, ax)));
+    ctx.globalAlpha = shadow ? al * 0.55 : al; ctx.drawImage(s, -w / 2, -h / 2, w, h); ctx.restore();
+  }
+  var chipCache = {};
+  function chipSprite(k, dpr, dark) {   // éclat de métal : polygone irrégulier, bandes dures d'or patiné
+    var key = k + (dark ? 'd' : 'l') + dpr;
+    if (chipCache[key]) return chipCache[key];
+    var P = [[[-7, -3], [2, -6], [8, 1], [-1, 5]], [[-6, -5], [7, -2], [3, 5], [-8, 3]], [[-8, 0], [0, -6], [8, -1], [4, 4], [-4, 5]]][k], c = mk(22 * dpr, 16 * dpr), x = c.getContext('2d');
+    x.scale(dpr, dpr); x.translate(11, 8); var g = x.createLinearGradient(0, -6, 0, 6); bands(g);
+    x.beginPath(); P.forEach(function (p, i) { if (i) x.lineTo(p[0], p[1]); else x.moveTo(p[0], p[1]); }); x.closePath(); x.fillStyle = g; x.fill();
+    x.lineWidth = 1; x.strokeStyle = 'rgba(239,223,168,.55)'; x.stroke();
+    if (dark) { x.globalCompositeOperation = 'source-atop'; x.fillStyle = 'rgba(14,8,0,.5)'; x.fillRect(-12, -9, 24, 18); }
+    return (chipCache[key] = c);
+  }
+  function newEngine() {
+    var lite = !!(root.FX && root.FX.lite), nS = lite ? 44 : 100, nC = lite ? 36 : 84, nP = lite ? 80 : 190, nD = lite ? 18 : 40, i;
+    var S = [], C = [], P = [], D = [], R = [], W = 800, H = 600, floor = 600, dpr = 1, tinkAt = 0, tinks = 0;
+    for (i = 0; i < nS; i++) S.push({ on: false, x: 0, y: 0, vx: 0, vy: 0, z: 0, vz: 0, rz: 0, wz: 0, rx: 0, wx: 0, ry: 0, wy: 0, sz: 24, fl: 0, b: 0, rest: 0, age: 0, al: 1 });
+    for (i = 0; i < nC; i++) C.push({ on: false, x: 0, y: 0, vx: 0, vy: 0, rz: 0, wz: 0, rx: 0, wx: 0, k: 0, s: 1, age: 0, max: 1, fl: 0, b: 0 });
+    for (i = 0; i < nP; i++) P.push({ on: false, x: 0, y: 0, vx: 0, vy: 0, age: 0, max: 1, c: 0, w: 1 });
+    for (i = 0; i < nD; i++) D.push({ on: false, x: 0, y: 0, vx: 0, vy: 0, r: 4, age: 0, max: 1 });
+    for (i = 0; i < 6; i++) R.push({ on: false, x: 0, y: 0, r1: 100, age: 0, dur: 1, w: 4, c: 0 });
+    var E = { cols: ['#fff3c4', '#efdfa8', '#d9b857'], ringCols: ['239,223,168', '217,184,87'], onTink: null };
+    function take(a) { for (var k = 0; k < a.length; k++) if (!a[k].on) return a[k]; return null; }
+    E.bounds = function (w, h, fl, d) { W = w; H = h; floor = fl; dpr = d || 1; tinks = 0; };
+    E.link = function (x, y, rz, size, edge, vx, vy) {   // false : pool plein (l'appelant se rabat sur des éclats)
+      var s = take(S); if (!s) return false;
+      s.on = true; s.x = x; s.y = y; s.vx = vx; s.vy = vy; s.z = 0; s.vz = 120 + rnd() * 320; s.rz = rz; s.rx = edge ? Math.PI / 2 : 0; s.ry = 0; s.wz = (rnd() - 0.5) * 16; s.wx = (rnd() - 0.5) * 22; s.wy = (rnd() - 0.5) * 12;
+      s.sz = size; s.fl = floor + (rnd() - 0.5) * H * 0.05; s.b = 0; s.rest = 0; s.age = 0; s.al = 1; return true;
+    };
+    E.chips = function (x, y, n, spd) {
+      for (var k = 0; k < n; k++) {
+        var c = take(C); if (!c) return; var a = rnd() * TAU, v = spd * (0.3 + rnd() * 0.8);
+        c.on = true; c.x = x; c.y = y; c.vx = Math.cos(a) * v; c.vy = Math.sin(a) * v - spd * 0.3; c.rz = rnd() * TAU; c.wz = (rnd() - 0.5) * 24; c.rx = rnd() * TAU; c.wx = (rnd() - 0.5) * 26;
+        c.k = (rnd() * 3) | 0; c.s = 0.7 + rnd() * 0.9; c.age = 0; c.max = 0.8 + rnd() * 0.7; c.fl = floor + (rnd() - 0.5) * H * 0.04; c.b = 0;
+      }
+    };
+    E.sparks = function (x, y, n, spd, ang, spread) {   // ang : direction moyenne (radians) ; spread : demi-ouverture ; pas d'ang = tous azimuts
+      for (var k = 0; k < n; k++) {
+        var p = take(P); if (!p) return; var a = ang == null ? rnd() * TAU : ang + (rnd() - 0.5) * 2 * spread, v = spd * (0.25 + rnd() * 0.85);
+        p.on = true; p.x = x; p.y = y; p.vx = Math.cos(a) * v; p.vy = Math.sin(a) * v; p.age = 0; p.max = 0.22 + rnd() * 0.5; p.c = (rnd() * 3) | 0; p.w = 1 + rnd() * 1.2;
+      }
+    };
+    E.dust = function (x, y, n, spd) {
+      for (var k = 0; k < n; k++) { var d = take(D); if (!d) return; var a = rnd() * TAU; d.on = true; d.x = x; d.y = y; d.vx = Math.cos(a) * spd * rnd(); d.vy = Math.sin(a) * spd * rnd() - spd * 0.15; d.r = 3 + rnd() * 6; d.age = 0; d.max = 0.7 + rnd() * 0.8; }
+    };
+    E.ring = function (x, y, r1, dur, w, c) { var r = take(R); if (!r) return; r.on = true; r.x = x; r.y = y; r.r1 = r1; r.age = 0; r.dur = dur; r.w = w; r.c = c || 0; };
+    E.busy = function () { var k; for (k = 0; k < S.length; k++) if (S[k].on) return true; for (k = 0; k < C.length; k++) if (C[k].on) return true; for (k = 0; k < P.length; k++) if (P[k].on) return true; for (k = 0; k < R.length; k++) if (R[k].on) return true; return false; };
+    function step(dt) {
+      var k, s, c, p, d, r;
+      tinkAt -= dt;
+      for (k = 0; k < S.length; k++) {
+        s = S[k]; if (!s.on) continue;
+        s.age += dt; s.vy += GRAV * dt; s.x += s.vx * dt; s.y += s.vy * dt; s.z += s.vz * dt; s.vz -= 700 * dt;
+        if (s.z < 0) { s.z = 0; s.vz = s.vz < -80 ? -s.vz * 0.3 : 0; }
+        s.rz += s.wz * dt; s.rx += s.wx * dt; s.ry += s.wy * dt;
+        if (s.rest > 0) { var fr = Math.pow(0.03, dt); s.rest += dt; s.vx *= fr; s.wx *= fr; s.wy *= fr; s.wz *= fr; s.vy = 0; s.y = s.fl; s.vz = 0; s.z = 0; if (s.rest > 0.35) { s.al = 1 - (s.rest - 0.35) / 0.5; if (s.al <= 0) s.on = false; } }
+        else if (s.y > s.fl && s.vy > 0) {
+          s.y = s.fl;
+          if (s.b >= 2 || s.vy < 150) s.rest = 0.0001;
+          else {
+            s.vy *= -0.42; s.vx *= 0.72; s.wz *= 0.6; s.wx *= 0.55; s.wy *= 0.55; s.b++; E.dust(s.x, s.y, 1, 70);
+            if (tinkAt <= 0 && tinks < 9 && E.onTink) { tinkAt = 0.08; tinks++; E.onTink(Math.min(1, s.vy / -500 + 0.4)); }
+          }
+        }
+        if (s.age > 2.6 || s.x < -150 || s.x > W + 150) s.on = false;
+      }
+      for (k = 0; k < C.length; k++) {
+        c = C[k]; if (!c.on) continue; c.age += dt; c.vy += GRAV * 0.8 * dt; c.x += c.vx * dt; c.y += c.vy * dt; c.rz += c.wz * dt; c.rx += c.wx * dt;
+        if (c.y > c.fl && c.vy > 0 && c.b < 1) { c.y = c.fl; c.vy *= -0.35; c.vx *= 0.6; c.wz *= 0.5; c.b++; }
+        if (c.age >= c.max) c.on = false;
+      }
+      for (k = 0; k < P.length; k++) { p = P[k]; if (!p.on) continue; p.age += dt; p.vy += 800 * dt; p.vx *= Math.pow(0.35, dt); p.x += p.vx * dt; p.y += p.vy * dt; if (p.age >= p.max) p.on = false; }
+      for (k = 0; k < D.length; k++) { d = D[k]; if (!d.on) continue; d.age += dt; d.vx *= Math.pow(0.12, dt); d.vy = d.vy * Math.pow(0.12, dt) - 14 * dt; d.x += d.vx * dt; d.y += d.vy * dt; d.r += 22 * dt; if (d.age >= d.max) d.on = false; }
+      for (k = 0; k < R.length; k++) { r = R[k]; if (!r.on) continue; r.age += dt; if (r.age >= r.dur) r.on = false; }
+    }
+    E.update = function (dt) { dt = Math.min(dt, 0.1); if (dt > 0.034) { step(dt / 2); step(dt / 2); } else step(dt); };
+    E.draw = function (ctx) {
+      var k, s, c, p, d, r, u, f;
+      for (k = 0; k < D.length; k++) {   // poussière : disques de sable à bord net, qui enflent en s'éteignant
+        d = D[k]; if (!d.on) continue; u = d.age / d.max; ctx.globalAlpha = 0.26 * (1 - u) * (1 - u); ctx.fillStyle = '#b9a073'; ctx.beginPath(); ctx.arc(d.x, d.y, d.r, 0, TAU); ctx.fill();
+      }
+      for (k = 0; k < S.length; k++) { s = S[k]; if (s.on) link3(ctx, s.x, s.y, s.rz, s.rx, s.ry, s.z, s.sz, dpr, s.al, true, 3 + s.z * 0.05 + Math.max(0, s.fl - s.y) * 0.03, 4 + s.z * 0.06 + Math.max(0, s.fl - s.y) * 0.04); }
+      for (k = 0; k < S.length; k++) { s = S[k]; if (s.on) link3(ctx, s.x, s.y, s.rz, s.rx, s.ry, s.z, s.sz, dpr, s.al, false, 0, 0); }
+      for (k = 0; k < C.length; k++) {
+        c = C[k]; if (!c.on) continue; f = Math.cos(c.rx); u = 1 - c.age / c.max; var cs = chipSprite(c.k, dpr, f < 0), cw = cs.width / dpr, chh = cs.height / dpr;
+        ctx.save(); ctx.globalAlpha = Math.min(1, u * 2.5); ctx.translate(c.x, c.y); ctx.rotate(c.rz); ctx.scale(c.s, c.s * Math.max(0.15, Math.abs(f))); ctx.drawImage(cs, -cw / 2, -chh / 2, cw, chh); ctx.restore();
+      }
+      ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.lineCap = 'round';
+      for (k = 0; k < P.length; k++) {
+        p = P[k]; if (!p.on) continue; u = 1 - p.age / p.max; ctx.globalAlpha = u; ctx.strokeStyle = E.cols[p.c]; ctx.lineWidth = p.w * (0.6 + 0.4 * u);
+        ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p.x - p.vx * 0.026, p.y - p.vy * 0.026); ctx.stroke();
+      }
+      for (k = 0; k < R.length; k++) {   // ondes de choc : anneaux durs qui s'amincissent
+        r = R[k]; if (!r.on) continue; u = r.age / r.dur; f = 1 - Math.pow(1 - u, 3); ctx.globalAlpha = (1 - u) * 0.85; ctx.strokeStyle = 'rgb(' + E.ringCols[r.c] + ')'; ctx.lineWidth = Math.max(0.8, r.w * (1 - u));
+        ctx.beginPath(); ctx.arc(r.x, r.y, Math.max(1, r.r1 * f), 0, TAU); ctx.stroke();
+      }
+      ctx.restore(); ctx.globalAlpha = 1;
+    };
+    return E;
+  }
+
+  // lueur d'impact : voile radial borné (centre ≤ 0,55 d'opacité) + très léger voile plein écran ; jamais éblouissant
+  function flashFx(ctx, w, h, x, y, f, rgb) {
+    if (f <= 0.004) return;
+    var R = Math.max(w, h);
+    ctx.save(); ctx.globalCompositeOperation = 'lighter';
+    var g = ctx.createRadialGradient(x, y, 0, x, y, R * (0.18 + 0.5 * (1 - f))); g.addColorStop(0, 'rgba(' + rgb + ',' + (0.36 * f) + ')'); g.addColorStop(1, 'rgba(' + rgb + ',0)');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, w, h); ctx.fillStyle = 'rgba(' + rgb + ',' + (0.05 * f) + ')'; ctx.fillRect(0, 0, w, h); ctx.restore();
+  }
+  function sfx(name, a, b) { try { var S = root.Sfx; if (S && S[name]) S[name](a, b); } catch (e) {} }
+  function shakeFx(m, d) { try { if (m > 0 && root.FX && root.FX.shake) root.FX.shake(m, d); } catch (e) {} }
+  function tinkOf(E) { E.onTink = function (v) { sfx('chainTink', v); }; }
+  function lockSprite(ls, dpr) {   // le cadenas fissuré, figé dans un canvas (pour le couper en deux)
+    var S = Math.ceil(ls * 2.4 * dpr), c = mk(S, S), x = c.getContext('2d'); x.scale(dpr, dpr); lock(x, S / dpr / 2, S / dpr / 2, ls, { crack: 1, t: 0 }); return c;
+  }
+  function halves(h, x, y) {   // deux moitiés de cadenas : état initial
+    h[0].x = h[1].x = x; h[0].y = h[1].y = y; h[0].vx = -(150 + rnd() * 90); h[1].vx = 150 + rnd() * 90; h[0].vy = h[1].vy = -430; h[0].a = h[1].a = 0; h[0].va = -(2 + rnd() * 1.5); h[1].va = 2 + rnd() * 1.5;
+  }
+  function drawHalves(ctx, spr, h, dpr, al) {
+    if (al <= 0) return;
+    var w = spr.width / dpr, k;
+    ctx.save(); ctx.globalAlpha = al;
+    for (k = 0; k < 2; k++) { ctx.save(); ctx.translate(h[k].x, h[k].y); ctx.rotate(h[k].a); ctx.drawImage(spr, k ? spr.width / 2 : 0, 0, spr.width / 2, spr.height, k ? 0 : -w / 2, -w / 2, w / 2, w); ctx.restore(); }
+    ctx.restore();
+  }
+  function moveHalves(h, dt) { for (var k = 0; k < 2; k++) { h[k].vy += GRAV * dt; h[k].x += h[k].vx * dt; h[k].y += h[k].vy * dt; h[k].a += h[k].va * dt; } }
+
+  /* ---------- ACCUEIL : tension -> rupture -> éclats. seq.update(dt réel) ; seq.drawChains / drawLock / drawFx(ctx) ; seq.shake, seq.flash, seq.rise, seq.charge, seq.done ---------- */
+  function unchain(o) {
+    var chains = o.chains, W = o.W, H = o.H, lx = o.x, ly = o.y, ls = o.size, dpr = o.dpr || 1, cd = o.fast ? 0.55 : 0.9;
+    var E = newEngine(), seq = { E: E, t: 0, tb: -1, charge: 0, flash: 0, shake: 0, rise: 0, done: false };
+    var pl = [], pc = [], base = [], half = [{}, {}], spr = null, sw = 0, tbs = 0, R1 = Math.max(W, H) * 0.8, maxD = 1, acc = 0, started = false;
+    E.bounds(W, H, o.floor || H * 0.92, dpr); tinkOf(E);
+    chains.forEach(function (c) { base.push([c.sag, c.sway]); c.links.forEach(function (lk) { pl.push(lk); pc.push(c); }); });
+    seq.update = function (rdt) {
+      rdt = Math.min(rdt, 0.1); seq.t += rdt;
+      var sc = seq.tb < 0 ? 1 : seq.tb < 0.15 ? 0.3 : seq.tb < 0.4 ? 0.3 + 0.7 * (seq.tb - 0.15) / 0.25 : 1, dt = rdt * sc, k, lk, c;   // léger ralenti de 150 ms à la rupture
+      if (!started) { started = true; sfx('chainTense', cd); }
+      if (seq.tb < 0) {
+        var q = clamp(seq.t / cd, 0, 1), e = q * q; seq.charge = q;
+        for (k = 0; k < chains.length; k++) { c = chains[k]; c.sag = base[k][0] * (1 - clamp(q * 1.5, 0, 1)); c.sway = base[k][1] * (1 - q); c.place(seq.t); }
+        acc += dt * (3 + 90 * e);   // étincelles de friction entre les maillons
+        while (acc >= 1) { acc -= 1; lk = pl[(rnd() * pl.length) | 0]; E.sparks(lk.x, lk.y, 1 + ((rnd() * 2) | 0), 150 + 330 * e); }
+        if (q >= 1) {   // RUPTURE
+          seq.tb = 0; maxD = 1;
+          for (k = 0; k < pl.length; k++) { lk = pl[k]; lk.d = Math.hypot(lk.x - lx, lk.y - ly); if (lk.d > maxD) maxD = lk.d; }
+          E.ring(lx, ly, R1, 0.8, 5, 0); E.ring(lx, ly, R1 * 0.62, 0.55, 2.5, 1);
+          E.sparks(lx, ly, 46, 760); E.chips(lx, ly, 22, 640); E.dust(lx, ly, 14, 240);
+          spr = lockSprite(ls, dpr); halves(half, lx, ly); sfx('chainBreak');
+        }
+      } else {
+        seq.tb += rdt; tbs += dt; sw = R1 * (1 - Math.pow(1 - clamp(tbs / 0.8, 0, 1), 3)) * 1.05;   // le front de l'onde libère les maillons
+        for (k = 0; k < pl.length; k++) {   // l'onde de choc libère les maillons du centre vers les bords
+          lk = pl[k]; if (lk.state === 'gone' || lk.d > sw) continue;
+          lk.state = 'gone'; lk.al = 0; c = pc[k];
+          var an = Math.atan2(lk.y - ly, lk.x - lx) + (rnd() - 0.5) * 0.8, sp = (230 + rnd() * 430) * 1.1 * (1.15 - 0.55 * lk.d / maxD);
+          if (!E.link(lk.x, lk.y, lk.a, c.size, lk.e, Math.cos(an) * sp, Math.sin(an) * sp - 210)) E.chips(lk.x, lk.y, 3, 300); else if (k % 3 === 0) E.chips(lk.x, lk.y, 2, 260);
+          if (k % 2 === 0) E.sparks(lk.x, lk.y, 2, 360);
+        }
+        moveHalves(half, dt);
+        seq.shake = Math.pow(Math.max(0, 1 - seq.tb / 0.6), 2);
+        seq.flash = seq.tb < 0.05 ? seq.tb / 0.05 : Math.max(0, 1 - (seq.tb - 0.05) / 0.42);
+        seq.rise = 1 - Math.pow(1 - clamp(seq.tb / 1.2, 0, 1), 3);
+      }
+      E.update(dt);
+      if (seq.tb > 1.6 && !seq.done && !E.busy()) seq.done = true;
+      if (seq.tb > 3.2) seq.done = true;
+    };
+    seq.drawChains = function (ctx) {
+      var k, amp = seq.tb < 0 ? 0.3 + 2.6 * seq.charge * seq.charge : 0;
+      for (k = 0; k < chains.length; k++) draw(ctx, chains[k], 0, { still: true, dpr: dpr, shadow: 3, jit: amp * Math.max(0.6, chains[k].size / 28), jt: seq.t });
+    };
+    seq.drawLock = function (ctx, t) {
+      if (seq.tb < 0) { var q = seq.charge, v = q * q * 1.6; ctx.save(); ctx.translate(Math.sin(t * 83) * v, Math.cos(t * 71) * v); lock(ctx, lx, ly, ls, { crack: q, t: t }); ctx.restore(); }
+      else if (spr) drawHalves(ctx, spr, half, dpr, clamp(1 - (seq.tb - 0.5) / 0.6, 0, 1));
+    };
+    seq.drawFx = function (ctx) {
+      E.draw(ctx);
+      if (seq.tb >= 0 && seq.flash > 0) {
+        flashFx(ctx, W, H, lx, ly, seq.flash, '255,236,176');
+        if (seq.flash > 0.05 && root.Art) { ctx.save(); ctx.globalCompositeOperation = 'lighter'; root.Art.rays(ctx, lx, ly, Math.max(W, H), 14, seq.tb * 0.5, '#efdfa8', 0.07 * seq.flash); ctx.restore(); }
+      }
+    };
+    return seq;
+  }
+
+  /* ---------- BONUS : entrée (la chaîne traverse l'écran, se tend, se brise en révélant la scène) et sortie (elle se reforme, les portes se referment) ---------- */
+  var KINDS = {   // acc : couleur d'accent sourde (jamais de néon) ; lay : angles (centre -> bord) des chaînes
+    weigh:  { acc: [208, 196, 150], lay: [-0.3, 0.3, Math.PI - 0.3, Math.PI + 0.3] },
+    scarab: { acc: [58, 148, 132], lay: 'x' },
+    vault:  { acc: [196, 146, 58], lay: [Math.PI / 2, -Math.PI / 2, Math.PI / 2 + 0.5, -Math.PI / 2 - 0.5] },
+    hand:   { acc: [160, 58, 42], lay: [0.45, Math.PI - 0.45, Math.PI + 0.45, -0.45, Math.PI / 2, -Math.PI / 2], rage: 1 },
+    crypt:  { acc: [114, 96, 164], lay: [Math.PI / 2, Math.PI / 2 + 0.55, Math.PI / 2 - 0.55, -Math.PI / 2 + 0.4, -Math.PI / 2 - 0.4] }
+  };
+  function hex(a) { return '#' + a.map(function (v) { return ('0' + Math.min(255, Math.round(v * 1.25)).toString(16)).slice(-2); }).join(''); }
+  function rig(kind, w, h, o) {
+    o = o || {}; var dpr = o.dpr, K = KINDS[kind] || KINDS.vault, lite = !!(root.FX && root.FX.lite), cx = o.cx != null ? o.cx : w / 2, cy = o.cy != null ? o.cy : h / 2, size = clamp(Math.min(w, h) * 0.075, 26, 52), mr = size * 1.95;
+    var lay = K.lay === 'x' ? (function () { var a = Math.atan2(h, w); return [a, Math.PI - a, Math.PI + a, TAU - a]; })() : K.lay, acc = K.acc;
+    if (lite) lay = lay.slice(0, 4);
+    var R = { K: K, w: w, h: h, cx: cx, cy: cy, size: size, mr: mr, dpr: dpr || 1, rays: [], accS: acc.join(','), veilS: [Math.round(6 + acc[0] * 0.07), Math.round(5 + acc[1] * 0.07), Math.round(4 + acc[2] * 0.07)].join(',') };
+    lay.forEach(function (an, i) {
+      var dx = Math.cos(an), dy = Math.sin(an), tx = dx > 1e-6 ? (w - cx) / dx : dx < -1e-6 ? -cx / dx : 1e9, ty = dy > 1e-6 ? (h - cy) / dy : dy < -1e-6 ? -cy / dy : 1e9, L = Math.min(tx, ty) + size * 1.6;
+      var ch = make(cx + dx * L, cy + dy * L, cx + dx * mr * 0.8, cy + dy * mr * 0.8, { size: size, sag: 0.035 + (i % 2) * 0.02 });
+      R.rays.push({ ch: ch, dx: dx, dy: dy, len: L, base: ch.sag });
+    });
+    return R;
+  }
+  function veilFx(ctx, w, h, R, v) { if (v > 0.002) { ctx.fillStyle = 'rgba(' + R.veilS + ',' + v + ')'; ctx.fillRect(0, 0, w, h); } }
+
+  function entry(kind, w, h, o) {
+    o = o || {};
+    var R = rig(kind, w, h, o), E = newEngine(), K = R.K, cx = R.cx, cy = R.cy, size = R.size, rage = K.rage ? 1.5 : 1, R1 = Math.max(w, h) * 0.85, tbs = 0, i, k;
+    var e = { dur: 2.3, swapAt: 1.16, veil: 0, light: 0, flash: 0, crack: 0, jit: 0, slide: 0, tb: -1, lockA: 0, E: E, last: 0 };
+    var pl = [], pc = [], spr = null, half = [{}, {}], sw = 0, maxD = 1, acc = 0, did = 0;
+    E.bounds(w, h, o.floor || h * 0.93, R.dpr); tinkOf(E); E.cols = ['#fff3c4', '#efdfa8', hex(K.acc)]; E.ringCols = ['239,223,168', R.accS];
+    R.rays.forEach(function (r) { r.ch.links.forEach(function (lk) { pl.push(lk); pc.push(r.ch); }); });
+    e.frame = function (T) {
+      var dt = Math.min(0.1, Math.max(0, T - e.last)), sl = clamp(T / 0.5, 0, 1), lk, an, sp; e.last = T;
+      e.slide = 1 - Math.pow(1 - sl, 3); e.lockA = clamp((T - 0.25) / 0.25, 0, 1);
+      if (T < 1.1) {
+        var ten = clamp((T - 0.5) / 0.6, 0, 1), t2 = ten * ten;
+        e.veil = 0.9 * clamp(T / 0.7, 0, 1); e.crack = ten; e.jit = ten > 0 ? (0.4 + 2.8 * t2) * rage : 0; e.light = ten * 0.5;
+        for (i = 0; i < R.rays.length; i++) { var r = R.rays[i]; r.ch.sag = r.base * (1 - clamp(ten * 1.4, 0, 1)); r.ch.place(0); }
+        if (T >= 0.5 && !(did & 1)) { did |= 1; sfx('chainSlam'); shakeFx(9, 0.4); E.ring(cx, cy, R.mr * 2.6, 0.45, 5, 1); E.sparks(cx, cy, 22, 420); E.chips(cx, cy, 6, 300); }
+        if (T >= 0.58 && !(did & 2)) { did |= 2; sfx('chainTense', 0.5); }
+        if (ten > 0) {
+          acc += dt * (4 + 100 * t2) * rage;
+          while (acc >= 1) { acc -= 1; lk = pl[(rnd() * pl.length) | 0]; E.sparks(lk.x, lk.y, 1 + ((rnd() * 2) | 0), 140 + 320 * t2); }
+          shakeFx(0.8 + 3.5 * ten, 0.08);
+        }
+      } else {
+        if (e.tb < 0) {   // RUPTURE
+          e.tb = 0; maxD = 1; e.jit = 0; e.crack = 1;
+          for (k = 0; k < pl.length; k++) { pl[k].d = Math.hypot(pl[k].x - cx, pl[k].y - cy); if (pl[k].d > maxD) maxD = pl[k].d; }
+          E.ring(cx, cy, R1, 0.85, 5 * rage, 0); E.ring(cx, cy, R1 * 0.62, 0.6, 2.5, 1); E.ring(cx, cy, R1 * 0.35, 0.4, 2, 1);
+          E.sparks(cx, cy, 54, 780); E.chips(cx, cy, 26, 660); E.dust(cx, cy, 16, 260);
+          spr = lockSprite(R.mr, R.dpr); halves(half, cx, cy); sfx('chainBreak', false, kind); shakeFx(22 * rage, 0.7);
+        }
+        var sc = e.tb < 0.13 ? 0.3 : e.tb < 0.35 ? 0.3 + 0.7 * (e.tb - 0.13) / 0.22 : 1;   // ralenti bref
+        dt *= sc; e.tb += dt; tbs += dt; sw = R1 * (1 - Math.pow(1 - clamp(tbs / 0.85, 0, 1), 3)) * 1.05;
+        for (k = 0; k < pl.length; k++) {
+          lk = pl[k]; if (lk.state === 'gone' || lk.d > sw) continue;
+          lk.state = 'gone'; lk.al = 0; an = Math.atan2(lk.y - cy, lk.x - cx) + (rnd() - 0.5) * 0.8; sp = (230 + rnd() * 450) * 1.1 * (1.15 - 0.55 * lk.d / maxD);
+          if (!E.link(lk.x, lk.y, lk.a, size, lk.e, Math.cos(an) * sp, Math.sin(an) * sp - 220)) E.chips(lk.x, lk.y, 3, 300); else if (k % 3 === 0) E.chips(lk.x, lk.y, 2, 260);
+          if (k % 2 === 0) E.sparks(lk.x, lk.y, 2, 340);
+        }
+        moveHalves(half, dt);
+        e.flash = e.tb < 0.05 ? e.tb / 0.05 : Math.max(0, 1 - (e.tb - 0.05) / 0.4);
+        e.veil = 0.9 * (1 - clamp((e.tb - 0.06) / 0.95, 0, 1)); e.light = Math.max(0, 1 - e.tb / 0.7) * 0.6;
+      }
+      E.update(dt);
+    };
+    e.draw = function (ctx, w2, h2) {
+      veilFx(ctx, w2, h2, R, e.veil);
+      if (e.light > 0.01 && root.Art) { ctx.save(); ctx.globalCompositeOperation = 'lighter'; root.Art.rays(ctx, cx, cy, Math.max(w2, h2), 12, e.last * 0.4, 'rgb(' + R.accS + ')', 0.14 * e.light); root.Art.rays(ctx, cx, cy, Math.max(w2, h2), 12, -e.last * 0.3 + 0.2, '#efdfa8', 0.06 * e.light); ctx.restore(); }
+      var off = 1 - e.slide, r, v;
+      for (i = 0; i < R.rays.length; i++) {
+        r = R.rays[i]; ctx.save(); ctx.translate(r.dx * off * (r.len + size * 2), r.dy * off * (r.len + size * 2));
+        draw(ctx, r.ch, 0, { still: true, dpr: R.dpr, shadow: 3, jit: e.jit * Math.max(0.6, size / 28), jt: e.last }); ctx.restore();
+      }
+      if (e.tb < 0) { if (e.lockA > 0) { ctx.save(); ctx.globalAlpha = e.lockA; v = e.jit * 0.4; ctx.translate(Math.sin(e.last * 83) * v, Math.cos(e.last * 71) * v); lock(ctx, cx, cy, R.mr, { crack: e.crack, t: e.last }); ctx.restore(); } }
+      else if (spr) drawHalves(ctx, spr, half, R.dpr, clamp(1 - (e.tb - 0.5) / 0.6, 0, 1));
+      E.draw(ctx);
+      flashFx(ctx, w2, h2, cx, cy, e.flash, '255,' + Math.round(226 + K.acc[1] * 0.04) + ',' + Math.round(150 + K.acc[2] * 0.15));
+    };
+    return e;
+  }
+
+  function exit(kind, w, h, o) {
+    o = o || {};
+    var R = rig(kind, w, h, o), E = newEngine(), cx = R.cx, cy = R.cy, size = R.size, i, k, maxD = 1, did = 0;
+    var e = { dur: 1.7, swapAt: 0.66, veil: 0, flash: 0, doors: 0, slide: 1, E: E, last: 0, lockA: 0 };
+    E.bounds(w, h, o.floor || h * 0.93, R.dpr); tinkOf(E); E.ringCols = ['239,223,168', R.accS];
+    R.rays.forEach(function (r) { r.ch.sag = 0.012; r.ch.place(0); r.ch.links.forEach(function (lk) { lk.d = Math.hypot(lk.hx - cx, lk.hy - cy); if (lk.d > maxD) maxD = lk.d; }); });
+    R.rays.forEach(function (r) {   // départ de chaque maillon : dispersé, en rotation (tirage fait une fois)
+      r.its = r.ch.links.map(function (lk) {
+        var a = rnd() * TAU, d = 120 + rnd() * 240;
+        return { sx: lk.hx + Math.cos(a) * d, sy: lk.hy + Math.sin(a) * d - 60, a0: rnd() * 8 - 4, rx0: (rnd() - 0.5) * 12, ry0: (rnd() - 0.5) * 7, t0: 0.04 + (lk.d / maxD) * 0.2 + rnd() * 0.05, rxE: lk.e ? Math.PI / 2 : 0 };
+      });
+    });
+    e.frame = function (T) {
+      var dt = Math.min(0.1, Math.max(0, T - e.last)); e.last = T;
+      var close = clamp((T - 0.1) / 0.4, 0, 1), open = clamp((T - 0.7) / 0.7, 0, 1);
+      e.doors = (1 - open) * (1 - Math.pow(1 - close, 3)); e.veil = 0.88 * (T < 0.66 ? clamp(T / 0.5, 0, 1) : 1 - open * open);
+      e.slide = T < 0.76 ? 1 : 1 - (1 - Math.pow(1 - clamp((T - 0.76) / 0.7, 0, 1), 3));
+      if (!(did & 1)) { did |= 1; sfx('chainForge'); }
+      if (T >= 0.52 && !(did & 2)) { did |= 2; shakeFx(13, 0.45); E.ring(cx, cy, R.mr * 3, 0.5, 5, 1); E.sparks(cx, cy, 26, 420); E.chips(cx, cy, 8, 300); E.dust(cx, cy, 6, 140); e.flash = 0.7; }
+      e.flash = Math.max(0, e.flash - dt * 2.4); e.lockA = clamp((T - 0.3) / 0.2, 0, 1);
+      E.update(dt);
+    };
+    e.draw = function (ctx, w2, h2) {
+      veilFx(ctx, w2, h2, R, e.veil);
+      if (e.doors > 0.002) {   // portes d'obsidienne : deux battants de pierre à liseré d'or
+        var pw = w2 / 2 * e.doors, g = ctx.createLinearGradient(0, 0, 0, h2); g.addColorStop(0, '#0e0a07'); g.addColorStop(0.5, '#1d150c'); g.addColorStop(1, '#0a0705');
+        ctx.fillStyle = g; ctx.fillRect(0, 0, pw, h2); ctx.fillRect(w2 - pw, 0, pw, h2);
+        if (root.Art && root.Art.stonePat) { ctx.save(); ctx.globalAlpha = 0.5; ctx.fillStyle = root.Art.stonePat(ctx); ctx.fillRect(0, 0, pw, h2); ctx.fillRect(w2 - pw, 0, pw, h2); ctx.restore(); }
+        ctx.fillStyle = 'rgba(' + R.accS + ',.5)'; ctx.fillRect(0, 0, pw, 3); ctx.fillRect(w2 - pw, 0, pw, 3);
+        ctx.fillStyle = '#b8923a'; ctx.fillRect(pw - 3, 0, 3, h2); ctx.fillRect(w2 - pw, 0, 3, h2);
+      }
+      var ex = 1 - e.slide, T = e.last, r, ls, it, lk, pass, u, eb, c, al, z, x, y;
+      for (i = 0; i < R.rays.length; i++) {
+        r = R.rays[i]; ls = r.ch.links; ctx.save(); ctx.translate(r.dx * ex * (r.len + size * 2), r.dy * ex * (r.len + size * 2));
+        for (pass = 0; pass < 2; pass++) for (k = 0; k < ls.length; k++) {   // ombre dure d'abord, puis les maillons : position, tours sur deux axes et profondeur s'apaisent
+          lk = ls[k]; it = r.its[k]; u = clamp((T - it.t0) / 0.34, 0, 1); eb = 1 + 2.1 * Math.pow(u - 1, 3) + 1.1 * Math.pow(u - 1, 2); c = 1 - Math.pow(1 - u, 3); al = clamp(u * 3, 0, 1); z = (1 - u) * 260;
+          x = it.sx + (lk.hx - it.sx) * eb; y = it.sy + (lk.hy - it.sy) * eb;
+          link3(ctx, x, y, lk.ha + it.a0 * (1 - c), it.rxE + it.rx0 * (1 - c), it.ry0 * (1 - c), z, size, R.dpr, al, pass === 0, 4 + z * 0.05, 5 + z * 0.07);
+        }
+        ctx.restore();
+      }
+      if (e.lockA > 0 && e.slide > 0.02) { ctx.save(); ctx.globalAlpha = e.lockA * e.slide; lock(ctx, cx, cy, R.mr, { crack: 0, t: T }); ctx.restore(); }
+      E.draw(ctx);
+      flashFx(ctx, w2, h2, cx, cy, e.flash, '255,232,170');
+    };
+    return e;
+  }
+
   root.Chains = {
+    unchain: unchain, entry: entry, exit: exit,
     make: make, draw: draw, lock: lock, shatter: shatter, reform: reform, header: header,
     setReduced: function (v) { reduced = !!v; }, isReduced: function () { return reduced }
   };
