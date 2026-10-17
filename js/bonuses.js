@@ -492,18 +492,21 @@
       // ombre de contact du socle
       ctx.save(); ctx.translate(g.px, G.h - hudH() - 18); ctx.scale(1, 0.16); var cg0 = ctx.createRadialGradient(0, 0, 0, 0, 0, u * 0.3); cg0.addColorStop(0, 'rgba(0,0,0,.6)'); cg0.addColorStop(1, 'rgba(0,0,0,0)'); ctx.fillStyle = cg0; ctx.beginPath(); ctx.arc(0, 0, u * 0.3, 0, TAU); ctx.fill(); ctx.restore();
       // pilier
-      var pg = ctx.createLinearGradient(g.px - 16, 0, g.px + 16, 0); pg.addColorStop(0, '#6a4f12'); pg.addColorStop(0.5, '#f6d878'); pg.addColorStop(1, '#6a4f12');
-      ctx.fillStyle = pg; ctx.fillRect(g.px - u * 0.018, g.py, u * 0.036, G.h - hudH() - g.py - 12);
-      ctx.fillStyle = A.goldGrad(ctx, g.px - u * 0.12, 0, g.px + u * 0.12, 0);
-      A.roundRect(ctx, g.px - u * 0.12, G.h - hudH() - 34, u * 0.24, 22, 6); ctx.fill();
+      var pw = u * 0.036, pbot = G.h - hudH() - 12;
+      ctx.beginPath(); ctx.rect(g.px - pw / 2, g.py, pw, pbot - g.py); A.fillMetal(ctx, g.px - pw / 2, 0, g.px + pw / 2, 0);
+      ctx.lineWidth = 1.2; ctx.strokeStyle = '#2b1d06'; ctx.stroke();
+      for (i = 0; i < 5; i++) { var by = g.py + (pbot - g.py) * (0.18 + i * 0.17); ctx.fillStyle = 'rgba(30,20,4,.55)'; ctx.fillRect(g.px - pw / 2, by, pw, 2); ctx.fillStyle = 'rgba(255,236,160,.3)'; ctx.fillRect(g.px - pw / 2, by + 2, pw, 1); }   // bagues
+      A.roundRect(ctx, g.px - u * 0.12, G.h - hudH() - 34, u * 0.24, 22, 6); A.fillMetal(ctx, 0, G.h - hudH() - 34, 0, G.h - hudH() - 12);
+      ctx.lineWidth = 1.4; ctx.strokeStyle = '#2b1d06'; ctx.stroke();
       A.jackal(ctx, g.px, g.py - u * 0.062, u * 0.036, { glow: 0.9 });
       // fléau
       ctx.save(); ctx.translate(g.px, g.py); ctx.rotate(theta);
-      ctx.fillStyle = A.goldGrad(ctx, -g.L, -10, g.L, 10);
-      A.roundRect(ctx, -g.L - 8, -u * 0.012, g.L * 2 + 16, u * 0.024, 6); ctx.fill();
-      ctx.lineWidth = 1.5; ctx.strokeStyle = '#5b4311'; ctx.stroke();
+      A.roundRect(ctx, -g.L - 8, -u * 0.012, g.L * 2 + 16, u * 0.024, 6); A.fillMetal(ctx, 0, -u * 0.012, 0, u * 0.012);   // bandes en travers du fléau
+      ctx.lineWidth = 1.5; ctx.strokeStyle = '#2b1d06'; ctx.stroke();
+      for (i = -4; i <= 4; i++) { if (!i) continue; var fx = i * g.L / 4.4; ctx.fillStyle = 'rgba(30,20,4,.5)'; ctx.fillRect(fx, -u * 0.012, 2, u * 0.024); ctx.fillStyle = 'rgba(255,236,160,.28)'; ctx.fillRect(fx + 2, -u * 0.012, 1, u * 0.024); }   // gravures
       ctx.restore();
-      ctx.beginPath(); ctx.arc(g.px, g.py, u * 0.026, 0, TAU); ctx.fillStyle = A.goldGrad(ctx, g.px - 20, g.py - 20, g.px + 20, g.py + 20); ctx.fill(); ctx.stroke();
+      ctx.beginPath(); ctx.arc(g.px, g.py, u * 0.026, 0, TAU); A.fillMetal(ctx, g.px - u * 0.026, g.py - u * 0.026, g.px + u * 0.026, g.py + u * 0.026); ctx.stroke();
+      ctx.beginPath(); ctx.arc(g.px, g.py, u * 0.011, 0, TAU); ctx.fillStyle = '#274f9e'; ctx.fill(); ctx.lineWidth = 1; ctx.strokeStyle = '#2b1d06'; ctx.stroke();   // cabochon de lapis
       // plateaux
       [-1, 1].forEach(function (side, si) {
         var e = endPt(side), cx = e.x, cy = e.y + g.chain, pr = g.pan, dim = dimSide === si ? 0.42 : 1, rl = reel[si];
@@ -524,9 +527,11 @@
         if (si === 0) { A.feather(ctx, cx, cy - pr * 0.42, pr * 0.95, '#fff8e6', 'rgba(150,110,40,.8)'); }
         else { heart(cx, cy - pr * 0.3, pr * 0.9 * (1 + 0.07 * Math.pow(Math.max(0, Math.sin(ph * (4 + tens * 8))), 3) * (0.5 + tens))); }
         // bol
-        ctx.beginPath(); ctx.ellipse(cx, cy, pr, pr * 0.2, 0, 0, Math.PI, false); ctx.quadraticCurveTo(cx + pr * 0.5, cy + pr * 0.55, cx, cy + pr * 0.58); ctx.quadraticCurveTo(cx - pr * 0.5, cy + pr * 0.55, cx - pr, cy);
-        ctx.fillStyle = A.goldGrad(ctx, cx - pr, cy, cx + pr, cy + pr * 0.5); ctx.fill(); ctx.lineWidth = 1.4; ctx.strokeStyle = '#5b4311'; ctx.stroke();
-        ctx.beginPath(); ctx.ellipse(cx, cy, pr, pr * 0.2, 0, 0, TAU); ctx.fillStyle = '#e6c25a'; ctx.fill(); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(cx - pr, cy); ctx.quadraticCurveTo(cx - pr * 0.55, cy + pr * 0.62, cx, cy + pr * 0.62); ctx.quadraticCurveTo(cx + pr * 0.55, cy + pr * 0.62, cx + pr, cy); ctx.closePath();
+        A.fillMetal(ctx, cx - pr, cy, cx + pr, cy); ctx.lineWidth = 1.4; ctx.strokeStyle = '#2b1d06'; ctx.stroke();
+        ctx.beginPath(); ctx.ellipse(cx, cy, pr, pr * 0.2, 0, 0, TAU);   // intérieur du bol : creux sombre, rebord clair
+        var ig = ctx.createLinearGradient(0, cy - pr * 0.2, 0, cy + pr * 0.2); ig.addColorStop(0, '#3a2a0a'); ig.addColorStop(0.55, '#6a4f18'); ig.addColorStop(1, '#a98a3c');
+        ctx.fillStyle = ig; ctx.fill(); ctx.lineWidth = 1.6; ctx.strokeStyle = '#efdfa8'; ctx.stroke();
         // cartouche du multiplicateur : « ×? » puis compteur qui défile (rouleau) et se fige sur la vraie valeur
         var cw = pr * 1.5, ch = pr * 0.62, cyy = cy + pr * 0.95, lit = glowSide === si || rl.on;
         ctx.save(); ctx.translate(cx, cyy); ctx.scale(1 + 0.3 * rl.pop, 1 + 0.3 * rl.pop); ctx.translate(-cx, -cyy);
@@ -542,7 +547,7 @@
           ctx.globalAlpha = 0.95; ctx.strokeStyle = 'rgba(255,84,62,.95)'; ctx.lineWidth = Math.max(2.5, ch * 0.11); ctx.lineCap = 'round';
           ctx.beginPath(); ctx.moveTo(cx - cw * 0.4, cyy + ch * 0.12); ctx.lineTo(cx + cw * 0.4, cyy - ch * 0.12); ctx.stroke(); ctx.lineCap = 'butt';
         }
-        if (G.h >= 520 && !res[si]) G.txt(si === 0 ? T.feather : T.heart, cx, cyy - ch * 0.78, { size: clamp(pr * 0.17, 10, 15), family: G.TEXT, weight: 800, fill: '#d8c590', spacing: 3 });
+        if (G.h >= 520 && !res[si]) G.txt(si === 0 ? T.feather : T.heart, cx, cyy + ch * 0.5 + clamp(pr * 0.17, 10, 15) * 0.9, { size: clamp(pr * 0.17, 10, 15), family: G.TEXT, weight: 800, fill: '#d8c590', spacing: 3 });
         if (res[si]) {   // GAGNÉ / PERDU sous le cartouche
           var ls = clamp(pr * 0.24, 12, 22), won = res[si] === 'won', pop = G.ease.outBack(clamp((verdict ? verdict.t : 1) / 0.4, 0, 1));
           ctx.globalAlpha = won ? 1 : 0.95;

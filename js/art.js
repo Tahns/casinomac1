@@ -22,6 +22,24 @@
     g.addColorStop(0.72, C.goldLo); g.addColorStop(0.76, C.gold); g.addColorStop(0.92, C.gold); g.addColorStop(1, C.goldHi);
     return g;
   }
+  // grain de métal martelé : traits brossés, piqûres, vert-de-gris (tuile 128 px tracée une fois, graine fixe : même rendu partout)
+  var grain = null;
+  function grainPat(ctx) {
+    if (!grain) {
+      var c = document.createElement('canvas'), x, s = 7, i; c.width = c.height = 128; x = c.getContext('2d');
+      var r = function () { s = (s * 16807) % 2147483647; return s / 2147483647; };
+      for (i = 0; i < 1100; i++) { x.fillStyle = r() < 0.5 ? 'rgba(255,238,170,' + (0.05 + r() * 0.12) + ')' : 'rgba(36,22,4,' + (0.07 + r() * 0.15) + ')'; x.fillRect(r() * 128, r() * 128, 2 + r() * 14, 1); }
+      for (i = 0; i < 300; i++) { x.fillStyle = 'rgba(28,20,6,' + (0.06 + r() * 0.14) + ')'; x.beginPath(); x.arc(r() * 128, r() * 128, 0.5 + r() * 1.7, 0, TAU); x.fill(); }
+      for (i = 0; i < 46; i++) { x.fillStyle = 'rgba(52,118,96,' + (0.05 + r() * 0.09) + ')'; x.beginPath(); x.arc(r() * 128, r() * 128, 1 + r() * 3.2, 0, TAU); x.fill(); }
+      grain = c;
+    }
+    return ctx.createPattern(grain, 'repeat');
+  }
+  // remplit le tracé courant en or patiné : bandes dures dans le sens x0,y0 → x1,y1 (à poser en travers de la pièce) + grain + arête haute claire
+  function fillMetal(ctx, x0, y0, x1, y1) {
+    ctx.fillStyle = goldGrad(ctx, x0, y0, x1, y1); ctx.fill();
+    ctx.save(); ctx.clip(); ctx.fillStyle = grainPat(ctx); ctx.fill(); ctx.restore();
+  }
   function rgba(hex, a) {
     var n = parseInt(hex.slice(1), 16);
     return 'rgba(' + (n >> 16) + ',' + ((n >> 8) & 255) + ',' + (n & 255) + ',' + a + ')';
@@ -267,7 +285,7 @@
   }
 
   root.Art = {
-    C: C, TAU: TAU, goldGrad: goldGrad, rgba: rgba, mix: mix,
+    C: C, TAU: TAU, goldGrad: goldGrad, fillMetal: fillMetal, rgba: rgba, mix: mix,
     ankh: ankh, eye: eye, scarab: scarab, feather: feather, pyramid: pyramid, skullX: skullX, cobra: cobra, skull: skull,
     jackal: jackal, hand: hand, glyphStrip: glyphStrip, glyphRow: glyphRow, noiseTile: noiseTile, rays: rays, roundRect: roundRect
   };
