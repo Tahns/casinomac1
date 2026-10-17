@@ -1,64 +1,142 @@
-# Checklist des 51 directives Stake Engine : audit du front
+# Checklist Stake Engine (texte original) : audit du front
 
-Les directives de Stake ne sont pas publiées dans le dépôt : la liste ci-dessous est reconstituée depuis `docs/RETOUR_STAKE.md` (pré-vérifications et contrôles cités au refus du 2026-10-15). Le découpage en 51 lignes est donc **une interprétation** ; les libellés exacts de Stake restent à comparer dans le tableau de bord. En cas d'ambiguïté, l'interprétation la plus prudente a été retenue (notée en dernière colonne).
+Texte source : la liste collée par l'utilisateur (« 0 des 51 directives cochées »), libellés d'origine, numérotés dans l'ordre. **Le texte collé ne contient que 50 cases** sous l'intitulé « 51 » : une case n'a pas été collée (ou l'en-tête compte autrement) ; à comparer au tableau de bord Stake.
 
-Preuves : `tools/conformite.js` (nouveau, Playwright + faux RGS, 6 formats d'écran), `tools/rgs-test.js`, `tools/stake-build-test.js`, `tools/replay-test.js`, `tools/social-check.js`, `tools/i18n-check.js`, `tools/layout.js`, `tools/fuzz.js`. Lancer : `PLAYWRIGHT_CORE=… CHROMIUM=… node tools/conformite.js` (≈ 3 min, une dizaine de tours).
+Jeu = roue à bonus : les points propres aux rouleaux, scatters et free spins sont transposés (cases, relances Ankh / Fureur). Aucune modification des maths, aucun test désactivé.
 
-États : **conforme** (déjà bon, testé), **corrigé** (défaut trouvé et corrigé dans cette passe), **non vérifiable ici** (dépend de Stake ou d'un jugement humain).
+Statuts : **OK vérifié** (preuve citée, test vert) ; **non vérifiable ici** (appareil réel, jugement humain) ; **à faire par le propriétaire** (tableau de bord / processus Stake). Défauts corrigés lors des passes précédentes : voir fin.
 
-| n° | Directive reformulée | État | Preuve / note |
+Validation de cette passe, tous verts : check, i18n-check, contrast, social-check, conformite, e2e, layout, gestures, stake-build-test.
+
+
+### Pré-vérifications
+
+| n° | Directive | Statut | Preuve |
 |---|---|---|---|
-| 1 | Authentification RGS au lancement (`/wallet/authenticate`, une fois) | conforme | `js/main.js` `startRgs` ; rgs-test [181] |
-| 2 | Échec propre avec une URL RGS invalide ou injoignable (message, jeu bloqué, aucune mise) | conforme | conformite.js : 6 URL (`notaurl`, `ftp://`, `javascript:`, `http://`, port fermé, hôte inexistant) ; rgs-test [274] ; `js/rgs.js` `normalizeUrl` |
-| 3 | Lancement sans RGS : pas de jeu truqué ni de solde fictif | conforme | build Stake : écran « Lancez le jeu depuis Stake » (stake-build-test 1) ; build dev : aucune requête externe (conformite.js) |
-| 4 | Le clic sur le pari envoie une requête de jeu | conforme | conformite.js (desktop, mobile, Popout : appui réel -> `/wallet/play`) |
-| 5 | Pas de chargeur « pieux » | conforme | aucun écran de chargement ; texte « Connexion… » dans la barre d'état seulement. Jugement humain pour le mot « pieux » : non vérifiable |
-| 6 | Titre unique, sans terme restreint | non vérifiable ici | `<title>` = « Anubis Unchained » ; unicité = catalogue Stake (`GUIDE_PUBLICATION.md`) |
-| 7 | Contenu non offensant | non vérifiable ici | relecture humaine (`GUIDE_PUBLICATION.md` [217]) |
-| 8 | Se distingue des titres existants | non vérifiable ici | humain / conseil PI (`DOSSIER_PI.md`) |
-| 9 | Miniature conforme aux directives graphiques | non vérifiable ici | `brand/stake-media/` : fond 16:9 (1920×1080) et 3:4 (1200×1600) sans alpha, abstraits, sans personnage ni texte ; médaillon 1024² et titre blanc en PNG transparent (coins alpha 0, vérifié). Dimensions exactes et champs du Media Editor de Stake non lus. Le médaillon est un visuel IA retouché (point DA, autre agent) |
-| 10 | Niveaux de mise lus de la réponse d'authentification | conforme | `betLevelsFrom` ; rgs-test [242] |
-| 11 | Mise active (round repris) lue de la réponse d'authentification | conforme | `startRgs` (`rd.amount`) ; rgs-test [187] |
-| 12 | Devises : symbole, position, décimales par devise | conforme | `js/currency.js` ; rgs-test (JPY, XSC) |
-| 13 | Gains sous-centime affichés sans arrondi à 0,00 | conforme | conformite.js : 0,005 $ -> « $0.005 », 0,0005 -> « $0.0005 », 0,5 ¥, 0,005 SC |
-| 14 | Pas de requête de fin de tour pour un pari à gain nul | conforme | `js/main.js` l.344 (`end-round` seulement si gain > 0) ; rgs-test [221] |
-| 15 | Pas de requête de jeu si le solde est insuffisant (coût réel : mode, achat) | conforme | `js/main.js` l.268 ; rgs-test [222] |
-| 16 | Barre d'espace = bouton de pari | conforme | `js/main.js` l.610 ; conformite.js (Espace envoie 1 requête) |
-| 17 | Espace sans conflit avec les autres touches | corrigé | touche maintenue (`e.repeat`) ignorée (un seul tour) ; lettres, Échap, Tab, flèches ne jouent pas ; fenêtre ou panneau AUTO ouverts : Espace sans effet (conformite.js B, C) |
-| 18 | Fenêtre principale non défilable | conforme | `html,body{overflow:hidden}` ; conformite.js : `scrollTo`, PageDown/End, molette sans effet sur 6 formats ; layout.js |
-| 19 | Fenêtres internes (règles) défilables et fermables | corrigé | bouton × rendu `sticky` (restait hors écran après défilement) ; conformite.js (règles sur 6 formats) |
-| 20 | Zoom par double-clic / double toucher désactivé (mobile) | corrigé | meta `user-scalable=no,maximum-scale=1` (déjà) ; `touch-action:pan-x pan-y` (avant : `manipulation`, laissait le pincement) ; `dblclick`, double toucher annulés (`js/main.js` l.7) ; conformite.js : échelle du viewport = 1 |
-| 21 | Zoom par pincement désactivé | corrigé | `touch-action`, `gesturestart/change`, `touchmove` à 2 doigts, Ctrl+molette ; conformite.js : pincement CDP ×2,5 -> échelle 1 (portrait, paysage, ancien mobile). iOS réel non testable ici |
-| 22 | RTP dans les règles | conforme | `js/rules.js` (par mode) + `openInfo` ; conformite.js |
-| 23 | Gain maximal dans les règles (25 000×) | conforme | idem |
-| 24 | Gains par case / par symbole | conforme | table des cases (`openInfo`), valeurs des bonus (`rules.js`) ; conformite.js. Chiffres = maths : i18n-check |
-| 25 | Combinaisons gagnantes (transposées à la roue) | conforme | section « formation des gains » (`rules.js`) |
-| 26 | Description et coût de chaque mode | conforme | tableau des modes : Standard, Oracle+ ×1,1, 4 achats (`rules.js`) ; conformite.js |
-| 27 | Free spins / relances / re-déclenchements décrits | conforme | `R.retrig` (`rules.js`) ; pas de free spins au sens rouleaux : transposé aux relances (Ankh, Fureur) |
-| 28 | Clause de non-responsabilité (« Malfunction voids all wins and plays ») | conforme | `R.disc` ×16 langues ; conformite.js |
-| 29 | Guide d'interaction (boutons, clavier) dans les infos | conforme | `R.btn` ; conformite.js (SPIN, AUTO, TURBO, Espace) |
-| 30 | Confirmation avant de démarrer le pari automatique | conforme | panneau `openAuto` (« Démarrer ») ; rgs-test [104] ; conformite.js (aucun tour avant, Espace dans le panneau sans effet) |
-| 31 | Confirmation avant un mode de pari à coût élevé : achat de bonus | conforme | `confirmBuy` (focus sur Annuler, répétitions ignorées) ; rgs-test [31] |
-| 32 | Idem pour Oracle+ / ante (mise ×1,1) | corrigé | **nouveau** `confirmPlus` : confirmation avant activation (désactivation immédiate) ; clés `plusConfirm*` ×16 langues ; Oracle+ n'est plus réactivé au rechargement. Interprétation prudente : ×1,1 est sous le seuil habituel (×2) mais confirmé quand même. Tests : rgs-test, conformite.js C ; e2e et fuzz adaptés |
-| 33 | Fonctionne sur desktop | conforme | conformite.js 1280×720 ; e2e ; layout |
-| 34 | Fonctionne en Popout L (≈ 640×360) | conforme | conformite.js : contrôles visibles, tour joué, règles |
-| 35 | Fonctionne en Popout S (≈ 400×300) | corrigé | AUTO et ORACLE+ sortaient de l'écran (HUD paysage à 5 colonnes) ; bloc compact `@media (max-width:520px) and (min-height:261px) and (max-height:340px)` dans la section « conformité » de `style.css` ; conformite.js, layout.js |
-| 36 | Fonctionne sur mobile portrait et paysage | conforme | conformite.js 390×844 et 844×390 (tactile) ; layout.js |
-| 37 | Option pour couper le son | conforme | bouton haut-parleur -> mixeur -> « couper » ; conformite.js |
-| 38 | Anglais disponible | conforme | langue de base ; `?lang=en` |
-| 39 | Paramètres de langue invalides sans effet | conforme | conformite.js : `xx`, vide, `%00`, `<script>`, `EN-us`, `e`, `frfrfr` -> anglais, aucune erreur ; replay idem |
-| 40 | 16 langues complètes | conforme | i18n-check (nouvelles clés incluses) |
-| 41 | 5 victoires par mode vérifiées par rapport aux règles | non vérifiable ici | outil Stake ; `stake-math/tests`, `tools/check.js`, `export-parity.js` (parité JS / Python, book v2 `verify()`) |
-| 42 | Mode Mystère : probabilités exactes (si présent) | conforme | pas de mode Mystère ; chances de l'Oracle affichées exactes (`rtp-exact.js`, rgs-test [266]) |
-| 43 | Mode social Stake.US : textes, SC / GC sans « $ », vocabulaire, anglais seul | conforme | social-check (mots interdits dans tous les textes, DOM, canvas) ; rgs-test (`socialCasino`) ; conformite.js (replay social sans « $ ») ; nouvelles clés vérifiées. Relecture humaine « mots interdits » : non vérifiable |
-| 44 | Replay : URL et paramètres devise / langue / montant | conforme | replay-test ; conformite.js (EUR 5,00, lang invalide, paramètres manquants -> erreur) |
-| 45 | Replay : rejouer une fois fini | conforme | conformite.js (« PLAY AGAIN » relance) ; replay-test |
-| 46 | Replay : coût de la mise et multiplicateur affichés | conforme | conformite.js : « REAL COST €61.85 · COST ×12.37 » |
-| 47 | Replay : vue popout S | conforme | conformite.js 400×300 : bouton Lecture dans la fenêtre, mises masquées |
-| 48 | Replay : aucun appel wallet, touches du jeu neutralisées | conforme | conformite.js, stake-build-test 3 |
-| 49 | Modèles de niveaux de mise, Provably Fair | non vérifiable ici | approbation finale Stake |
-| 50 | Anciens mobiles Android / iOS | non vérifiable ici (simulé) | 360×640, CPU ×4 (CDP), SwiftShader : DOMContentLoaded ≈ 0,5-0,7 s, `load` ≈ 0,7-3,6 s, 55 fichiers, ≈ 2,1 Mo, ≈ 6-9 images/s sans GPU réel, 0 erreur console (conformite.js). Appareils réels non testés |
-| 51 | Aucune requête hors origine du jeu et de `rgs_url`, 0 erreur console | conforme | stake-build-test 4 ; conformite.js (0 erreur sur tous les scénarios) |
+| 1 | Le jeu s'authentifie avec succès auprès de RGS au lancement. | OK vérifié | js/main.js `startRgs` ; rgs-test [181] |
+| 2 | L'authentification du jeu échoue correctement avec une URL rgs invalide. | OK vérifié | conformite.js : 6 URL invalides (`notaurl`, `ftp://`, `javascript:`, `http://`, port fermé, hôte inexistant) -> message, jeu bloqué, aucune mise ; `js/rgs.js` `normalizeUrl` ; rgs-test [274] |
+| 3 | Cliquer sur le bouton de pari envoie une requête de jeu réussie à RGS. | OK vérifié | conformite.js (desktop, mobile, Popout : appui réel -> `/wallet/play`) ; rgs-test |
+| 4 | Le jeu ne doit pas contenir le chargeur de moteur à pieux. (libellé traduit, probablement « Pixi » ou un chargeur de moteur tiers) | OK vérifié | aucune bibliothèque Pixi / Spine / Phaser / GSAP / Three (grep du dépôt : seule mention dans `docs/ANALYSE.md`) ; canvas 2D maison ; aucun écran de chargement ; stake-build-test. Libellé exact à confirmer dans le tableau de bord |
 
-## Ce qui a changé dans cette passe
-`js/main.js` (zoom, confirmation Oracle+, Espace non répété, Oracle+ non restauré), `js/i18n.js` (`plusConfirmTitle`, `plusConfirm` ×16), `css/style.css` (section « conformité » : touch-action, Popout S, bouton × collant), `tools/conformite.js` (nouveau), `tools/rgs-test.js`, `tools/e2e.js`, `tools/fuzz.js` (Oracle+ demande confirmation ; aucun test désactivé).
+### Contrôles de conformité
+
+| n° | Directive | Statut | Preuve |
+|---|---|---|---|
+| 5 | Le titre du jeu est unique et n'utilise pas de termes restreints. | à faire par le propriétaire | `<title>` = « Anubis Unchained » ; unicité à vérifier dans le catalogue Stake (`GUIDE_PUBLICATION.md`) |
+| 6 | Les éléments et images du jeu ne contiennent aucun contenu offensant ou inapproprié. | non vérifiable ici | relecture humaine ; aucun contenu sensible repéré (`GUIDE_PUBLICATION.md`) |
+| 7 | Le jeu se distingue suffisamment des titres et séries existants. | à faire par le propriétaire | jugement Stake / conseil PI (`DOSSIER_PI.md`, `CONCURRENTS.md`) |
+
+### Miniature du jeu
+
+| n° | Directive | Statut | Preuve |
+|---|---|---|---|
+| 8 | La miniature du jeu respecte les directives graphiques de Stake. | non vérifiable ici | `brand/stake-media/` : fonds 16:9 (1920×1080) et 3:4 (1200×1600) sans alpha, sans personnage ni texte ; médaillon 1024² et titre PNG transparent. Dimensions exactes et champs du Media Editor non lisibles ici ; à téléverser par le propriétaire |
+
+### Exigences rgs — niveaux de mise
+
+| n° | Directive | Statut | Preuve |
+|---|---|---|---|
+| 9 | Le jeu utilise dynamiquement tous les paramètres de mise issus de la réponse d'authentification. | OK vérifié | `betLevelsFrom` ; rgs-test [242] |
+| 10 | Les tours actifs rétablissent le montant de la mise à partir de la réponse d'authentification. | OK vérifié | `startRgs` (`rd.amount`) ; rgs-test [187] |
+
+### Soutien monétaire
+
+| n° | Directive | Statut | Preuve |
+|---|---|---|---|
+| 11 | Le jeu prend en charge et affiche correctement les devises. | OK vérifié | `js/currency.js` ; rgs-test (JPY, XSC…) |
+| 12 | Le jeu affiche correctement les gains inférieurs au centime. | OK vérifié | conformite.js : 0,005 $ -> « $0.005 », 0,0005 -> « $0.0005 », 0,5 ¥, 0,005 SC |
+
+### Demandes rgs
+
+| n° | Directive | Statut | Preuve |
+|---|---|---|---|
+| 13 | Les paris à gain nul n'envoient pas de requête de fin de tour au RGS. | OK vérifié | `js/main.js` (`end-round` seulement si gain > 0) ; rgs-test [221] |
+| 14 | Les mises avec un solde insuffisant n'envoient pas de requête de jeu au RGS. | OK vérifié | `js/main.js` (coût réel : mode, achat) ; rgs-test [222] |
+
+### Exigences du frontend
+
+| n° | Directive | Statut | Preuve |
+|---|---|---|---|
+| 15 | La barre d'espace devrait être associée au bouton de pari. | OK vérifié | conformite.js (Espace = 1 requête ; touche maintenue ignorée ; fenêtres ouvertes : sans effet) |
+| 16 | La fenêtre principale du jeu ne devrait pas être défilable. | OK vérifié | `html,body{overflow:hidden}` ; conformite.js (scrollTo, PageDown/End, molette sans effet, 6 formats) ; layout.js |
+
+### Règles du jeu
+
+| n° | Directive | Statut | Preuve |
+|---|---|---|---|
+| 17 | Le taux de redistribution (RTP) et le gain maximal sont clairement indiqués dans les règles du jeu. | OK vérifié | `js/rules.js` (RTP par mode, gain max 25 000×) ; conformite.js ; i18n-check |
+| 18 | Les informations relatives aux gains par symbole doivent être clairement communiquées. (transposé : gains par case et par bonus de la roue) | OK vérifié | table des cases (`openInfo`), valeurs des bonus (`rules.js`) ; conformite.js |
+| 19 | Les combinaisons gagnantes sont indiquées dans les règles du jeu. (transposé : pas de lignes, formation des gains de la roue) | OK vérifié | section « formation des gains » (`rules.js`) |
+| 20 | Les modes de jeu incluent une description et des informations sur les coûts. | OK vérifié | tableau des modes : Standard, Oracle+ ×1,1, 4 achats, pactes (`rules.js`) ; conformite.js |
+| 21 | Les conditions de jeu gratuit et de redéclenchement sont clairement indiquées. (transposé : pas de free spins littéraux ; relances Ankh / Fureur) | OK vérifié | `R.retrig` (`rules.js`) ; conformite.js |
+| 22 | Une clause de non-responsabilité générale est incluse dans les informations du jeu. | OK vérifié | `R.disc` (« Malfunction voids all wins and plays ») ×16 langues ; conformite.js |
+
+### Lecture automatique
+
+| n° | Directive | Statut | Preuve |
+|---|---|---|---|
+| 23 | Le pari automatique nécessite une confirmation avant de démarrer. | OK vérifié | panneau `openAuto` (« Démarrer ») ; rgs-test [104] ; conformite.js (aucun tour avant confirmation) |
+| 24 | Les modes de pari à coût élevé nécessitent une confirmation avant activation. | OK vérifié | `confirmBuy` (achats de bonus) ; `confirmPlus` (Oracle+ ×1,1, interprétation prudente) ; rgs-test [31], conformite.js |
+
+### Contrôles réactifs
+
+| n° | Directive | Statut | Preuve |
+|---|---|---|---|
+| 25 | Le jeu fonctionne correctement sur ordinateur de bureau / portable. | OK vérifié | conformite.js 1280×720 ; e2e.js ; layout.js (jusqu'à 2560×1080) |
+| 26 | Le jeu fonctionne correctement sur Popout S/L. | OK vérifié | conformite.js : L ≈ 640×360 et S ≈ 400×300 (bloc compact `style.css`, section « conformité ») ; layout.js |
+| 27 | Le jeu fonctionne correctement sur mobile. | OK vérifié | conformite.js 390×844 et 844×390 tactile ; gestures.js ; layout.js. Appareil réel non testé (cf. n° 49) |
+| 28 | Le zoom par double-clic est désactivé sur mobile. | OK vérifié | meta `user-scalable=no`, `touch-action:pan-x pan-y`, `dblclick` / double toucher annulés, pincement bloqué ; conformite.js (échelle du viewport = 1) ; gestures.js. iOS réel non testable |
+| 29 | Le guide d'interaction utilisateur est inclus dans les informations du jeu. | OK vérifié | `R.btn` (SPIN, AUTO, TURBO, Espace) ; conformite.js |
+
+### Sons / musique
+
+| n° | Directive | Statut | Preuve |
+|---|---|---|---|
+| 30 | Le jeu propose une option pour désactiver les sons. | OK vérifié | bouton haut-parleur -> mixeur -> « couper » ; conformite.js |
+
+### Prise en charge multilingue
+
+| n° | Directive | Statut | Preuve |
+|---|---|---|---|
+| 31 | Le jeu est disponible en anglais. | OK vérifié | langue de base ; `?lang=en` ; i18n-check (16 langues complètes) |
+| 32 | Des paramètres de langue invalides n'affectent pas l'affichage du jeu. | OK vérifié | conformite.js : `xx`, vide, `%00`, `<script>`, `EN-us`, `frfrfr` -> anglais, 0 erreur ; replay idem |
+| 33 | Vérifiez que vous avez remporté 5 victoires pour chaque mode de jeu par rapport aux règles du jeu. | à faire par le propriétaire | contrôle manuel dans l'outil Stake ; appui : `tools/check.js`, `export-parity.js`, `stake-math/tests` (parité JS / Python, `verify()`), tous verts |
+| 34 | Si le mode Mystère est présent dans le jeu, toutes les valeurs numériques représentant des chances ou des probabilités sont exactes. | OK vérifié | sans objet (pas de mode Mystère) ; chances de l'Oracle affichées = exactes (`rtp-exact.js`, rgs-test [266]) |
+
+### Exigences de compétence — stake.us
+
+| n° | Directive | Statut | Preuve |
+|---|---|---|---|
+| 35 | Le jeu est-il conforme aux traductions requises pour un jeu social ? | OK vérifié | social-check.js (mots interdits dans tous les textes, DOM, canvas) ; rgs-test (`socialCasino`). Relecture humaine du vocabulaire : à faire par le propriétaire |
+| 36 | Le jeu prend en charge les devises SC et GC et leurs valeurs n'affichent pas de préfixe « $ ». | OK vérifié | conformite.js (replay social sans « $ ») ; social-check.js ; rgs-test |
+| 37 | La dénomination des modes de jeu suit les directives terminologiques du mode social. | OK vérifié | social-check.js (mots interdits remplacés en mode social) |
+| 38 | La fenêtre de relecture ne contient pas de mots interdits. | OK vérifié | social-check.js + conformite.js (replay social) |
+| 39 | L'anglais est la seule langue prise en charge en mode social. | OK vérifié | social-check.js ; `js/social.js` (langue forcée à l'anglais) |
+
+### Assistance à la rediffusion (replay)
+
+| n° | Directive | Statut | Preuve |
+|---|---|---|---|
+| 40 | Prend en charge les URL de rediffusion, charge et lit l'événement souhaité. | OK vérifié | replay-test.js ; conformite.js |
+| 41 | Prend en charge tous les paramètres optionnels tels que la devise, la langue et le montant. | OK vérifié | conformite.js (EUR 5,00, langue invalide, paramètres manquants -> erreur) |
+| 42 | La fonction Replay permet de rejouer l'événement une fois terminé. | OK vérifié | conformite.js (« PLAY AGAIN ») ; replay-test.js |
+| 43 | L'interface utilisateur affiche clairement le coût de la mise et le multiplicateur appliqué. | OK vérifié | conformite.js : « REAL COST €61.85 · COST ×12.37 » |
+| 44 | Prise en charge des rediffusions dans la vue popout S. | OK vérifié | conformite.js 400×300 : bouton Lecture dans la fenêtre, mises masquées |
+
+### Liste de contrôle pour l'approbation finale
+
+| n° | Directive | Statut | Preuve |
+|---|---|---|---|
+| 45 | Des modèles de niveaux de mise ont été appliqués au jeu. | à faire par le propriétaire | tableau de bord Stake |
+| 46 | Les fonctionnalités Provably Fair et Replay sont activées. | à faire par le propriétaire | Replay : code prêt et testé (n° 40-44) ; activation côté Stake |
+| 47 | Les demandes de Front et Math sont approuvées. | à faire par le propriétaire | processus Stake (après resoumission) |
+| 48 | Le jeu est publié dans le canal stake-engine-game-approved. | à faire par le propriétaire | Slack / Discord Stake |
+| 49 | Le jeu fonctionne correctement sur les anciens appareils mobiles (Android et iOS). | non vérifiable ici | simulé : 360×640, CPU ×4, SwiftShader : DOMContentLoaded ≈ 0,5-0,7 s, `load` ≈ 0,7-3,6 s, 55 fichiers, ≈ 2,1 Mo, 0 erreur console (conformite.js). Appareils réels à tester par le propriétaire |
+| 50 | Les demandes d'approbation sont fermées une fois le jeu en ligne et les émojis ajoutés aux notifications Slack. | à faire par le propriétaire | processus Stake |
+
+## Bilan : 50 cases — OK vérifié 39, non vérifiable ici 3, à faire par le propriétaire 8.
+
+Défauts corrigés lors de la passe précédente (comptés OK) : zoom double toucher / pincement (n° 28), confirmation Oracle+ (n° 24), Popout S (n° 26), bouton × des règles, Espace maintenu (n° 15). Cette passe : aucun nouveau défaut trouvé, aucun changement de code.
+
+## Reste au propriétaire
+Titre unique et distinction (n° 5, 7), miniature (n° 8), 5 victoires par mode (n° 33), niveaux de mise, Provably Fair / Replay, approbations, canal, Slack (n° 45-48, 50), appareils réels anciens (n° 49) et iOS réel (n° 28), relecture humaine du vocabulaire social et du contenu (n° 6, 35).
