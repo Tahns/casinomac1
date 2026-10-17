@@ -1,0 +1,64 @@
+{
+    "modes": [
+        {
+            "name": "std",
+            "cost": 1.0,
+            "events": "books_std.jsonl.zst",
+            "weights": "lookUpTable_std_0.csv"
+        },
+        {
+            "name": "plus",
+            "cost": 1.1,
+            "events": "books_plus.jsonl.zst",
+            "weights": "lookUpTable_plus_0.csv"
+        },
+        {
+            "name": "safe",
+            "cost": 1.0,
+            "events": "books_safe.jsonl.zst",
+            "weights": "lookUpTable_safe_0.csv"
+        },
+        {
+            "name": "bold",
+            "cost": 1.0,
+            "events": "books_bold.jsonl.zst",
+            "weights": "lookUpTable_bold_0.csv"
+        },
+        {
+            "name": "plus_safe",
+            "cost": 1.1,
+            "events": "books_plus_safe.jsonl.zst",
+            "weights": "lookUpTable_plus_safe_0.csv"
+        },
+        {
+            "name": "plus_bold",
+            "cost": 1.1,
+            "events": "books_plus_bold.jsonl.zst",
+            "weights": "lookUpTable_plus_bold_0.csv"
+        },
+        {
+            "name": "bonus_scarab",
+            "cost": 9.26,
+            "events": "books_bonus_scarab.jsonl.zst",
+            "weights": "lookUpTable_bonus_scarab_0.csv"
+        },
+        {
+            "name": "bonus_weigh",
+            "cost": 10.31,
+            "events": "books_bonus_weigh.jsonl.zst",
+            "weights": "lookUpTable_bonus_weigh_0.csv"
+        },
+        {
+            "name": "bonus_vault",
+            "cost": 12.37,
+            "events": "books_bonus_vault.jsonl.zst",
+            "weights": "lookUpTable_bonus_vault_0.csv"
+        },
+        {
+            "name": "bonus_fury",
+            "cost": 27.3,
+            "events": "books_bonus_fury.jsonl.zst",
+            "weights": "lookUpTable_bonus_fury_0.csv"
+        }
+    ]
+}

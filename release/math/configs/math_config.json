@@ -1,0 +1,1283 @@
+{
+    "game_id": "anubis_unchained",
+    "bet_modes": [
+        {
+            "bet_mode": "std",
+            "cost": 1.0,
+            "rtp": 0.962,
+            "max_win": 25000
+        },
+        {
+            "bet_mode": "plus",
+            "cost": 1.1,
+            "rtp": 0.962,
+            "max_win": 25000
+        },
+        {
+            "bet_mode": "safe",
+            "cost": 1.0,
+            "rtp": 0.962,
+            "max_win": 25000
+        },
+        {
+            "bet_mode": "bold",
+            "cost": 1.0,
+            "rtp": 0.962,
+            "max_win": 25000
+        },
+        {
+            "bet_mode": "plus_safe",
+            "cost": 1.1,
+            "rtp": 0.962,
+            "max_win": 25000
+        },
+        {
+            "bet_mode": "plus_bold",
+            "cost": 1.1,
+            "rtp": 0.962,
+            "max_win": 25000
+        },
+        {
+            "bet_mode": "bonus_scarab",
+            "cost": 9.26,
+            "rtp": 0.962,
+            "max_win": 25000
+        },
+        {
+            "bet_mode": "bonus_weigh",
+            "cost": 10.31,
+            "rtp": 0.962,
+            "max_win": 25000
+        },
+        {
+            "bet_mode": "bonus_vault",
+            "cost": 12.37,
+            "rtp": 0.962,
+            "max_win": 25000
+        },
+        {
+            "bet_mode": "bonus_fury",
+            "cost": 27.3,
+            "rtp": 0.962,
+            "max_win": 25000
+        }
+    ],
+    "fences": [
+        {
+            "bet_mode": "std",
+            "fences": [
+                {
+                    "name": "wincap",
+                    "avg_win": "25000",
+                    "rtp": "0.0132881",
+                    "identity_condition": {
+                        "search": [],
+                        "win_range_start": 25000,
+                        "win_range_end": 25000,
+                        "opposite": false
+                    }
+                },
+                {
+                    "name": "0",
+                    "avg_win": "0",
+                    "rtp": "0",
+                    "identity_condition": {
+                        "search": [],
+                        "win_range_start": 0,
+                        "win_range_end": 0,
+                        "opposite": false
+                    }
+                },
+                {
+                    "name": "epic",
+                    "hr": "10449.25",
+                    "rtp": "0.1550214",
+                    "min_mean_to_median": "0.81",
+                    "max_mean_to_median": "4.86",
+                    "identity_condition": {
+                        "search": [
+                            {
+                                "name": "tier",
+                                "value": "epic"
+                            }
+                        ],
+                        "win_range_start": -1,
+                        "win_range_end": -1,
+                        "opposite": false
+                    }
+                },
+                {
+                    "name": "big",
+                    "hr": "963.735",
+                    "rtp": "0.1923982",
+                    "min_mean_to_median": "0.773",
+                    "max_mean_to_median": "4.636",
+                    "identity_condition": {
+                        "search": [
+                            {
+                                "name": "tier",
+                                "value": "big"
+                            }
+                        ],
+                        "win_range_start": -1,
+                        "win_range_end": -1,
+                        "opposite": false
+                    }
+                },
+                {
+                    "name": "bonus",
+                    "hr": "23.249",
+                    "rtp": "0.3534923",
+                    "min_mean_to_median": "0.822",
+                    "max_mean_to_median": "4.931",
+                    "identity_condition": {
+                        "search": [
+                            {
+                                "name": "bonus",
+                                "value": "yes"
+                            }
+                        ],
+                        "win_range_start": -1,
+                        "win_range_end": -1,
+                        "opposite": false
+                    }
+                },
+                {
+                    "name": "basegame",
+                    "hr": "3.536",
+                    "rtp": "0.2478001",
+                    "min_mean_to_median": "0.876",
+                    "max_mean_to_median": "5.258",
+                    "identity_condition": {
+                        "search": [],
+                        "win_range_start": -1,
+                        "win_range_end": -1,
+                        "opposite": false
+                    }
+                }
+            ]
+        },
+        {
+            "bet_mode": "plus",
+            "fences": [
+                {
+                    "name": "wincap",
+                    "avg_win": "25000",
+                    "rtp": "0.0175927",
+                    "identity_condition": {
+                        "search": [],
+                        "win_range_start": 25000,
+                        "win_range_end": 25000,
+                        "opposite": false
+                    }
+                },
+                {
+                    "name": "0",
+                    "avg_win": "0",
+                    "rtp": "0",
+                    "identity_condition": {
+                        "search": [],
+                        "win_range_start": 0,
+                        "win_range_end": 0,
+                        "opposite": false
+                    }
+                },
+                {
+                    "name": "epic",
+                    "hr": "9338.181",
+                    "rtp": "0.1712231",
+                    "min_mean_to_median": "0.879",
+                    "max_mean_to_median": "5.276",
+                    "identity_condition": {
+                        "search": [
+                            {
+                                "name": "tier",
+                                "value": "epic"
+                            }
+                        ],
+                        "win_range_start": -1,
+                        "win_range_end": -1,
+                        "opposite": false
+                    }
+                },
+                {
+                    "name": "big",
+                    "hr": "876.803",
+                    "rtp": "0.1990301",
+                    "min_mean_to_median": "0.738",
+                    "max_mean_to_median": "4.43",
+                    "identity_condition": {
+                        "search": [
+                            {
+                                "name": "tier",
+                                "value": "big"
+                            }
+                        ],
+                        "win_range_start": -1,
+                        "win_range_end": -1,
+                        "opposite": false
+                    }
+                },
+                {
+                    "name": "bonus",
+                    "hr": "23.311",
+                    "rtp": "0.3336664",
+                    "min_mean_to_median": "0.856",
+                    "max_mean_to_median": "5.133",
+                    "identity_condition": {
+                        "search": [
+                            {
+                                "name": "bonus",
+                                "value": "yes"
+                            }
+                        ],
+                        "win_range_start": -1,
+                        "win_range_end": -1,
+                        "opposite": false
+                    }
+                },
+                {
+                    "name": "basegame",
+                    "hr": "3.536",
+                    "rtp": "0.2404878",
+                    "min_mean_to_median": "0.936",
+                    "max_mean_to_median": "5.613",
+                    "identity_condition": {
+                        "search": [],
+                        "win_range_start": -1,
+                        "win_range_end": -1,
+                        "opposite": false
+                    }
+                }
+            ]
+        },
+        {
+            "bet_mode": "safe",
+            "fences": [
+                {
+                    "name": "wincap",
+                    "avg_win": "25000",
+                    "rtp": "0.0012114",
+                    "identity_condition": {
+                        "search": [],
+                        "win_range_start": 25000,
+                        "win_range_end": 25000,
+                        "opposite": false
+                    }
+                },
+                {
+                    "name": "0",
+                    "avg_win": "0",
+                    "rtp": "0",
+                    "identity_condition": {
+                        "search": [],
+                        "win_range_start": 0,
+                        "win_range_end": 0,
+                        "opposite": false
+                    }
+                },
+                {
+                    "name": "epic",
+                    "hr": "47719.064",
+                    "rtp": "0.0496954",
+                    "min_mean_to_median": "0.706",
+                    "max_mean_to_median": "4.235",
+                    "identity_condition": {
+                        "search": [
+                            {
+                                "name": "tier",
+                                "value": "epic"
+                            }
+                        ],
+                        "win_range_start": -1,
+                        "win_range_end": -1,
+                        "opposite": false
+                    }
+                },
+                {
+                    "name": "big",
+                    "hr": "1194.024",
+                    "rtp": "0.1918641",
+                    "min_mean_to_median": "0.636",
+                    "max_mean_to_median": "3.818",
+                    "identity_condition": {
+                        "search": [
+                            {
+                                "name": "tier",
+                                "value": "big"
+                            }
+                        ],
+                        "win_range_start": -1,
+                        "win_range_end": -1,
+                        "opposite": false
+                    }
+                },
+                {
+                    "name": "bonus",
+                    "hr": "22.237",
+                    "rtp": "0.4719434",
+                    "min_mean_to_median": "0.75",
+                    "max_mean_to_median": "4.498",
+                    "identity_condition": {
+                        "search": [
+                            {
+                                "name": "bonus",
+                                "value": "yes"
+                            }
+                        ],
+                        "win_range_start": -1,
+                        "win_range_end": -1,
+                        "opposite": false
+                    }
+                },
+                {
+                    "name": "basegame",
+                    "hr": "3.544",
+                    "rtp": "0.2472857",
+                    "min_mean_to_median": "0.876",
+                    "max_mean_to_median": "5.258",
+                    "identity_condition": {
+                        "search": [],
+                        "win_range_start": -1,
+                        "win_range_end": -1,
+                        "opposite": false
+                    }
+                }
+            ]
+        },
+        {
+            "bet_mode": "bold",
+            "fences": [
+                {
+                    "name": "wincap",
+                    "avg_win": "25000",
+                    "rtp": "0.0304635",
+                    "identity_condition": {
+                        "search": [],
+                        "win_range_start": 25000,
+                        "win_range_end": 25000,
+                        "opposite": false
+                    }
+                },
+                {
+                    "name": "0",
+                    "avg_win": "0",
+                    "rtp": "0",
+                    "identity_condition": {
+                        "search": [],
+                        "win_range_start": 0,
+                        "win_range_end": 0,
+                        "opposite": false
+                    }
+                },
+                {
+                    "name": "epic",
+                    "hr": "14509.149",
+                    "rtp": "0.206799",
+                    "min_mean_to_median": "0.5",
+                    "max_mean_to_median": "3.0",
+                    "identity_condition": {
+                        "search": [
+                            {
+                                "name": "tier",
+                                "value": "epic"
+                            }
+                        ],
+                        "win_range_start": -1,
+                        "win_range_end": -1,
+                        "opposite": false
+                    }
+                },
+                {
+                    "name": "big",
+                    "hr": "984.551",
+                    "rtp": "0.233179",
+                    "min_mean_to_median": "0.498",
+                    "max_mean_to_median": "2.987",
+                    "identity_condition": {
+                        "search": [
+                            {
+                                "name": "tier",
+                                "value": "big"
+                            }
+                        ],
+                        "win_range_start": -1,
+                        "win_range_end": -1,
+                        "opposite": false
+                    }
+                },
+                {
+                    "name": "bonus",
+                    "hr": "23.591",
+                    "rtp": "0.2435504",
+                    "min_mean_to_median": "0.958",
+                    "max_mean_to_median": "5.746",
+                    "identity_condition": {
+                        "search": [
+                            {
+                                "name": "bonus",
+                                "value": "yes"
+                            }
+                        ],
+                        "win_range_start": -1,
+                        "win_range_end": -1,
+                        "opposite": false
+                    }
+                },
+                {
+                    "name": "basegame",
+                    "hr": "3.534",
+                    "rtp": "0.248008",
+                    "min_mean_to_median": "0.876",
+                    "max_mean_to_median": "5.258",
+                    "identity_condition": {
+                        "search": [],
+                        "win_range_start": -1,
+                        "win_range_end": -1,
+                        "opposite": false
+                    }
+                }
+            ]
+        },
+        {
+            "bet_mode": "plus_safe",
+            "fences": [
+                {
+                    "name": "wincap",
+                    "avg_win": "25000",
+                    "rtp": "0.0029727",
+                    "identity_condition": {
+                        "search": [],
+                        "win_range_start": 25000,
+                        "win_range_end": 25000,
+                        "opposite": false
+                    }
+                },
+                {
+                    "name": "0",
+                    "avg_win": "0",
+                    "rtp": "0",
+                    "identity_condition": {
+                        "search": [],
+                        "win_range_start": 0,
+                        "win_range_end": 0,
+                        "opposite": false
+                    }
+                },
+                {
+                    "name": "epic",
+                    "hr": "30897.758",
+                    "rtp": "0.0724142",
+                    "min_mean_to_median": "0.724",
+                    "max_mean_to_median": "4.343",
+                    "identity_condition": {
+                        "search": [
+                            {
+                                "name": "tier",
+                                "value": "epic"
+                            }
+                        ],
+                        "win_range_start": -1,
+                        "win_range_end": -1,
+                        "opposite": false
+                    }
+                },
+                {
+                    "name": "big",
+                    "hr": "1037.817",
+                    "rtp": "0.2036418",
+                    "min_mean_to_median": "0.646",
+                    "max_mean_to_median": "3.875",
+                    "identity_condition": {
+                        "search": [
+                            {
+                                "name": "tier",
+                                "value": "big"
+                            }
+                        ],
+                        "win_range_start": -1,
+                        "win_range_end": -1,
+                        "opposite": false
+                    }
+                },
+                {
+                    "name": "bonus",
+                    "hr": "22.346",
+                    "rtp": "0.4429588",
+                    "min_mean_to_median": "0.778",
+                    "max_mean_to_median": "4.666",
+                    "identity_condition": {
+                        "search": [
+                            {
+                                "name": "bonus",
+                                "value": "yes"
+                            }
+                        ],
+                        "win_range_start": -1,
+                        "win_range_end": -1,
+                        "opposite": false
+                    }
+                },
+                {
+                    "name": "basegame",
+                    "hr": "3.543",
+                    "rtp": "0.2400126",
+                    "min_mean_to_median": "0.936",
+                    "max_mean_to_median": "5.613",
+                    "identity_condition": {
+                        "search": [],
+                        "win_range_start": -1,
+                        "win_range_end": -1,
+                        "opposite": false
+                    }
+                }
+            ]
+        },
+        {
+            "bet_mode": "plus_bold",
+            "fences": [
+                {
+                    "name": "wincap",
+                    "avg_win": "25000",
+                    "rtp": "0.0362157",
+                    "identity_condition": {
+                        "search": [],
+                        "win_range_start": 25000,
+                        "win_range_end": 25000,
+                        "opposite": false
+                    }
+                },
+                {
+                    "name": "0",
+                    "avg_win": "0",
+                    "rtp": "0",
+                    "identity_condition": {
+                        "search": [],
+                        "win_range_start": 0,
+                        "win_range_end": 0,
+                        "opposite": false
+                    }
+                },
+                {
+                    "name": "epic",
+                    "hr": "12350.586",
+                    "rtp": "0.2233117",
+                    "min_mean_to_median": "0.547",
+                    "max_mean_to_median": "3.279",
+                    "identity_condition": {
+                        "search": [
+                            {
+                                "name": "tier",
+                                "value": "epic"
+                            }
+                        ],
+                        "win_range_start": -1,
+                        "win_range_end": -1,
+                        "opposite": false
+                    }
+                },
+                {
+                    "name": "big",
+                    "hr": "925.369",
+                    "rtp": "0.2296294",
+                    "min_mean_to_median": "0.507",
+                    "max_mean_to_median": "3.041",
+                    "identity_condition": {
+                        "search": [
+                            {
+                                "name": "tier",
+                                "value": "big"
+                            }
+                        ],
+                        "win_range_start": -1,
+                        "win_range_end": -1,
+                        "opposite": false
+                    }
+                },
+                {
+                    "name": "bonus",
+                    "hr": "23.615",
+                    "rtp": "0.2321642",
+                    "min_mean_to_median": "1.005",
+                    "max_mean_to_median": "6.031",
+                    "identity_condition": {
+                        "search": [
+                            {
+                                "name": "bonus",
+                                "value": "yes"
+                            }
+                        ],
+                        "win_range_start": -1,
+                        "win_range_end": -1,
+                        "opposite": false
+                    }
+                },
+                {
+                    "name": "basegame",
+                    "hr": "3.534",
+                    "rtp": "0.240679",
+                    "min_mean_to_median": "0.936",
+                    "max_mean_to_median": "5.613",
+                    "identity_condition": {
+                        "search": [],
+                        "win_range_start": -1,
+                        "win_range_end": -1,
+                        "opposite": false
+                    }
+                }
+            ]
+        },
+        {
+            "bet_mode": "bonus_scarab",
+            "fences": [
+                {
+                    "name": "wincap",
+                    "avg_win": "25000",
+                    "rtp": "2.47e-05",
+                    "identity_condition": {
+                        "search": [],
+                        "win_range_start": 25000,
+                        "win_range_end": 25000,
+                        "opposite": false
+                    }
+                },
+                {
+                    "name": "0",
+                    "avg_win": "0",
+                    "rtp": "0",
+                    "identity_condition": {
+                        "search": [],
+                        "win_range_start": 0,
+                        "win_range_end": 0,
+                        "opposite": false
+                    }
+                },
+                {
+                    "name": "epic",
+                    "hr": "8394.348",
+                    "rtp": "0.0265986",
+                    "min_mean_to_median": "0.833",
+                    "max_mean_to_median": "4.999",
+                    "identity_condition": {
+                        "search": [
+                            {
+                                "name": "tier",
+                                "value": "epic"
+                            }
+                        ],
+                        "win_range_start": -1,
+                        "win_range_end": -1,
+                        "opposite": false
+                    }
+                },
+                {
+                    "name": "big",
+                    "hr": "37.837",
+                    "rtp": "0.3463978",
+                    "min_mean_to_median": "0.589",
+                    "max_mean_to_median": "3.532",
+                    "identity_condition": {
+                        "search": [
+                            {
+                                "name": "tier",
+                                "value": "big"
+                            }
+                        ],
+                        "win_range_start": -1,
+                        "win_range_end": -1,
+                        "opposite": false
+                    }
+                },
+                {
+                    "name": "bonus",
+                    "hr": "1.029",
+                    "rtp": "0.588979",
+                    "min_mean_to_median": "0.699",
+                    "max_mean_to_median": "4.197",
+                    "identity_condition": {
+                        "search": [
+                            {
+                                "name": "bonus",
+                                "value": "yes"
+                            }
+                        ],
+                        "win_range_start": -1,
+                        "win_range_end": -1,
+                        "opposite": false
+                    }
+                }
+            ]
+        },
+        {
+            "bet_mode": "bonus_weigh",
+            "fences": [
+                {
+                    "name": "wincap",
+                    "avg_win": "25000",
+                    "rtp": "2.22e-05",
+                    "identity_condition": {
+                        "search": [],
+                        "win_range_start": 25000,
+                        "win_range_end": 25000,
+                        "opposite": false
+                    }
+                },
+                {
+                    "name": "0",
+                    "avg_win": "0",
+                    "rtp": "0",
+                    "identity_condition": {
+                        "search": [],
+                        "win_range_start": 0,
+                        "win_range_end": 0,
+                        "opposite": false
+                    }
+                },
+                {
+                    "name": "epic",
+                    "hr": "282.347",
+                    "rtp": "0.3558605",
+                    "min_mean_to_median": "0.518",
+                    "max_mean_to_median": "3.108",
+                    "identity_condition": {
+                        "search": [
+                            {
+                                "name": "tier",
+                                "value": "epic"
+                            }
+                        ],
+                        "win_range_start": -1,
+                        "win_range_end": -1,
+                        "opposite": false
+                    }
+                },
+                {
+                    "name": "big",
+                    "hr": "79.591",
+                    "rtp": "0.2034202",
+                    "min_mean_to_median": "0.605",
+                    "max_mean_to_median": "3.629",
+                    "identity_condition": {
+                        "search": [
+                            {
+                                "name": "tier",
+                                "value": "big"
+                            }
+                        ],
+                        "win_range_start": -1,
+                        "win_range_end": -1,
+                        "opposite": false
+                    }
+                },
+                {
+                    "name": "bonus",
+                    "hr": "1.915",
+                    "rtp": "0.4026972",
+                    "min_mean_to_median": "0.792",
+                    "max_mean_to_median": "4.75",
+                    "identity_condition": {
+                        "search": [
+                            {
+                                "name": "bonus",
+                                "value": "yes"
+                            }
+                        ],
+                        "win_range_start": -1,
+                        "win_range_end": -1,
+                        "opposite": false
+                    }
+                }
+            ]
+        },
+        {
+            "bet_mode": "bonus_vault",
+            "fences": [
+                {
+                    "name": "wincap",
+                    "avg_win": "25000",
+                    "rtp": "1.85e-05",
+                    "identity_condition": {
+                        "search": [],
+                        "win_range_start": 25000,
+                        "win_range_end": 25000,
+                        "opposite": false
+                    }
+                },
+                {
+                    "name": "0",
+                    "avg_win": "0",
+                    "rtp": "0",
+                    "identity_condition": {
+                        "search": [],
+                        "win_range_start": 0,
+                        "win_range_end": 0,
+                        "opposite": false
+                    }
+                },
+                {
+                    "name": "epic",
+                    "hr": "5014.813",
+                    "rtp": "0.026688",
+                    "min_mean_to_median": "0.68",
+                    "max_mean_to_median": "4.078",
+                    "identity_condition": {
+                        "search": [
+                            {
+                                "name": "tier",
+                                "value": "epic"
+                            }
+                        ],
+                        "win_range_start": -1,
+                        "win_range_end": -1,
+                        "opposite": false
+                    }
+                },
+                {
+                    "name": "big",
+                    "hr": "116.35",
+                    "rtp": "0.1749077",
+                    "min_mean_to_median": "0.699",
+                    "max_mean_to_median": "4.196",
+                    "identity_condition": {
+                        "search": [
+                            {
+                                "name": "tier",
+                                "value": "big"
+                            }
+                        ],
+                        "win_range_start": -1,
+                        "win_range_end": -1,
+                        "opposite": false
+                    }
+                },
+                {
+                    "name": "bonus",
+                    "hr": "1.012",
+                    "rtp": "0.7603859",
+                    "min_mean_to_median": "0.792",
+                    "max_mean_to_median": "4.75",
+                    "identity_condition": {
+                        "search": [
+                            {
+                                "name": "bonus",
+                                "value": "yes"
+                            }
+                        ],
+                        "win_range_start": -1,
+                        "win_range_end": -1,
+                        "opposite": false
+                    }
+                }
+            ]
+        },
+        {
+            "bet_mode": "bonus_fury",
+            "fences": [
+                {
+                    "name": "wincap",
+                    "avg_win": "25000",
+                    "rtp": "0.0001046",
+                    "identity_condition": {
+                        "search": [],
+                        "win_range_start": 25000,
+                        "win_range_end": 25000,
+                        "opposite": false
+                    }
+                },
+                {
+                    "name": "0",
+                    "avg_win": "0",
+                    "rtp": "0",
+                    "identity_condition": {
+                        "search": [],
+                        "win_range_start": 0,
+                        "win_range_end": 0,
+                        "opposite": false
+                    }
+                },
+                {
+                    "name": "epic",
+                    "hr": "671.548",
+                    "rtp": "0.1127759",
+                    "min_mean_to_median": "0.833",
+                    "max_mean_to_median": "4.999",
+                    "identity_condition": {
+                        "search": [
+                            {
+                                "name": "tier",
+                                "value": "epic"
+                            }
+                        ],
+                        "win_range_start": -1,
+                        "win_range_end": -1,
+                        "opposite": false
+                    }
+                },
+                {
+                    "name": "big",
+                    "hr": "15.89",
+                    "rtp": "0.4483546",
+                    "min_mean_to_median": "0.54",
+                    "max_mean_to_median": "3.242",
+                    "identity_condition": {
+                        "search": [
+                            {
+                                "name": "tier",
+                                "value": "big"
+                            }
+                        ],
+                        "win_range_start": -1,
+                        "win_range_end": -1,
+                        "opposite": false
+                    }
+                },
+                {
+                    "name": "bonus",
+                    "hr": "1.096",
+                    "rtp": "0.4007649",
+                    "min_mean_to_median": "0.994",
+                    "max_mean_to_median": "5.964",
+                    "identity_condition": {
+                        "search": [
+                            {
+                                "name": "bonus",
+                                "value": "yes"
+                            }
+                        ],
+                        "win_range_start": -1,
+                        "win_range_end": -1,
+                        "opposite": false
+                    }
+                }
+            ]
+        }
+    ],
+    "dresses": [
+        {
+            "bet_mode": "std",
+            "dresses": [
+                {
+                    "fence": "bonus",
+                    "scale_factor": "1",
+                    "identity_condition_win_range": [
+                        1,
+                        1
+                    ],
+                    "prob": 1.0
+                },
+                {
+                    "fence": "basegame",
+                    "scale_factor": "1",
+                    "identity_condition_win_range": [
+                        1,
+                        1
+                    ],
+                    "prob": 1.0
+                }
+            ]
+        },
+        {
+            "bet_mode": "plus",
+            "dresses": [
+                {
+                    "fence": "bonus",
+                    "scale_factor": "1",
+                    "identity_condition_win_range": [
+                        1,
+                        1
+                    ],
+                    "prob": 1.0
+                },
+                {
+                    "fence": "basegame",
+                    "scale_factor": "1",
+                    "identity_condition_win_range": [
+                        1,
+                        1
+                    ],
+                    "prob": 1.0
+                }
+            ]
+        },
+        {
+            "bet_mode": "safe",
+            "dresses": [
+                {
+                    "fence": "bonus",
+                    "scale_factor": "1",
+                    "identity_condition_win_range": [
+                        1,
+                        1
+                    ],
+                    "prob": 1.0
+                },
+                {
+                    "fence": "basegame",
+                    "scale_factor": "1",
+                    "identity_condition_win_range": [
+                        1,
+                        1
+                    ],
+                    "prob": 1.0
+                }
+            ]
+        },
+        {
+            "bet_mode": "bold",
+            "dresses": [
+                {
+                    "fence": "bonus",
+                    "scale_factor": "1",
+                    "identity_condition_win_range": [
+                        1,
+                        1
+                    ],
+                    "prob": 1.0
+                },
+                {
+                    "fence": "basegame",
+                    "scale_factor": "1",
+                    "identity_condition_win_range": [
+                        1,
+                        1
+                    ],
+                    "prob": 1.0
+                }
+            ]
+        },
+        {
+            "bet_mode": "plus_safe",
+            "dresses": [
+                {
+                    "fence": "bonus",
+                    "scale_factor": "1",
+                    "identity_condition_win_range": [
+                        1,
+                        1
+                    ],
+                    "prob": 1.0
+                },
+                {
+                    "fence": "basegame",
+                    "scale_factor": "1",
+                    "identity_condition_win_range": [
+                        1,
+                        1
+                    ],
+                    "prob": 1.0
+                }
+            ]
+        },
+        {
+            "bet_mode": "plus_bold",
+            "dresses": [
+                {
+                    "fence": "bonus",
+                    "scale_factor": "1",
+                    "identity_condition_win_range": [
+                        1,
+                        1
+                    ],
+                    "prob": 1.0
+                },
+                {
+                    "fence": "basegame",
+                    "scale_factor": "1",
+                    "identity_condition_win_range": [
+                        1,
+                        1
+                    ],
+                    "prob": 1.0
+                }
+            ]
+        },
+        {
+            "bet_mode": "bonus_scarab",
+            "dresses": [
+                {
+                    "fence": "bonus",
+                    "scale_factor": "1",
+                    "identity_condition_win_range": [
+                        1,
+                        1
+                    ],
+                    "prob": 1.0
+                }
+            ]
+        },
+        {
+            "bet_mode": "bonus_weigh",
+            "dresses": [
+                {
+                    "fence": "bonus",
+                    "scale_factor": "1",
+                    "identity_condition_win_range": [
+                        1,
+                        1
+                    ],
+                    "prob": 1.0
+                }
+            ]
+        },
+        {
+            "bet_mode": "bonus_vault",
+            "dresses": [
+                {
+                    "fence": "bonus",
+                    "scale_factor": "1",
+                    "identity_condition_win_range": [
+                        1,
+                        1
+                    ],
+                    "prob": 1.0
+                }
+            ]
+        },
+        {
+            "bet_mode": "bonus_fury",
+            "dresses": [
+                {
+                    "fence": "bonus",
+                    "scale_factor": "1",
+                    "identity_condition_win_range": [
+                        1,
+                        1
+                    ],
+                    "prob": 1.0
+                }
+            ]
+        }
+    ],
+    "bias": [
+        {
+            "bet_mode": "std",
+            "bias": [
+                {
+                    "criteria": "",
+                    "range": [
+                        0.0,
+                        0.0
+                    ],
+                    "prob": 0.0
+                }
+            ]
+        },
+        {
+            "bet_mode": "plus",
+            "bias": [
+                {
+                    "criteria": "",
+                    "range": [
+                        0.0,
+                        0.0
+                    ],
+                    "prob": 0.0
+                }
+            ]
+        },
+        {
+            "bet_mode": "safe",
+            "bias": [
+                {
+                    "criteria": "",
+                    "range": [
+                        0.0,
+                        0.0
+                    ],
+                    "prob": 0.0
+                }
+            ]
+        },
+        {
+            "bet_mode": "bold",
+            "bias": [
+                {
+                    "criteria": "",
+                    "range": [
+                        0.0,
+                        0.0
+                    ],
+                    "prob": 0.0
+                }
+            ]
+        },
+        {
+            "bet_mode": "plus_safe",
+            "bias": [
+                {
+                    "criteria": "",
+                    "range": [
+                        0.0,
+                        0.0
+                    ],
+                    "prob": 0.0
+                }
+            ]
+        },
+        {
+            "bet_mode": "plus_bold",
+            "bias": [
+                {
+                    "criteria": "",
+                    "range": [
+                        0.0,
+                        0.0
+                    ],
+                    "prob": 0.0
+                }
+            ]
+        },
+        {
+            "bet_mode": "bonus_scarab",
+            "bias": [
+                {
+                    "criteria": "",
+                    "range": [
+                        0.0,
+                        0.0
+                    ],
+                    "prob": 0.0
+                }
+            ]
+        },
+        {
+            "bet_mode": "bonus_weigh",
+            "bias": [
+                {
+                    "criteria": "",
+                    "range": [
+                        0.0,
+                        0.0
+                    ],
+                    "prob": 0.0
+                }
+            ]
+        },
+        {
+            "bet_mode": "bonus_vault",
+            "bias": [
+                {
+                    "criteria": "",
+                    "range": [
+                        0.0,
+                        0.0
+                    ],
+                    "prob": 0.0
+                }
+            ]
+        },
+        {
+            "bet_mode": "bonus_fury",
+            "bias": [
+                {
+                    "criteria": "",
+                    "range": [
+                        0.0,
+                        0.0
+                    ],
+                    "prob": 0.0
+                }
+            ]
+        }
+    ]
+}

@@ -6,7 +6,7 @@ Ce que le jeu contient et ce qu'il reste à faire **par toi**. Ce document ne pr
 
 | Élément | Où | État |
 |---|---|---|
-| Front à déposer (Files > Front End) | `release/anubis-unchained-front-stake.zip` (3,3 Mo, 57 fichiers) | Build « stake » : sans session Stake, le jeu affiche « Lancez le jeu depuis Stake », aucun hôte externe. Régénérable : `python3 -I tools/build-stake.py` |
+| Front à déposer (Files > Front End) | `release/front/` et `release/anubis-unchained-front-stake.zip` (≈ 3,5 Mo) | Build « stake » : sans session Stake, le jeu affiche « Lancez le jeu depuis Stake », aucun hôte externe. Régénérable : `python3 -I tools/build-stake.py` |
 | Démo jouable (test) | https://claude.ai/artifact/9tueR3gP8QpKf1RLCZdkgn | Fichier unique, argent fictif |
 | Maths (format math-sdk) | `stake-math/` | 10 modes, parité JS/Python, 74 tests |
 | Pactes (Scribe / Balance / Chacal) | `docs/GAMEPLAY.md` | RTP 96,20 % pour chaque mode, volatilité distincte |
@@ -14,16 +14,13 @@ Ce que le jeu contient et ce qu'il reste à faire **par toi**. Ce document ne pr
 | Checklist des 50 cases collées | `docs/CHECKLIST_51.md` | 39 vérifiées, 3 non vérifiables ici, 8 à faire par toi |
 | Direction artistique | `docs/AUDIT_DA.md`, `tools/retouche-assets.py` | Retouche unifiée, bonus refaits |
 | Visuels de marque | `brand/` (key art, miniatures 5 formats, logos, bannières, captures) | Générés avec Canva et Higgsfield |
-| Script de production de la table | `tools/prod-table.sh` | Non lancé jusqu'au bout (voir ci-dessous) |
+| Table de production (maths) | `release/math/` | Optimisée, 10 modes à 96,20 %, voir `release/math/LISEZ-MOI.md` |
 
 Contrôles passés sur la dernière version : `check`, `i18n-check`, `contrast`, `social-check`, `conformite`, `e2e`, `layout`, `gestures`, `rgs-test`, `replay-test`, `stake-build-test`, tests Python. `fuzz` signale une minuterie résiduelle (musique d'ambiance), présente avant ce travail.
 
 ## Ce qui bloque la soumission (à faire par toi, dans l'ordre)
 
-1. **Produire la table optimisée** (200 000 books par mode, 10 modes) : `tools/prod-table.sh <chemin du math-sdk>`.
-   - Prérequis : Python 3.12+, Node, Rust/Cargo, `pip install zstandard`.
-   - **Avant de lancer :** la première tentative n'a pas convergé (l'optimiseur boucle sur la contrainte moyenne/médiane des fences). Le correctif `M2M_BAND = (0.5, 3.0)` est dans `stake-math/game_optimization.py` ; le script régénère la configuration avec cette bande. Si l'optimiseur boucle encore, élargis la bande.
-   - Après: vérifier RTP 96,2 % par mode et l'ordre d'écart-type Scribe < Balance < Chacal dans l'outil de Stake.
+1. **Table optimisée : produite** (200 000 books par mode, 10 modes, optimiseur Rust de Stake) et déposée dans `release/math/`. RTP exact 96,20 % pour chacun des 10 modes, écart-type du mode Balance 33,0 (Scribe 19,5, Chacal 46,9), `verify_library` sans erreur. À contrôler dans l'outil de Stake avant dépôt. Pour la régénérer : `tools/prod-table.sh <math-sdk> 200000` (les bornes moyenne/médiane `M2M_BAND = (0.5, 3.0)` de `stake-math/game_optimization.py` sont ce qui a fait converger l'optimiseur).
 2. **Lire le tableau de bord Stake** : dimensions de la miniature, image abstraite ou non, libellé exact de la 51e case et de « chargeur de moteur à pieux ».
 3. **Légal** : droits des images générées (Higgsfield, Canva), ressemblance avec « Hand of Anubis » (Play'n GO) et Crazy Time, légalité de l'achat de bonus selon les territoires, titre unique (cases 5 et 7).
 4. **Écoute et appareils réels** : le son est procédural et n'a jamais été écouté ; le 60 fps n'est mesuré sur aucun vrai téléphone.

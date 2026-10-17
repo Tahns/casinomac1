@@ -1,0 +1,80 @@
+{
+    "gameID": "anubis_unchained",
+    "gameName": "Anubis Unchained",
+    "rtp": 0.962,
+    "scale": 100,
+    "wincap": 25000,
+    "payoutStep": 1,
+    "betModes": {
+        "std": {
+            "cost": 1.0,
+            "feature": false,
+            "buyBonus": false,
+            "rtp": 0.962,
+            "max_win": 25000
+        },
+        "plus": {
+            "cost": 1.1,
+            "feature": false,
+            "buyBonus": false,
+            "rtp": 0.962,
+            "max_win": 25000
+        },
+        "safe": {
+            "cost": 1.0,
+            "feature": false,
+            "buyBonus": false,
+            "rtp": 0.962,
+            "max_win": 25000
+        },
+        "bold": {
+            "cost": 1.0,
+            "feature": false,
+            "buyBonus": false,
+            "rtp": 0.962,
+            "max_win": 25000
+        },
+        "plus_safe": {
+            "cost": 1.1,
+            "feature": false,
+            "buyBonus": false,
+            "rtp": 0.962,
+            "max_win": 25000
+        },
+        "plus_bold": {
+            "cost": 1.1,
+            "feature": false,
+            "buyBonus": false,
+            "rtp": 0.962,
+            "max_win": 25000
+        },
+        "bonus_scarab": {
+            "cost": 9.26,
+            "feature": false,
+            "buyBonus": true,
+            "rtp": 0.962,
+            "max_win": 25000
+        },
+        "bonus_weigh": {
+            "cost": 10.31,
+            "feature": false,
+            "buyBonus": true,
+            "rtp": 0.962,
+            "max_win": 25000
+        },
+        "bonus_vault": {
+            "cost": 12.37,
+            "feature": false,
+            "buyBonus": true,
+            "rtp": 0.962,
+            "max_win": 25000
+        },
+        "bonus_fury": {
+            "cost": 27.3,
+            "feature": false,
+            "buyBonus": true,
+            "rtp": 0.962,
+            "max_win": 25000
+        }
+    }
+}
