@@ -575,3 +575,6 @@ html[dir=rtl] #modal .sheet>.x{float:left;margin:-8px 0 calc(-1*var(--tap)) -10p
 .chips button.on,.chip.on{background:var(--grain-gold),linear-gradient(180deg,#efdfa8 0 18%,#cfa94c 18% 80%,#a8872f 80%);color:#1f1303;border-color:#efdfa8;box-shadow:var(--bevel-gold)}
 .spBtn{background:var(--grain-gold),var(--go);box-shadow:var(--bevel-gold),0 5px 0 rgba(0,0,0,.8);border:1px solid #4f3a12}
 @keyframes spPulse{50%{filter:brightness(1.18)}}
+
+/* SPIN : le libellé se pose sur une plaquette d'obsidienne sertie d'or (il ne se bat plus avec la tige de l'ankh) */
+#spin .spin-t{left:50%;right:auto;transform:translateX(-50%);bottom:14%;padding:.28em .7em .22em;background:#120d07;border:1px solid #b99443;border-radius:.5em;white-space:nowrap;text-shadow:0 1px 0 #000}
