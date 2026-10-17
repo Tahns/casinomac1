@@ -36,9 +36,21 @@
     return ctx.createPattern(grain, 'repeat');
   }
   // remplit le tracé courant en or patiné : bandes dures dans le sens x0,y0 → x1,y1 (à poser en travers de la pièce) + grain + arête haute claire
-  function fillMetal(ctx, x0, y0, x1, y1) {
-    ctx.fillStyle = goldGrad(ctx, x0, y0, x1, y1); ctx.fill();
-    ctx.save(); ctx.clip(); ctx.fillStyle = grainPat(ctx); ctx.fill(); ctx.restore();
+  function fillMetal(ctx, x0, y0, x1, y1, rule) {
+    ctx.fillStyle = goldGrad(ctx, x0, y0, x1, y1); ctx.fill(rule);
+    ctx.save(); ctx.clip(rule); ctx.fillStyle = grainPat(ctx); ctx.fillRect(-9999, -9999, 19998, 19998); ctx.restore();
+  }
+  // pierre : basalte grenu (éclats clairs, piqûres sombres, fines fissures), tuile 96 px à graine fixe ; se pose en voile sur un aplat de pierre
+  var stone = null;
+  function stonePat(ctx) {
+    if (!stone) {
+      var c = document.createElement('canvas'), x, s = 11, i; c.width = c.height = 96; x = c.getContext('2d');
+      var r = function () { s = (s * 16807) % 2147483647; return s / 2147483647; };
+      for (i = 0; i < 520; i++) { x.fillStyle = r() < 0.5 ? 'rgba(191,162,103,' + (0.05 + r() * 0.1) + ')' : 'rgba(11,9,7,' + (0.12 + r() * 0.2) + ')'; x.fillRect(r() * 96, r() * 96, 1 + r() * 3, 1 + r() * 2); }
+      x.lineWidth = 1; for (i = 0; i < 7; i++) { x.strokeStyle = 'rgba(11,9,7,' + (0.25 + r() * 0.2) + ')'; x.beginPath(); var px = r() * 96, py = r() * 96; x.moveTo(px, py); x.lineTo(px + (r() - 0.5) * 26, py + (r() - 0.5) * 26); x.lineTo(px + (r() - 0.5) * 40, py + (r() - 0.5) * 40); x.stroke(); }
+      stone = c;
+    }
+    return ctx.createPattern(stone, 'repeat');
   }
   function rgba(hex, a) {
     var n = parseInt(hex.slice(1), 16);
@@ -285,7 +297,7 @@
   }
 
   root.Art = {
-    C: C, TAU: TAU, goldGrad: goldGrad, fillMetal: fillMetal, rgba: rgba, mix: mix,
+    C: C, TAU: TAU, goldGrad: goldGrad, fillMetal: fillMetal, stonePat: stonePat, rgba: rgba, mix: mix,
     ankh: ankh, eye: eye, scarab: scarab, feather: feather, pyramid: pyramid, skullX: skullX, cobra: cobra, skull: skull,
     jackal: jackal, hand: hand, glyphStrip: glyphStrip, glyphRow: glyphRow, noiseTile: noiseTile, rays: rays, roundRect: roundRect
   };
