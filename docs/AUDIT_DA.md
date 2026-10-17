@@ -19,3 +19,6 @@ Contexte : refus Stake 3,3 / 9, direction artistique citée par 3/3 évaluateurs
 
 ## Reste à faire
 `js/bonuses.js` (halos, dégradés, textes lumineux), `drawBackdrop` (rayons, lueur d'or, braises : animation, non touché), logo et médaillon d'Anubis à régénérer (les yeux de `HEADS.medal` dépendent du cadrage), cadre de roue en image, fonds `abyss` / `judgment` / `vault` / `splash` à régénérer au même style que `key` et `scarabwall`.
+
+## Passe finale (fureur, crypte, colere, pactes, HUD, fenetres)
+Fenetres en pierre sertie d or (CSS, plus de cadre image etire), cartes d achat en pierre, plaque / pill / spinbtn detoures en RGBA (le noir de fond ne se voit plus ; a refaire apres tools/retouche-assets.py), ombres dures partout (G.txt, goButton, plaques), roue de la Fureur en pierres a grain (Art.grain), crypte en basalte, chaines et cadenas a bandes dures, palette reportee dans game/wrath/pact/chains/fx/main/bonuses (hand, crypt, intro).

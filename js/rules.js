@@ -27,14 +27,14 @@
   // logo illustré d'un bonus (images du jeu, fond noir fondu en « screen ») ; vide si l'image n'est pas chargée
   function ic(kind) { var u = (root.ANUBIS_IMG || {})['ic_' + kind]; return u ? '<img class="rIc" alt="" src="' + u + '" width="38" height="38">' : ''; }
   // roue en un coup d'œil : une part par case (couleurs de l'écran de jeu), pointeur en haut
-  var KCOL = { m0: '#4a4036', m025: '#6f5a2e', m05: '#8a6a1e', m1: '#b48a24', m2: '#c9a03a', m3: '#e6b94a', ankh: '#18b5a4', scarab: '#2f8f5b', weigh: '#2352b8', vault: '#7b3fa6' };
+  var KCOL = { m0: '#4a4036', m025: '#6f5a2e', m05: '#8a6a1e', m1: '#b48a24', m2: '#c9a03a', m3: '#cfa94c', ankh: '#1fa596', scarab: '#2f8f5b', weigh: '#2352b8', vault: '#7b3fa6' };
   function wheelSvg() {
     var L = M.LAYOUT, n = L.length, r = 46, out = '<svg viewBox="-50 -52 100 104" role="img" aria-hidden="true">';
     for (var i = 0; i < n; i++) {
       var a0 = i / n * 2 * Math.PI - Math.PI / 2, a1 = (i + 1) / n * 2 * Math.PI - Math.PI / 2, col = (root.G && root.G.kindColor && root.G.kindColor(L[i])) || KCOL[L[i]] || '#8a6a1e';
       out += '<path d="M0 0L' + (r * Math.cos(a0)).toFixed(2) + ' ' + (r * Math.sin(a0)).toFixed(2) + 'A' + r + ' ' + r + ' 0 0 1 ' + (r * Math.cos(a1)).toFixed(2) + ' ' + (r * Math.sin(a1)).toFixed(2) + 'Z" fill="' + col + '" stroke="#0b0907" stroke-width=".8"/>';
     }
-    return out + '<circle r="9" fill="#14100c" stroke="#e6b94a" stroke-width="1.6"/><path d="M0 -50 -4.2 -43.5H4.2Z" fill="#fff1b8" stroke="#5b4311" stroke-width=".8"/></svg>';
+    return out + '<circle r="9" fill="#14100c" stroke="#cfa94c" stroke-width="1.6"/><path d="M0 -50 -4.2 -43.5H4.2Z" fill="#efdfa8" stroke="#5b4311" stroke-width=".8"/></svg>';
   }
 
   var BTN_CUR = 9;   // rang de l'entrée « devise » dans le guide des boutons (R.btn) : tools/i18n-check.js vérifie qu'elle porte bien le bouton de devise

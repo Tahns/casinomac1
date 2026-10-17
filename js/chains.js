@@ -10,7 +10,7 @@
  *   var h = Chains.header(canvasElement);                              // petit effet d'en-tête : h.breakNow(), h.reform(), h.destroy()
  *   Chains.setReduced(true);                                           // mouvement réduit : aucune animation, états finaux immédiats
  *
- * Palette = celle du jeu (or #e6b94a, patine turquoise). Aucun hasard dans le dessin des maillons (rendu identique à chaque image). */
+ * Palette = celle du jeu (or #cfa94c, patine turquoise). Aucun hasard dans le dessin des maillons (rendu identique à chaque image). */
 (function (root) {
   'use strict';
   var TAU = Math.PI * 2, reduced = false;
@@ -42,19 +42,19 @@
     if (shadow) { shape(); x.fillStyle = '#000'; x.fill('evenodd'); cache[key] = c; return c; }
     // métal : dégradé haut clair -> bas sombre, comme un cylindre d'or éclairé par le haut
     var g = x.createLinearGradient(0, cy - W / 2, 0, cy + W / 2);
-    g.addColorStop(0, '#fff1b8'); g.addColorStop(0.22, '#e6b94a'); g.addColorStop(0.6, '#8a6a1e'); g.addColorStop(1, '#4a350c');
-    if (edge) { var ge = x.createLinearGradient(0, cy - T * 0.62, 0, cy + T * 0.62); ge.addColorStop(0, '#fff1b8'); ge.addColorStop(0.3, '#e6b94a'); ge.addColorStop(0.7, '#8a6a1e'); ge.addColorStop(1, '#3d2b08'); g = ge; }
-    shape(); x.fillStyle = g; x.fill('evenodd');
+    bands(g);
+    if (edge) { var ge = x.createLinearGradient(0, cy - T * 0.62, 0, cy + T * 0.62); bands(ge); g = ge; }
+    shape(); x.fillStyle = g; x.fill('evenodd'); if (window.Art) { shape(); window.Art.grain(x, 'evenodd'); }
     // patine : taches turquoise / vert-de-gris, toujours aux mêmes endroits (pas de hasard)
     x.save(); shape(); x.clip('evenodd');
     for (var i = 0; i < 9; i++) {
       var px = cx - L / 2 + L * (((i * 0.37) % 1) * 0.9 + 0.05), py = cy - W / 2 + W * (((i * 0.61 + 0.2) % 1)), pr = (0.09 + (i % 3) * 0.05) * L;
-      var pg = x.createRadialGradient(px, py, 0, px, py, pr); pg.addColorStop(0, 'rgba(24,181,164,.30)'); pg.addColorStop(1, 'rgba(24,181,164,0)');
+      var pg = x.createRadialGradient(px, py, 0, px, py, pr); pg.addColorStop(0, 'rgba(31,165,150,.30)'); pg.addColorStop(1, 'rgba(31,165,150,0)');
       x.fillStyle = pg; x.fillRect(px - pr, py - pr, pr * 2, pr * 2);
     }
     x.restore();
     // arêtes : liseré clair dehors, trait sombre au creux de l'anneau, reflet fin sur le haut
-    shape(); x.lineWidth = Math.max(1, k * 1.1); x.strokeStyle = 'rgba(255,241,184,.5)'; x.stroke();
+    shape(); x.lineWidth = Math.max(1, k * 1.1); x.strokeStyle = 'rgba(239,223,168,.5)'; x.stroke();
     if (!edge) {
       x.beginPath(); rr(x, cx - L / 2 + T, cy - W / 2 + T, L - 2 * T, W - 2 * T, (W - 2 * T) / 2); x.lineWidth = Math.max(1, k * 1.6); x.strokeStyle = 'rgba(25,14,2,.85)'; x.stroke();
       x.beginPath(); x.moveTo(cx - L * 0.28, cy - W / 2 + T * 0.36); x.lineTo(cx + L * 0.2, cy - W / 2 + T * 0.36); x.lineWidth = Math.max(1, k * 1.2); x.lineCap = 'round'; x.strokeStyle = 'rgba(255,252,230,.7)'; x.stroke();
@@ -109,6 +109,8 @@
     ctx.restore();
   }
 
+  // or patiné à bandes dures (pas de dégradé lisse)
+  function bands(g) { g.addColorStop(0, '#efdfa8'); g.addColorStop(0.2, '#efdfa8'); g.addColorStop(0.2, '#cfa94c'); g.addColorStop(0.55, '#cfa94c'); g.addColorStop(0.55, '#8a6a1e'); g.addColorStop(0.82, '#8a6a1e'); g.addColorStop(0.82, '#4f3a12'); g.addColorStop(1, '#4f3a12'); return g; }
   /* ---------- cadenas : anse, corps d'or, serrure en forme d'ankh ; crack = fissures de lumière divine ---------- */
   function lock(ctx, x, y, size, o) {
     o = o || {};
@@ -118,16 +120,16 @@
     ctx.fillStyle = 'rgba(0,0,0,.55)'; ctx.beginPath(); rr(ctx, x - bw / 2 + 4, by + 5, bw, bh, s * 0.14); ctx.fill();
     ctx.beginPath(); ctx.arc(x + 4, by - bh * 0.02 + 5, bw * 0.34, Math.PI, 0); ctx.lineWidth = s * 0.15; ctx.strokeStyle = 'rgba(0,0,0,.55)'; ctx.stroke();
     // anse
-    var sg = ctx.createLinearGradient(x - bw / 2, 0, x + bw / 2, 0); sg.addColorStop(0, '#8a6a1e'); sg.addColorStop(0.4, '#fff1b8'); sg.addColorStop(1, '#5b4311');
+    var sg = ctx.createLinearGradient(x - bw / 2, 0, x + bw / 2, 0); sg.addColorStop(0, '#8a6a1e'); sg.addColorStop(0.35, '#8a6a1e'); sg.addColorStop(0.35, '#cfa94c'); sg.addColorStop(0.62, '#cfa94c'); sg.addColorStop(0.62, '#efdfa8'); sg.addColorStop(0.8, '#efdfa8'); sg.addColorStop(0.8, '#5b4311'); sg.addColorStop(1, '#5b4311');
     ctx.beginPath(); ctx.moveTo(x - bw * 0.34, by + 2); ctx.lineTo(x - bw * 0.34, by - bh * 0.2); ctx.arc(x, by - bh * 0.2, bw * 0.34, Math.PI, 0); ctx.lineTo(x + bw * 0.34, by + 2);
     ctx.lineWidth = s * 0.15; ctx.lineCap = 'butt'; ctx.strokeStyle = sg; ctx.stroke();
     // corps
-    var bg = ctx.createLinearGradient(0, by, 0, by + bh); bg.addColorStop(0, '#fff1b8'); bg.addColorStop(0.18, '#e6b94a'); bg.addColorStop(0.65, '#8a6a1e'); bg.addColorStop(1, '#4a350c');
-    ctx.beginPath(); rr(ctx, x - bw / 2, by, bw, bh, s * 0.14); ctx.fillStyle = bg; ctx.fill();
+    var bg = ctx.createLinearGradient(0, by, 0, by + bh); bands(bg);
+    ctx.beginPath(); rr(ctx, x - bw / 2, by, bw, bh, s * 0.14); ctx.fillStyle = bg; ctx.fill(); if (window.Art) { window.Art.grain(ctx); ctx.beginPath(); rr(ctx, x - bw / 2, by, bw, bh, s * 0.14); }
     ctx.lineWidth = Math.max(1.5, s * 0.03); ctx.strokeStyle = '#3d2b08'; ctx.stroke();
-    ctx.beginPath(); rr(ctx, x - bw / 2 + s * 0.06, by + s * 0.06, bw - s * 0.12, bh - s * 0.12, s * 0.1); ctx.strokeStyle = 'rgba(255,241,184,.45)'; ctx.lineWidth = Math.max(1, s * 0.02); ctx.stroke();
+    ctx.beginPath(); rr(ctx, x - bw / 2 + s * 0.06, by + s * 0.06, bw - s * 0.12, bh - s * 0.12, s * 0.1); ctx.strokeStyle = 'rgba(239,223,168,.45)'; ctx.lineWidth = Math.max(1, s * 0.02); ctx.stroke();
     // patine turquoise au bas
-    var pg = ctx.createLinearGradient(0, by + bh * 0.6, 0, by + bh); pg.addColorStop(0, 'rgba(24,181,164,0)'); pg.addColorStop(1, 'rgba(24,181,164,.28)');
+    var pg = ctx.createLinearGradient(0, by + bh * 0.6, 0, by + bh); pg.addColorStop(0, 'rgba(31,165,150,0)'); pg.addColorStop(1, 'rgba(31,165,150,.28)');
     ctx.beginPath(); rr(ctx, x - bw / 2, by, bw, bh, s * 0.14); ctx.fillStyle = pg; ctx.fill();
     // serrure : ankh sombre
     var kx = x, ky = by + bh * 0.5, ks = s * 0.34;
@@ -145,11 +147,9 @@
         ctx.beginPath(); ctx.moveTo(x + bw * p[0], by + bh * (0.5 + p[1] * 0.5));
         ctx.lineTo(x + bw * (p[0] + (p[2] - p[0]) * u), by + bh * (0.5 + (p[1] + (p[3] - p[1]) * u) * 0.5));
         ctx.lineTo(x + bw * (p[0] + (p[4] - p[0]) * u * 0.9), by + bh * (0.5 + (p[1] + (p[5] - p[1]) * u * 0.9) * 0.5));
-        ctx.strokeStyle = 'rgba(255,236,160,' + (0.85 * pulse) + ')'; ctx.lineWidth = Math.max(1.5, s * 0.035); ctx.stroke();
+        ctx.strokeStyle = 'rgba(234,219,159,' + (0.85 * pulse) + ')'; ctx.lineWidth = Math.max(1.5, s * 0.035); ctx.stroke();
         ctx.strokeStyle = 'rgba(120,255,235,' + (0.35 * pulse) + ')'; ctx.lineWidth = Math.max(3, s * 0.09); ctx.stroke();
       });
-      var gl = ctx.createRadialGradient(x, ky, 0, x, ky, s * (0.9 + crack)); gl.addColorStop(0, 'rgba(255,236,160,' + (0.5 * crack * pulse) + ')'); gl.addColorStop(1, 'rgba(255,200,80,0)');
-      ctx.fillStyle = gl; ctx.fillRect(x - s * 2, ky - s * 2, s * 4, s * 4);
     }
     ctx.restore();
   }
@@ -191,7 +191,7 @@
       chains.forEach(function (ch) { draw(ctx, ch, 0, { still: true, dpr: dpr, shadow: 3 }); });
       ctx.save(); ctx.globalCompositeOperation = 'lighter';
       for (var k = 0; k < parts.length; k++) {
-        var p = parts[k], al = 1 - p.life / p.max; ctx.globalAlpha = al; ctx.fillStyle = p.shard ? '#ffe9a0' : '#fff6d0';
+        var p = parts[k], al = 1 - p.life / p.max; ctx.globalAlpha = al; ctx.fillStyle = p.shard ? '#eadb9f' : '#f4ecd6';
         if (p.shard) { ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.a); ctx.fillRect(-p.s * 1.6, -p.s * 0.4, p.s * 3.2, p.s * 0.8); ctx.restore(); }
         else { ctx.beginPath(); ctx.arc(p.x, p.y, p.s * al + 0.5, 0, TAU); ctx.fill(); }
       }
@@ -244,7 +244,7 @@
       if (anim) anim.draw(ctx, dpr); else if (!broken) draw(ctx, ch, 0, { still: true, dpr: dpr, shadow: 1.5 });
       if (gleam >= 0 && !broken) {   // reflet qui court le long de la chaîne
         ctx.save(); ctx.globalCompositeOperation = 'lighter'; var gx = gleam * (w + 120) - 60, g = ctx.createLinearGradient(gx - 40, 0, gx + 40, 0);
-        g.addColorStop(0, 'rgba(255,236,160,0)'); g.addColorStop(0.5, 'rgba(255,236,160,.55)'); g.addColorStop(1, 'rgba(255,236,160,0)'); ctx.fillStyle = g; ctx.fillRect(gx - 40, 0, 80, h); ctx.restore();
+        g.addColorStop(0, 'rgba(234,219,159,0)'); g.addColorStop(0.5, 'rgba(234,219,159,.55)'); g.addColorStop(1, 'rgba(234,219,159,0)'); ctx.fillStyle = g; ctx.fillRect(gx - 40, 0, 80, h); ctx.restore();
       }
     }
     function loop(n) {
